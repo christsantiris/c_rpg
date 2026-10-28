@@ -115,7 +115,6 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
         case ENEMY_HARPY_STORMCALLER:
         case ENEMY_STORM_ELEMENTAL:
         case ENEMY_TEMPEST_MATRIARCH:
-        case ENEMY_BRIAR_WOLF:
         case ENEMY_IRONHIDE_BOAR:
         case ENEMY_THORN_DRYAD:
         case ENEMY_TREEFOLK:
@@ -215,11 +214,6 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             snprintf(e->name, sizeof(e->name), "Horseman");
             e->max_hp = 52; e->hp = 52;
             e->attack = 13; e->defense = 4; e->experience = 60;
-            break;
-        case ENEMY_ICE_WOLF:
-            snprintf(e->name, sizeof(e->name), "Ice Wolf");
-            e->max_hp = 30; e->hp = 30;
-            e->attack = 10; e->defense = 2; e->experience = 32;
             break;
         case ENEMY_FROST_ARCHER:
             snprintf(e->name, sizeof(e->name), "Frost Archer");
@@ -352,6 +346,13 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             strncpy(e->name, "Blighted Wolf", sizeof(e->name) - 1);
             e->max_hp = 14; e->hp = 14; e->attack = 6; e->defense = 1;
             e->experience = 14;
+            if (g->location == LOCATION_FROSTFELL) {
+                e->max_hp = 30;
+                e->hp = 30;
+                e->attack = 10;
+                e->defense = 2;
+                e->experience = 32;
+            }
             break;
         case ENEMY_GIANT_SPIDER:
             strncpy(e->name, "Giant Spider", sizeof(e->name) - 1);
@@ -1288,21 +1289,21 @@ void enemies_spawn(GameState *g) {
         } else if (g->location == LOCATION_FROSTFELL) {
             // Each deeper stage adds one heavier kind of frost creature.
             if (g->level == 1) {
-                type = roll < 60 ? ENEMY_ICE_WOLF : ENEMY_FROST_ARCHER;
+                type = roll < 60 ? ENEMY_BLIGHTED_WOLF : ENEMY_FROST_ARCHER;
             } else if (g->level == 2) {
-                type = roll < 40 ? ENEMY_ICE_WOLF :
+                type = roll < 40 ? ENEMY_BLIGHTED_WOLF :
                     (roll < 70 ? ENEMY_FROST_ARCHER : ENEMY_YETI);
             } else if (g->level == 3) {
-                type = roll < 25 ? ENEMY_ICE_WOLF :
+                type = roll < 25 ? ENEMY_BLIGHTED_WOLF :
                     (roll < 50 ? ENEMY_FROST_ARCHER :
                     (roll < 75 ? ENEMY_YETI : ENEMY_FROST_WRAITH));
             } else if (g->level == 4) {
-                type = roll < 15 ? ENEMY_ICE_WOLF :
+                type = roll < 15 ? ENEMY_BLIGHTED_WOLF :
                     (roll < 35 ? ENEMY_FROST_ARCHER :
                     (roll < 55 ? ENEMY_YETI :
                     (roll < 80 ? ENEMY_FROST_WRAITH : ENEMY_ICE_GOLEM)));
             } else {
-                type = roll < 10 ? ENEMY_ICE_WOLF :
+                type = roll < 10 ? ENEMY_BLIGHTED_WOLF :
                     (roll < 25 ? ENEMY_FROST_ARCHER :
                     (roll < 40 ? ENEMY_YETI :
                     (roll < 60 ? ENEMY_FROST_WRAITH :
@@ -2650,7 +2651,7 @@ static void place_frostfell_quest_encounter(GameState *g) {
         }
     }
     for (int i = existing; i < 2; i++) {
-        EnemyType type = bit == FROSTFELL_JOURNAL_RECOVERED ? ENEMY_ICE_WOLF :
+        EnemyType type = bit == FROSTFELL_JOURNAL_RECOVERED ? ENEMY_BLIGHTED_WOLF :
             (i == 0 ? ENEMY_FROST_GIANT : ENEMY_FROST_ARCHER);
         if (!spawn_quest_guard(g, type, x, y, "Expedition Guardian")) {
             return;
@@ -2938,7 +2939,7 @@ typedef struct {
 
 static const GuildHunt guild_hunts[3] = {
     {LOCATION_FROSTFELL, HUNT_FROSTFELL_LEVEL, "Rimefang", "Rimefang Pack",
-        {ENEMY_ICE_WOLF, ENEMY_ICE_WOLF, ENEMY_ICE_WOLF, ENEMY_FROST_WRAITH}, 4, 0},
+        {ENEMY_BLIGHTED_WOLF, ENEMY_BLIGHTED_WOLF, ENEMY_BLIGHTED_WOLF, ENEMY_FROST_WRAITH}, 4, 0},
     {LOCATION_GLASSDEEP, HUNT_GLASSDEEP_LEVEL, "Shardwarden", "Shardwarden Stalker",
         {ENEMY_SHARD_GOLEM, ENEMY_BLIND_STALKER, ENEMY_BLIND_STALKER}, 3, 4},
     {LOCATION_DESERT, HUNT_SUNSCAR_LEVEL, "Dunehex", "Dunehex Mummy",
@@ -4591,7 +4592,7 @@ void game_talk_to_brenna(GameState *g) {
     } else if (g->frostfell_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, g->frostfell_quest_progress & FROSTFELL_JOURNAL_RECOVERED ?
             "The journal says Surveyor Fen survived. Find him on Frostfell stage 4, defeat his captors, and speak to him. Return here for 100 gold." :
-            "Recover the journal guarded by Ice Wolves on Frostfell stage 2. Press A beside it, then find Surveyor Fen on stage 4. Return here for 100 gold.");
+            "Recover the journal guarded by Blighted Wolves on Frostfell stage 2. Press A beside it, then find Surveyor Fen on stage 4. Return here for 100 gold.");
     } else if (g->frostfell_quest_state == 2) {
         g->frostfell_quest_state = 3;
         g->gold += FROSTFELL_REWARD_GOLD;

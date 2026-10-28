@@ -2337,7 +2337,6 @@ static void draw_dragonspine_road_enemy(Renderer *r, int tx, int ty, EnemyType t
 static void draw_frostfell_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     int art;
     switch (type) {
-        case ENEMY_ICE_WOLF: art = FROST_ART_ICE_WOLF; break;
         case ENEMY_FROST_ARCHER: art = FROST_ART_FROST_ARCHER; break;
         case ENEMY_YETI: art = FROST_ART_YETI; break;
         case ENEMY_FROST_WRAITH: art = FROST_ART_FROST_WRAITH; break;
@@ -2346,11 +2345,11 @@ static void draw_frostfell_enemy(Renderer *r, int tx, int ty, EnemyType type) {
         default: return;
     }
     static const SDL_Color bodies[FROST_ART_COUNT] = {
-        {226, 234, 242, 255}, {190, 150, 120, 255}, {226, 234, 242, 255},
+        {190, 150, 120, 255}, {226, 234, 242, 255},
         {118, 178, 224, 255}, {136, 194, 230, 255}, {112, 152, 196, 255}
     };
     static const SDL_Color clothes[FROST_ART_COUNT] = {
-        {154, 176, 200, 255}, {204, 216, 230, 255}, {154, 176, 200, 255},
+        {204, 216, 230, 255}, {154, 176, 200, 255},
         {118, 178, 224, 255}, {72, 128, 176, 255}, {130, 100, 74, 255}
     };
     SDL_Color body = bodies[art];
@@ -2380,9 +2379,6 @@ static void draw_frostfell_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     palette['k'] = (SDL_Color){33, 34, 43, 255};
     palette['g'] = (SDL_Color){130, 105, 52, 255};
     palette['G'] = (SDL_Color){207, 177, 91, 255};
-    if (type == ENEMY_ICE_WOLF) {
-        palette['y'] = (SDL_Color){52, 156, 232, 255};
-    }
     if (type == ENEMY_FROST_WRAITH) {
         palette['J'] = (SDL_Color){28, 48, 80, 255};
     }
@@ -2712,8 +2708,8 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         SDL_RenderCopy(r->sdl, r->mangrove_enemy_texture, &source, &dest);
         return;
     }
-    if (type >= ENEMY_BRIAR_WOLF && type <= ENEMY_ELDERTHORN) {
-        int index = type - ENEMY_BRIAR_WOLF;
+    if (type >= ENEMY_IRONHIDE_BOAR && type <= ENEMY_ELDERTHORN) {
+        int index = type - ENEMY_IRONHIDE_BOAR;
         SDL_Rect source = {index * 64, 0, 64, 64};
         SDL_Rect dest = {tile_x * TILE_SIZE - 20, tile_y * TILE_SIZE - 40, 64, 64};
         SDL_RenderCopy(r->sdl, r->elderwood_enemy_texture, &source, &dest);
@@ -2739,7 +2735,6 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_ROYAL_GUARD:
             draw_royal_guard_overlay(r, tile_x, tile_y, 0);
             break;
-        case ENEMY_BRIAR_WOLF:
         case ENEMY_IRONHIDE_BOAR:
         case ENEMY_THORN_DRYAD:
         case ENEMY_TREEFOLK:
@@ -2791,7 +2786,6 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_HORSEMAN:
             draw_dragonspine_road_enemy(r, tile_x, tile_y, type);
             break;
-        case ENEMY_ICE_WOLF:
         case ENEMY_FROST_ARCHER:
         case ENEMY_YETI:
         case ENEMY_FROST_WRAITH:

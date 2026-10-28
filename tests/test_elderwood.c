@@ -1,3 +1,5 @@
+#include "game/combat_feedback.h"
+#include "game/heartseed.h"
 #include "expedition_fixture.h"
 #include "test_utils.h"
 #include "northroad_checks.h"
@@ -133,7 +135,7 @@ static void mechanics(GameState *g) {
     action_resolve_enemies(g);
     action_resolve_enemies(g);
     action_resolve_enemies(g);
-    ASSERT("the wounded boss summons a finite pair of wolves", g->enemy_count == 3 && enemy->boss_wave_used == 1 && g->enemies[1].type == ENEMY_BRIAR_WOLF && g->enemies[1].experience == 0);
+    ASSERT("the wounded boss summons a finite pair of wolves", g->enemy_count == 3 && enemy->boss_wave_used == 1 && g->enemies[1].type == ENEMY_BLIGHTED_WOLF && g->enemies[1].experience == 0);
     enemy->type = ENEMY_TREEFOLK;
     enemy->attack_phase = 0;
     enemy->move_timer = 0;
@@ -152,6 +154,152 @@ static void mechanics(GameState *g) {
     ASSERT("cut brambles and exploration persist when revisiting a stage", g->map.tiles[16][18] == TILE_ELDERWOOD_FLOOR);
 }
 
+static void test_elderwood_reentry(GameState *g, GameState *loaded) {
+    game_init(g);
+    g->heartseed_quest_state = 1;
+    elderwood_enter(g);
+    for (int level = 1; level <= ELDERWOOD_DEPTH; level++) {
+        for (int n = 0; n < g->enemy_count; n++) {
+            Enemy *e = &g->enemies[n];
+            if (heartseed_is_guardian(g, e)) {
+                e->hp = 7;
+            } else {
+                e->active = 0;
+                e->hp = 0;
+            }
+        }
+        g->map.tiles[16][18] = TILE_ELDERWOOD_FLOOR;
+        map_mark_explored(&g->map, 18, 16);
+        if (level < ELDERWOOD_DEPTH) {
+            elderwood_change_level(g, 1);
+        }
+    }
+    g->elderwood_defeated = 1;
+    game_open_town_portal(g);
+    ASSERT("escape stores dead Elderwood enemies without refreshing them in town", g->location == LOCATION_TOWN &&
+        g->elderwood_cache[0].valid && !g->elderwood_cache[0].enemies[0].active);
+    ASSERT("spent Elderwood expedition survives saving before re-entry", save_game(g, ELDER_SLOT) && load_game(loaded, ELDER_SLOT));
+    elderwood_enter(loaded);
+    int regular = 0;
+    int preserved = 1;
+    int refreshed = 1;
+    for (int level = 1; level <= ELDERWOOD_DEPTH; level++) {
+        const ElderwoodCache *cache = &loaded->elderwood_cache[level - 1];
+        preserved &= cache->tiles[16][18] == TILE_ELDERWOOD_FLOOR;
+        int bit = 16 * ELDERWOOD_W + 18;
+        preserved &= !!(cache->explored[bit / 8] & (1u << (bit % 8)));
+        for (int n = 0; n < cache->enemy_count; n++) {
+            const Enemy *e = &cache->enemies[n];
+            if (e->is_boss || strncmp(e->name, "Heartseed ", 10) == 0) {
+                preserved &= !e->active && e->hp == 0;
+            } else if (strcmp(e->name, "Bound Treefolk") == 0) {
+                preserved &= e->active && e->hp == 7;
+            } else if (e->experience > 0) {
+                refreshed &= e->active && e->hp == e->max_hp && !e->attack_phase && !e->frozen_turns;
+                regular++;
+            }
+        }
+    }
+    ASSERT("physical re-entry repopulates regular enemies on all five cached stages", refreshed && regular > 25 && loaded->level == 1);
+    ASSERT("re-entry preserves boss deaths, quest guards, guardian wounds, cut paths and exploration", preserved && loaded->elderwood_defeated);
+    loaded->enemies[0].hp = 7;
+    elderwood_change_level(loaded, 1);
+    elderwood_change_level(loaded, 0);
+    ASSERT("backtracking within an expedition retains enemy wounds", loaded->enemies[0].hp == 7);
+}
+
+static void test_treefolk_combat(GameState *g) {
+    game_init(g);
+    g->location = LOCATION_ELDERWOOD;
+    g->level = 1;
+    for (int y = 0; y < ELDERWOOD_H; y++) {
+        for (int x = 0; x < ELDERWOOD_W; x++) {
+            g->map.tiles[y][x] = TILE_ELDERWOOD_FLOOR;
+        }
+    }
+    g->player.x = 20;
+    g->player.y = 20;
+    g->player.attack = 30;
+    g->enemy_count = 1;
+    Enemy *tree = &g->enemies[0];
+    *tree = (Enemy){.type = ENEMY_TREEFOLK, .name = "Treefolk", .active = 1, .x = 20, .y = 28,
+        .hp = 500, .max_hp = 500, .attack = 15, .defense = 8, .experience = 90};
+    action_resolve_enemies(g);
+    ASSERT("attackable Treefolk still pursue the player", tree->y == 27);
+    g->player.x = tree->x - 1;
+    g->player.y = tree->y;
+    int hp = tree->hp;
+    action_resolve_player(g, (Action){ACTION_MOVE, tree->x, tree->y});
+    ASSERT("bumping a Treefolk's occupied tile damages its health", tree->hp < hp && g->player.x == tree->x - 1);
+    g->player.x = tree->x - 4;
+    g->player.last_dx = 1;
+    g->player.last_dy = 0;
+    g->inventory[0] = item_make_longbow();
+    g->inventory_count = 1;
+    g->equipped_main_hand = 0;
+    g->player.arrows = 10;
+    hp = tree->hp;
+    for (int n = 0; n < 3 && tree->hp == hp; n++) {
+        action_resolve_player(g, (Action){ACTION_RANGED_ATTACK, 0, 0});
+    }
+    ASSERT("Treefolk can be damaged by arrows as well as melee", tree->hp < hp);
+    tree->move_timer = 0;
+    tree->attack_phase = 0;
+    g->player.x = tree->x;
+    g->player.y = tree->y - 4;
+    int player_hp = g->player.hp;
+    combat_feedback_clear();
+    action_resolve_enemies(g);
+    int tx = tree->attack_target_x;
+    int ty = tree->attack_target_y;
+    g->player.x += 3;
+    action_resolve_enemies(g);
+    action_resolve_enemies(g);
+    int burst = 0;
+    for (int n = 0; n < combat_feedback_count(); n++) {
+        const CombatFeedbackEvent *event = combat_feedback_get(n);
+        burst |= event->kind == FEEDBACK_ROOT_BURST && event->x == tx && event->y == ty && event->amount == 1;
+    }
+    ASSERT("root eruptions animate the fixed warned ground even after the player dodges", burst && g->player.hp == player_hp && tree->x == tx);
+}
+
+static void test_wolf_save_migration(GameState *g, GameState *loaded) {
+    game_init(g);
+    elderwood_enter(g);
+    const int retired_ids[] = {95, 56, 56, 56};
+    const char *names[] = {"Legacy Wolf", "Legacy Wolf", "Rimefang", "Expedition Guardian I"};
+    g->enemy_count = 4;
+    for (int n = 0; n < 4; n++) {
+        g->enemies[n] = (Enemy){.type = retired_ids[n], .active = n != 2, .hp = n == 2 ? 0 : 7,
+            .max_hp = 90, .x = 12 + n, .y = 12, .attack = 16, .defense = 4, .experience = 28,
+            .move_timer = 2, .attack_phase = 1};
+        snprintf(g->enemies[n].name, sizeof(g->enemies[n].name), "%s", names[n]);
+    }
+    elderwood_store(g);
+    g->frostfell_cache[0].valid = 1;
+    map_generate_frostfell(&g->frostfell_cache[0].map, 1);
+    g->frostfell_cache[0].enemy_count = 4;
+    memcpy(g->frostfell_cache[0].enemies, g->enemies, 4 * sizeof(Enemy));
+    g->gold = 327;
+    g->heartseed_quest_state = 1;
+    ASSERT("retired wolf actor fixtures load without changing progress", save_game(g, ELDER_SLOT) && load_game(loaded, ELDER_SLOT) &&
+        loaded->gold == 327 && loaded->heartseed_quest_state == 1);
+    int converted = 1;
+    for (int n = 0; n < 4; n++) {
+        const Enemy *lists[] = {&loaded->enemies[n], &loaded->elderwood_cache[0].enemies[n], &loaded->frostfell_cache[0].enemies[n]};
+        for (int k = 0; k < 3; k++) {
+            const Enemy *e = lists[k];
+            converted &= e->type == ENEMY_BLIGHTED_WOLF && e->hp == (n == 2 ? 0 : 7) &&
+                e->max_hp == 90 && e->active == (n != 2) && e->attack == 16 && e->move_timer == 2;
+        }
+    }
+    ASSERT("all retired wolves migrate in active and cached areas while preserving wounds, deaths and stats", converted);
+    ASSERT("wolf migration preserves named hunt and quest encounters", strcmp(loaded->enemies[2].name, "Rimefang") == 0 &&
+        strcmp(loaded->enemies[3].name, "Expedition Guardian I") == 0 && strcmp(loaded->enemies[0].name, "Blighted Wolf") == 0);
+    ASSERT("retiring wolf variants leaves unrelated serialized enemy IDs unchanged", ENEMY_FROST_ARCHER == 57 &&
+        ENEMY_IRONHIDE_BOAR == 96 && ENEMY_ROYAL_GUARD == 100 && ENEMY_GOBLIN_MINE_BOSS == 119);
+}
+
 void test_elderwood(void) {
     printf("Elderwood and the northern castle road:\n");
     GameState *g = calloc(1, sizeof(*g));
@@ -168,6 +316,9 @@ void test_elderwood(void) {
         free(loaded);
         return;
     }
+    test_elderwood_reentry(g, loaded);
+    test_treefolk_combat(g);
+    test_wolf_save_migration(g, loaded);
     game_init(g);
     g->player.x = 20;
     g->player.y = 1;

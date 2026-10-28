@@ -215,7 +215,7 @@ static void walk_onto(GameState *g, int x, int y) {
 }
 
 static int frost_enemy_type(EnemyType type) {
-    return type == ENEMY_ICE_WOLF || type == ENEMY_FROST_ARCHER ||
+    return type == ENEMY_BLIGHTED_WOLF || type == ENEMY_FROST_ARCHER ||
         type == ENEMY_YETI || type == ENEMY_FROST_WRAITH ||
         type == ENEMY_ICE_GOLEM || type == ENEMY_FROST_GIANT;
 }
@@ -283,7 +283,7 @@ static void test_frostfell_rosters(void) {
             one_kraken_on_the_lake &= krakens == (level == FROSTFELL_DEPTH);
         }
     }
-    int all_kinds_on_stage_5 = seen_on_stage_5[ENEMY_ICE_WOLF] &&
+    int all_kinds_on_stage_5 = seen_on_stage_5[ENEMY_BLIGHTED_WOLF] &&
         seen_on_stage_5[ENEMY_FROST_ARCHER] && seen_on_stage_5[ENEMY_YETI] &&
         seen_on_stage_5[ENEMY_FROST_WRAITH] && seen_on_stage_5[ENEMY_ICE_GOLEM] &&
         seen_on_stage_5[ENEMY_FROST_GIANT];
@@ -546,14 +546,14 @@ static void test_frostfell_behaviours(void) {
         strstr(frost_game.messages[frost_game.message_count - 1], "Frost arrow") != NULL);
 
     // Six tiles away is inside the distance at which enemies notice the player.
-    setup_snowfield(&frost_game, ENEMY_ICE_WOLF, 26, 20);
+    setup_snowfield(&frost_game, ENEMY_BLIGHTED_WOLF, 26, 20);
     action_resolve_enemies(&frost_game);
-    int wolf_steps = steps_from(26, 20, frost_game.enemies[0].x, frost_game.enemies[0].y);
+    int wolf_steps = abs(26 - frost_game.enemies[0].x) + abs(20 - frost_game.enemies[0].y);
     setup_snowfield(&frost_game, ENEMY_ICE_GOLEM, 26, 20);
     action_resolve_enemies(&frost_game);
     action_resolve_enemies(&frost_game);
     int golem_steps = steps_from(26, 20, frost_game.enemies[0].x, frost_game.enemies[0].y);
-    ASSERT("Ice Wolves cover two tiles a turn while Ice Golems take two turns per tile",
+    ASSERT("Blighted Wolves flank and take two movement steps while Ice Golems take two turns per tile",
         wolf_steps == 2 && golem_steps == 1);
 }
 

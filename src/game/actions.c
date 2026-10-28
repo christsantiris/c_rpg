@@ -223,7 +223,6 @@ static int enemy_score(EnemyType type) {
         case ENEMY_PIXIE: return 15;
         case ENEMY_BLIGHTED_WOLF: return 22;
         case ENEMY_GIANT_SPIDER: return 32;
-        case ENEMY_BRIAR_WOLF: return 60;
         case ENEMY_IRONHIDE_BOAR: return 90;
         case ENEMY_THORN_DRYAD: return 80;
         case ENEMY_TREEFOLK: return 200;
@@ -279,7 +278,6 @@ static int enemy_score(EnemyType type) {
         case ENEMY_FIRE_ELEMENTAL: return 185;
         case ENEMY_ROAD_ARCHER: return 65;
         case ENEMY_HORSEMAN: return 105;
-        case ENEMY_ICE_WOLF: return 50;
         case ENEMY_FROST_ARCHER: return 65;
         case ENEMY_YETI: return 110;
         case ENEMY_FROST_WRAITH: return 120;
@@ -418,7 +416,6 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_SSZARETH: break;
         case ENEMY_ROYAL_GUARD: gold = 10; break;
         case ENEMY_ELDERTHORN: break; // Its one-time reward was handled above.
-        case ENEMY_BRIAR_WOLF:
         case ENEMY_IRONHIDE_BOAR: gold = 5 + rand() % 5; break;
         case ENEMY_THORN_DRYAD: gold = 8 + rand() % 6; break;
         case ENEMY_TREEFOLK: gold = 15 + rand() % 10; break;
@@ -481,7 +478,6 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_FIRE_ELEMENTAL: gold = 13 + rand() % 12; break;
         case ENEMY_ROAD_ARCHER: gold = 8 + rand() % 9; break;
         case ENEMY_HORSEMAN: gold = 11 + rand() % 10; break;
-        case ENEMY_ICE_WOLF: gold = 4 + rand() % 6; break;
         case ENEMY_FROST_ARCHER: gold = 8 + rand() % 8; break;
         case ENEMY_YETI: gold = 10 + rand() % 10; break;
         case ENEMY_FROST_WRAITH: gold = 9 + rand() % 9; break;
@@ -3207,7 +3203,7 @@ static int enemy_prefers_range(const Enemy *e) {
 }
 
 static int enemy_prefers_flank(const Enemy *e) {
-    return e->type == ENEMY_BRIAR_WOLF || e->type == ENEMY_CRYPT_BAT ||
+    return e->type == ENEMY_CRYPT_BAT ||
         e->type == ENEMY_CRYSTAL_SPIDER ||
         e->type == ENEMY_BLIND_STALKER ||
         e->type == ENEMY_ASH_HOUND ||
@@ -3224,7 +3220,7 @@ static int enemy_prefers_flank(const Enemy *e) {
 static int enemy_blocks_line_of_sight(const GameState *g, int shooter_index, int x, int y);
 static int clear_orthogonal_path(const GameState *g, int shooter_index, const Enemy *e);
 
-static int enemy_move_toward(GameState *g, int index) {
+static int enemy_step_toward(GameState *g, int index, int avoid_x, int avoid_y) {
     Enemy *e = &g->enemies[index];
     int current_distance = enemy_distances[e->y][e->x];
     if (current_distance <= 0) {
@@ -3240,7 +3236,7 @@ static int enemy_move_toward(GameState *g, int index) {
     for (int direction = 0; direction < 4; direction++) {
         int tx = e->x + dx[direction];
         int ty = e->y + dy[direction];
-        if (!map_is_walkable(&g->map, tx, ty) ||
+        if ((tx == avoid_x && ty == avoid_y) || !map_is_walkable(&g->map, tx, ty) ||
             enemy_position_occupied(g, index, tx, ty) ||
             (tx == g->player.x && ty == g->player.y)) {
             continue;
@@ -3267,6 +3263,10 @@ static int enemy_move_toward(GameState *g, int index) {
     e->x = best_x;
     e->y = best_y;
     return 1;
+}
+
+static int enemy_move_toward(GameState *g, int index) {
+    return enemy_step_toward(g, index, -1, -1);
 }
 
 static int enemy_move_away(GameState *g, int index) {
@@ -4105,6 +4105,8 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             }
         }
 
+        int old_x = e->x;
+        int old_y = e->y;
         int moved = enemy_prefers_flank(e) && enemy_move_to_flank(g, i);
         if (!moved) {
             moved = enemy_move_toward(g, i);
@@ -4113,9 +4115,11 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             // Fast enemies close distance without attacking on their second move.
             enemy_move_toward(g, i);
         }
-        // Ice Wolves skip flanking and charge two tiles a turn.
-        if ((e->type == ENEMY_PIXIE || e->type == ENEMY_BLIGHTED_WOLF ||
-            e->type == ENEMY_ICE_WOLF) && moved) {
+        // Wolves and pixies close distance with a second movement step.
+        if (e->type == ENEMY_BLIGHTED_WOLF && moved) {
+            // Keep the second step from undoing the pack's flanking step.
+            enemy_step_toward(g, i, old_x, old_y);
+        } else if (e->type == ENEMY_PIXIE && moved) {
             enemy_move_toward(g, i);
         }
         if (e->type == ENEMY_TEMPLE_STALKER && moved) {

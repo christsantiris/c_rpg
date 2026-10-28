@@ -1629,7 +1629,7 @@ int main(int argc, char **argv) {
                 SDL_GetTicks() - game.trail_started_at < SPELL_TRAVEL_MS
                 ? &projectile_view : &game;
             game_draw(&renderer, view, &viewport);
-            game_draw_enemy_projectiles(&renderer, &enemy_shots, &viewport,
+            game_draw_enemy_projectiles(&renderer, &game, &enemy_shots, &viewport,
                 SDL_GetTicks() - enemy_shots_started_at);
         } else if (screen == SCREEN_GAME_OVER) {
             game_over_draw(&renderer, &game);

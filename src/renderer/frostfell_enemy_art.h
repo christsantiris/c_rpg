@@ -2,39 +2,13 @@
 #define FROSTFELL_ENEMY_ART_H
 
 // Rendering indices only; persistent EnemyType values are unchanged.
-enum { FROST_ART_ICE_WOLF, FROST_ART_FROST_ARCHER, FROST_ART_YETI, FROST_ART_FROST_WRAITH, FROST_ART_ICE_GOLEM, FROST_ART_FROST_GIANT, FROST_ART_COUNT };
+enum { FROST_ART_FROST_ARCHER, FROST_ART_YETI, FROST_ART_FROST_WRAITH, FROST_ART_ICE_GOLEM, FROST_ART_FROST_GIANT, FROST_ART_COUNT };
 
 // Native 24-pixel silhouettes; dots preserve the snow and ice underneath.
 // o outline, s/S/H body shadow/base/light, c/C/v cloth, e/y eyes, j/J face,
 // f/F fur light/shadow, p fang, i/I ice shadow/light, l/L/K leather, k boots,
 // g/G brass.
 static const char frostfell_enemy_art[FROST_ART_COUNT][24][25] = {
-    { // ICE_WOLF
-        "........................",
-        "........................",
-        "........................",
-        "................oH...Ho.",
-        "................oHS.oSHo",
-        "...............oHHSoHSSo",
-        "...............oHHSSSSSo",
-        ".............oHHHSSSeySo",
-        "oH..........oHHHSSSSSSSo",
-        "oHS..oHHSHHHHSSSSSSSSSSe",
-        "oHSSHHHSSSHHHSSSSSSSso..",
-        ".oSSSSSHHSSSHHSSfSSSo...",
-        "..oSSSSSSSSSSSSSSSSo....",
-        "...oHSSSSSSSSSssssSo....",
-        "...oHSSSSSSssssssSo.....",
-        "...oHSSSSsssssssSo......",
-        "....oSSSSSSssssSSo......",
-        "....oSSSoSSSooSSSo......",
-        "....oSSo.oSSo.oSSo......",
-        "....oHSo..oSSo.oSSo.....",
-        "...oHSo...oSSo.oSSo.....",
-        "..oHHSo...oSSo.oSSo.....",
-        "..oHSSfo..oSSfo.oSSfo...",
-        "...ooooo...ooooo.ooooo..",
-    },
     { // FROST_ARCHER
         "........................",
         "..........ovCo..........",

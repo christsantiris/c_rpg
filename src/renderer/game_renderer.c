@@ -686,7 +686,39 @@ static void draw_weapon_arrow_at(Renderer *r, int cx, int cy, int dx, int dy, in
     }
 }
 
-void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, const Viewport *v, Uint32 elapsed) {
+static int regional_camera(const GameState *g, const Viewport *base, Viewport *out) {
+    int w;
+    int h;
+    switch (g->location) {
+        case LOCATION_ELDERWOOD: w = ELDERWOOD_W; h = ELDERWOOD_H; break;
+        case LOCATION_MANGROVES: w = MANGROVE_W; h = MANGROVE_H; break;
+        case LOCATION_ESCAPE_TUNNEL: w = ESCAPE_TUNNEL_W; h = ESCAPE_TUNNEL_H; break;
+        case LOCATION_CASTLE_INTERIOR: w = CASTLE_W; h = CASTLE_H; break;
+        case LOCATION_CROWNROAD_NORTH: w = CROWN_NORTH_W; h = CROWN_NORTH_H; break;
+        case LOCATION_GIANTS_CROWN: w = GIANTS_W; h = GIANTS_H; break;
+        case LOCATION_IRONFANG: w = IRON_W; h = IRON_H; break;
+        case LOCATION_STORMWATCH: w = STORM_W; h = STORM_H; break;
+        case LOCATION_CATACOMBS: w = CATACOMBS_W; h = CATACOMBS_H; break;
+        case LOCATION_SWAMP:
+        case LOCATION_DRAGONSPINE:
+        case LOCATION_DESERT:
+        case LOCATION_ASHEN:
+        case LOCATION_GLASSDEEP:
+        case LOCATION_FROSTFELL: w = SWAMP_MAP_W; h = SWAMP_MAP_H; break;
+        default:
+            if (!game_is_king_road(g)) {
+                return 0;
+            }
+            w = CROWNROAD_W;
+            h = CROWNROAD_H;
+            break;
+    }
+    viewport_init(out, base->tiles_x < w ? base->tiles_x : w, base->tiles_y < h ? base->tiles_y : h, w, h);
+    viewport_center_on(out, g->player.x, g->player.y);
+    return 1;
+}
+
+void game_draw_enemy_projectiles(Renderer *r, const GameState *g, const EnemyProjectiles *shots, const Viewport *v, Uint32 elapsed) {
     if (elapsed >= ENEMY_PROJECTILE_TOTAL_MS || shots->count == 0) {
         return;
     }
@@ -703,17 +735,7 @@ void game_draw_enemy_projectiles(Renderer *r, const EnemyProjectiles *shots, con
     for (int i = 0; i < shots->count; i++) {
         const EnemyProjectile *shot = &shots->shots[i];
         Viewport shot_view = *v;
-        if (shot->type == ENEMY_RED_DRAGON) {
-            // Dragonspine terrain uses a regional camera, including near the summit's east edge.
-            int max_x = SWAMP_MAP_W > v->tiles_x ? SWAMP_MAP_W - v->tiles_x : 0;
-            int max_y = SWAMP_MAP_H > v->tiles_y ? SWAMP_MAP_H - v->tiles_y : 0;
-            if (shot_view.cam_x > max_x) {
-                shot_view.cam_x = max_x;
-            }
-            if (shot_view.cam_y > max_y) {
-                shot_view.cam_y = max_y;
-            }
-        }
+        regional_camera(g, v, &shot_view);
         int dx = shot->target_x - shot->start_x;
         int dy = shot->target_y - shot->start_y;
         int length = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
@@ -1052,7 +1074,7 @@ static void draw_melee_slash(Renderer *r, int left, int top, Uint32 age) {
 
 static int combat_feedback_shown(const CombatFeedbackEvent *e, const GameState *g, const Viewport *v, Uint32 now) {
     Uint32 start = combat_feedback_start(e);
-    return e->kind != FEEDBACK_WEAPONS_DUMP && e->location == g->location && e->level == g->level &&
+    return e->kind != FEEDBACK_WEAPONS_DUMP && e->kind != FEEDBACK_ROOT_BURST && e->location == g->location && e->level == g->level &&
         now >= start && now - start < COMBAT_FEEDBACK_MS &&
         viewport_is_visible(v, e->x, e->y);
 }
@@ -2084,15 +2106,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         SDL_RenderSetScale(r->sdl,
             (float)play_w / (map_w * TILE_SIZE),
             (float)play_h / (map_h * TILE_SIZE));
-    } else if (g->location == LOCATION_ESCAPE_TUNNEL) {
-        viewport_init(&town_view, v->tiles_x < ESCAPE_TUNNEL_W ? v->tiles_x : ESCAPE_TUNNEL_W,
-            v->tiles_y < ESCAPE_TUNNEL_H ? v->tiles_y : ESCAPE_TUNNEL_H, ESCAPE_TUNNEL_W, ESCAPE_TUNNEL_H);
-        viewport_center_on(&town_view, g->player.x, g->player.y);
-        v = &town_view;
-    } else if (g->location == LOCATION_MANGROVES) {
-        viewport_init(&town_view, v->tiles_x < MANGROVE_W ? v->tiles_x : MANGROVE_W,
-            v->tiles_y < MANGROVE_H ? v->tiles_y : MANGROVE_H, MANGROVE_W, MANGROVE_H);
-        viewport_center_on(&town_view, g->player.x, g->player.y);
+    } else if (regional_camera(g, v, &town_view)) {
         v = &town_view;
     } else if (road_scaled) {
         int road_w = g->location == LOCATION_MANGROVE_PATH ? MANGROVE_PATH_W : g->location == LOCATION_TOWN_ROAD ? TOWN_ROAD_W : g->location == LOCATION_APPROACH ? APPROACH_W : g->location == LOCATION_HIGH_PASS ? HIGH_PASS_W :
@@ -2111,46 +2125,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             abs(g->player.y - TOWN_ROAD_H / 2) <= TOWN_SPRITE_H / 2 + 4) {
             viewport_center_on(&town_view, TOWN_ROAD_W / 2, TOWN_ROAD_H / 2);
         }
-        v = &town_view;
-    } else if (g->location == LOCATION_CASTLE_INTERIOR) {
-        viewport_init(&town_view, v->tiles_x < CASTLE_W ? v->tiles_x : CASTLE_W, v->tiles_y < CASTLE_H ? v->tiles_y : CASTLE_H, CASTLE_W, CASTLE_H);
-        viewport_center_on(&town_view, g->player.x, g->player.y);
-        v = &town_view;
-    } else if (g->location == LOCATION_CROWNROAD_NORTH) {
-        viewport_init(&town_view, v->tiles_x < CROWN_NORTH_W ? v->tiles_x : CROWN_NORTH_W, v->tiles_y < CROWN_NORTH_H ? v->tiles_y : CROWN_NORTH_H, CROWN_NORTH_W, CROWN_NORTH_H);
-        viewport_center_on(&town_view, g->player.x, g->player.y);
-        v = &town_view;
-    } else if (g->location == LOCATION_GIANTS_CROWN) {
-        viewport_init(&town_view, v->tiles_x < GIANTS_W ? v->tiles_x : GIANTS_W, v->tiles_y < GIANTS_H ? v->tiles_y : GIANTS_H, GIANTS_W, GIANTS_H);
-        viewport_center_on(&town_view, g->player.x, g->player.y);
-        v = &town_view;
-    } else if (g->location == LOCATION_IRONFANG) {
-        viewport_init(&town_view, v->tiles_x < IRON_W ? v->tiles_x : IRON_W, v->tiles_y < IRON_H ? v->tiles_y : IRON_H, IRON_W, IRON_H);
-        viewport_center_on(&town_view, g->player.x, g->player.y);
-        v = &town_view;
-    } else if (g->location == LOCATION_STORMWATCH) {
-        viewport_init(&town_view, v->tiles_x < STORM_W ? v->tiles_x : STORM_W, v->tiles_y < STORM_H ? v->tiles_y : STORM_H, STORM_W, STORM_H);
-        viewport_center_on(&town_view, g->player.x, g->player.y);
-        v = &town_view;
-    } else if (g->location == LOCATION_ELDERWOOD) {
-        viewport_init(&town_view, v->tiles_x < ELDERWOOD_W ? v->tiles_x : ELDERWOOD_W, v->tiles_y < ELDERWOOD_H ? v->tiles_y : ELDERWOOD_H, ELDERWOOD_W, ELDERWOOD_H);
-        viewport_center_on(&town_view, g->player.x, g->player.y);
-        v = &town_view;
-    } else if (g->location == LOCATION_CATACOMBS) {
-        viewport_init(&town_view, v->tiles_x < CATACOMBS_W ? v->tiles_x : CATACOMBS_W, v->tiles_y < CATACOMBS_H ? v->tiles_y : CATACOMBS_H, CATACOMBS_W, CATACOMBS_H);
-        viewport_center_on(&town_view, g->player.x, g->player.y);
-        v = &town_view;
-    } else if (g->location == LOCATION_SWAMP ||
-        g->location == LOCATION_DRAGONSPINE ||
-        g->location == LOCATION_DESERT ||
-        g->location == LOCATION_ASHEN ||
-        g->location == LOCATION_GLASSDEEP ||
-        g->location == LOCATION_FROSTFELL) {
-        int view_w = v->tiles_x < SWAMP_MAP_W ? v->tiles_x : SWAMP_MAP_W;
-        int view_h = v->tiles_y < SWAMP_MAP_H ? v->tiles_y : SWAMP_MAP_H;
-        viewport_init(&town_view, view_w, view_h,
-            SWAMP_MAP_W, SWAMP_MAP_H);
-        viewport_center_on(&town_view, g->player.x, g->player.y);
         v = &town_view;
     } else if (tavern_scaled) {
         // Fit the entire room without stretching sprites or showing unused map tiles.
@@ -3390,6 +3364,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             if (!viewport_is_visible(v, e->x, e->y)) continue;
             int sx = viewport_to_screen_x(v, e->x);
             int sy = viewport_to_screen_y(v, e->y);
+            if (e->type == ENEMY_TREEFOLK) {
+                // Mark the occupied ground tile beneath the overhanging canopy.
+                SDL_SetRenderDrawColor(r->sdl, 186, 167, 96, 255);
+                SDL_Rect footing = {sx * TILE_SIZE + 3, sy * TILE_SIZE + 15, TILE_SIZE - 6, 6};
+                SDL_RenderDrawRect(r->sdl, &footing);
+            }
             if (g->location == LOCATION_CASTLE_INTERIOR) {
                 castle_draw_enemy(r, sx, sy, e);
             } else if (e->type == ENEMY_FALLEN_SUN_GUARDIAN &&
@@ -3429,7 +3409,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 int bar_w = TILE_SIZE - 4;
                 int bar_h = 3;
                 int bar_x = sx * TILE_SIZE + 2;
-                int bar_y = sy * TILE_SIZE - 5;
+                int bar_y = sy * TILE_SIZE - (e->type == ENEMY_TREEFOLK ? 32 : 5);
                 if (g->location == LOCATION_CASTLE_INTERIOR && e->is_boss) {
                     bar_w = 32;
                     bar_x = sx * TILE_SIZE - 4;

@@ -84,9 +84,9 @@ static void test_expedition(void) {
     game_descend(&game);
     int x = -1;
     int y = -1;
-    ASSERT("stage two contains the expedition journal and two Ice Wolf guards", objective(TILE_FROST_JOURNAL, &x, &y) &&
-        guards(&game, 1) == 2 && game.enemies[game.enemy_count - 1].type == ENEMY_ICE_WOLF &&
-        game.enemies[game.enemy_count - 2].type == ENEMY_ICE_WOLF && game.frostfell_quest_encounters == 1);
+    ASSERT("stage two contains the expedition journal and two Blighted Wolf guards", objective(TILE_FROST_JOURNAL, &x, &y) &&
+        guards(&game, 1) == 2 && game.enemies[game.enemy_count - 1].type == ENEMY_BLIGHTED_WOLF &&
+        game.enemies[game.enemy_count - 2].type == ENEMY_BLIGHTED_WOLF && game.frostfell_quest_encounters == 1);
     if (x < 0) {
         return;
     }

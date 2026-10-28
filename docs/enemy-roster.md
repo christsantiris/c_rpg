@@ -22,7 +22,7 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Crypt Conjurer | Dungeon; Royal Catacombs |
 | Lich King | Dungeon |
 | Pixie | Haunted Forest |
-| Blighted Wolf | Haunted Forest; Crown Road East; Crown Road West; Crown Road North |
+| Blighted Wolf | Haunted Forest, Elderwood Forest, Frostfell, Crown Road East, Crown Road West, Crown Road North |
 | Giant Spider | Haunted Forest; Rook's Labyrinth |
 | Dark Elf | Haunted Forest; Elderwood Forest |
 | Giant Wurm | Haunted Forest |
@@ -68,7 +68,6 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Red Dragon | Dragonspine |
 | Road Archer | Crown Road East; Crown Road West; Escape Tunnel (Smuggler Archer) |
 | Horseman | Crown Road East; Crown Road West |
-| Ice Wolf | Frostfell |
 | Frost Archer | Frostfell |
 | Yeti | Frostfell |
 | Frost Wraith | Frostfell |
@@ -101,7 +100,6 @@ Castle entries below refer to the castle interior, not Castle Grounds.
 | Castellan | Castle of No Return |
 | Royal Arcanist | Castle of No Return |
 | Lord Veyr | Castle of No Return |
-| Briar Wolf | Elderwood Forest |
 | Ironhide Boar | Elderwood Forest |
 | Thorn Dryad | Elderwood Forest |
 | Treefolk | Elderwood Forest |
