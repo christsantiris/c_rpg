@@ -698,6 +698,7 @@ float game_camera_zoom(const GameState *g) {
         case LOCATION_CATACOMBS:
         case LOCATION_IRONFANG:
         case LOCATION_STORMWATCH:
+        case LOCATION_GIANTS_CROWN:
             return CAMERA_ZOOM;
         default:
             return 1.0f;
