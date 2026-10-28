@@ -12,6 +12,11 @@ to town, with its portal beside the north gate.
 Save version **163** relocates existing approach paths and town portals to this
 gate while preserving exploration, loot, combat maps, and quest progress.
 
+Dragonspine is drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 ×
+18 tiles around the player. The Red Dragon acts within sixteen tiles or whenever
+the player is in its chamber, so its warned breath cones may begin from off
+screen.
+
 Dragonspine has five generated stages with independent progress and saved
 floor caches. Broad cliff ledges fork around deep ravines, joining a lower
 ridge, a high rim and a connecting shelf. Trails at the west and east map edges
