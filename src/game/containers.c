@@ -71,6 +71,18 @@ static int same_floor(const GameState *g, const LootContainer *c) {
     return c->location == (int)g->location && c->level == g->level;
 }
 
+void containers_forget_floor(GameState *g) {
+    // A regenerated floor has new chests; records for its old layout would leave phantom chests.
+    // Boss reward claims live in their own state fields, so nothing is lost or repeated.
+    int kept = 0;
+    for (int i = 0; i < g->loot_container_count; i++) {
+        if (!same_floor(g, &g->loot_containers[i])) {
+            g->loot_containers[kept++] = g->loot_containers[i];
+        }
+    }
+    g->loot_container_count = kept;
+}
+
 const LootContainer *containers_record(const GameState *g, int x, int y) {
     for (int i = 0; i < g->loot_container_count; i++) {
         const LootContainer *c = &g->loot_containers[i];
