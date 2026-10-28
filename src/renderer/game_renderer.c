@@ -703,6 +703,7 @@ float game_camera_zoom(const GameState *g) {
         case LOCATION_ESCAPE_TUNNEL:
         case LOCATION_CASTLE_INTERIOR:
         case LOCATION_SWAMP:
+        case LOCATION_FROSTFELL:
             return CAMERA_ZOOM;
         default:
             return 1.0f;

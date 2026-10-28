@@ -1762,7 +1762,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 220);
+    cJSON_AddNumberToObject(root, "save_version", 221);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -6722,6 +6722,10 @@ int load_game(GameState *g, int slot) {
     // Catacombs floors now scatter their chambers; regenerate floors saved on the old grid.
     if (save_version < 220) {
         catacombs_regenerate_saved_floors(g);
+    }
+    // Town exteriors no longer pave a ring around the town.
+    if (save_version < 221) {
+        town_road_migrate(g);
     }
     cJSON_Delete(root);
     return 1;

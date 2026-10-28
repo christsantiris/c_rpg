@@ -26,5 +26,6 @@ void town_road_exit(TownSide side, int *x, int *y);
 int town_road_enter(GameState *g, Location town, TownSide side, int departing);
 int town_road_depart(GameState *g, int x, int y);
 int town_road_travel(GameState *g, int x, int y);
+void town_road_migrate(GameState *g);
 
 #endif
