@@ -2,13 +2,17 @@
 
 Runtime assets use `tools/sprites/ironfang.py` and the established pixelkit
 pipeline. The entrance is 168×144; its doorway matches a walking character.
+The rock uses irregular slate faces, chipped ledges, rust-coloured ore seams
+and sparse moss. Iron-strapped timber supports frame a recessed rail tunnel,
+with paired lanterns, an ore cart and an ore hoist beside it. Transparent
+edges preserve the approach terrain, and the doorway keeps its existing anchor.
 The Goblin Mine Boss is 24×24 and derives from the existing Hobgoblin artwork,
 with a mining helmet, lamp, and pick. Seven regular enemies reuse their existing
 native sprites. There is no rescaling of the player or other enemy families.
 
 Actual SDL renderer captures:
 
-- [Entrance beside the existing blacksmith, player, and boss](ironfang-native.png).
+- [Entrance beside the existing blacksmith, mountain entrance, player, and boss](ironfang-native.png).
 - [Ridgeshire east gate](ironfang-ridgeshire.png) and [mine approach](ironfang-approach.png).
 - [Abandoned Workings](stage-1.png), [Goblin Warrens](stage-2.png),
   [Flooded Galleries](stage-3.png), [Deep Ironworks](stage-4.png), and
