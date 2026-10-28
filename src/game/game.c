@@ -4185,9 +4185,12 @@ void game_enter_guild(GameState *g) {
     push_message(g, "You enter the Adventurer's Guild.");
 }
 
-void town_life_enter(GameState *g) {
+void town_life_enter(GameState *g, int x, int y) {
     const TownBuilding *b = town_life_building(g->location);
-    if (!b || b->town != g->location) {
+    while (b && b->town == g->location && (x != b->x + b->w / 2 || y != b->y + b->h - 1)) {
+        b = town_life_next_building(g->location, b);
+    }
+    if (!b || b->town != g->location || g->map.tiles[y][x] != TILE_LOCAL_DOOR) {
         return;
     }
     g->location = b->interior;
@@ -6119,7 +6122,7 @@ static const QuestOffer quest_offers[] = {
     {"Huntmaster Selene", LOCATION_GUILD, offsetof(GameState, hunt_quest_state), 0, "Assigned: The Three Great Hunts. See your quest journal."},
     {"Marshal Veyra", LOCATION_TOWN_HALL, offsetof(GameState, watchfire_quest_state), 0, "Assigned: Watchfires of Ridgeshire. See your quest journal."},
     {"Elowen", LOCATION_TAVERN, offsetof(GameState, elowen_quest_state), 0, "Quest assigned: The Broken Seals."},
-    {"Dain", LOCATION_DAWNMERE, offsetof(GameState, dain_quest_state), 0, "Assigned: Recover the Treasure Map."},
+    {"Dain", LOCATION_ALEHOUSE, offsetof(GameState, dain_quest_state), 0, "Assigned: Recover the Treasure Map."},
     {"Alder", LOCATION_INN, offsetof(GameState, alder_quest_state), 0, "Assigned: The Lost Wardens."},
     {"Mara", LOCATION_TAVERN, offsetof(GameState, mara_quest_state), 0, "Assigned: Relight the Drowned Beacons."},
     {"Rook", LOCATION_TAVERN, offsetof(GameState, rook_quest_state), 0, "Assigned: The Ivory Rook."},
@@ -6384,17 +6387,17 @@ void game_talk_to_elowen(GameState *g) {
 }
 
 void game_talk_to_dain(GameState *g) {
-    if (g->location != LOCATION_DAWNMERE || abs(g->player.x - DAIN_TOWN_X) > 1 || abs(g->player.y - DAIN_TOWN_Y) > 1) {
+    if (g->location != LOCATION_ALEHOUSE || abs(g->player.x - DAIN_ALEHOUSE_X) > 1 || abs(g->player.y - DAIN_ALEHOUSE_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
     strncpy(g->dialogue_speaker, "Dain", MAX_SPEAKER_LEN - 1);
     g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
-    g->dialogue_x = DAIN_TOWN_X;
-    g->dialogue_y = DAIN_TOWN_Y;
+    g->dialogue_x = DAIN_ALEHOUSE_X;
+    g->dialogue_y = DAIN_ALEHOUSE_Y;
     if (g->dain_quest_state == 0) {
         strncpy(g->dialogue_text,
-            "Take Dawnmere's north gate into the Goblin Mountains. Map Bearers hold fragments on stages 2, 3, and 4 before the Goblin King. Return to Dawnmere's town center.",
+            "Take Dawnmere's north gate into the Goblin Mountains. Map Bearers hold fragments on stages 2, 3, and 4 before the Goblin King. Return to Dawnmere's Alehouse.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         return;
@@ -6407,7 +6410,7 @@ void game_talk_to_dain(GameState *g) {
             }
         }
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have %d of 3 map fragments. Find Map Bearers on mountain stages 2, 3, and 4. The road leads north to Ridgeshire and south here. Return the fragments to Dawnmere's town center.",
+            "You have %d of 3 map fragments. Find Map Bearers on mountain stages 2, 3, and 4. The road leads north to Ridgeshire and south here. Return the fragments to Dawnmere's Alehouse.",
             defeated);
         char status[MAX_MESSAGE_LEN];
         snprintf(status, sizeof(status),
@@ -6456,7 +6459,7 @@ void game_record_dain_kill(GameState *g, EnemyType type) {
     push_message(g, status);
     if ((g->dain_map_fragments & 7) == 7) {
         g->dain_quest_state = 2;
-        push_message(g, "Treasure map complete. Return to Dain in Dawnmere's town center.");
+        push_message(g, "Treasure map complete. Return to Dain in Dawnmere's Alehouse.");
     }
 }
 

@@ -1832,7 +1832,6 @@ void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
     m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
     town_life_place(m, LOCATION_DAWNMERE);
     m->tiles[SEREN_Y][SEREN_X] = TILE_NPC_SEREN;
-    m->tiles[DAIN_TOWN_Y][DAIN_TOWN_X] = TILE_NPC_DAIN;
     *spawn_x = 20;
     *spawn_y = 12;
 }

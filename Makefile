@@ -34,6 +34,7 @@ test:
 sprites:
 	python3 tools/sprites/castle.py
 	python3 tools/sprites/tavern.py
+	python3 tools/sprites/alehouse.py
 	python3 tools/sprites/inn.py
 	python3 tools/sprites/blacksmith.py
 	python3 tools/sprites/alchemist.py

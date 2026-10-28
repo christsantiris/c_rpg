@@ -1757,7 +1757,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 214);
+    cJSON_AddNumberToObject(root, "save_version", 215);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -6677,6 +6677,26 @@ int load_game(GameState *g, int slot) {
     coast_exits_migrate(g);
     if (save_version < 213) {
         migrate_dain_to_dawnmere(g);
+    }
+    if (save_version < 215 && g->location == LOCATION_DAWNMERE) {
+        // Restore the plaza, then add the Alehouse without rebuilding the town.
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (g->map.tiles[y][x] == TILE_NPC_DAIN) {
+                    g->map.tiles[y][x] = map_dawnmere_ground(x, y);
+                }
+            }
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->underlying_tile == TILE_NPC_DAIN) {
+                item->underlying_tile = map_dawnmere_ground(item->x, item->y);
+            }
+        }
+        if (strcmp(g->dialogue_speaker, "Dain") == 0) {
+            g->dialogue_active = 0;
+        }
+        town_life_migrate(g);
     }
     cJSON_Delete(root);
     return 1;

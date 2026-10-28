@@ -11,7 +11,7 @@ The Silent Stormbell, Break the War Machine, and Giant's Crown**.
 | Quest | Assigning NPC | NPC location | Area 1 | Area 2 | Area 3 |
 | --- | --- | --- | --- | --- | --- |
 | The Broken Seals | Elowen | Oakhaven — Tavern | Oakhaven Dungeon | — | — |
-| Recover the Treasure Map | Dain | Dawnmere — Town center | Goblin Mountains | — | — |
+| Recover the Treasure Map | Dain | Dawnmere — Alehouse | Goblin Mountains | — | — |
 | The Lost Wardens | Alder | Stillbury — Inn | Haunted Forest | — | — |
 | Relight the Drowned Beacons | Mara | Oakhaven — Tavern | Sunken Coast | — | — |
 | The Buried Sun | Nahla | Ruined Isle — Beside the temple | Ruined Temple | — | — |

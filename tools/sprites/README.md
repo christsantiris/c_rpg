@@ -51,6 +51,7 @@ height in renderer tests; merely fitting an atlas cell does not establish scale.
 |---|---|---|---|
 | `castle.py` | `castle-of-no-return.bmp` | 408 × 240 (17 × 10 tiles) | Rosemoor, the moat footprint `TOWN_MOAT_*` |
 | `tavern.py` | `tavern.bmp` | 168 × 120 (7 × 5) | Town 1, `TOWN_TAVERN_X/Y` |
+| `alehouse.py` | `alehouse.bmp`, `alehouse-cask.bmp` | 168 × 144 exterior; 48 × 24 cask/mug atlas | Dawnmere, northeast of the plaza; Dain's Alehouse interior |
 | `inn.py` | `inn.bmp` | 168 × 120 (7 × 5) | Stillbury, `TOWN_INN_X/Y` |
 | `blacksmith.py` | `blacksmith.bmp` | 120 × 96 (5 × 4) | Town 1, `TOWN_BLACKSMITH_X/Y` |
 | `alchemist.py` | `alchemist.bmp` | 120 × 96 (5 × 4) | Town 1, `TOWN_ALCHEMIST_X/Y` |

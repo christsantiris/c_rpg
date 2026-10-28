@@ -56,7 +56,7 @@ save/load.
 
 ## Mountain Quests
 
-Dain assigns **Recover the Treasure Map** in Ridgeshire's town center. The
+Dain assigns **Recover the Treasure Map** in Dawnmere's Alehouse. The
 Archer, Bomber and Shaman Map Bearers occupy **levels 2, 3 and 4**, respectively,
 with themed guards. Collected fragments do not use inventory space. Return all
 three to Dain for **60 gold and 400 score**.

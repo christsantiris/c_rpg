@@ -2062,6 +2062,22 @@ static void draw_low_health_warning(Renderer *r, const GameState *g) {
     SDL_SetRenderDrawBlendMode(r->sdl, blend);
 }
 
+// NPCs are transparent overlays; select their ground from the location, not the character.
+static void draw_npc_ground(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType floor) {
+    if (g->location == LOCATION_DAWNMERE) {
+        floor = map_dawnmere_ground(x, y);
+    } else if (town_life_is_interior(g->location)) {
+        floor = TILE_TAVERN_FLOOR;
+    }
+    if (floor == TILE_TOWN_PATH) {
+        draw_town_path(r, sx, sy);
+    } else if (floor == TILE_TAVERN_FLOOR) {
+        draw_tavern_floor(r, sx, sy);
+    } else {
+        draw_town_floor(r, sx, sy);
+    }
+}
+
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_MANGROVES) {
         SDL_SetRenderDrawColor(r->sdl, 9, 42, 52, 255);
@@ -2801,13 +2817,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         draw_world_prop(r, sx, sy, g->location == LOCATION_WITCH ? PROP_CRYSTAL : PROP_GOBLET,
                             (SDL_Color){114, 190, 153, 255});
                     }
-                    if (town_life_is_interior(g->location) && (y == 7 || y == 17)) {
-                        town_life_draw_goods(r, sx, sy, town_life_building(g->location)->style);
+                    if (town_life_is_interior(g->location) && (y == 7 || y == 17 || g->location == LOCATION_ALEHOUSE)) {
+                        town_life_draw_goods(r, sx, sy, town_life_building(g->location)->style, y == 7);
                     }
                     break;
                 case TILE_NPC_HEALER:
                 case TILE_NPC_WITCH:
-                    draw_tavern_floor(r, sx, sy);
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
                     npc_draw(r, sx, sy, g->location == LOCATION_WITCH ? NPC_ART_MORWEN : NPC_ART_LYSA, 0);
                     break;
                 case TILE_NPC_RESIDENT: {
@@ -2817,36 +2833,51 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     break;
                 }
                 case TILE_NPC_EDDA:
-                    draw_tavern_floor(r, sx, sy);
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_EDDA, 0);
                     break;
                 case TILE_NPC_SEREN:
-                    draw_town_floor(r, sx, sy);
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TOWN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_SEREN, 0);
                     break;
                 case TILE_NPC_TAMSIN:
-                    draw_town_floor(r, sx, sy);
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TOWN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_TAMSIN, 0);
                     break;
-                case TILE_NPC_ELOWEN: draw_elowen(r, sx, sy); break;
+                case TILE_NPC_ELOWEN:
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
+                    npc_draw(r, sx, sy, NPC_ART_ELOWEN, 0);
+                    break;
                 case TILE_NPC_DAIN:
-                    draw_town_floor(r, sx, sy);
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TOWN_FLOOR);
                     draw_dain(r, sx, sy);
                     break;
                 case TILE_NPC_SHARPENER:
-                    draw_tavern_floor(r, sx, sy);
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_GARRICK, 0);
                     break;
                 case TILE_NPC_FLETCHER:
-                    draw_tavern_floor(r, sx, sy);
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_TESSA, 0);
                     break;
-                case TILE_NPC_ALDER: draw_alder(r, sx, sy); break;
-                case TILE_NPC_MARA: draw_mara(r, sx, sy); break;
-                case TILE_NPC_ROOK: draw_rook(r, sx, sy); break;
-                case TILE_NPC_GUILD_SEEKER: draw_guild_seeker(r, sx, sy); break;
+                case TILE_NPC_ALDER:
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
+                    npc_draw(r, sx, sy, NPC_ART_ALDER, 0);
+                    break;
+                case TILE_NPC_MARA:
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
+                    npc_draw(r, sx, sy, NPC_ART_MARA, 0);
+                    break;
+                case TILE_NPC_ROOK:
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
+                    npc_draw(r, sx, sy, NPC_ART_ROOK, 0);
+                    break;
+                case TILE_NPC_GUILD_SEEKER:
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
+                    npc_draw(r, sx, sy, NPC_ART_ZARA, 0);
+                    break;
                 case TILE_NPC_STEWARD:
-                    draw_tavern_floor(r, sx, sy);
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_HADRIN, 0);
                     break;
                 case TILE_JAIL_BUILDING:
@@ -2854,7 +2885,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_town_floor(r, sx, sy);
                     break;
                 case TILE_NPC_INFORMANT:
-                    draw_town_floor(r, sx, sy);
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TOWN_FLOOR);
                     jail_draw_person(r, sx, sy, 0);
                     break;
                 case TILE_WATCHFIRE_COLD:
@@ -2862,39 +2893,48 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_watchfire(r, g, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
                 case TILE_NPC_SELENE:
-                    draw_tavern_floor(r, sx, sy);
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_SELENE, 0);
                     break;
                 case TILE_NPC_VEYRA:
-                    draw_tavern_floor(r, sx, sy);
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_VEYRA, 0);
                     break;
                 case TILE_NPC_OSWIN:
                     draw_oswin(r, sx, sy);
                     break;
-                case TILE_NPC_INNKEEPER: draw_innkeeper(r, sx, sy); break;
-                case TILE_NPC_CAIN: draw_cain(r, sx, sy); break;
+                case TILE_NPC_INNKEEPER:
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
+                    npc_draw(r, sx, sy, NPC_ART_BRAM_INN, 0);
+                    break;
+                case TILE_NPC_CAIN:
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TOWN_PATH);
+                    npc_draw(r, sx, sy, NPC_ART_CAIN, 0);
+                    break;
                 case TILE_NPC_BRAM:
-                    draw_town_path(r, sx, sy);
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TOWN_PATH);
                     npc_draw(r, sx, sy, NPC_ART_BRAM_TOWN, 0);
                     break;
                 case TILE_NPC_ALDRIC:
-                    draw_town_path(r, sx, sy);
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TOWN_PATH);
                     npc_draw(r, sx, sy, NPC_ART_ALDRIC, 0);
                     break;
                 case TILE_NPC_ROWAN:
                     if (coastal_approach(g) && approach_coast_ground(x, y) == TILE_COAST_SAND) {
                         draw_coast_sand(r, sx, sy, x, y, 0);
                     } else {
-                        draw_town_floor(r, sx, sy);
+                        draw_npc_ground(r, g, sx, sy, x, y, TILE_TOWN_FLOOR);
                     }
                     draw_rowan(r, sx, sy);
                     break;
                 case TILE_NPC_DRAGON_SEEKER:
-                    draw_dragon_seeker(r, sx, sy); break;
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
+                    npc_draw(r, sx, sy, NPC_ART_ILYA, 0);
+                    break;
                 case TILE_NPC_ROYAL_GUARD:
                     // Each guard holds the halberd on the side away from the road.
-                    draw_royal_guard(r, sx, sy,
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TOWN_FLOOR);
+                    draw_royal_guard_overlay(r, sx, sy,
                         game_is_king_road(g) ? y < CROWNROAD_Y :
                         (g->location == LOCATION_TOWN4 ?
                         y < TOWN4_KING_GATE_Y : y < TOWN3_KING_GATE_Y));
@@ -3223,8 +3263,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (town_road_index(g->location) >= 0 || g->location == LOCATION_CASTLE) {
         draw_town_gates(r, g, v);
     }
-    const TownBuilding *local_building = town_life_building(g->location);
-    if (local_building && local_building->town == g->location) {
+    for (const TownBuilding *local_building = town_life_building(g->location); local_building && local_building->town == g->location;
+        local_building = town_life_next_building(g->location, local_building)) {
         town_life_draw_building(r, v, local_building);
     }
     if (g->location == LOCATION_TOWN) {
@@ -3827,11 +3867,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 viewport_to_screen_y(v, y) * TILE_SIZE - 12, (SDL_Color){240, 190, 95, 255}, r->font_tiny);
         }
     }
-    if (g->location == LOCATION_DAWNMERE) {
+    if (g->location == LOCATION_ALEHOUSE) {
         int width = 0;
         TTF_SizeText(r->font_tiny, "DAIN", &width, NULL);
-        renderer_draw_text(r, "DAIN", viewport_to_screen_x(v, DAIN_TOWN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, DAIN_TOWN_Y - 1) * TILE_SIZE, (SDL_Color){218, 164, 84, 255}, r->font_tiny);
+        renderer_draw_text(r, "DAIN", viewport_to_screen_x(v, DAIN_ALEHOUSE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, DAIN_ALEHOUSE_Y - 1) * TILE_SIZE, (SDL_Color){218, 164, 84, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_GUILD) {
         int width = 0;
