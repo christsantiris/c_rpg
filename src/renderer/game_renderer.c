@@ -704,6 +704,7 @@ float game_camera_zoom(const GameState *g) {
         case LOCATION_CASTLE_INTERIOR:
         case LOCATION_SWAMP:
         case LOCATION_FROSTFELL:
+        case LOCATION_COAST:
             return CAMERA_ZOOM;
         default:
             return 1.0f;
@@ -736,11 +737,16 @@ static int regional_camera(const GameState *g, const Viewport *base, Viewport *o
         case LOCATION_GLASSDEEP:
         case LOCATION_FROSTFELL: w = SWAMP_MAP_W; h = SWAMP_MAP_H; break;
         default:
-            if (!game_is_crownroad(g)) {
+            if (game_is_crownroad(g)) {
+                w = CROWNROAD_W;
+                h = CROWNROAD_H;
+            } else if (game_camera_zoom(g) != 1.0f) {
+                // Original areas fill the whole map; zoom them within its bounds.
+                w = base->map_w;
+                h = base->map_h;
+            } else {
                 return 0;
             }
-            w = CROWNROAD_W;
-            h = CROWNROAD_H;
             break;
     }
     int tiles_x = zoomed_tiles(base->tiles_x, game_camera_zoom(g));
