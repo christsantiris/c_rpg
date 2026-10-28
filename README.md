@@ -333,5 +333,5 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Add new equipment types
    Add helmets, rings, gauntlets
 - Revamp enemy types
-   Variety of dark elves instead of simly dark elf type, variety of giants, recurring enemies in similar terrain
+   Variety of dark elves (dark elf archer, dark elf ranger etc) instead of simly dark elf type, variety of giants, recurring enemies in similar terrain
 
