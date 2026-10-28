@@ -32,11 +32,11 @@ int town_road_connection(Location town, TownSide side, TownApproach *connection)
         }
     }
     if (town == LOCATION_TOWN3 && side == TOWN_SIDE_EAST) {
-        *connection = (TownApproach){town, LOCATION_CROWNROAD, TOWN_W - 1, TOWN3_KING_GATE_Y};
+        *connection = (TownApproach){town, LOCATION_CROWNROAD, TOWN_W - 1, TOWN3_CROWN_GATE_Y};
         return 1;
     }
     if (town == LOCATION_TOWN4 && side == TOWN_SIDE_WEST) {
-        *connection = (TownApproach){town, LOCATION_KING_ROAD_WEST, 0, TOWN4_KING_GATE_Y};
+        *connection = (TownApproach){town, LOCATION_CROWNROAD_WEST, 0, TOWN4_CROWN_GATE_Y};
         return 1;
     }
     return 0;
@@ -171,8 +171,8 @@ int town_road_travel(GameState *g, int x, int y) {
         game_enter_town_gate(g, connection.town, connection.gate_x, connection.gate_y);
     } else if (connection.area == LOCATION_MANGROVES) {
         mangrove_path(g, 0);
-    } else if (connection.area == LOCATION_CROWNROAD || connection.area == LOCATION_KING_ROAD_WEST) {
-        game_enter_king_road(g, connection.area, 0);
+    } else if (connection.area == LOCATION_CROWNROAD || connection.area == LOCATION_CROWNROAD_WEST) {
+        game_enter_crownroad(g, connection.area, 0);
     } else {
         for (int i = 0; i < town_approach_count; i++) {
             if (town_approaches[i].town == connection.town && town_approaches[i].area == connection.area) {

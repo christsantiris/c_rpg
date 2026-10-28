@@ -334,14 +334,9 @@ static void enter_tunnel(GameState *g) {
     g->prisoner_y = 14;
     populate_tunnel(g);
     if (g->jail_gear_state == 1 && !g->jail_supplies_taken && g->inventory_count < MAX_INVENTORY) {
-        Item weapon = g->player.player_class == CLASS_MAGE ? item_make_staff() :
-            g->player.player_class == CLASS_ROGUE ? item_make_shortbow() : item_make_short_sword();
         int slot = g->inventory_count++;
-        g->inventory[slot] = weapon;
+        g->inventory[slot] = item_make_smuggled_dagger();
         game_equip_main_hand(g, slot);
-        if (g->player.player_class == CLASS_ROGUE && g->player.arrows < 10) {
-            g->player.arrows = 10;
-        }
         g->jail_supplies_taken = 1;
         push_message(g, "Tomas gives you a smuggled weapon for the escape. Your own gear is still guarded in the jail.");
     }

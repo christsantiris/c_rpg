@@ -22,8 +22,8 @@ This remains true when using `./tools/debug_shortcuts.sh`.
 
 Walking onto the hatch takes both characters into the **Escape Tunnel**.
 Tomas closes it behind them to prevent pursuit, so there is no return to the cell.
-After confiscation he supplies a basic weapon for the escape: a Short Sword for
-Warriors, a Staff for Mages, or a Shortbow and at least ten arrows for Rogues.
+After confiscation he supplies a Smuggled Dagger for the escape, small enough
+to hide in a cell. Every class can wield it.
 This does not return any confiscated equipment. The first enemies stand farther
 along the passage, leaving space to prepare after arriving.
 The tunnel is a single 190-tile combat map with thirty enemies. Its original

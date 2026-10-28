@@ -94,6 +94,9 @@ void test_jail_equipment(void) {
     escape_cell(g);
     ASSERT("accepting the quest reveals the hatch and entering begins the escort", g->location == LOCATION_ESCAPE_TUNNEL && g->jail_quest_state == 2);
     ASSERT("Tomas provides a usable escape weapon without returning confiscated gear", g->jail_supplies_taken && g->equipped_main_hand >= 0 && g->jail_gear_claimed == 0 && g->enemies[0].x >= 18);
+    const Item *smuggled = &g->inventory[g->equipped_main_hand];
+    ASSERT("the smuggled escape weapon is a dagger every class can wield", !strcmp(smuggled->name, "Smuggled Dagger") && smuggled->weapon_family == WEAPON_FAMILY_DAGGER &&
+        item_class_allowed(smuggled, CLASS_WARRIOR) && item_class_allowed(smuggled, CLASS_MAGE) && item_class_allowed(smuggled, CLASS_ROGUE));
     g->player.x = ESCAPE_TUNNEL_W - 2;
     g->player.y = 14;
     g->prisoner_x = ESCAPE_TUNNEL_W - 3;

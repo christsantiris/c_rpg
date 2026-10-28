@@ -1574,7 +1574,7 @@ int main(int argc, char **argv) {
         int traveling = game.location == LOCATION_MANGROVE_PATH || game.location == LOCATION_TOWN_ROAD || game.location == LOCATION_APPROACH ||
             game.location == LOCATION_FOREST_ROAD || game.location == LOCATION_HIGH_PASS ||
             game.location == LOCATION_SWAMP_ROAD || game.location == LOCATION_CROWNROAD ||
-            game.location == LOCATION_KING_ROAD_WEST;
+            game.location == LOCATION_CROWNROAD_WEST;
         int is_town = game.location == LOCATION_TOWN ||
             game.location == LOCATION_TAVERN ||
             game.location == LOCATION_TOWN2 ||

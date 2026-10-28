@@ -213,16 +213,30 @@ static void test_quest_guards_and_spawn_positions(void) {
 }
 
 static void test_road_expeditions(void) {
-    const Location roads[2] = {LOCATION_CROWNROAD, LOCATION_KING_ROAD_WEST};
+    const Location roads[2] = {LOCATION_CROWNROAD, LOCATION_CROWNROAD_WEST};
     for (int i = 0; i < 2; i++) {
         memset(&game, 0, sizeof(game));
         game_init(&game);
-        game_enter_king_road(&game, roads[i], 0);
+        game_enter_crownroad(&game, roads[i], 0);
         clear_regular_enemies(&game);
         game_leave_crownroad(&game, LOCATION_CASTLE);
-        game_enter_king_road(&game, roads[i], 1);
-        ASSERT("both Crown Roads repopulate on a new crossing", active_regular_enemies(&game) == CROWNROAD_ENEMIES && !game.level_cleared);
+        game_enter_crownroad(&game, roads[i], 1);
+        ASSERT("both cleared Crown Roads stay clear on a new crossing", !active_regular_enemies(&game) && game.level_cleared);
     }
+    memset(&game, 0, sizeof(game));
+    game_init(&game);
+    game_enter_crownroad(&game, LOCATION_CROWNROAD, 0);
+    game.enemies[0].active = 0;
+    game.enemies[0].hp = 0;
+    game.enemies[1].hp = 3;
+    game.enemies[2].x = CROWNROAD_W - 2;
+    game.enemies[2].y = CROWNROAD_Y;
+    game_leave_crownroad(&game, LOCATION_CASTLE);
+    game_enter_crownroad(&game, LOCATION_CROWNROAD, 1);
+    ASSERT("Crown Road survivors keep their wounds while defeated patrols stay down", game.enemy_count == CROWNROAD_ENEMIES &&
+        !game.enemies[0].active && game.enemies[1].hp == 3 && active_regular_enemies(&game) == CROWNROAD_ENEMIES - 1);
+    ASSERT("a Crown Road patrol on the entry tile steps aside for the arriving player", game.enemies[2].active &&
+        !(game.enemies[2].x == game.player.x && game.enemies[2].y == game.player.y));
 }
 
 void test_expeditions(void) {

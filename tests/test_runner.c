@@ -40,7 +40,7 @@ void test_return_to_town_spell(void);
 void test_town_escapes(void);
 void test_town_tiles(void);
 void test_town_healer(void);
-void test_king_roads_and_castle(void);
+void test_crownroads_and_castle(void);
 void test_town3_royal_guards(void);
 void test_rook_labyrinth(void);
 void test_minotaur(void);
@@ -172,7 +172,7 @@ int main(void) {
     printf("\n");
     test_town_tiles();
     test_town_healer();
-    test_king_roads_and_castle();
+    test_crownroads_and_castle();
     test_town3_royal_guards();
     test_rook_labyrinth();
     test_minotaur();

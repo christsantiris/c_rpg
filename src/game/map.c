@@ -1484,12 +1484,12 @@ void map_place_town3_guards(Map *m, int avoid_x, int avoid_y) {
 }
 
 void map_place_town4_guards(Map *m, int avoid_x, int avoid_y) {
-    const int guard_y[2] = {TOWN4_KING_GATE_Y - 1, TOWN4_KING_GATE_Y + 1};
+    const int guard_y[2] = {TOWN4_CROWN_GATE_Y - 1, TOWN4_CROWN_GATE_Y + 1};
     for (int i = 0; i < 2; i++) {
         int y = guard_y[i];
-        if (m->tiles[y][TOWN4_KING_GATE_X] == TILE_TOWN_FLOOR &&
-            (TOWN4_KING_GATE_X != avoid_x || y != avoid_y)) {
-            m->tiles[y][TOWN4_KING_GATE_X] = TILE_NPC_ROYAL_GUARD;
+        if (m->tiles[y][TOWN4_CROWN_GATE_X] == TILE_TOWN_FLOOR &&
+            (TOWN4_CROWN_GATE_X != avoid_x || y != avoid_y)) {
+            m->tiles[y][TOWN4_CROWN_GATE_X] = TILE_NPC_ROYAL_GUARD;
         }
     }
 }
@@ -1841,7 +1841,7 @@ void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
     map_place_town3_frost_gate(m);
     map_place_town3_ashen_gate(m);
     m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
-    for (int y = TOWN3_KING_GATE_Y - 2; y <= TOWN3_KING_GATE_Y + 2; y++) {
+    for (int y = TOWN3_CROWN_GATE_Y - 2; y <= TOWN3_CROWN_GATE_Y + 2; y++) {
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
     map_place_town_apothecary(m);
