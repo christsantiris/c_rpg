@@ -679,6 +679,14 @@ static void migrate_retired_enemy(Enemy *e) {
     // Only serialized IDs remain here; retired types never enter runtime state.
     const char *name;
     switch ((int)e->type) {
+        case 56:
+        case 95:
+            e->type = ENEMY_BLIGHTED_WOLF;
+            // Retain named hunt and expedition guards so quest encounters stay spent.
+            if (game_hunt_enemy_index(e) < 0 && strncmp(e->name, "Expedition ", 11) != 0) {
+                snprintf(e->name, sizeof(e->name), "Blighted Wolf");
+            }
+            return;
         case 1:
             e->type = ENEMY_GOBLIN_SCOUT;
             name = "Goblin Scout";
@@ -1749,7 +1757,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 213);
+    cJSON_AddNumberToObject(root, "save_version", 214);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);

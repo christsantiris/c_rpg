@@ -1,3 +1,4 @@
+#include "game/combat_feedback.h"
 #include "../../src/game/coast_exits.h"
 #include "game/boss_gates.h"
 #include "game/containers.h"
@@ -968,6 +969,121 @@ static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
     printf("PASS: all six Saltwind enemy sprites render in the adventure; Rowan preserves his beach underlay.\n");
 }
 
+static void test_regional_projectiles(Renderer *r, GameState *g, SDL_Surface *surface) {
+    const Location areas[] = {LOCATION_ELDERWOOD, LOCATION_MANGROVES, LOCATION_STORMWATCH, LOCATION_IRONFANG,
+        LOCATION_GIANTS_CROWN, LOCATION_CROWNROAD_NORTH, LOCATION_CATACOMBS, LOCATION_FROSTFELL, LOCATION_DRAGONSPINE};
+    const int widths[] = {ELDERWOOD_W, MANGROVE_W, STORM_W, IRON_W, GIANTS_W, CROWN_NORTH_W, CATACOMBS_W, SWAMP_MAP_W, SWAMP_MAP_W};
+    const int heights[] = {ELDERWOOD_H, MANGROVE_H, STORM_H, IRON_H, GIANTS_H, CROWN_NORTH_H, CATACOMBS_H, SWAMP_MAP_H, SWAMP_MAP_H};
+    size_t bytes = (size_t)surface->pitch * surface->h;
+    unsigned char *baseline = malloc(bytes);
+    assert(baseline);
+    for (int area = 0; area < 9; area++) {
+        game_init(g);
+        g->location = areas[area];
+        g->level = 1;
+        g->player.x = widths[area] - 4;
+        g->player.y = heights[area] - 4;
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                g->map.tiles[y][x] = TILE_ELDERWOOD_FLOOR;
+                map_mark_explored(&g->map, x, y);
+            }
+        }
+        g->enemy_count = 1;
+        g->enemies[0] = (Enemy){.type = ENEMY_DARK_ELF, .name = "Dark Elf", .active = 1,
+            .x = g->player.x - 5, .y = g->player.y, .hp = 30, .max_hp = 30, .attack = 10, .move_timer = 1};
+        EnemyProjectiles shots = {.count = 1};
+        shots.shots[0] = (EnemyProjectile){ENEMY_DARK_ELF, g->enemies[0].x, g->enemies[0].y, g->player.x, g->player.y};
+        if (area == 0) {
+            // Exercise real Elderwood firing; the other fixtures isolate each
+            // renderer's camera without invoking a different area's enemy AI.
+            action_resolve_enemies_with_projectiles(g, &shots);
+        }
+        assert(shots.count == 1 && shots.shots[0].start_x == g->enemies[0].x && shots.shots[0].target_x == g->player.x);
+        Viewport base;
+        viewport_init(&base, (r->screen_w - INFO_PANEL_W) / TILE_SIZE, r->tiles_y, MAP_W, MAP_H);
+        viewport_center_on(&base, g->player.x, g->player.y);
+        Viewport expected;
+        viewport_init(&expected, base.tiles_x < widths[area] ? base.tiles_x : widths[area],
+            base.tiles_y < heights[area] ? base.tiles_y : heights[area], widths[area], heights[area]);
+        viewport_center_on(&expected, g->player.x, g->player.y);
+        renderer_begin_frame(r);
+        game_draw(r, g, &base);
+        renderer_end_frame(r);
+        memcpy(baseline, surface->pixels, bytes);
+        SDL_Texture *scene = SDL_CreateTextureFromSurface(r->sdl, surface);
+        assert(scene);
+        SDL_SetTextureBlendMode(scene, SDL_BLENDMODE_NONE);
+        for (int frame = 0; frame < 3; frame++) {
+            SDL_RenderCopy(r->sdl, scene, NULL, NULL);
+            Uint32 elapsed = frame * ENEMY_PROJECTILE_TRAVEL_MS / 2;
+            game_draw_enemy_projectiles(r, g, &shots, &base, elapsed);
+            renderer_end_frame(r);
+            int cx = ((2 - frame) * shots.shots[0].start_x + frame * shots.shots[0].target_x) * TILE_SIZE / 2 - expected.cam_x * TILE_SIZE + TILE_SIZE / 2;
+            int cy = (g->player.y - expected.cam_y) * TILE_SIZE + TILE_SIZE / 2;
+            int changed = 0;
+            for (int y = 0; y < surface->h; y++) {
+                for (int x = 0; x < surface->w; x++) {
+                    Uint32 before = ((Uint32 *)(baseline + y * surface->pitch))[x];
+                    if (rendered_pixel(surface, x, y) != before) {
+                        if (abs(x - cx) > TILE_SIZE || abs(y - cy) > TILE_SIZE) {
+                            fprintf(stderr, "Regional projectile %d frame %d: pixel %d,%d outside impact %d,%d\n", area, frame, x, y, cx, cy);
+                        }
+                        assert(abs(x - cx) <= TILE_SIZE && abs(y - cy) <= TILE_SIZE);
+                        changed++;
+                    }
+                }
+            }
+            assert(changed > 4);
+            if (area == 0) {
+                char path[80];
+                snprintf(path, sizeof(path), "/tmp/elderwood-arrow-%d.bmp", frame);
+                assert(SDL_SaveBMP(surface, path) == 0);
+            }
+        }
+        SDL_DestroyTexture(scene);
+    }
+    free(baseline);
+    puts("PASS: arrows launch from their shooter and land on the player with the rendered regional camera in nine areas.");
+}
+
+static void test_elderwood_roots(Renderer *r, GameState *g, SDL_Surface *surface) {
+    game_init(g);
+    elderwood_enter(g);
+    g->enemy_count = 2;
+    g->enemies[0] = (Enemy){.type = ENEMY_TREEFOLK, .name = "Treefolk", .active = 1, .x = 32, .y = 32,
+        .hp = 92, .max_hp = 92, .attack = 15, .defense = 8, .experience = 90};
+    g->enemies[1] = (Enemy){.type = ENEMY_BLIGHTED_WOLF, .name = "Blighted Wolf", .active = 1, .x = 36, .y = 32,
+        .hp = 26, .max_hp = 26, .frozen_turns = 10};
+    g->player.x = 32;
+    g->player.y = 28;
+    for (int y = 24; y < 36; y++) {
+        for (int x = 25; x < 40; x++) {
+            g->map.tiles[y][x] = TILE_ELDERWOOD_FLOOR;
+        }
+    }
+    Viewport view;
+    viewport_init(&view, (r->screen_w - INFO_PANEL_W) / TILE_SIZE, r->tiles_y, MAP_W, MAP_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    action_resolve_enemies(g);
+    for (int frame = 0; frame < 3; frame++) {
+        if (frame == 1) {
+            action_resolve_enemies(g);
+            action_resolve_enemies(g);
+            SDL_Delay(180);
+        } else if (frame == 2) {
+            SDL_Delay(270);
+        }
+        renderer_begin_frame(r);
+        game_draw(r, g, &view);
+        renderer_end_frame(r);
+        char path[80];
+        snprintf(path, sizeof(path), "/tmp/elderwood-roots-%d.bmp", frame);
+        assert(SDL_SaveBMP(surface, path) == 0);
+    }
+    puts("PASS: Elderwood renders attackable Treefolk footing, a recurring wolf, warning roots, eruption and fading roots.");
+}
+
 static void test_coast_exit_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     for (int level = 1; level <= COAST_DEPTH; level++) {
         game_init(g);
@@ -1337,6 +1453,8 @@ int main(void) {
     test_stonewake_renderer(&renderer, game, surface);
     test_saltwind_renderer(&renderer, game, surface);
     test_rowan_dialogue(&renderer, game, surface);
+    test_regional_projectiles(&renderer, game, surface);
+    test_elderwood_roots(&renderer, game, surface);
     test_coast_exit_renderer(&renderer, game, surface);
     test_dawnmere_dialogue(&renderer, game, surface);
     test_one_way_escape(&renderer, game, surface);

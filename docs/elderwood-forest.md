@@ -22,11 +22,14 @@ brambles line the paths. Optional bramble passages give alternate
 angles; a normal route around them remains available. Interact beside brambles
 with the bound action key (A by default) to cut them. Fallen logs block movement
 and projectiles and stop charging creatures. Floor layouts, exploration, cut
-brambles and surviving enemies persist when moving between stages.
+brambles and surviving enemies persist when moving between stages. Leaving and
+re-entering the area begins a new expedition: ordinary enemies return on all
+visited stages, while bosses, named quest guards and finite reinforcements keep
+their existing state. Saving and loading alone does not respawn enemies.
 
 | Enemy | Role |
 | --- | --- |
-| Briar Wolf | Pack flanker; closes on ranged enemies' targets |
+| Blighted Wolf | Pack flanker; closes on ranged enemies' targets |
 | Ironhide Boar | Warns an aligned charge, then smashes through brambles |
 | Thorn Dryad | Ranged thorn volleys and repositioning |
 | Dark Elf | The existing Haunted Forest archer, sharing its art and behavior |
@@ -39,6 +42,17 @@ turns; its armor returns afterward. Below half health it calls one finite pair
 of wolves. Defeating it awards 180 gold and 2,000 score and permanently opens the
 Elderwood section of the road. The boss journal records the victory separately
 from the older regions' integer boss mask.
+
+Treefolk remain mobile, attackable enemies. Their marked footing identifies the
+occupied tile beneath the canopy; their health bar sits above the canopy. Bump
+that tile for melee or fire along its row or column. Root attacks crack the
+warned ground for two turns, then sprout branching roots at that fixed location
+and fade. The visual eruption adds no turns or lingering damage.
+
+Save version 214 replaces retired wolf variants in active and cached encounters
+with Blighted Wolf, retaining wounds, deaths, combat state and named quest guards.
+Frostfell keeps its regional wolf difficulty; all wolves share the existing
+Haunted Forest art.
 
 ## The Stolen Heartseed
 

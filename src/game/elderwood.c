@@ -1,3 +1,4 @@
+#include "combat_feedback.h"
 #include "elderwood.h"
 #include "boss_gates.h"
 #include "crownroad_north.h"
@@ -5,6 +6,8 @@
 #include "heartseed.h"
 #include <stdlib.h>
 #include <string.h>
+
+static void refresh_population(GameState *g);
 
 static int sign(int value) {
     return (value > 0) - (value < 0);
@@ -96,14 +99,10 @@ static void carve(Map *map, int x, int y, int tx, int ty) {
     }
 }
 
-static void add_enemy(GameState *g, EnemyType type, int x, int y) {
-    if (g->enemy_count >= AREA_ENEMY_LIMIT) {
-        return;
-    }
-    Enemy *enemy = &g->enemies[g->enemy_count++];
+static void make_enemy(Enemy *enemy, EnemyType type, int x, int y, int level) {
     *enemy = (Enemy){.active = 1, .type = type, .x = x, .y = y,
         .attack_target_x = -1, .attack_target_y = -1};
-    const char *name = "Briar Wolf";
+    const char *name = "Blighted Wolf";
     int hp = 26;
     int attack = 7;
     int defense = 1;
@@ -126,11 +125,17 @@ static void add_enemy(GameState *g, EnemyType type, int x, int y) {
         enemy->is_boss = 1;
     }
     snprintf(enemy->name, sizeof(enemy->name), "%s", name);
-    enemy->max_hp = hp + (enemy->is_boss ? 0 : (g->level - 1) * 7);
+    enemy->max_hp = hp + (enemy->is_boss ? 0 : (level - 1) * 7);
     enemy->hp = enemy->max_hp;
-    enemy->attack = attack + (enemy->is_boss ? 0 : g->level - 1);
+    enemy->attack = attack + (enemy->is_boss ? 0 : level - 1);
     enemy->defense = defense;
-    enemy->experience = xp + g->level * 4;
+    enemy->experience = xp + level * 4;
+}
+
+static void add_enemy(GameState *g, EnemyType type, int x, int y) {
+    if (g->enemy_count < AREA_ENEMY_LIMIT) {
+        make_enemy(&g->enemies[g->enemy_count++], type, x, y, g->level);
+    }
 }
 
 static void generate(GameState *g) {
@@ -184,10 +189,10 @@ static void generate(GameState *g) {
         }
         add_enemy(g, ENEMY_TREEFOLK, 21, 27);
         add_enemy(g, ENEMY_DARK_ELF, 43, 26);
-        add_enemy(g, ENEMY_BRIAR_WOLF, 26, 35);
+        add_enemy(g, ENEMY_BLIGHTED_WOLF, 26, 35);
         add_enemy(g, ENEMY_THORN_DRYAD, 38, 34);
     } else {
-        const EnemyType types[5] = {ENEMY_BRIAR_WOLF, ENEMY_IRONHIDE_BOAR, ENEMY_THORN_DRYAD, ENEMY_DARK_ELF, ENEMY_TREEFOLK};
+        const EnemyType types[5] = {ENEMY_BLIGHTED_WOLF, ENEMY_IRONHIDE_BOAR, ENEMY_THORN_DRYAD, ENEMY_DARK_ELF, ENEMY_TREEFOLK};
         for (int i = 0; i < 4 + g->level * 2; i++) {
             int room = i % 6;
             int x = cx[room] + (i / 6) * 2 - 2;
@@ -222,6 +227,16 @@ void elderwood_enter(GameState *g) {
     discard_loot(g);
     g->location = LOCATION_ELDERWOOD;
     g->approach_route = -1;
+    g->player.x = 32;
+    g->player.y = 46;
+    for (int level = 1; level <= ELDERWOOD_DEPTH; level++) {
+        if (g->elderwood_cache[level - 1].valid) {
+            g->level = level;
+            load_floor(g);
+            refresh_population(g);
+            elderwood_store(g);
+        }
+    }
     g->level = 1;
     load_floor(g);
     g->player.x = 32;
@@ -301,6 +316,41 @@ static int occupied(const GameState *g, const Enemy *self, int x, int y) {
         }
     }
     return self && x == g->player.x && y == g->player.y;
+}
+
+static void refresh_population(GameState *g) {
+    unsigned char regular[AREA_ENEMY_LIMIT] = {0};
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *enemy = &g->enemies[i];
+        Enemy fresh;
+        make_enemy(&fresh, enemy->type, enemy->x, enemy->y, g->level);
+        if (!enemy->is_boss && !enemy->dain_fragment && enemy->experience > 0 && strcmp(enemy->name, fresh.name) == 0) {
+            regular[i] = 1;
+            enemy->active = 0;
+        }
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (!regular[i]) {
+            continue;
+        }
+        Enemy *enemy = &g->enemies[i];
+        int x = enemy->x;
+        int y = enemy->y;
+        int found = 0;
+        for (int n = -1; n < ELDERWOOD_W * ELDERWOOD_H; n++) {
+            int tx = n < 0 ? x : n % ELDERWOOD_W;
+            int ty = n < 0 ? y : n / ELDERWOOD_W;
+            if (inside(tx, ty) && map_is_walkable(&g->map, tx, ty) && !occupied(g, enemy, tx, ty) &&
+                g->map.tiles[ty][tx] != TILE_ELDERWOOD_ENTRANCE && g->map.tiles[ty][tx] != TILE_ELDERWOOD_EXIT) {
+                make_enemy(enemy, enemy->type, tx, ty, g->level);
+                found = 1;
+                break;
+            }
+        }
+        if (found) {
+            g->level_cleared = 0;
+        }
+    }
 }
 
 static void step(GameState *g, Enemy *enemy, int tx, int ty) {
@@ -393,6 +443,7 @@ int elderwood_tick(GameState *g, Enemy *enemy, int *damage) {
             if (elderwood_marks(enemy, g->player.x, g->player.y)) {
                 *damage = enemy->attack;
             }
+            combat_feedback_add(g, FEEDBACK_ROOT_BURST, FEEDBACK_NOW, enemy->attack_target_x, enemy->attack_target_y, enemy->is_boss ? 2 : 1);
             enemy->move_timer = -1;
         } else {
             if (g->enemy_count < AREA_ENEMY_LIMIT - 1) {
@@ -400,7 +451,7 @@ int elderwood_tick(GameState *g, Enemy *enemy, int *damage) {
                     int x = enemy->x + ox;
                     int y = enemy->y + 2;
                     if (inside(x, y) && map_is_walkable(&g->map, x, y) && !occupied(g, enemy, x, y)) {
-                        add_enemy(g, ENEMY_BRIAR_WOLF, x, y);
+                        add_enemy(g, ENEMY_BLIGHTED_WOLF, x, y);
                         g->enemies[g->enemy_count - 1].experience = 0;
                         g->enemies[g->enemy_count - 1].revived = 1;
                     }

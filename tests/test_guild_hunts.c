@@ -159,7 +159,7 @@ static void test_flow(void) {
     finish_group();
     ASSERT("Glassdeep hunt does not complete Orin's quest", game.hunt_quest_progress == 6 && game.glassdeep_quest_state == 1 && !game.glassdeep_quest_progress);
     visit(LOCATION_FROSTFELL);
-    ASSERT("Rimefang's pack includes three Wolves and a Frost Wraith", leader() && leader()->type == ENEMY_ICE_WOLF &&
+    ASSERT("Rimefang's pack includes three Wolves and a Frost Wraith", leader() && leader()->type == ENEMY_BLIGHTED_WOLF &&
         members(&game, 1) == 4 && game.enemies[game.enemy_count - 1].type == ENEMY_FROST_WRAITH);
     finish_group();
     ASSERT("hunts complete in any order without regional boss victories", game.hunt_quest_state == 2 && game.hunt_quest_progress == 7 &&

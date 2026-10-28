@@ -2678,7 +2678,7 @@ static void test_kraken_cycle_migration(void) {
         e->attack_phase = 1;
         e->hp = e->max_hp / 2;
         int other = original.enemy_count++;
-        original.enemies[other] = (Enemy){.type = ENEMY_ICE_WOLF, .move_timer = 5, .attack_target_x = -1, .attack_target_y = -1, .attack_phase = 2};
+        original.enemies[other] = (Enemy){.type = ENEMY_BLIGHTED_WOLF, .move_timer = 5, .attack_target_x = -1, .attack_target_y = -1, .attack_phase = 2};
         original.gold = 617;
         original.defeated_bosses = 1 << LOCATION_FOREST;
         original.dain_map_fragments = 3;
