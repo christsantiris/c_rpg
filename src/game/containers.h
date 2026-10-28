@@ -15,5 +15,6 @@ Item containers_reward(const LootContainer *c, int bit);
 int containers_valid(const GameState *g);
 int containers_kind_location(int kind);
 void containers_restore(GameState *g);
+void containers_forget_floor(GameState *g);
 
 #endif
