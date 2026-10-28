@@ -64,7 +64,7 @@ const char *approach_area_name(Location area) {
         case LOCATION_CATACOMBS: return "ROYAL CATACOMBS";
         case LOCATION_ELDERWOOD: return "ELDERWOOD FOREST";
         case LOCATION_CROWNROAD: return "CROWN ROAD EAST";
-        case LOCATION_KING_ROAD_WEST: return "CROWN ROAD WEST";
+        case LOCATION_CROWNROAD_WEST: return "CROWN ROAD WEST";
         default: return "AREA";
     }
 }

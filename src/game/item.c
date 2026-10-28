@@ -372,6 +372,14 @@ Item item_make_dagger(void) {
     return it;
 }
 
+Item item_make_smuggled_dagger(void) {
+    // A blade small enough to hide in a cell, so Tomas can arm any class.
+    Item it = item_make_dagger();
+    strncpy(it.name, "Smuggled Dagger", sizeof(it.name) - 1);
+    it.class_mask = ITEM_CLASS_ALL;
+    return it;
+}
+
 Item item_make_magic_dagger(void) {
     Item it = {0};
     it.active = 1;

@@ -1490,7 +1490,7 @@ void game_init(GameState *g) {
     srand((unsigned)time(NULL));
     g->level = 1;
     g->crownroad_cache.valid = 0;
-    g->kingroad_west_cache = (CrownroadCache){0};
+    g->crownroad_west_cache = (CrownroadCache){0};
     for (int i = 0; i < MAX_REGION_DEPTH; i++) {
         g->level_cache[i].valid = 0;
         g->forest_cache[i].valid = 0;
@@ -4001,8 +4001,8 @@ void game_leave_forest_road(GameState *g, Location destination) {
     approach_return_from_shortcut(g, LOCATION_FOREST);
 }
 
-int game_is_king_road(const GameState *g) {
-    return g->location == LOCATION_CROWNROAD || g->location == LOCATION_KING_ROAD_WEST;
+int game_is_crownroad(const GameState *g) {
+    return g->location == LOCATION_CROWNROAD || g->location == LOCATION_CROWNROAD_WEST;
 }
 
 static int crownroad_spawn_open(const GameState *g, const Map *map, const Enemy *enemies, int count, int x, int y) {
@@ -4017,6 +4017,22 @@ static int crownroad_spawn_open(const GameState *g, const Map *map, const Enemy 
         }
     }
     return 1;
+}
+
+static int crownroad_nearest_open(const GameState *g, const Map *map, const Enemy *enemies, int count, int *x, int *y) {
+    for (int radius = 1; radius < CROWNROAD_W; radius++) {
+        for (int dy = -radius; dy <= radius; dy++) {
+            int dx = radius - abs(dy);
+            for (int side = -1; side <= 1; side += 2) {
+                if (crownroad_spawn_open(g, map, enemies, count, *x + side * dx, *y + dy)) {
+                    *x += side * dx;
+                    *y += dy;
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
 }
 
 static void populate_crownroad(GameState *g, const Map *map, Enemy *roster, int *count, int *cleared) {
@@ -4056,25 +4072,9 @@ static void populate_crownroad(GameState *g, const Map *map, Enemy *roster, int 
         int active = !was_cleared && !(base < old_count && !roster[base].active);
         // Existing patrols may have moved onto a new spawn. Choose the
         // nearest free road tile without moving saved enemies, loot, or player.
-        if (active && !crownroad_spawn_open(g, map, roster, *count, sx, sy)) {
-            int found = 0;
-            for (int radius = 1; radius < CROWNROAD_W && !found; radius++) {
-                for (int dy = -radius; dy <= radius && !found; dy++) {
-                    int dx = radius - abs(dy);
-                    for (int side = -1; side <= 1 && !found; side += 2) {
-                        int nx = sx + side * dx;
-                        int ny = sy + dy;
-                        if (crownroad_spawn_open(g, map, roster, *count, nx, ny)) {
-                            sx = nx;
-                            sy = ny;
-                            found = 1;
-                        }
-                    }
-                }
-            }
-            if (!found) {
-                break;
-            }
+        if (active && !crownroad_spawn_open(g, map, roster, *count, sx, sy) &&
+            !crownroad_nearest_open(g, map, roster, *count, &sx, &sy)) {
+            break;
         }
         spawn_enemy(g, &roster[i], enemies[base], sx, sy);
         roster[i].active = active;
@@ -4084,12 +4084,12 @@ static void populate_crownroad(GameState *g, const Map *map, Enemy *roster, int 
 }
 
 void game_migrate_crownroad_density(GameState *g) {
-    if (game_is_king_road(g)) {
+    if (game_is_crownroad(g)) {
         populate_crownroad(g, &g->map, g->enemies, &g->enemy_count, &g->level_cleared);
     }
     Map road;
     map_generate_crownroad(&road);
-    CrownroadCache *caches[2] = {&g->crownroad_cache, &g->kingroad_west_cache};
+    CrownroadCache *caches[2] = {&g->crownroad_cache, &g->crownroad_west_cache};
     for (int i = 0; i < 2; i++) {
         CrownroadCache *cache = caches[i];
         if (cache->valid) {
@@ -4098,16 +4098,31 @@ void game_migrate_crownroad_density(GameState *g) {
     }
 }
 
-void game_enter_king_road(GameState *g, Location road, int from_castle) {
+void game_enter_crownroad(GameState *g, Location road, int from_castle) {
+    const CrownroadCache *cache = road == LOCATION_CROWNROAD_WEST ? &g->crownroad_west_cache : &g->crownroad_cache;
     g->location = road;
     g->level = 1;
     map_generate_crownroad(&g->map);
-    g->enemy_count = 0;
-    g->level_cleared = 0;
+    // Crown Roads are exempt from expedition respawns: defeated patrols stay defeated.
+    if (cache->valid) {
+        g->enemy_count = cache->enemy_count;
+        g->level_cleared = cache->level_cleared;
+        memcpy(g->enemies, cache->enemies, cache->enemy_count * sizeof(Enemy));
+    } else {
+        g->enemy_count = 0;
+        g->level_cleared = 0;
+    }
     int from_west = (road == LOCATION_CROWNROAD) != from_castle;
     g->player.x = from_west ? 1 : CROWNROAD_W - 2;
     g->player.y = CROWNROAD_Y;
     populate_crownroad(g, &g->map, g->enemies, &g->enemy_count, &g->level_cleared);
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *enemy = &g->enemies[i];
+        // A surviving patrol may have stopped on the entry tile; step it aside.
+        if (enemy->active && enemy->x == g->player.x && enemy->y == g->player.y) {
+            crownroad_nearest_open(g, &g->map, g->enemies, g->enemy_count, &enemy->x, &enemy->y);
+        }
+    }
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     push_message(g, road == LOCATION_CROWNROAD ?
@@ -4116,8 +4131,8 @@ void game_enter_king_road(GameState *g, Location road, int from_castle) {
 }
 
 static void save_crownroad_cache(GameState *g) {
-    CrownroadCache *cache = g->location == LOCATION_KING_ROAD_WEST ?
-        &g->kingroad_west_cache : &g->crownroad_cache;
+    CrownroadCache *cache = g->location == LOCATION_CROWNROAD_WEST ?
+        &g->crownroad_west_cache : &g->crownroad_cache;
     clear_floor_loot(g);
     cache->enemy_count = g->enemy_count;
     cache->level_cleared = g->level_cleared;
@@ -4146,7 +4161,7 @@ void game_leave_crownroad(GameState *g, Location destination) {
         map_generate_town3(&g->map, &spawn_x, &spawn_y);
         map_set_rosemoor_swamp_road(&g->map, g->defeated_bosses & (1 << LOCATION_SWAMP));
         g->player.x = TOWN_W - 2;
-        g->player.y = TOWN3_KING_GATE_Y;
+        g->player.y = TOWN3_CROWN_GATE_Y;
     }
     g->enemy_count = 0;
     g->floor_item_count = 0;
@@ -5286,7 +5301,7 @@ static void return_to_town(GameState *g, Location destination) {
     }
     LevelCache *cache = active_cache(g);
     // Cache current level before leaving
-    if (returning_from == LOCATION_CROWNROAD || returning_from == LOCATION_KING_ROAD_WEST) {
+    if (returning_from == LOCATION_CROWNROAD || returning_from == LOCATION_CROWNROAD_WEST) {
         save_crownroad_cache(g);
     } else if ((returning_from == LOCATION_DUNGEON || cache != g->level_cache) &&
         g->level >= 1 &&
@@ -5339,12 +5354,12 @@ static void return_to_town(GameState *g, Location destination) {
         }
         if (returning_from == LOCATION_CATACOMBS) {
             g->player.x = TOWN_W - 2;
-            g->player.y = TOWN3_KING_GATE_Y;
+            g->player.y = TOWN3_CROWN_GATE_Y;
         }
 
     } else if (destination == LOCATION_TOWN4) {
         g->player.x = returning_from == LOCATION_MOUNTAINS ? spawn_x : TOWN_W - 2;
-        g->player.y = returning_from == LOCATION_MOUNTAINS ? spawn_y : TOWN4_KING_GATE_Y;
+        g->player.y = returning_from == LOCATION_MOUNTAINS ? spawn_y : TOWN4_CROWN_GATE_Y;
         if (returning_from == LOCATION_DRAGONSPINE) {
             g->player.x = RIDGESHIRE_DRAGON_GATE_X;
             g->player.y = 1;
@@ -5549,7 +5564,7 @@ void game_return_to_town(GameState *g) {
         castle_leave(g, 1);
         return;
     }
-    if (g->location == LOCATION_CROWNROAD || g->location == LOCATION_KING_ROAD_WEST) {
+    if (g->location == LOCATION_CROWNROAD || g->location == LOCATION_CROWNROAD_WEST) {
         game_leave_crownroad(g, g->location == LOCATION_CROWNROAD ? LOCATION_TOWN3 : LOCATION_TOWN4);
         return;
     }
@@ -6227,7 +6242,7 @@ void game_talk_to_royal_guard(GameState *g, int x, int y) {
     g->dialogue_x = x;
     g->dialogue_y = y;
     if (g->location == LOCATION_TOWN4) {
-        if (y < TOWN4_KING_GATE_Y) {
+        if (y < TOWN4_CROWN_GATE_Y) {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
                 "Traveler, Crown Road West is dangerous. Bandits, archers and "
                 "horsemen roam the route. Stay alert, but we will not stop you.");
@@ -6237,7 +6252,7 @@ void game_talk_to_royal_guard(GameState *g, int x, int y) {
                 "your wits about you; we will let you pass, but cannot "
                 "protect you out there.");
         }
-    } else if (y < TOWN3_KING_GATE_Y) {
+    } else if (y < TOWN3_CROWN_GATE_Y) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Halt, traveler. Beyond this gate Crown Road East swarms with "
             "bandits, archers and horsemen. Few who walk it return.");

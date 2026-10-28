@@ -68,6 +68,7 @@ Sword also has a ranged attack.
 | Rusty Sword | +1 | One | Warrior | 1 | 10 | — |
 | Rusty Dagger | +1 | One | Rogue | Starter | 10 | 10% critical chance; +10% gold drop rating |
 | Dagger | +3 | One | Rogue | 1 | 90 | 25% critical chance; +25% gold drop rating |
+| Smuggled Dagger | +3 | One | All | Quest | 90 | 25% critical chance; +25% gold drop rating; Royal Dungeon escape weapon |
 | Short Sword | +3 | One | Warrior, Rogue | 1 | 40 | — |
 | Staff | +4 | Two | Mage | 1 | 60 | +2 spell power, +10 maximum MP |
 | Cryptblade | +2 | One | Warrior | Boss | 350 | 10% critical chance; Lich King reward |

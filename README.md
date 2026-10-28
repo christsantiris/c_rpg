@@ -88,7 +88,7 @@ inventory actions.
 - [Elderwood Forest and the northern road](docs/elderwood-forest.md)
 - [Royal Catacombs](docs/catacombs.md)
 - [Castle interior and play testing](docs/castle-design.md)
-- [Royal Jail, escape, and equipment recovery](docs/royal-jail.md)
+- [Royal Dungeon, escape, and equipment recovery](docs/royal-dungeon.md)
 - [Docks, Ruined Isle, and Ruined Temple](docs/harbor-and-ruined-isle.md)
 
 ## Screenshots
@@ -129,29 +129,6 @@ Below are screenshots of the game in action:
 Build a release executable with `make`, or build and start it with `make run`.
 The executable is written to `build/conr`.
 
-### Browser play and GitHub Pages
-
-From the project root:
-
-```sh
-source /private/tmp/wolf-browser-emsdk/emsdk_env.sh
-make browser-run
-```
-
-Open **http://localhost:8000/**, then select **Play**. Run `source` again in
-each new terminal. If the temporary SDK directory is removed, install
-Emscripten 4.0.23 in a permanent location and update that path.
-
-Once these changes reach `master`, the **Browser Pages** workflow builds and
-deploys `dist/browser/`. In the repository's **Settings → Pages**, first set
-**Build and deployment → Source** to **GitHub Actions**. After a successful
-deployment, the game will be available at
-[Castle of No Return on Pages](https://christsantiris.github.io/c_rpg/).
-
-Save slots, hotkey settings, and high scores persist in this
-browser's site storage. Desktop saves are not uploaded or bundled. Clearing
-site data removes browser saves; storage restrictions can make them temporary.
-
 ### Debug interface
 
 To test with all passage locks open, run:
@@ -176,7 +153,7 @@ Locked dungeon doors, mountain barriers, temple doors, the labyrinth vault,
 quarry crane walkways and castle portcullises open as you explore. Each unused
 quarry crossing lowers once; its crane then respects manual raised, crossing and
 salvage settings. Boss-blocked exits,
-temple stairs and castle floor progression are accessible. The jail's secret
+temple stairs and castle floor progression are accessible. The Royal Dungeon's secret
 hatch stays hidden until you accept Tomas's escape quest, including in debug mode.
 This adds a saved debug passage-unlock flag without marking bosses defeated.
 Quests stay unassigned, existing quest progress remains intact,
@@ -344,7 +321,7 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 
 ### Feature enhancements
 - Expand world map
-   Farms between areas for rest to improve hp. New story lines. Improve area sprites. Building diversity in towns. Crown Road North between forest and castle
+   Farms between areas for rest to improve hp. New story lines. More coherent quest structure.
 - Recruit a party to join the adventure
    NPCs that can team up with the player character and accompany on the quest. Implement resurrection. 
 - Improve difficulty scaling and economy

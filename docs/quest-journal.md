@@ -74,7 +74,7 @@ accepted. Return to Oswin for 150 gold and 1,500 score once. All four objectives
 remain recorded after completion, and the quest list scrolls as selection moves
 past the visible entries.
 
-**Guide Tomas Home** is offered by Tomas inside the Royal Jail after the castle
+**Guide Tomas Home** is offered by Tomas inside the Royal Dungeon after the castle
 grounds informant has you arrested. It tracks discovering the secret tunnel
 and escorting Tomas to central Ridgeshire. Both objectives occupy a single
 tunnel level; reaching town together automatically awards 100 gold and 750

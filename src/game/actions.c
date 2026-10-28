@@ -1866,7 +1866,7 @@ void action_resolve_player(GameState *g, Action a) {
                 g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD ||
                 g->location == LOCATION_HIGH_PASS ||
                 g->location == LOCATION_SWAMP_ROAD ||
-                game_is_king_road(g)) {
+                game_is_crownroad(g)) {
                 push_message(g, "A town is just ahead on the road.");
                 return;
             }
@@ -2508,7 +2508,7 @@ void action_resolve_player(GameState *g, Action a) {
             } else if (ty == TOWN_H - 1) {
                 game_enter_swamp(g);
             } else if (tx == TOWN_W - 1) {
-                game_enter_king_road(g, LOCATION_CROWNROAD, 0);
+                game_enter_crownroad(g, LOCATION_CROWNROAD, 0);
             } else if (tx == 0) {
                 giants_enter(g, 0);
             }
@@ -2520,9 +2520,9 @@ void action_resolve_player(GameState *g, Action a) {
             if (ty == TOWN_H - 1) {
                 game_enter_catacombs(g);
             } else if (tx == 0) {
-                game_enter_king_road(g, LOCATION_CROWNROAD, 1);
+                game_enter_crownroad(g, LOCATION_CROWNROAD, 1);
             } else if (tx == TOWN_W - 1) {
-                game_enter_king_road(g, LOCATION_KING_ROAD_WEST, 1);
+                game_enter_crownroad(g, LOCATION_CROWNROAD_WEST, 1);
             } else {
                 castle_request(g, 0);
             }
@@ -2536,7 +2536,7 @@ void action_resolve_player(GameState *g, Action a) {
             } else if (tx == TOWN_W - 1) {
                 ironfang_enter(g, 0);
             } else if (tx == 0) {
-                game_enter_king_road(g, LOCATION_KING_ROAD_WEST, 0);
+                game_enter_crownroad(g, LOCATION_CROWNROAD_WEST, 0);
             } else if (ty == TOWN_H - 1) {
                 game_enter_mountains(g);
             }
@@ -2611,7 +2611,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (game_is_king_road(g) &&
+        if (game_is_crownroad(g) &&
             g->map.tiles[ty][tx] == TILE_TOWN_EXIT) {
             Location destination;
             if (g->location == LOCATION_CROWNROAD) {
@@ -3148,7 +3148,7 @@ static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES])
         for (int i = 0; i < g->enemy_count; i++) {
             const Enemy *e = &g->enemies[i];
             if (!e->active || pursuers[i] || enemy_is_major_boss(e) || wilds_conceals(g, e) ||
-                (game_is_king_road(g) &&
+                (game_is_crownroad(g) &&
                 e->type == ENEMY_ROAD_ARCHER)) {
                 continue;
             }
@@ -3809,7 +3809,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         int adjacent = abs_int(dx) <= 1 && abs_int(dy) <= 1 &&
             !(dx == 0 && dy == 0);
         if (!enemy_is_major_boss(e) && !adjacent && !pursuers[i] &&
-            !(game_is_king_road(g) &&
+            !(game_is_crownroad(g) &&
             e->type == ENEMY_ROAD_ARCHER &&
             clear_orthogonal_path(g, i, e))) {
             continue;

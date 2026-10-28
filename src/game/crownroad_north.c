@@ -97,6 +97,21 @@ static int spawn_open(const GameState *g, int x, int y) {
         !(g->portal_active && g->portal_location == LOCATION_CROWNROAD_NORTH && x == g->portal_x && y == g->portal_y);
 }
 
+static int nearest_open(const GameState *g, int *x, int *y, int limit) {
+    for (int radius = 0; radius <= limit; radius++) {
+        for (int dy = -radius; dy <= radius; dy++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                if (abs(dx) + abs(dy) == radius && spawn_open(g, *x + dx, *y + dy)) {
+                    *x += dx;
+                    *y += dy;
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 static void spawn_patrols(GameState *g) {
     static const EnemyType types[NORTH_SQUAD_SIZE] = {
         ENEMY_HOBGOBLIN_GUARD, ENEMY_HOBGOBLIN_GUARD, ENEMY_HOBGOBLIN_GUARD, ENEMY_HOBGOBLIN_GUARD,
@@ -113,21 +128,7 @@ static void spawn_patrols(GameState *g) {
         for (int i = 0; i < NORTH_SQUAD_SIZE; i++) {
             int x = camps[squad][0] + offsets[i][0];
             int y = camps[squad][1] + offsets[i][1];
-            int found = spawn_open(g, x, y);
-            for (int radius = 1; radius <= 6 && !found; radius++) {
-                for (int dy = -radius; dy <= radius && !found; dy++) {
-                    for (int dx = -radius; dx <= radius && !found; dx++) {
-                        int tx = camps[squad][0] + offsets[i][0] + dx;
-                        int ty = camps[squad][1] + offsets[i][1] + dy;
-                        if (abs(dx) + abs(dy) == radius && spawn_open(g, tx, ty)) {
-                            x = tx;
-                            y = ty;
-                            found = 1;
-                        }
-                    }
-                }
-            }
-            if (!found) {
+            if (!nearest_open(g, &x, &y, 6)) {
                 continue;
             }
             Enemy *enemy = &g->enemies[g->enemy_count];
@@ -183,14 +184,25 @@ void northroad_enter(GameState *g, int from_castle, int portal) {
     memcpy(g->floor_items, g->northroad.loot, g->floor_item_count * sizeof(FloorItem));
     g->player.x = portal ? g->portal_x : CROWN_NORTH_X;
     g->player.y = portal ? g->portal_y : from_castle ? 1 : CROWN_NORTH_H - 2;
+    // Crown Road North is exempt from expedition respawns: patrols spawn only on the first crossing.
+    g->enemy_count = g->northroad.enemy_count;
+    g->level_cleared = g->northroad.level_cleared;
+    memcpy(g->enemies, g->northroad.enemies, g->enemy_count * sizeof(Enemy));
     if (portal) {
-        g->enemy_count = g->northroad.enemy_count;
-        g->level_cleared = g->northroad.level_cleared;
-        memcpy(g->enemies, g->northroad.enemies, g->enemy_count * sizeof(Enemy));
         g->portal_active = 0;
     } else {
         g->northroad.from_castle = castle_access;
-        spawn_patrols(g);
+        if (!g->enemy_count) {
+            spawn_patrols(g);
+        }
+        for (int i = 0; i < g->enemy_count; i++) {
+            Enemy *enemy = &g->enemies[i];
+            // Survivors forget shots marked during the last crossing and clear the entry tile.
+            enemy->attack_phase = 0;
+            if (enemy->active && enemy->x == g->player.x && enemy->y == g->player.y) {
+                nearest_open(g, &enemy->x, &enemy->y, CROWN_NORTH_W + CROWN_NORTH_H);
+            }
+        }
         g->player.last_dx = 0;
         g->player.last_dy = from_castle ? 1 : -1;
     }
