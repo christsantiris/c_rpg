@@ -3570,11 +3570,15 @@ void draw_frostfell_wall(Renderer *r, const Map *map, int tile_x, int tile_y, in
     int east = map_x < MAP_W - 1 && map->tiles[map_y][map_x + 1] != TILE_FROST_WALL;
     SDL_Rect patches[6][64];
     int counts[6] = {0};
+    // Zoomed cameras round each patch separately; a one-pixel overlap hides the seams.
+    float zoom;
+    SDL_RenderGetScale(r->sdl, &zoom, NULL);
+    int size = zoom > 1.0f ? 4 : 3;
     for (int py = 0; py < TILE_SIZE; py += 3) {
         for (int px = 0; px < TILE_SIZE; px += 3) {
             int shade = (dragonspine_shade(wx + px, wy + py, 90, 66) * 3 +
                 dragonspine_shade(wx + px, wy + py, 24, 33)) / 171;
-            patches[shade][counts[shade]++] = (SDL_Rect){x + px, y + py, 3, 3};
+            patches[shade][counts[shade]++] = (SDL_Rect){x + px, y + py, size, size};
         }
     }
     for (int shade = 0; shade < 6; shade++) {
