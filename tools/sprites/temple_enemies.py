@@ -18,7 +18,7 @@ CROPS = (
     (1070, 5, 1448, 380),  # Vinebound Guardian
     (15, 370, 340, 698),  # Sun Priest
     (350, 370, 715, 699),  # Serpent Spirit
-    (725, 370, 1075, 725),  # Treasure Wraith
+    None,  # Reserved atlas slot; shared enemy artwork is drawn separately.
     (1080, 400, 1448, 685),  # Lunar Effigy
     (20, 702, 330, 1086),  # Moonbound Sentinel
     (330, 701, 715, 1086),  # Sun Guardian
@@ -30,6 +30,8 @@ def main():
     source = Image.open(SOURCE).convert('RGBA')
     atlas = Image.new('RGBA', (CELL * 4, CELL * 3))
     for index, crop in enumerate(CROPS):
+        if crop is None:
+            continue
         sprite = source.crop(crop)
         # Ignore faint edge pixels when finding each silhouette's bounds.
         bounds = sprite.getchannel('A').point(lambda a: 255 if a >= 128 else 0).getbbox()

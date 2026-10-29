@@ -7,7 +7,7 @@
 #define NORTH_SQUAD_SIZE 15
 #define NORTH_ENEMIES (NORTH_SQUADS * NORTH_SQUAD_SIZE)
 
-enum { NORTH_ARROW = 1, NORTH_BOMB };
+enum { NORTH_ARROW = 1 };
 
 void northroad_generate(Map *map);
 void northroad_enter(GameState *g, int from_castle, int portal);

@@ -2358,7 +2358,7 @@ static void test_forest_entry_migration(void) {
         original->player.y = y;
         original->player.last_dx = 1;
         original->enemy_count = 1;
-        original->enemies[0] = (Enemy){.type = ENEMY_DARK_ELF, .active = 1, .x = x + 1, .y = y, .hp = 17, .max_hp = 50, .move_timer = 2, .attack_target_x = x, .attack_target_y = y, .facing_dx = 1};
+        original->enemies[0] = (Enemy){.type = ENEMY_DARK_ELF_ARCHER, .active = 1, .x = x + 1, .y = y, .hp = 17, .max_hp = 50, .move_timer = 2, .attack_target_x = x, .attack_target_y = y, .facing_dx = 1};
         original->map.tiles[y][x + 1] = TILE_FOREST_FLOOR;
         original->map.tiles[y][x + 2] = TILE_FOREST_FLOOR;
         original->map.tiles[y][x + 3] = TILE_FOREST_FLOOR;
@@ -2994,7 +2994,7 @@ static void test_retired_enemy_migration(void) {
         original->level_cache[DUNGEON_DEPTH - 1].enemies[3].hp == 0);
     ASSERT("surviving low and high enemy IDs retain their serialized values", ENEMY_ZOMBIE == 2 && ENEMY_STONE_GIANT == 5 &&
         ENEMY_LICH_KING == 7 && ENEMY_RED_DRAGON == 9 && ENEMY_CRYPT_BAT == 11 &&
-        ENEMY_ROYAL_GUARD == 100 && ENEMY_LIZARDFOLK_SCOUT == 107 && ENEMY_IRON_SENTINEL == 113 &&
+        ENEMY_ROYAL_GUARD == 100 && ENEMY_LIZARDFOLK_SCOUT == 107 && ENEMY_DARK_ELF_RANGER == 123 &&
         ENEMY_FROST_KRAKEN == 62 && ENEMY_GRAVE_MARSHAL == 86 && ENEMY_LIZARDFOLK_SCALEGUARD == 111 &&
         ENEMY_GOBLIN_MINE_BOSS == 119);
     remove_test_save(slot);

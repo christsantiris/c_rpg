@@ -251,7 +251,7 @@ void test_region_difficulty_scaling(void) {
     enemies_spawn(&g);
     int forest_roles = 0;
     for (int i = 0; i < g.enemy_count; i++) {
-        forest_roles |= g.enemies[i].type == ENEMY_GIANT_WURM ||
+        forest_roles |= g.enemies[i].type == ENEMY_DARK_ELF_RANGER ||
             g.enemies[i].type == ENEMY_FOREST_TROLL;
     }
     g.location = LOCATION_MOUNTAINS;
@@ -284,7 +284,7 @@ void test_region_difficulty_scaling(void) {
     for (int i = 0; i < g.enemy_count; i++) {
         Enemy *e = &g.enemies[i];
         forest_after_coast &= e->type == ENEMY_GIANT_SPIDER ||
-            e->type == ENEMY_DARK_ELF || e->type == ENEMY_GIANT_WURM ||
+            e->type == ENEMY_DARK_ELF_ARCHER || e->type == ENEMY_DARK_ELF_RANGER ||
             e->type == ENEMY_FOREST_TROLL;
         forest_after_coast &= e->max_hp >= 28 && e->attack >= 16;
     }

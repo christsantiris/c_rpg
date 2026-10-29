@@ -142,8 +142,8 @@ void heartseed_prepare(GameState *g) {
     if (g->level == 2) {
         put_object(g, HEARTSEED_ORDERS_X, HEARTSEED_ORDERS_Y, TILE_HEARTSEED_ORDERS);
         if (!(g->heartseed_sites & 1) &&
-            add_guard(g, ENEMY_DARK_ELF, "Heartseed Lookout", 10, 10) &&
-            add_guard(g, ENEMY_DARK_ELF, "Heartseed Sentry", 14, 10)) {
+            add_guard(g, ENEMY_DARK_ELF_ARCHER, "Heartseed Lookout", 10, 10) &&
+            add_guard(g, ENEMY_DARK_ELF_ARCHER, "Heartseed Sentry", 14, 10)) {
             g->heartseed_sites |= 1;
         }
         return;
@@ -151,8 +151,8 @@ void heartseed_prepare(GameState *g) {
     if (!(g->heartseed_sites & 2)) {
         heartseed_carve_grove(&g->map);
         if ((!g->heartseed_guardian && !add_guard(g, ENEMY_TREEFOLK, "Bound Treefolk", 53, 32)) ||
-            !add_guard(g, ENEMY_DARK_ELF, "Heartseed Captor", 48, 34) ||
-            !add_guard(g, ENEMY_DARK_ELF, "Heartseed Binder", 57, 35)) {
+            !add_guard(g, ENEMY_DARK_ELF_ARCHER, "Heartseed Captor", 48, 34) ||
+            !add_guard(g, ENEMY_DARK_ELF_ARCHER, "Heartseed Binder", 57, 35)) {
             return;
         }
         g->heartseed_sites |= 2;

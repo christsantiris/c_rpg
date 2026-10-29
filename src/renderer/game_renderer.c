@@ -887,8 +887,6 @@ void game_draw_enemy_projectiles(Renderer *r, const GameState *g, const EnemyPro
             color = (SDL_Color){80, 210, 255, 255};
         } else if (shot->type == ENEMY_SIREN) {
             color = (SDL_Color){240, 130, 220, 255};
-        } else if (shot->type == ENEMY_GOBLIN_BOMBER) {
-            color = (SDL_Color){255, 160, 55, 255};
         } else if (shot->type == ENEMY_RED_DRAGON) {
             color = (SDL_Color){255, 126, 49, 255};
         } else if (shot->type == ENEMY_SUN_PRIEST ||
@@ -941,17 +939,9 @@ void game_draw_enemy_projectiles(Renderer *r, const GameState *g, const EnemyPro
         } else if (shot->type == ENEMY_GOBLIN_ARCHER ||
             shot->type == ENEMY_ROAD_ARCHER ||
             shot->type == ENEMY_FROST_ARCHER ||
-            shot->type == ENEMY_DARK_ELF ||
+            shot->type == ENEMY_DARK_ELF_ARCHER || shot->type == ENEMY_DARK_ELF_RANGER ||
             shot->type == ENEMY_BLOWDART_HUNTER) {
             draw_weapon_arrow_at(r, cx, cy, (dx > 0) - (dx < 0), (dy > 0) - (dy < 0), 0);
-        } else if (shot->type == ENEMY_GOBLIN_BOMBER) {
-            SDL_Rect bomb = {cx - 5, cy - 5, 10, 10};
-            SDL_SetRenderDrawColor(r->sdl, 36, 32, 40, 255);
-            SDL_RenderFillRect(r->sdl, &bomb);
-            SDL_SetRenderDrawColor(r->sdl, color.r, color.g, color.b, 255);
-            SDL_RenderDrawRect(r->sdl, &bomb);
-            SDL_RenderDrawLine(r->sdl, cx, cy - 5, cx + 4, cy - 9);
-            SDL_RenderDrawPoint(r->sdl, cx + 5, cy - 10);
         } else if (shot->type == ENEMY_MOUNTAIN_GOBLIN_KING) {
             SDL_SetRenderDrawColor(r->sdl, 160, 105, 55, 255);
             SDL_RenderDrawLine(r->sdl, cx - (int)(vx * 8), cy - (int)(vy * 8), cx + (int)(vx * 5), cy + (int)(vy * 5));
@@ -4285,7 +4275,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_prism_sovereign_status(r, g, v);
     draw_sun_guardian_status(r, g, v);
     draw_red_dragon_status(r, g, v);
-    castle_draw_castellan_status(r, g, v);
     castle_draw_arcanist_status(r, g, v);
     castle_draw_veyr_status(r, g, v);
 

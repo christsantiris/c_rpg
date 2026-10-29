@@ -64,8 +64,8 @@ void test_enemy_projectiles(void) {
     EnemyType ranged[] = {
         ENEMY_LICH_KING, ENEMY_FOREST_NECROMANCER, ENEMY_MOUNTAIN_GOBLIN_KING,
         ENEMY_DESERT_PHARAOH, ENEMY_SIREN, ENEMY_WATER_ELEMENTAL,
-        ENEMY_GOBLIN_ARCHER, ENEMY_ROAD_ARCHER, ENEMY_GOBLIN_BOMBER,
-        ENEMY_DARK_ELF, ENEMY_CRYPT_CONJURER, ENEMY_DJINN
+        ENEMY_GOBLIN_ARCHER, ENEMY_ROAD_ARCHER, ENEMY_FROST_ARCHER,
+        ENEMY_DARK_ELF_ARCHER, ENEMY_CRYPT_CONJURER, ENEMY_DJINN
     };
     for (int i = 0; i < (int)(sizeof(ranged) / sizeof(ranged[0])); i++) {
         setup_ranged_enemy(&g, ranged[i]);
@@ -80,7 +80,7 @@ void test_enemy_projectiles(void) {
 
     setup_ranged_enemy(&g, ENEMY_GOBLIN_ARCHER);
     g.enemies[1] = g.enemies[0];
-    g.enemies[1].type = ENEMY_DARK_ELF;
+    g.enemies[1].type = ENEMY_DARK_ELF_ARCHER;
     g.enemies[1].x = 20;
     g.enemies[1].y = 14;
     g.enemy_count = 2;
@@ -203,8 +203,8 @@ void test_enemy_projectiles(void) {
         shots.shots[0].target_y == 20);
 
     EnemyType retreating[] = {
-        ENEMY_CRYPT_CONJURER, ENEMY_DARK_ELF, ENEMY_GOBLIN_ARCHER,
-        ENEMY_GOBLIN_BOMBER, ENEMY_SIREN, ENEMY_WATER_ELEMENTAL,
+        ENEMY_CRYPT_CONJURER, ENEMY_DARK_ELF_ARCHER, ENEMY_GOBLIN_ARCHER,
+        ENEMY_SIREN, ENEMY_WATER_ELEMENTAL,
         ENEMY_BLOWDART_HUNTER, ENEMY_SUN_PRIEST, ENEMY_SERPENT_SPIRIT,
         ENEMY_MOONBOUND_SENTINEL, ENEMY_GOBLIN_SHAMAN, ENEMY_DJINN
     };

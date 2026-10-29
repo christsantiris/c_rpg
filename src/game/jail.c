@@ -282,20 +282,20 @@ static void carve_tunnel(Map *m, int start_x) {
 
 static void populate_tunnel(GameState *g) {
     static const EnemyType deeper_types[] = {
-        ENEMY_HOBGOBLIN_GUARD, ENEMY_TUNNEL_SPIDER, ENEMY_ROAD_ARCHER,
-        ENEMY_BANDIT, ENEMY_TUNNEL_SPIDER, ENEMY_ROAD_ARCHER
+        ENEMY_HOBGOBLIN_GUARD, ENEMY_GIANT_SPIDER, ENEMY_ROAD_ARCHER,
+        ENEMY_BANDIT, ENEMY_GIANT_SPIDER, ENEMY_ROAD_ARCHER
     };
     for (int i = g->enemy_count; i < NON_ROAD_ENEMY_LIMIT; i++) {
         int deeper = i >= 12;
         int x = deeper ? 69 + (i - 12) * 7 : 18 + i * 4;
         EnemyType type = deeper ? deeper_types[(i - 12) % 6] :
-            i % 3 == 0 ? ENEMY_BANDIT : i % 3 == 1 ? ENEMY_TUNNEL_SPIDER : ENEMY_GIANT_RAT;
+            i % 3 == 0 ? ENEMY_BANDIT : i % 3 == 1 ? ENEMY_GIANT_SPIDER : ENEMY_GIANT_RAT;
         int hp = deeper ? (type == ENEMY_HOBGOBLIN_GUARD ? 80 : 48) : 32;
         Enemy *enemy = &g->enemies[g->enemy_count++];
         *enemy = (Enemy){.active = 1, .type = type, .x = x, .y = tunnel_y(x), .max_hp = hp, .hp = hp,
             .attack = deeper ? 16 : 10, .defense = deeper ? 5 : 3, .experience = deeper ? 60 : 35,
             .attack_target_x = -1, .attack_target_y = -1, .facing_dy = -1};
-        const char *name = type == ENEMY_BANDIT ? "Tunnel Smuggler" : type == ENEMY_TUNNEL_SPIDER ? "Tunnel Spider" :
+        const char *name = type == ENEMY_BANDIT ? "Tunnel Smuggler" : type == ENEMY_GIANT_SPIDER ? "Giant Spider" :
             type == ENEMY_HOBGOBLIN_GUARD ? "Smuggler Bodyguard" : type == ENEMY_ROAD_ARCHER ? "Smuggler Archer" : "Giant Rat";
         snprintf(enemy->name, sizeof(enemy->name), "%s", name);
     }

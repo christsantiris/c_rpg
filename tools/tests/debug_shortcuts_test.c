@@ -21,6 +21,7 @@
 #undef main
 #include <assert.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include "../../src/game/town_road.h"
 #include "../../src/game/castle.h"
 #include "../../src/game/elderwood.h"
@@ -687,7 +688,7 @@ static void test_northroad_renderer(Renderer *r, GameState *g, SDL_Surface *surf
     renderer_end_frame(r);
     assert(SDL_SaveBMP(surface, "/tmp/crown-north-renderer-test.bmp") == 0);
     const EnemyType roster[] = {ENEMY_GOBLIN_SCOUT, ENEMY_HOBGOBLIN_GUARD, ENEMY_GOBLIN_ARCHER,
-        ENEMY_GOBLIN_BOMBER, ENEMY_GOBLIN_SHAMAN, ENEMY_BLIGHTED_WOLF};
+        ENEMY_GOBLIN_WARCHIEF, ENEMY_GOBLIN_SHAMAN, ENEMY_BLIGHTED_WOLF};
     g->enemy_count = 1;
     Enemy *enemy = &g->enemies[0];
     *enemy = (Enemy){.x = 32, .y = 82, .hp = 50, .max_hp = 50};
@@ -712,7 +713,7 @@ static void test_northroad_renderer(Renderer *r, GameState *g, SDL_Surface *surf
 
 static void test_stonewake_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     assert(r->stonewake_enemy_texture && r->stonewake_crane_texture && r->stonewake_prop_texture && r->stonewake_workshop_texture);
-    const EnemyType roster[5] = {ENEMY_CRYSTAL_SPIDER, ENEMY_BLIND_STALKER, ENEMY_SHARD_GOLEM, ENEMY_IRON_SENTINEL, ENEMY_PRISM_SOVEREIGN};
+    const EnemyType roster[5] = {ENEMY_OGRE, ENEMY_BLIND_STALKER, ENEMY_SHARD_GOLEM, ENEMY_STONE_GIANT, ENEMY_PRISM_SOVEREIGN};
     unsigned int hashes[5];
     for (int i = 0; i < 5; i++) {
         SDL_SetRenderDrawColor(r->sdl, 0, 0, 0, 255);
@@ -747,7 +748,7 @@ static void test_stonewake_renderer(Renderer *r, GameState *g, SDL_Surface *surf
         }
         assert(pixels > 80);
         const int widths[5] = {24, 24, 32, 24, 48};
-        const int heights[5] = {16, 24, 32, 24, 48};
+        const int heights[5] = {24, 24, 32, 24, 48};
         assert(right - left + 1 <= widths[i] && bottom - top + 1 <= heights[i]);
         assert(bottom == 47); // Soles/tail sit on the same ground line as the 24px player.
         for (int n = 0; n < i; n++) {
@@ -1010,10 +1011,10 @@ static void test_regional_projectiles(Renderer *r, GameState *g, SDL_Surface *su
             }
         }
         g->enemy_count = 1;
-        g->enemies[0] = (Enemy){.type = ENEMY_DARK_ELF, .name = "Dark Elf", .active = 1,
+        g->enemies[0] = (Enemy){.type = ENEMY_DARK_ELF_ARCHER, .name = "Dark Elf", .active = 1,
             .x = g->player.x - 5, .y = g->player.y, .hp = 30, .max_hp = 30, .attack = 10, .move_timer = 1};
         EnemyProjectiles shots = {.count = 1};
-        shots.shots[0] = (EnemyProjectile){ENEMY_DARK_ELF, g->enemies[0].x, g->enemies[0].y, g->player.x, g->player.y};
+        shots.shots[0] = (EnemyProjectile){ENEMY_DARK_ELF_ARCHER, g->enemies[0].x, g->enemies[0].y, g->player.x, g->player.y};
         if (area == 0) {
             // Exercise real Elderwood firing; the other fixtures isolate each
             // renderer's camera without invoking a different area's enemy AI.
@@ -1464,7 +1465,7 @@ static void test_ironfang_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
     assert(g->player.x == 12 && g->ironfang[0].cart_x == 12 && g->player.last_dx == 1 && g->player.last_dy == 0);
     game_init(g);
     ironfang_enter(g, 0);
-    const EnemyType roster[] = {ENEMY_GOBLIN_SCOUT, ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_BOMBER, ENEMY_TUNNEL_SPIDER, ENEMY_CAVE_TROLL, ENEMY_HOBGOBLIN_GUARD, ENEMY_GOBLIN_SHAMAN, ENEMY_GOBLIN_MINE_BOSS};
+    const EnemyType roster[] = {ENEMY_GOBLIN_SCOUT, ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_WARCHIEF, ENEMY_GIANT_SPIDER, ENEMY_CAVE_TROLL, ENEMY_HOBGOBLIN_GUARD, ENEMY_GOBLIN_SHAMAN, ENEMY_GOBLIN_MINE_BOSS};
     for (int n = 0; n < 8; n++) {
         SDL_SetRenderDrawColor(r->sdl, 0, 0, 0, 255);
         SDL_RenderClear(r->sdl);
@@ -1542,6 +1543,124 @@ static void test_boss_camera_lean(Renderer *r, GameState *g, SDL_Surface *surfac
     puts("PASS: the zoomed camera leans toward a boss fourteen rows away, keeping the player two rows from the edge.");
 }
 
+static void roster_scene(Renderer *r, GameState *g, SDL_Surface *surface, const char *path) {
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    Viewport view;
+    viewport_init(&view, r->tiles_x, r->tiles_y, MAP_W, MAP_H);
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, path) == 0);
+}
+
+static void test_approved_roster_renderer(Renderer *r, GameState *g, SDL_Surface *surface, const char *project) {
+    const EnemyType types[] = {ENEMY_DARK_ELF_ARCHER, ENEMY_DARK_ELF_RANGER, ENEMY_FOREST_TROLL, ENEMY_GOBLIN_WARCHIEF, ENEMY_HOBGOBLIN_GUARD, ENEMY_GIANT_SPIDER, ENEMY_OGRE, ENEMY_STONE_GIANT, ENEMY_ROYAL_GUARD, ENEMY_VAMPIRE, ENEMY_SUN_PRIEST, ENEMY_LUNAR_EFFIGY};
+    const char *labels[] = {"Dark Elf Archer", "Dark Elf Ranger", "Forest Troll", "Goblin Warchief", "Hobgoblin Guard", "Giant Spider", "Ogre", "Stone Giant", "Royal Guard", "Vampire", "Sun Priest", "Lunar Effigy"};
+    renderer_begin_frame(r);
+    for (int i = 0; i < 12; i++) {
+        int x = 3 + (i % 3) * 10;
+        int y = 3 + (i / 3) * 5;
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                draw_forest_floor(r, x + dx, y + dy, x + dx, y + dy);
+            }
+        }
+        draw_enemy(r, x, y, types[i]);
+        renderer_draw_text(r, labels[i], x * TILE_SIZE - 10, (y + 2) * TILE_SIZE, (SDL_Color){239, 235, 214, 255}, r->font_tiny);
+    }
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/approved-enemy-sprites.bmp") == 0);
+
+    game_init(g);
+    castle_enter(g, 2);
+    g->player.x = 45;
+    g->player.y = 47;
+    roster_scene(r, g, surface, "/tmp/approved-castle-vampire.bmp");
+    castle_enter(g, 3);
+    g->player.x = 49;
+    g->player.y = 34;
+    roster_scene(r, g, surface, "/tmp/approved-castle-guard.bmp");
+
+    game_init(g);
+    game_enter_temple(g);
+    for (int i = 0; i < g->enemy_count; i++) {
+        g->enemies[i].active = 0;
+        g->enemies[i].alignment_dormant = 0;
+    }
+    for (int y = 0; y < TEMPLE_H; y++) {
+        for (int x = 0; x < TEMPLE_W; x++) {
+            if (g->map.tiles[y][x] == TILE_TEMPLE_DORMANT_SENTINEL) {
+                g->map.tiles[y][x] = TILE_TEMPLE_FLOOR;
+            }
+        }
+    }
+    g->player.x = g->map.stairs_down_x;
+    g->player.y = g->map.stairs_down_y;
+    action_resolve_player(g, (Action){ACTION_ASCEND, 0, 0});
+    assert(g->level == 2);
+    g->player.x = 53;
+    g->player.y = 26;
+    roster_scene(r, g, surface, "/tmp/approved-temple-sun.bmp");
+    int switched = 0;
+    for (int y = 0; y < TEMPLE_H && !switched; y++) {
+        for (int x = 0; x < TEMPLE_W && !switched; x++) {
+            if (g->map.tiles[y][x] == TILE_TEMPLE_ALTAR) {
+                g->player.x = x;
+                g->player.y = y;
+                assert(game_interact_temple(g));
+                switched = 1;
+            }
+        }
+    }
+    assert(g->temple_alignment);
+    g->player.x = 40;
+    g->player.y = 8;
+    roster_scene(r, g, surface, "/tmp/approved-temple-moon.bmp");
+
+    char source_path[1024];
+    snprintf(source_path, sizeof(source_path), "%s/saves/savegame_1.json", project);
+    FILE *source = fopen(source_path, "rb");
+    if (source) {
+        mkdir("saves", 0700);
+        FILE *copy = fopen("saves/savegame_99224.json", "wb");
+        assert(copy);
+        char buffer[8192];
+        size_t bytes;
+        while ((bytes = fread(buffer, 1, sizeof(buffer), source)) > 0) {
+            assert(fwrite(buffer, 1, bytes, copy) == bytes);
+        }
+        fclose(copy);
+        fclose(source);
+        assert(load_game(g, 99224));
+        if (!g->forest_cache[3].valid) {
+            remove("saves/savegame_99224.json");
+            memset(g, 0, sizeof(*g));
+            return;
+        }
+        g->location = LOCATION_FOREST;
+        g->level = 4;
+        g->map = g->forest_cache[3].map;
+        g->enemy_count = g->forest_cache[3].enemy_count;
+        memcpy(g->enemies, g->forest_cache[3].enemies, g->enemy_count * sizeof(Enemy));
+        for (int i = 0; i < g->enemy_count; i++) {
+            if (g->enemies[i].active && g->enemies[i].type == ENEMY_DARK_ELF_RANGER) {
+                g->player.x = g->enemies[i].x;
+                g->player.y = g->enemies[i].y + 1;
+                break;
+            }
+        }
+        roster_scene(r, g, surface, "/tmp/approved-existing-save-forest.bmp");
+        remove("saves/savegame_99224.json");
+    }
+    memset(g, 0, sizeof(*g));
+    puts("PASS: approved enemy sprites, castle replacements, temple alignments and a migrated existing forest save render through the game renderer.");
+}
+
 int main(void) {
     char *project = getcwd(NULL, 0);
     char *assets = realpath("assets", NULL);
@@ -1584,6 +1703,7 @@ int main(void) {
     GameScreen screen = SCREEN_LOAD_SLOT;
     GameState *game = calloc(1, sizeof(*game));
     assert(game);
+    test_approved_roster_renderer(&renderer, game, surface, project);
     test_boss_gate_renderer(&renderer, game, surface);
     test_container_renderer(&renderer, game, surface);
     test_stonewake_renderer(&renderer, game, surface);

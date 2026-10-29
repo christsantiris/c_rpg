@@ -1,121 +1,48 @@
-# Enemy names and areas
+# Approved enemy rosters by area
 
-This is the current spawn roster, including quest encounters and summoned
-enemies. It covers all **100 defined enemy types**, all of which have current
-spawns. The 22 named variants are listed separately because they reuse these
-types. Removed enemy IDs remain reserved in the save format; they are no longer
-runtime enemy definitions. The six retired Pirate Coast IDs also remain unused.
+All 24 area rosters are approved. The game defines **94 active enemy types**.
+Named quest, hunt and summoned enemies reuse these types rather than adding
+separate definitions. Retired numeric IDs are reserved and migrated in save/load;
+existing actors retain their wounds, deaths, quest identities and progress.
 
-Names follow the game display, including Rockworm/Quarry Construct/Stone Troll
-in place of the old Glassdeep creatures. The Dungeon is on the Oakhaven–Dawnmere
-route. Rook's Labyrinth is its own area beside the Haunted Forest road entrance.
-Castle entries below refer to the castle interior, not Castle Grounds.
+Dark Elf Archers hold firing lanes. Dark Elf Rangers use a slower bow cadence
+and reposition after shooting. Goblin Warchiefs are armored melee attackers.
+The castle Vampire replaces the former armory miniboss while retaining its
+stair unlock and reserved equipment reward.
 
-## Current enemy types
+Sun Priests appear only during Sun alignment; Lunar Effigies appear only during
+Moon alignment. Living actors hidden by alignment retain their health and status,
+remain counted by temple seals, and return when their alignment returns. Defeated
+actors never return. Moon Sentinels retain their existing rule: Moon awakens them,
+and they remain active if alignment changes back to Sun. Other temple enemies
+are active during either alignment.
 
-| Enemy | Area(s) |
-| --- | --- |
-| Skeleton | Dungeon; Rook's Labyrinth |
-| Zombie | Dungeon; Blackwater Swamp |
-| Crypt Bat | Dungeon; Royal Catacombs |
-| Wraith | Dungeon; Blackwater Swamp; Royal Catacombs |
-| Crypt Conjurer | Dungeon; Royal Catacombs |
-| Lich King | Dungeon |
-| Pixie | Haunted Forest |
-| Blighted Wolf | Haunted Forest, Elderwood Forest, Frostfell, Crown Road East, Crown Road West, Crown Road North |
-| Giant Spider | Haunted Forest; Rook's Labyrinth |
-| Dark Elf | Haunted Forest; Elderwood Forest |
-| Giant Wurm | Haunted Forest |
-| Forest Troll | Haunted Forest |
-| Necromancer | Haunted Forest |
-| Goblin Scout | Goblin Mountains; Dragonspine; Ironfang Mines; Crown Road North |
-| Goblin Archer | Goblin Mountains; Dragonspine; Ironfang Mines; Crown Road North |
-| Goblin Bomber | Goblin Mountains; Ironfang Mines; Crown Road North |
-| Tunnel Spider | Goblin Mountains; Escape Tunnel; Ironfang Mines |
-| Cave Troll | Goblin Mountains; Ironfang Mines; Giant's Peaks |
-| Hobgoblin Guard | Goblin Mountains; Crown Road East; Crown Road West; Escape Tunnel (Smuggler Bodyguard); Ironfang Mines; Crown Road North |
-| Goblin Shaman | Goblin Mountains; Ironfang Mines; Crown Road North |
-| Goblin King | Goblin Mountains |
-| Illusion | Sunken Coast |
-| Merfolk | Sunken Coast |
-| Siren | Sunken Coast |
-| Giant Crab | Sunken Coast; Saltwind Marsh |
-| Animated Statue | Sunken Coast; Rook's Labyrinth |
-| Water Elemental | Sunken Coast |
-| Sea Serpent | Sunken Coast |
-| Drowned Queen | Sunken Coast |
-| Relic Scarabs | Ruined Temple |
-| Temple Stalker | Ruined Temple |
-| Dart Hunter | Ruined Temple |
-| Vine Guardian | Ruined Temple |
-| Sun Priest | Ruined Temple |
-| Serpent Spirit | Ruined Temple |
-| Treasure Wraith | Ruined Temple |
-| Lunar Effigy | Ruined Temple |
-| Moon Sentinel | Ruined Temple (awakened by Moon alignment) |
-| Sun Guardian | Ruined Temple (the Fallen Sun Guardian boss) |
-| Minotaur | Rook's Labyrinth |
-| Giant Rat | Blackwater Swamp; Escape Tunnel |
-| Bandit | Blackwater Swamp; Crown Road East; Crown Road West; Escape Tunnel (Tunnel Smuggler) |
-| Vampire | Blackwater Swamp; Royal Catacombs |
-| Swamp Demon | Blackwater Swamp |
-| Drake | Dragonspine |
-| Stone Giant | Dragonspine; Giant's Peaks |
-| Ogre | Giant's Peaks |
-| Hill Giant | Giant's Peaks |
-| The Last Jarl | Giant's Peaks |
-| Fire Elemental | Dragonspine; Ashen Hollow |
-| Red Dragon | Dragonspine |
-| Road Archer | Crown Road East; Crown Road West; Escape Tunnel (Smuggler Archer) |
-| Horseman | Crown Road East; Crown Road West |
-| Frost Archer | Frostfell |
-| Yeti | Frostfell |
-| Frost Wraith | Frostfell |
-| Ice Golem | Frostfell |
-| Frost Giant | Frostfell; Giant's Peaks |
-| Frost Kraken | Frostfell |
-| Scarab | Sunscar Wastes |
-| Viper | Sunscar Wastes |
-| Mummy | Sunscar Wastes |
-| Djinn | Sunscar Wastes |
-| Golem | Sunscar Wastes |
-| Desert Pharaoh | Sunscar Wastes |
-| Cinder Imp | Ashen Hollow |
-| Ash Hound | Ashen Hollow |
-| Obsidian Guardian | Ashen Hollow |
-| Cinder Lord | Ashen Hollow |
-| Rockworm | Stonewake Quarry |
-| Quarry Construct | Stonewake Quarry |
-| Stone Troll | Stonewake Quarry; Giant's Peaks |
-| Iron Sentinel | Stonewake Quarry (stages 4–5) |
-| Quarry Colossus | Stonewake Quarry |
-| Ancient Skeleton | Royal Catacombs |
-| Bone Sentinel | Royal Catacombs |
-| Grave Marshal | Royal Catacombs |
-| Oathbound Soldier | Castle of No Return |
-| Iron Warden | Castle of No Return |
-| Royal Marksman | Castle of No Return |
-| Court Hexer | Castle of No Return |
-| Bell Herald | Castle of No Return |
-| Castellan | Castle of No Return |
-| Royal Arcanist | Castle of No Return |
-| Lord Veyr | Castle of No Return |
-| Ironhide Boar | Elderwood Forest |
-| Thorn Dryad | Elderwood Forest |
-| Treefolk | Elderwood Forest |
-| Elderthorn | Elderwood Forest |
-| Royal Guard | Royal Dungeon evidence room, outside Castle Grounds |
-| Lizardfolk Scout | Saltwind Marsh |
-| Reed Spearhunter | Saltwind Marsh |
-| Marsh Spitter | Saltwind Marsh |
-| Lizardfolk Scaleguard | Saltwind Marsh |
-| Sszareth | Saltwind Marsh |
-| Harpy Raider | Stormwatch Headland 1–5; finite Matriarch reinforcements |
-| Cliff Gargoyle | Stormwatch Headland 2–5 |
-| Harpy Stormcaller | Stormwatch Headland 3–5 |
-| Storm Elemental | Stormwatch Headland 4–5 |
-| Tempest Matriarch | Stormwatch Headland 5 |
-| Goblin Mine Boss | Ironfang Mines 5 |
+| Approved | Area | Enemy types |
+| --- | --- | --- |
+| ✅ | Ashen Hollow | Cinder Imp; Ash Hound; Obsidian Guardian; Fire Elemental; Cinder Lord |
+| ✅ | Blackwater Swamp | Giant Rat; Zombie; Bandit; Wraith; Vampire; Swamp Demon |
+| ✅ | Castle of No Return — interior | Oathbound Soldier; Iron Warden; Royal Marksman; Court Hexer; Royal Guard; Vampire; Royal Arcanist; Lord Veyr |
+| ✅ | Crown Road East | Bandit; Blighted Wolf; Royal Guard; Road Archer; Horseman |
+| ✅ | Crown Road North | Goblin Scout; Goblin Archer; Goblin Warchief; Goblin Shaman; Hobgoblin Guard; Blighted Wolf |
+| ✅ | Crown Road West | Bandit; Blighted Wolf; Royal Guard; Road Archer; Horseman |
+| ✅ | Dragonspine | Goblin Scout; Goblin Archer; Drake; Stone Giant; Fire Elemental; Red Dragon |
+| ✅ | Dungeon | Skeleton; Zombie; Crypt Bat; Wraith; Crypt Conjurer; Lich King |
+| ✅ | Elderwood Forest | Blighted Wolf; Dark Elf Ranger; Dark Elf Archer; Thorn Dryad; Treefolk; Elderthorn |
+| ✅ | Escape Tunnel | Giant Rat; Giant Spider; Bandit (Tunnel Smuggler); Hobgoblin Guard (Smuggler Bodyguard); Road Archer (Smuggler Archer) |
+| ✅ | Frostfell | Blighted Wolf; Frost Archer; Yeti; Frost Wraith; Ice Golem; Frost Giant; Frost Kraken |
+| ✅ | Giant’s Peaks | Ogre; Cave Troll; Hill Giant; Stone Giant; Stone Troll; Frost Giant; The Last Jarl |
+| ✅ | Goblin Mountains | Goblin Scout; Goblin Archer; Goblin Warchief; Giant Spider; Cave Troll; Hobgoblin Guard; Goblin Shaman; Goblin King |
+| ✅ | Haunted Forest | Pixie; Blighted Wolf; Giant Spider; Dark Elf Archer; Dark Elf Ranger; Forest Troll; Necromancer |
+| ✅ | Ironfang Mines | Goblin Scout; Goblin Archer; Goblin Warchief; Giant Spider; Cave Troll; Hobgoblin Guard; Goblin Shaman; Goblin Mine Boss (stage 5) |
+| ✅ | Rook’s Labyrinth | Skeleton; Giant Spider; Animated Statue; Minotaur |
+| ✅ | Royal Catacombs | Crypt Bat; Wraith; Crypt Conjurer; Vampire; Ancient Skeleton; Bone Sentinel; Grave Marshal |
+| ✅ | Royal Dungeon — evidence room | Royal Guard |
+| ✅ | Ruined Temple | Relic Scarabs; Temple Stalker; Dart Hunter; Vine Guardian; Sun Priest (Sun only); Serpent Spirit; Wraith; Lunar Effigy (Moon only); Moon Sentinel (awakened by Moon); Sun Guardian |
+| ✅ | Saltwind Marsh | Lizardfolk Scout; Reed Spearhunter; Marsh Spitter; Giant Crab; Lizardfolk Scaleguard; Sszareth |
+| ✅ | Stonewake Quarry | Ogre; Quarry Construct; Stone Troll; Stone Giant (stages 4–5); Quarry Colossus |
+| ✅ | Stormwatch Headland | Harpy Raider (stages 1–5); Cliff Gargoyle (2–5); Harpy Stormcaller (3–5); Storm Elemental (4–5); Tempest Matriarch (5) |
+| ✅ | Sunken Coast | Illusion; Merfolk; Siren; Giant Crab; Animated Statue; Water Elemental; Sea Serpent; Drowned Queen |
+| ✅ | Sunscar Wastes | Scarab; Viper; Mummy; Djinn; Golem; Desert Pharaoh |
 
 ## Named quest, hunt and summoned enemies
 

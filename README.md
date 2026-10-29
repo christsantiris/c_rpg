@@ -332,6 +332,5 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Roll for stats. Choose a class based on strengths. Ascending armor class chance to hit. 
 - Add new equipment types
    Add helmets, rings, gauntlets
-- Revamp enemy types
-   Variety of dark elves (dark elf archer, dark elf ranger etc) instead of simly dark elf type, variety of giants, recurring enemies in similar terrain
+- Revamp quests. Chain quests together. Unlock new quests with completion of another. NPCs can offer quest part 2. Max number of active quests - NPC can say come back when you have completed xyz task.
 

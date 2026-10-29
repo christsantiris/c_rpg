@@ -113,8 +113,8 @@ static void test_layouts(GameState *g) {
             for (int i = 0; i < g->enemy_count; i++) {
                 Enemy *e = &g->enemies[i];
                 population &= seen[e->y][e->x] && e->hp > 0 && e->name[0];
-                if (e->type == ENEMY_IRON_SENTINEL) {
-                    population &= stage >= 4 && strcmp(e->name, "Iron Sentinel") == 0;
+                if (e->type == ENEMY_STONE_GIANT) {
+                    population &= stage >= 4 && strcmp(e->name, "Stone Giant") == 0;
                     sentinel++;
                 }
             }
@@ -122,7 +122,7 @@ static void test_layouts(GameState *g) {
     }
     ASSERT("500 layouts keep the main route connected in all nine crane configurations", valid);
     ASSERT("salvage platforms are accessible only with the salvage spur lowered across all 500 layouts", salvage);
-    ASSERT("ordinary enemies spawn on reachable main ground; Sentinels start on four", population && sentinel > 0);
+    ASSERT("ordinary enemies spawn on reachable main ground; Stone Giants start on stage four", population && sentinel > 0);
 }
 
 static void test_cranes(GameState *g, GameState *loaded) {
@@ -141,7 +141,7 @@ static void test_cranes(GameState *g, GameState *loaded) {
     ASSERT("raised gangways block walking across the cut", !map_is_walkable(&g->map, x + 1, y));
     ASSERT("lowering the crossing creates a real through route while its salvage spur stays raised", stonewake_interact(g) && g->map.tiles[y][x + 8] == TILE_STONEWAKE_BRIDGE && !map_is_walkable(&g->map, x + 5, y - 1));
     g->enemy_count = 1;
-    g->enemies[0] = (Enemy){.active = 1, .type = ENEMY_CRYSTAL_SPIDER, .x = x + 7, .y = y, .hp = 7, .max_hp = 30};
+    g->enemies[0] = (Enemy){.active = 1, .type = ENEMY_OGRE, .x = x + 7, .y = y, .hp = 7, .max_hp = 30};
     stonewake_interact(g);
     ASSERT("the east crossing cannot retract under an enemy", g->map.tiles[y][x] == TILE_STONEWAKE_CRANE_DOWN && g->enemies[0].hp == 7);
     g->enemies[0].active = 0;
@@ -256,8 +256,8 @@ static void test_salvage_replay(GameState *g) {
         return;
     }
     g->enemy_count = 1;
-    g->enemies[0] = (Enemy){.active = 0, .type = ENEMY_CRYSTAL_SPIDER, .x = x + 5, .y = y - 3, .hp = 0, .max_hp = 30, .experience = 40};
-    snprintf(g->enemies[0].name, sizeof(g->enemies[0].name), "Rockworm");
+    g->enemies[0] = (Enemy){.active = 0, .type = ENEMY_OGRE, .x = x + 5, .y = y - 3, .hp = 0, .max_hp = 30, .experience = 40};
+    snprintf(g->enemies[0].name, sizeof(g->enemies[0].name), "Ogre");
     g->map.tiles[y - 3][x + 5] = TILE_STONEWAKE_EMPTY;
     g->map.tiles[y][x] = TILE_STONEWAKE_CRANE_UP;
     game_return_to_town(g);
