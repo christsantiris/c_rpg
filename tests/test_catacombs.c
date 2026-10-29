@@ -445,8 +445,8 @@ static void test_boss(void) {
     game.inventory[0] = mantle;
     game.inventory_count = 1;
     action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, 0, 0});
-    ASSERT("equipping the mantle applies its health and defense bonuses", game.equipped_armor == 0 && game.player.max_hp == hp_before + 20 && game.player.defense == def_before + 6);
-    ASSERT("equipped mantle bonuses survive save/load", save_game(&game, CATACOMBS_TEST_SLOT) && load_game(&loaded, CATACOMBS_TEST_SLOT) && loaded.inventory[0].max_hp_bonus == 20 && loaded.player.max_hp == game.player.max_hp && loaded.player.defense == game.player.defense);
+    ASSERT("equipping the mantle applies its health and defense bonuses", game.equipped_armor == EQUIPMENT_ARMOR && game.player.max_hp == hp_before + 20 && game.player.defense == def_before + 6);
+    ASSERT("equipped mantle bonuses survive save/load", save_game(&game, CATACOMBS_TEST_SLOT) && load_game(&loaded, CATACOMBS_TEST_SLOT) && loaded.inventory[EQUIPMENT_ARMOR].max_hp_bonus == 20 && loaded.player.max_hp == game.player.max_hp && loaded.player.defense == game.player.defense);
 
 }
 

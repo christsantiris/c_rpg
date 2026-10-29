@@ -149,7 +149,7 @@ void test_jail(void) {
     int gold = game.gold;
     ASSERT("talking to the townsman triggers an explained arrest", jail_talk_nearby(&game) && game.location == LOCATION_JAIL &&
         game.jail_quest_state == 1 && strstr(game.dialogue_text, "informant") && strstr(game.dialogue_text, "locked"));
-    ASSERT("arrest confiscates equipment while preserving money", game.inventory_count + game.jail_gear_count == inventory && game.jail_gear_state == 1 && game.gold == gold &&
+    ASSERT("arrest confiscates all carried items and gold", game.inventory_count == 0 && game.jail_gear_count == inventory && game.jail_gear_state == 1 && game.gold == 0 && game.jail_gold == gold &&
         game.map.tiles[JAIL_PRISONER_Y][JAIL_PRISONER_X] == TILE_NPC_PRISONER &&
         game.map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] != TILE_JAIL_HATCH && !map_is_walkable(&game.map, 12, 13));
     ASSERT("only equipment recovery is active before Tomas offers the escort", quest_journal_count(&game, QUEST_TAB_ACTIVE) == 1);
@@ -171,6 +171,7 @@ void test_jail(void) {
         move(game.player.x + 1, game.player.y);
     }
     jail_talk_nearby(&game);
+    ASSERT("Tomas supplies exactly one all-class dagger inside the Royal Dungeon", game.location == LOCATION_JAIL && game.jail_supplies_taken && game.inventory_count == 0 && game.equipped_main_hand == EQUIPMENT_STRONG_HAND && !strcmp(game.inventory[EQUIPMENT_STRONG_HAND].name, "Smuggled Dagger") && game.inventory[EQUIPMENT_STRONG_HAND].class_mask == ITEM_CLASS_ALL);
     ASSERT("Tomas offers the escort without revealing the hatch", game_quest_offer_active(&game) && game.jail_quest_state == 1 &&
         game.map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] != TILE_JAIL_HATCH && quest_journal_count(&game, QUEST_TAB_ACTIVE) == 1);
     game_handle_quest_offer_key(&game, SDL_SCANCODE_N, 0);

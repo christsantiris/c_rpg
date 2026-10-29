@@ -37,9 +37,11 @@ directions; ordinary enemy respawns never close it again.
 
 Compact posts and a lowered beam identify closed road connections. The beam
 stays raised after victory. Regional textures distinguish crypt masonry,
-woodland checkpoints, goblin timber and the swamp causeway. Connected woodland
-and rock banks frame the crossings and prevent walking around a closed gate;
-the northern road no longer uses a straight row of trees.
+woodland checkpoints, goblin timber and the swamp causeway. Banks frame the
+crossings and prevent walking around a closed gate. On the Haunted Forest,
+Blackwater Swamp, Goblin Mountains and northern roads, the banks are drawn as the
+woods, bog or rock that the road cuts through; the Dungeon road keeps its
+connected rock banks.
 
 Nearby labels name the boss controlling a closed road. Bumping the beam or
 using the configured Interact key explains the boss and area requirement.
@@ -61,6 +63,13 @@ retaining exploration, loot, money, quests and all combat caches. A player
 stranded beyond a new closed checkpoint is placed on the original approach's
 accessible landing. Loot covered by a new bank is moved onto accessible paving,
 without covering the town transition.
+
+The Haunted Forest, Blackwater Swamp, Goblin Mountains and northern roads now cut
+through scenery. A save made on one of these roads before that change still has
+open grass; loading it rebuilds the road with its scenery. Exploration, money and
+quests are kept. A player or loot inside the new scenery moves to the road's
+accessible landing. No save version change is needed: a road without any
+scenery is detected on load.
 
 `--unlock-shortcuts`, including `tools/debug_shortcuts.sh`, bypasses these
 checkpoints without granting boss victories or quest completion. Use a normal

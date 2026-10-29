@@ -290,6 +290,33 @@ static void draw_approach_coast_ground(Renderer *r, int sx, int sy, int x, int y
     }
 }
 
+static void draw_approach_ground(Renderer *r, const GameState *g, int sx, int sy, int x, int y) {
+    const TownApproach *route = approach_route(g);
+    if (route && approach_ground(route->area) == TILE_SWAMP_FLOOR) {
+        draw_swamp_floor(r, sx, sy, x, y);
+    } else {
+        draw_town_floor(r, sx, sy);
+    }
+}
+
+static int draw_approach_scenery(Renderer *r, const GameState *g, int sx, int sy, int x, int y) {
+    // Checkpoint banks on wooded, boggy or rocky roads match the scenery around them.
+    const TownApproach *route = approach_route(g);
+    TileType scenery = route ? approach_scenery(route->area) : TILE_WALL;
+    if (scenery == TILE_FOREST_WALL) {
+        draw_forest_wall(r, sx, sy, x, y);
+    } else if (scenery == TILE_ELDERWOOD_WALL) {
+        draw_elderwood_wall(r, sx, sy, x, y);
+    } else if (scenery == TILE_SWAMP_WALL) {
+        draw_swamp_wall(r, sx, sy, x, y);
+    } else if (scenery == TILE_MOUNTAIN_WALL) {
+        draw_mountain_wall(r, sx, sy, x, y);
+    } else {
+        return 0;
+    }
+    return 1;
+}
+
 static void draw_approach_floor(Renderer *r, const GameState *g, int sx, int sy, int x, int y) {
     const TownApproach *route = approach_route(g);
     Location area = route ? route->area : LOCATION_FOREST;
@@ -2326,7 +2353,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     mangrove_draw_tile(r, g, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
                 case TILE_ROAD_BANK:
-                    draw_town_floor(r, sx, sy);
+                    if (!draw_approach_scenery(r, g, sx, sy, x, y)) {
+                        draw_town_floor(r, sx, sy);
+                    }
                     break;
                 case TILE_ROAD_GATE_CLOSED:
                 case TILE_ROAD_GATE_OPEN:
@@ -2347,7 +2376,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         if (approach_route(g)->area == LOCATION_COAST) {
                             draw_approach_coast_ground(r, sx, sy, x, y);
                         } else {
-                            draw_town_floor(r, sx, sy);
+                            draw_approach_ground(r, g, sx, sy, x, y);
                         }
                     } else if (g->location == LOCATION_APPROACH && approach_route(g) &&
                         approach_route(g)->area == LOCATION_DUNGEON &&
@@ -2358,7 +2387,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         (approach_route(g)->area == LOCATION_MOUNTAINS || approach_route(g)->area == LOCATION_FOREST || approach_route(g)->area == LOCATION_SWAMP) &&
                         x >= g->map.stairs_down_x - 3 && x <= g->map.stairs_down_x + 3 &&
                         y > g->map.stairs_down_y - (approach_route(g)->area == LOCATION_MOUNTAINS ? APPROACH_MOUNTAIN_ROWS : 6) && y <= g->map.stairs_down_y) {
-                        draw_town_floor(r, sx, sy);
+                        draw_approach_ground(r, g, sx, sy, x, y);
                     } else if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_FOREST &&
                         x >= APPROACH_LABYRINTH_X - 1 && x <= APPROACH_LABYRINTH_X + 1 &&
                         y >= APPROACH_LABYRINTH_Y - 2 && y <= APPROACH_LABYRINTH_Y) {
@@ -3224,6 +3253,28 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 }
                 if (edges != 0) {
                     draw_swamp_bank(r, sx, sy, x, y, edges);
+                }
+            }
+            if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area != LOCATION_MOUNTAINS &&
+                approach_scenery(approach_route(g)->area) != TILE_WALL && map_is_walkable(&g->map, x, y)) {
+                // Verges beside woods or bog take the soft edge of the matching adventure.
+                TileType scenery = approach_scenery(approach_route(g)->area);
+                const int ex[4] = {0, 1, 0, -1};
+                const int ey[4] = {-1, 0, 1, 0};
+                const unsigned int side[4] = {FOREST_EDGE_NORTH, FOREST_EDGE_EAST, FOREST_EDGE_SOUTH, FOREST_EDGE_WEST};
+                unsigned int edges = 0;
+                for (int i = 0; i < 4; i++) {
+                    int nx = x + ex[i];
+                    int ny = y + ey[i];
+                    if (nx >= 0 && nx < APPROACH_W && ny >= 0 && ny < APPROACH_H &&
+                        (g->map.tiles[ny][nx] == scenery || g->map.tiles[ny][nx] == TILE_ROAD_BANK)) {
+                        edges |= side[i];
+                    }
+                }
+                if (edges != 0 && scenery == TILE_SWAMP_WALL) {
+                    draw_swamp_bank(r, sx, sy, x, y, edges);
+                } else if (edges != 0) {
+                    draw_forest_tree_edge(r, sx, sy, x, y, edges);
                 }
             }
             if (g->location == LOCATION_FOREST &&
@@ -4136,17 +4187,17 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     // Draw player
     const Item *equipped_weapon = NULL;
     if (g->equipped_main_hand >= 0 &&
-        g->equipped_main_hand < g->inventory_count) {
+        g->equipped_main_hand < MAX_CARRIED_ITEMS) {
         equipped_weapon = &g->inventory[g->equipped_main_hand];
     }
     const Item *off_hand_weapon = NULL;
     if (g->equipped_off_hand >= 0 &&
-        g->equipped_off_hand < g->inventory_count) {
+        g->equipped_off_hand < MAX_CARRIED_ITEMS) {
         off_hand_weapon = &g->inventory[g->equipped_off_hand];
     }
     const Item *equipped_armor = NULL;
     if (g->equipped_armor >= 0 &&
-        g->equipped_armor < g->inventory_count) {
+        g->equipped_armor < MAX_CARRIED_ITEMS) {
         equipped_armor = &g->inventory[g->equipped_armor];
     }
     if (jail_prisoner_at(g, g->prisoner_x, g->prisoner_y) && viewport_is_visible(v, g->prisoner_x, g->prisoner_y)) {
@@ -4160,7 +4211,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     mangrove_draw_boat(r, g, v);
     draw_player_at(r, player_px, player_py,
         g->player.player_class, equipped_weapon, off_hand_weapon,
-        equipped_armor,
+        equipped_armor, game_equipped_item(g, EQUIPMENT_HELMET),
         g->player.last_dx, g->player.last_dy);
     if (g->player.poison_turns > 0) {
         draw_icon_poison(r, player_px + 16, player_py + 1);

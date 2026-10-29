@@ -92,9 +92,10 @@ void test_arrows(void) {
     game.player.player_class = CLASS_ROGUE;
     game_init(&game);
     ASSERT("a new Rogue receives 100 arrows", game.player.arrows == MAX_ARROWS);
-    // This scenario deliberately removes the backup dagger to test an empty bow.
+    // Acquire and equip a bow explicitly; the starter is now only a poor dagger.
+    game.inventory[0] = item_make_bow();
     game.inventory_count = 1;
-    game.equipped_main_hand = 0;
+    game_equip_main_hand(&game, 0);
     game.player.x = 20;
     game.player.y = 12;
     game.enemy_count = 0;
@@ -118,8 +119,8 @@ void test_arrows(void) {
         strstr(game.messages[game.message_count - 1], "No arrows"));
     game.enemies[0].x = 21;
     action_resolve_player(&game, (Action){ACTION_MOVE, 21, 12});
-    ASSERT("without a dagger, an empty bow still allows melee hits", game.inventory_count == 1 && game.inventory[0].weapon_family == WEAPON_FAMILY_BOW &&
-        game.enemies[0].hp == 1000 - (game.player.attack - game.inventory[0].attack_bonus) && game.player.arrows == 0);
+    ASSERT("without a dagger, an empty bow still allows melee hits", game.inventory_count == 0 && game.inventory[EQUIPMENT_STRONG_HAND].weapon_family == WEAPON_FAMILY_BOW &&
+        game.enemies[0].hp == 1000 - (game.player.attack - game.inventory[EQUIPMENT_STRONG_HAND].attack_bonus) && game.player.arrows == 0);
     game.player.arrows = 1;
     action_resolve_player(&game, fire);
     ASSERT("an adjacent target prevents firing without spending the last arrow", game.player.arrows == 1);
@@ -130,17 +131,17 @@ void test_arrows(void) {
     ASSERT("an arrow fired into a wall is spent without damaging the target", game.player.arrows == 0 && game.enemies[0].hp == blocked_hp);
     game.map.tiles[12][21] = TILE_TOWN_FLOOR;
     game.player.arrows = 1;
-    game.inventory[0] = item_make_magic_longbow();
+    game.inventory[EQUIPMENT_STRONG_HAND] = item_make_magic_longbow();
     game.enemy_count = 2;
     game.enemies[1] = game.enemies[0];
     game.enemies[1].x = 24;
     action_resolve_player(&game, fire);
     ASSERT("one piercing shot uses one arrow while hitting both targets", game.player.arrows == 0 && game.enemies[0].hp < 990 && game.enemies[1].hp < 990);
-    game.inventory[0] = item_make_demonic_sword();
+    game.inventory[EQUIPMENT_STRONG_HAND] = item_make_demonic_sword();
     int hp = game.enemies[0].hp;
     action_resolve_player(&game, fire);
     ASSERT("the Demonic Sword fires with no arrows", game.enemies[0].hp < hp && game.player.arrows == 0);
-    game.inventory[0] = item_make_dagger();
+    game.inventory[EQUIPMENT_STRONG_HAND] = item_make_dagger();
     hp = game.enemies[0].hp;
     action_resolve_player(&game, fire);
     ASSERT("a dagger cannot fire or consume arrows", game.enemies[0].hp == hp && game.player.arrows == 0);

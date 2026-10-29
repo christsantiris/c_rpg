@@ -11,6 +11,7 @@
 #define APPROACH_MOUNTAIN_ROWS 9
 #define APPROACH_LABYRINTH_X (APPROACH_W / 2 - 8)
 #define APPROACH_LABYRINTH_Y (APPROACH_H / 2 - 2)
+#define APPROACH_OPENING 8
 
 typedef struct {
     Location town;
@@ -26,6 +27,10 @@ const TownApproach *approach_route(const GameState *g);
 const char *approach_area_name(Location area);
 const char *approach_town_name(Location town);
 TileType approach_floor(Location area);
+TileType approach_scenery(Location area);
+TileType approach_ground(Location area);
+void approach_grow_scenery(Map *map, TileType wall, TileType ground, int through);
+void approach_migrate_scenery(GameState *g);
 TileType approach_coast_ground(int x, int y);
 void approach_refresh_dungeon(GameState *g);
 void approach_refresh_forest(GameState *g);
