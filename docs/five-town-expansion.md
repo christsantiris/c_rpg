@@ -5,6 +5,12 @@ Elderwood Forest replaces the planned Windscar Highlands north of Oakhaven.
 Its five stages and the relocated Catacombs form a third route to Castle Grounds,
 with each boss unlocking its own section. See [Elderwood](elderwood-forest.md).
 
+Towns, Castle Grounds and building interiors are drawn at the Crown Roads' 1.5×
+zoom. The camera follows the player across each 44 × 25 town, showing about 30 ×
+18 tiles, and scrolls slightly within the 32 × 21 interior rooms. The Royal
+Dungeon's cell and evidence room keep their whole-room view, as do Rook's
+Labyrinth and the Ruined Isle.
+
 ## Main travel routes
 
 ```mermaid
