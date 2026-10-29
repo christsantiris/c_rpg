@@ -25,6 +25,72 @@ static void set_shield_metadata(Item *it, ItemRarity rarity, int class_mask, Ite
     it->block_reduction_percent = 50;
 }
 
+static Item make_accessory(const char *name, AccessoryFamily family, int value) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_ACCESSORY;
+    snprintf(item.name, sizeof(item.name), "%s", name);
+    item.accessory_family = family;
+    item.class_mask = ITEM_CLASS_ALL;
+    item.value = value;
+    return item;
+}
+
+Item item_make_leather_cap(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_HELMET;
+    snprintf(item.name, sizeof(item.name), "Leather Cap");
+    item.class_mask = ITEM_CLASS_ALL;
+    item.defense_bonus = 1;
+    item.value = 40;
+    return item;
+}
+
+Item item_make_leather_gauntlets(void) {
+    Item item = make_accessory("Leather Gauntlets", ACCESSORY_FAMILY_GAUNTLETS, 60);
+    item.attack_bonus = 1;
+    return item;
+}
+
+Item item_make_leather_bracers(void) {
+    Item item = make_accessory("Leather Bracers", ACCESSORY_FAMILY_BRACERS, 40);
+    item.defense_bonus = 1;
+    return item;
+}
+
+Item item_make_ring_of_vigor(void) {
+    Item item = make_accessory("Ring of Vigor", ACCESSORY_FAMILY_RING, 80);
+    item.max_hp_bonus = 10;
+    return item;
+}
+
+Item item_make_copper_amulet(void) {
+    Item item = make_accessory("Copper Amulet", ACCESSORY_FAMILY_AMULET, 80);
+    item.max_mp_bonus = 10;
+    return item;
+}
+
+int item_accessory_limit(const Item *item) {
+    if (item->type != ITEM_ACCESSORY) {
+        return 0;
+    }
+    switch (item->accessory_family) {
+        case ACCESSORY_FAMILY_RING:
+            return 2;
+        case ACCESSORY_FAMILY_GAUNTLETS:
+        case ACCESSORY_FAMILY_BRACERS:
+        case ACCESSORY_FAMILY_AMULET:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+int item_is_jewelry(const Item *item) {
+    return item->type == ITEM_ACCESSORY && (item->accessory_family == ACCESSORY_FAMILY_RING || item->accessory_family == ACCESSORY_FAMILY_AMULET);
+}
+
 Item item_make_health_potion(void) {
     Item it = {0};
     it.active = 1;
@@ -204,6 +270,17 @@ Item item_make_embercleaver(void) {
     item.cleave_percent = 25;
     item.value = 650;
     set_weapon_metadata(&item, WEAPON_FAMILY_AXE, WEAPON_HANDS_TWO, ITEM_RARITY_RARE, ITEM_CLASS_WARRIOR, ITEM_VISUAL_EMBERCLEAVER);
+    return item;
+}
+
+Item item_make_worn_staff(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_WEAPON;
+    strncpy(item.name, "Worn Staff", sizeof(item.name) - 1);
+    item.attack_bonus = 1;
+    item.value = 10;
+    set_weapon_metadata(&item, WEAPON_FAMILY_STAFF, WEAPON_HANDS_TWO, ITEM_RARITY_COMMON, ITEM_CLASS_MAGE, ITEM_VISUAL_STAFF);
     return item;
 }
 
@@ -462,6 +539,8 @@ void item_apply_legacy_metadata(Item *item) {
         definition = item_make_embercleaver();
     } else if (strcmp(item->name, "Magic Battle Axe") == 0) {
         definition = item_make_magic_battle_axe();
+    } else if (strcmp(item->name, "Worn Staff") == 0) {
+        definition = item_make_worn_staff();
     } else if (strcmp(item->name, "Staff") == 0) {
         definition = item_make_staff();
     } else if (strcmp(item->name, "Runed Staff") == 0) {

@@ -1,8 +1,9 @@
 # Haunted Forest
 
 The Haunted Forest is a **five-level adventure** beside a straight, one-tile
-cobblestone road between **Oakhaven (east)** and **Stillbury (west)**. A large
-haunted-tree entrance stands north of that road. Leaving either town first
+cobblestone road between **Oakhaven (east)** and **Stillbury (west)**. The road
+cuts through dense haunted woods, with a narrow grass verge and a clearing at
+its town end. A large haunted-tree entrance stands in a clearing north of that road. Leaving either town first
 enters the safe approach; entering the forest always starts at **Forest 1**.
 Its interior never plays backward from Stillbury. Ordinary backtracking within
 an expedition remains available.

@@ -80,39 +80,53 @@ void jail_migrate_castle(GameState *g) {
     }
 }
 
-static int equipment(const Item *item) {
-    return item->type == ITEM_WEAPON || item->type == ITEM_ARMOR || item->type == ITEM_SHIELD;
-}
-
 static void confiscate_gear(GameState *g) {
     if (g->jail_gear_state) {
         return;
     }
-    for (int i = 0; i < g->inventory_count; i++) {
-        if (!equipment(&g->inventory[i])) {
+    for (int slot = EQUIPMENT_STRONG_HAND; slot < MAX_CARRIED_ITEMS; slot++) {
+        const Item *item = game_equipped_item(g, slot);
+        if (!item) {
             continue;
         }
         int index = g->jail_gear_count++;
-        g->jail_gear[index] = g->inventory[i];
-        if (g->equipped_main_hand == i) {
+        g->jail_gear[index] = *item;
+        if (slot == EQUIPMENT_STRONG_HAND) {
             g->jail_main_hand = index;
-        }
-        if (g->equipped_off_hand == i) {
+        } else if (slot == EQUIPMENT_WEAK_HAND) {
             g->jail_off_hand = index;
-        }
-        if (g->equipped_armor == i) {
+        } else if (slot == EQUIPMENT_ARMOR) {
             g->jail_armor = index;
+        } else {
+            int extra = slot == EQUIPMENT_HELMET ? 0 : slot - EQUIPMENT_ACCESSORY_1 + 1;
+            g->jail_extra_slots[extra] = index;
         }
+        game_clear_equipment_slot(g, slot);
     }
-    for (int i = g->inventory_count - 1; i >= 0; i--) {
-        if (equipment(&g->inventory[i])) {
-            game_remove_inventory_item(g, i);
-        }
+    for (int i = 0; i < g->inventory_count; i++) {
+        g->jail_gear[g->jail_gear_count++] = g->inventory[i];
+        g->inventory[i] = (Item){0};
     }
-    if (g->jail_gear_count) {
+    g->inventory_count = 0;
+    g->jail_gold = g->gold;
+    g->gold = 0;
+    g->jail_arrows = g->player.arrows;
+    g->player.arrows = 0;
+    if (g->jail_gear_count || g->jail_gold || g->jail_arrows) {
         g->jail_gear_state = 1;
-        push_message(g, "Assigned: Recover Your Equipment. The guards locked your gear in a storeroom.");
+        push_message(g, "Assigned: Recover Your Equipment. The guards locked all your belongings and gold in a storeroom.");
     }
+}
+
+static void give_smuggled_dagger(GameState *g) {
+    if (!g->jail_quest_state || g->jail_supplies_taken || g->inventory_count >= MAX_INVENTORY) {
+        return;
+    }
+    int index = g->inventory_count++;
+    g->inventory[index] = item_make_smuggled_dagger();
+    game_equip_main_hand(g, index);
+    g->jail_supplies_taken = 1;
+    push_message(g, "Tomas slips you one Smuggled Dagger hidden in the cell. Every class can wield it.");
 }
 
 static void enter_armory(GameState *g) {
@@ -150,7 +164,7 @@ static void enter_armory(GameState *g) {
             g->map.tiles[g->floor_items[i].y][g->floor_items[i].x] = TILE_ITEM;
         }
     }
-    push_message(g, "Royal Guards defend the dungeon's evidence room. Your confiscated equipment is in the chest.");
+    push_message(g, "Royal Guards defend the evidence room. Your confiscated belongings and gold are in the chest.");
 }
 
 static void leave_armory(GameState *g) {
@@ -176,33 +190,37 @@ int jail_recover_gear(GameState *g) {
             return 1;
         }
     }
-    // Recover the original equipment first so even one free slot yields a usable weapon.
-    for (int pass = 0; pass < g->jail_gear_count + 3 && g->inventory_count < MAX_INVENTORY; pass++) {
-        int index = pass == 0 ? g->jail_main_hand : pass == 1 ? g->jail_off_hand : pass == 2 ? g->jail_armor : pass - 3;
+    g->gold += g->jail_gold;
+    g->jail_gold = 0;
+    int arrows = MAX_ARROWS - g->player.arrows;
+    if (arrows > g->jail_arrows) {
+        arrows = g->jail_arrows;
+    }
+    g->player.arrows += arrows;
+    g->jail_arrows -= arrows;
+    int slots[] = {g->jail_main_hand, g->jail_off_hand, g->jail_extra_slots[0], g->jail_armor, g->jail_extra_slots[1], g->jail_extra_slots[2]};
+    // Restore worn gear directly, even when the bag is full. Revisit unclaimed
+    // bag items after all six slots so accessory constraints see the full set.
+    for (int pass = 0; pass < g->jail_gear_count + EQUIPMENT_SLOT_COUNT; pass++) {
+        int index = pass < EQUIPMENT_SLOT_COUNT ? slots[pass] : pass - EQUIPMENT_SLOT_COUNT;
         if (index < 0 || index >= g->jail_gear_count || (g->jail_gear_claimed & (1 << index))) {
             continue;
         }
-        int slot = g->inventory_count++;
-        g->inventory[slot] = g->jail_gear[index];
-        g->jail_gear_claimed |= 1 << index;
-        if (index == g->jail_main_hand && g->equipped_main_hand < 0) {
-            game_equip_main_hand(g, slot);
-        } else if (index == g->jail_off_hand && g->equipped_off_hand < 0) {
-            if (g->inventory[slot].type == ITEM_SHIELD) {
-                game_equip_shield(g, slot);
-            } else {
-                game_equip_off_hand(g, slot);
-            }
-        } else if (index == g->jail_armor && g->equipped_armor < 0) {
-            g->equipped_armor = slot;
-            game_apply_armor_bonuses(g, &g->inventory[slot]);
+        const Item *item = &g->jail_gear[index];
+        int restored = pass < EQUIPMENT_SLOT_COUNT && game_restore_equipment(g, item, MAX_INVENTORY + pass);
+        if (!restored && g->inventory_count < MAX_INVENTORY) {
+            g->inventory[g->inventory_count++] = *item;
+            restored = 1;
+        }
+        if (restored) {
+            g->jail_gear_claimed |= 1 << index;
         }
     }
-    if (g->jail_gear_claimed == (1 << g->jail_gear_count) - 1) {
+    if (g->jail_gear_claimed == (1 << g->jail_gear_count) - 1 && !g->jail_gold && !g->jail_arrows) {
         g->jail_gear_state = 3;
-        push_message(g, "Completed: Recover Your Equipment. Every confiscated item is back in your pack.");
+        push_message(g, "Completed: Recover Your Equipment. All belongings and gold have been returned.");
     } else {
-        push_message(g, "Make room in your pack, then Pick Up again. Unclaimed gear stays safely on the ground.");
+        push_message(g, "Make room in your pack or quiver, then Pick Up again. Unclaimed belongings stay safely in the chest.");
     }
     return 1;
 }
@@ -245,7 +263,7 @@ static void enter_jail(GameState *g, int arrest) {
     g->player.poison_turns = 0;
     g->player.frozen_turns = 0;
     g->player.freeze_recovery = 0;
-    dialogue(g, "Royal Guards", "The townsman was a royal informant. The guards locked you in the Royal Dungeon and confiscated your weapons, armor, and shields. Find your gear and a way out.", g->player.x, g->player.y);
+    dialogue(g, "Royal Guards", "The townsman was a royal informant. The guards locked you in the Royal Dungeon and confiscated all your belongings, arrows, and gold. Find a way out, then reclaim them from the guarded evidence chest.", g->player.x, g->player.y);
     push_message(g, "The townsman reports you. Royal Guards escort you to the Royal Dungeon!");
 }
 
@@ -333,13 +351,8 @@ static void enter_tunnel(GameState *g) {
     g->prisoner_x = 1;
     g->prisoner_y = 14;
     populate_tunnel(g);
-    if (g->jail_gear_state == 1 && !g->jail_supplies_taken && g->inventory_count < MAX_INVENTORY) {
-        int slot = g->inventory_count++;
-        g->inventory[slot] = item_make_smuggled_dagger();
-        game_equip_main_hand(g, slot);
-        g->jail_supplies_taken = 1;
-        push_message(g, "Tomas gives you a smuggled weapon for the escape. Your own gear is still guarded in the dungeon.");
-    }
+    // Also supply older saves that accepted the escort before receiving a blade.
+    give_smuggled_dagger(g);
     push_message(g, "Tomas follows. Clear the tunnel east to Ridgeshire; Space lets him catch up.");
     push_message(g, "The passage narrows deeper in; armed smugglers guard the long route home.");
     push_message(g, "Tomas pulls the hatch shut behind you so the guards cannot follow.");
@@ -363,6 +376,7 @@ int jail_talk_nearby(GameState *g) {
         if (g->jail_quest_state == 0 && g->debug_passages_unlocked) {
             g->jail_quest_state = 1;
         }
+        give_smuggled_dagger(g);
         dialogue(g, "Tomas", g->jail_quest_state == 1 ?
             "A flagstone hides a tunnel to central Ridgeshire. Smugglers, spiders, and rats make it too dangerous for me alone. Lead me home for a reward; I will reveal the hatch and follow you." :
             "Step onto the revealed hatch to enter the tunnel. I will follow you to Ridgeshire. Clear the way; Space lets me catch up.", JAIL_PRISONER_X, JAIL_PRISONER_Y);

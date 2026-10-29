@@ -210,7 +210,7 @@ static void test_mantle_rebalance(void) {
             game.temple_treasure_state = 3;
             game.island_travel_unlocked = 1;
             int ok = legacy_save(150) && load_game(&loaded, 99197);
-            int updated = ok && loaded.inventory[mantle].max_hp_bonus == 8 && loaded.inventory[mantle].max_mp_bonus == 7 &&
+            int updated = ok && loaded.inventory[mode ? EQUIPMENT_ARMOR : mantle].max_hp_bonus == 8 && loaded.inventory[mode ? EQUIPMENT_ARMOR : mantle].max_mp_bonus == 7 &&
                 loaded.floor_items[0].item.max_hp_bonus == 8 && loaded.floor_items[0].item.max_mp_bonus == 7;
             for (int level = 0; level < CASTLE_DEPTH; level++) {
                 updated &= loaded.castle_loot[level][0].item.max_hp_bonus == 8 && loaded.castle_loot[level][0].item.max_mp_bonus == 7;
@@ -221,7 +221,7 @@ static void test_mantle_rebalance(void) {
                 loaded.player.hp == (mode == 2 ? 3 : loaded.player.max_hp) && loaded.player.mp == (mode == 2 ? 2 : loaded.player.max_mp) &&
                 loaded.player.defense == game.player.defense);
             ASSERT("mantle rebalance preserves other armor, gold, boss victories and reward progress", ok &&
-                loaded.inventory[other].max_hp_bonus == game.inventory[other].max_hp_bonus && loaded.gold == 432 &&
+                loaded.inventory[other - (mode != 0)].max_hp_bonus == game.inventory[other].max_hp_bonus && loaded.gold == 432 &&
                 loaded.defeated_bosses == game.defeated_bosses && loaded.sun_guardian_reward_state == 2 && loaded.temple_treasure_state == 3);
             int hp = loaded.player.hp;
             int mp = loaded.player.mp;
@@ -230,7 +230,8 @@ static void test_mantle_rebalance(void) {
             ASSERT("resaving migrated mantles never applies the stat reduction twice", save_game(&loaded, 99197) && load_game(&loaded, 99197) &&
                 loaded.player.hp == hp && loaded.player.mp == mp && loaded.player.max_hp == max_hp && loaded.player.max_mp == max_mp);
             if (mode) {
-                action_resolve_player(&loaded, (Action){ACTION_DROP_ITEM, mantle, 0});
+                game_unequip_item(&loaded, EQUIPMENT_ARMOR);
+                action_resolve_player(&loaded, (Action){ACTION_DROP_ITEM, loaded.inventory_count - 1, 0});
                 ASSERT("dropping an equipped migrated mantle restores the original base resource caps", loaded.equipped_armor == -1 && loaded.player.max_hp == base_hp && loaded.player.max_mp == base_mp);
             }
         }
@@ -663,14 +664,14 @@ void test_sun_guardian(void) {
         int max_hp = game.player.max_hp;
         int max_mp = game.player.max_mp;
         action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, 0, 0});
-        equipment_ok &= game.equipped_armor == 0 && game.player.defense == defense + 5 &&
+        equipment_ok &= game.equipped_armor == EQUIPMENT_ARMOR && game.player.defense == defense + 5 &&
             game.player.max_hp == max_hp + 8 && game.player.max_mp == max_mp + 7 &&
-            game.inventory[0].class_mask == ITEM_CLASS_ALL && game.inventory[0].armor_family == ARMOR_FAMILY_LIGHT;
+            game.inventory[EQUIPMENT_ARMOR].class_mask == ITEM_CLASS_ALL && game.inventory[EQUIPMENT_ARMOR].armor_family == ARMOR_FAMILY_LIGHT;
     }
     ASSERT("Sunwarden Mantle equips on all classes with exactly +5 defense, +8 HP and +7 MP", equipment_ok);
     ASSERT("equipped mantle metadata and derived stats survive saving",
-        save_game(&game, 99197) && load_game(&loaded, 99197) && loaded.equipped_armor == 0 &&
-        loaded.inventory[0].visual_id == ITEM_VISUAL_SUNWARDEN_MANTLE && loaded.player.max_hp == game.player.max_hp &&
+        save_game(&game, 99197) && load_game(&loaded, 99197) && loaded.equipped_armor == EQUIPMENT_ARMOR &&
+        loaded.inventory[EQUIPMENT_ARMOR].visual_id == ITEM_VISUAL_SUNWARDEN_MANTLE && loaded.player.max_hp == game.player.max_hp &&
         loaded.player.max_mp == game.player.max_mp && loaded.player.defense == game.player.defense);
 
     e = setup();

@@ -486,7 +486,7 @@ static void test_robes(void) {
     int base_mp = game.player.max_mp;
     int base_defense = game.player.defense;
     action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, 0, 0});
-    ASSERT("equipping Prismweave Robes actually adds +3 defense and +35 maximum MP", game.equipped_armor == 0 && game.player.max_mp == base_mp + 35 && game.player.defense == base_defense + 3);
+    ASSERT("equipping Prismweave Robes actually adds +3 defense and +35 maximum MP", game.equipped_armor == EQUIPMENT_ARMOR && game.player.max_mp == base_mp + 35 && game.player.defense == base_defense + 3);
     game.player.known_spell_count = 1;
     game.player.known_spells[0] = spell_make_heal();
     game.player.equipped_spell = 0;
@@ -499,7 +499,7 @@ static void test_robes(void) {
     int cost = game.player.known_spells[0].mp_cost * 88 / 100;
     ASSERT("Prismweave Robes apply their real spell-cost reduction to casting", game.player.mp == before - cost);
     int ok = save_game(&game, 99195) && load_game(&loaded, 99195);
-    ASSERT("equipped robe metadata, maximum MP and mana cost modifier survive saving", ok && loaded.equipped_armor == 0 && loaded.inventory[0].max_mp_bonus == 35 && loaded.inventory[0].spell_cost_reduction_percent == 12 && loaded.inventory[0].visual_id == ITEM_VISUAL_PRISMWEAVE_ROBES && loaded.player.max_mp == base_mp + 35);
+    ASSERT("equipped robe metadata, maximum MP and mana cost modifier survive saving", ok && loaded.equipped_armor == EQUIPMENT_ARMOR && loaded.inventory[EQUIPMENT_ARMOR].max_mp_bonus == 35 && loaded.inventory[EQUIPMENT_ARMOR].spell_cost_reduction_percent == 12 && loaded.inventory[EQUIPMENT_ARMOR].visual_id == ITEM_VISUAL_PRISMWEAVE_ROBES && loaded.player.max_mp == base_mp + 35);
     Item top = item_make_archmage_robes();
     Item robes = item_make_prismweave_robes();
     ASSERT("Archmage Robes retain higher defense, mana and cost reduction", top.defense_bonus > robes.defense_bonus && top.max_mp_bonus > robes.max_mp_bonus && top.spell_cost_reduction_percent > robes.spell_cost_reduction_percent);

@@ -141,6 +141,7 @@ static void shield_checks(GameState *g, GameState *loaded) {
     g->inventory[1] = item_make_magic_shield();
     g->player.player_class = CLASS_WARRIOR;
     game_equip_main_hand(g, 0);
+    shield--;
     int base_hp = g->player.max_hp;
     int base_defense = g->player.defense;
     int hp = base_hp - 10;
@@ -149,16 +150,17 @@ static void shield_checks(GameState *g, GameState *loaded) {
         g->inventory[shield].defense_bonus == 8 && g->inventory[shield].block_chance == 20 && g->inventory[shield].max_hp_bonus == 30);
     ASSERT("equipping Stoneguard increases maximum HP without healing", game_equip_shield(g, shield) && g->player.max_hp == base_hp + 30 &&
         g->player.hp == hp && g->player.defense == base_defense + 8);
-    ASSERT("re-equipping the same shield never stacks its bonuses", game_equip_shield(g, shield) && g->player.max_hp == base_hp + 30 && g->player.hp == hp && g->player.defense == base_defense + 8);
+    ASSERT("worn equipment cannot be reapplied to stack its bonuses", !game_equip_shield(g, EQUIPMENT_WEAK_HAND) && g->player.max_hp == base_hp + 30 && g->player.hp == hp && g->player.defense == base_defense + 8);
     g->player.hp = base_hp + 20;
-    ASSERT("swapping shields removes health and defense exactly once", game_equip_shield(g, 1) && g->player.max_hp == base_hp && g->player.hp == base_hp && g->player.defense == base_defense + 9);
-    game_equip_shield(g, shield);
+    ASSERT("swapping shields removes health and defense exactly once", game_equip_shield(g, 0) && g->player.max_hp == base_hp && g->player.hp == base_hp && g->player.defense == base_defense + 9);
+    game_equip_shield(g, 0);
     g->player.hp = base_hp + 20;
     ASSERT("an equipped Stoneguard survives saving without doubling HP", save_game(g, CROWN_SLOT) && load_game(loaded, CROWN_SLOT) &&
-        loaded->equipped_off_hand == shield && loaded->player.max_hp == base_hp + 30 && loaded->player.hp == base_hp + 20 && loaded->inventory[shield].max_hp_bonus == 30);
+        loaded->equipped_off_hand == EQUIPMENT_WEAK_HAND && loaded->player.max_hp == base_hp + 30 && loaded->player.hp == base_hp + 20 && loaded->inventory[EQUIPMENT_WEAK_HAND].max_hp_bonus == 30);
     game_unequip_off_hand(loaded);
     ASSERT("removing a loaded shield restores base HP and clamps current HP", loaded->player.max_hp == base_hp && loaded->player.hp == base_hp && loaded->player.defense == base_defense);
-    game_remove_inventory_item(g, shield);
+    game_unequip_item(g, EQUIPMENT_WEAK_HAND);
+    game_remove_inventory_item(g, g->inventory_count - 1);
     int count = g->inventory_count;
     crown_quest_talk(g);
     ASSERT("dropping a claimed reward removes its bonuses and never recreates it", g->player.max_hp == base_hp && g->player.defense == base_defense &&

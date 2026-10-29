@@ -2,8 +2,9 @@
 
 Blackwater Swamp has five forward levels, with Mira on level 3 and the Swamp
 Demon on level 5. Stillbury's north gate and Rosemoor's south gate each lead
-onto a safe cobblestone road through grass. A mossy crypt framed by mangroves
-stands beside the road; its south-facing doorway always starts Swamp 1.
+onto a safe cobblestone causeway through bog, reeds and dead trees, with narrow
+mud verges and a clearing at its town end. A mossy crypt framed by mangroves
+stands in a clearing beside the road; its south-facing doorway always starts Swamp 1.
 
 Before the Demon is defeated, the road ends at the entrance. Victory opens
 the full north–south road: Rosemoor north, Stillbury south. Leaving the final

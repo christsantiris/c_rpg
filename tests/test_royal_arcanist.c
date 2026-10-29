@@ -285,8 +285,8 @@ static void test_arcanist_reward(void) {
     ASSERT("reserved robes remain recoverable after castle retreat", game.arcanist_reward_state == 2 && game.inventory_count == 1 && game.inventory[0].visual_id == ITEM_VISUAL_CROWN_CHAPEL_VESTMENTS);
     int max_mp = game.player.max_mp;
     action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, 0, 0});
-    ASSERT("Mage can equip Vestments and receives their maximum MP bonus", game.equipped_armor == 0 && game.player.max_mp == max_mp + 45);
-    ASSERT("claim and equipped item metadata survive save/load without another award", save_game(&game, ARCANIST_SLOT) && load_game(&loaded, ARCANIST_SLOT) && loaded.arcanist_reward_state == 2 && loaded.equipped_armor == 0 && loaded.inventory[0].max_mp_bonus == 45 && !castle_interact(&loaded));
+    ASSERT("Mage can equip Vestments and receives their maximum MP bonus", game.equipped_armor == EQUIPMENT_ARMOR && game.player.max_mp == max_mp + 45);
+    ASSERT("claim and equipped item metadata survive save/load without another award", save_game(&game, ARCANIST_SLOT) && load_game(&loaded, ARCANIST_SLOT) && loaded.arcanist_reward_state == 2 && loaded.equipped_armor == EQUIPMENT_ARMOR && loaded.inventory[EQUIPMENT_ARMOR].max_mp_bonus == 45 && !castle_interact(&loaded));
 }
 
 static cJSON *read_fixture(void) {

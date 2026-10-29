@@ -1,5 +1,6 @@
 #include "expedition_fixture.h"
 #include "test_utils.h"
+#include "equipment_test_utils.h"
 #include "game/coastal_travel.h"
 #include "town_road_checks.h"
 #include "game/approach.h"
@@ -142,6 +143,9 @@ static int rewrite_save_version(int slot, int version) {
     if (!save_version) {
         cJSON_Delete(root);
         return 0;
+    }
+    if (version < 224) {
+        test_legacy_equipment_json(root);
     }
     save_version->valueint = version;
     save_version->valuedouble = version;
@@ -343,19 +347,20 @@ static void test_bow_catalog_round_trip(void) {
         original.castle_loot[0][0] = original.floor_items[0];
         int ok = save_game(&original, ROUND_TRIP_SLOT) &&
             (!legacy || rewrite_save_version(ROUND_TRIP_SLOT, 141)) && load_game(&loaded, ROUND_TRIP_SLOT);
-        int match = ok && loaded.inventory_count == 6;
+        int match = ok && loaded.inventory_count == 5;
         for (int i = 0; i < 6 && match; i++) {
-            match &= weapon_fields_match(&loaded.inventory[i], &bows[i]);
+            int index = i == 2 ? EQUIPMENT_STRONG_HAND : i > 2 ? i - 1 : i;
+            match &= weapon_fields_match(&loaded.inventory[index], &bows[i]);
         }
         ASSERT("every bow retains its damage, range, class, traits and visual on load", match);
         ASSERT("legacy Hunting Bow names and ranges migrate in dropped and cached loot", ok &&
             weapon_fields_match(&loaded.floor_items[0].item, &bows[0]) &&
             weapon_fields_match(&loaded.castle_loot[0][0].item, &bows[0]));
         ASSERT("bow migration preserves equipped attack, equipment index and gold", ok &&
-            loaded.player.attack == original.player.attack && loaded.equipped_main_hand == 2 && loaded.gold == 234);
+            loaded.player.attack == original.player.attack && loaded.equipped_main_hand == EQUIPMENT_STRONG_HAND && loaded.gold == 234);
         ASSERT("migrated bow stats remain stable on a second load", ok && save_game(&loaded, MIGRATED_SLOT) &&
             load_game(&original, MIGRATED_SLOT) && weapon_fields_match(&original.inventory[0], &bows[0]) &&
-            weapon_fields_match(&original.inventory[5], &bows[5]));
+            weapon_fields_match(&original.inventory[4], &bows[5]));
     }
     remove_test_save(ROUND_TRIP_SLOT);
     remove_test_save(MIGRATED_SLOT);
@@ -383,6 +388,7 @@ static void test_current_weapon_round_trip(void) {
     original.equipped_main_hand = 0;
     original.equipped_off_hand = 9;
     original.equipped_armor = 6;
+    game_migrate_equipment_storage(&original);
     original.player.known_spell_count = 2;
     original.player.known_spells[0] = spell_make_magic_arrow();
     spell_upgrade(&original.player.known_spells[0]);
@@ -412,7 +418,7 @@ static void test_current_weapon_round_trip(void) {
     }
 
     int fields_match = loaded.inventory_count == original.inventory_count;
-    for (int i = 0; i < 6 && fields_match; i++) {
+    for (int i = 0; i < MAX_CARRIED_ITEMS && fields_match; i++) {
         fields_match = weapon_fields_match(&original.inventory[i],
             &loaded.inventory[i]);
     }
@@ -424,14 +430,14 @@ static void test_current_weapon_round_trip(void) {
     ASSERT("armor index survives save/load",
         loaded.equipped_armor == original.equipped_armor);
     int armor_fields_survive = 1;
-    for (int i = 6; i < 9 && armor_fields_survive; i++) {
+    for (int i = 0; i < MAX_CARRIED_ITEMS && armor_fields_survive; i++) {
         armor_fields_survive = armor_fields_match(&loaded.inventory[i],
             &original.inventory[i]);
     }
     ASSERT("all armor traits and metadata survive save/load",
         armor_fields_survive);
     ASSERT("shield traits survive save/load",
-        shield_fields_match(&loaded.inventory[9], &original.inventory[9]));
+        shield_fields_match(&loaded.inventory[EQUIPMENT_WEAK_HAND], &original.inventory[EQUIPMENT_WEAK_HAND]));
     ASSERT("spell rank survives save/load",
         loaded.player.known_spells[0].rank == 2 &&
         loaded.player.known_spells[0].damage == 25);
@@ -456,7 +462,7 @@ static void test_dual_wield_round_trip(void) {
     original.inventory[0] = item_make_long_sword();
     original.inventory[1] = item_make_short_sword();
     game_equip_main_hand(&original, 0);
-    game_equip_off_hand(&original, 1);
+    game_equip_off_hand(&original, 0);
     int equipped_attack = original.player.attack;
 
     remove_test_save(DUAL_WIELD_SLOT);
@@ -465,8 +471,8 @@ static void test_dual_wield_round_trip(void) {
     ASSERT("dual-wield save can be loaded", loaded_ok);
     if (loaded_ok) {
         ASSERT("dual-wield indices survive save/load",
-            loaded.equipped_main_hand == 0 &&
-            loaded.equipped_off_hand == 1);
+            loaded.equipped_main_hand == EQUIPMENT_STRONG_HAND &&
+            loaded.equipped_off_hand == EQUIPMENT_WEAK_HAND);
         ASSERT("off-hand attack total survives save/load",
             loaded.player.attack == equipped_attack);
     }
@@ -561,25 +567,25 @@ static void test_goblin_shield_rebalance_migration(void) {
         }
         original.floor_item_count = 1;
         original.floor_items[0] = (FloorItem){.active = 1, .x = 20, .y = 20,
-            .underlying_tile = TILE_TOWN_FLOOR, .item = original.inventory[index]};
+            .underlying_tile = TILE_TOWN_FLOOR, .item = original.inventory[equipped ? EQUIPMENT_WEAK_HAND : index]};
         original.map.tiles[20][20] = TILE_ITEM;
         original.castle_loot_count[0] = 1;
         original.castle_loot[0][0] = original.floor_items[0];
         int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 111) &&
             load_game(&loaded, LEGACY_SLOT);
         ASSERT("legacy Goblin shields migrate in inventory, dropped loot and castle loot", ok &&
-            loaded.inventory[index].defense_bonus == 3 && loaded.inventory[index].block_chance == 12 &&
-            loaded.inventory[index].value == 200 && loaded.floor_items[0].item.defense_bonus == 3 &&
+            loaded.inventory[equipped ? EQUIPMENT_WEAK_HAND : index].defense_bonus == 3 && loaded.inventory[equipped ? EQUIPMENT_WEAK_HAND : index].block_chance == 12 &&
+            loaded.inventory[equipped ? EQUIPMENT_WEAK_HAND : index].value == 200 && loaded.floor_items[0].item.defense_bonus == 3 &&
             loaded.floor_items[0].item.block_chance == 12 && loaded.floor_items[0].item.value == 200 &&
             loaded.castle_loot[0][0].item.defense_bonus == 3 && loaded.castle_loot[0][0].item.block_chance == 12 &&
             loaded.castle_loot[0][0].item.value == 200);
         ASSERT("shield migration adjusts defense only for an equipped shield", ok &&
             loaded.player.defense == base_defense + (equipped ? 3 : 0) &&
-            loaded.equipped_off_hand == (equipped ? index : -1));
+            loaded.equipped_off_hand == (equipped ? EQUIPMENT_WEAK_HAND : -1));
         ASSERT("shield migration preserves progress and does not apply twice", ok &&
             loaded.gold == original.gold && loaded.defeated_bosses == original.defeated_bosses &&
             save_game(&loaded, MIGRATED_SLOT) && load_game(&reloaded, MIGRATED_SLOT) &&
-            reloaded.player.defense == loaded.player.defense && reloaded.inventory[index].defense_bonus == 3);
+            reloaded.player.defense == loaded.player.defense && reloaded.inventory[equipped ? EQUIPMENT_WEAK_HAND : index].defense_bonus == 3);
         remove_test_save(LEGACY_SLOT);
         remove_test_save(MIGRATED_SLOT);
     }
@@ -665,8 +671,9 @@ static void test_cryptblade_rebalance_migration(void) {
             original.inventory[i].sharpened = i == 0 ? sharpened : (i == 1 ? !sharpened : 0);
             original.inventory[i].attack_bonus = (version < 110 ? 8 : 5) + original.inventory[i].sharpened;
         }
-        game_equip_main_hand(&original, 0);
-        game_equip_off_hand(&original, 1);
+        original.equipped_main_hand = 0;
+        original.equipped_off_hand = 1;
+        original.player.attack += original.inventory[0].attack_bonus + game_off_hand_attack_bonus(&original.inventory[1]);
         original.floor_item_count = 2;
         original.floor_items[0] = (FloorItem){.active = 1, .x = 20, .y = 20,
             .underlying_tile = TILE_TOWN_FLOOR, .item = original.inventory[0]};
@@ -691,11 +698,11 @@ static void test_cryptblade_rebalance_migration(void) {
             continue;
         }
         ASSERT("Cryptblade migration preserves sharpening and critical chance",
-            loaded.inventory[0].attack_bonus == 2 + sharpened &&
-            loaded.inventory[0].sharpened == sharpened && loaded.inventory[0].critical_chance_bonus == 10 &&
-            loaded.inventory[1].attack_bonus == 3 - sharpened && loaded.inventory[2].attack_bonus == 2);
+            loaded.inventory[EQUIPMENT_STRONG_HAND].attack_bonus == 2 + sharpened &&
+            loaded.inventory[EQUIPMENT_STRONG_HAND].sharpened == sharpened && loaded.inventory[EQUIPMENT_STRONG_HAND].critical_chance_bonus == 10 &&
+            loaded.inventory[EQUIPMENT_WEAK_HAND].attack_bonus == 3 - sharpened && loaded.inventory[0].attack_bonus == 2);
         ASSERT("equipped main and off-hand Cryptblades update attack with correct rounding",
-            loaded.equipped_main_hand == 0 && loaded.equipped_off_hand == 1 &&
+            loaded.equipped_main_hand == EQUIPMENT_STRONG_HAND && loaded.equipped_off_hand == EQUIPMENT_WEAK_HAND &&
             loaded.player.attack == base_attack + 2 + sharpened + (4 - sharpened) / 2);
         ASSERT("dropped and cached Cryptblades receive the same balance change",
             loaded.floor_items[0].item.attack_bonus == 2 + sharpened &&
@@ -717,8 +724,8 @@ static void test_cryptblade_rebalance_migration(void) {
         ASSERT("rebalanced weapons round-trip without repeating equipped stat changes",
             save_game(&loaded, MIGRATED_SLOT) && load_game(&reloaded, MIGRATED_SLOT) &&
             reloaded.player.attack == loaded.player.attack &&
-            weapon_fields_match(&reloaded.inventory[0], &loaded.inventory[0]) &&
-            reloaded.inventory[0].sharpened == sharpened);
+            weapon_fields_match(&reloaded.inventory[EQUIPMENT_STRONG_HAND], &loaded.inventory[EQUIPMENT_STRONG_HAND]) &&
+            reloaded.inventory[EQUIPMENT_STRONG_HAND].sharpened == sharpened);
         remove_test_save(LEGACY_SLOT);
         remove_test_save(MIGRATED_SLOT);
     }
@@ -768,7 +775,7 @@ static void test_migrated_armor_round_trip(void) {
     Item expected_armor = item_make_chain_mail();
     Item expected_drop = item_make_leather_armor();
     ASSERT("legacy equipped armor receives current metadata",
-        armor_fields_match(&migrated.inventory[0], &expected_armor));
+        armor_fields_match(&migrated.inventory[EQUIPMENT_ARMOR], &expected_armor));
     ASSERT("armor migration corrects equipped defense",
         migrated.player.defense == 6 + expected_armor.defense_bonus);
     ASSERT("legacy floor armor receives current metadata",
@@ -780,11 +787,11 @@ static void test_migrated_armor_round_trip(void) {
     ASSERT("migrated armor save loads again", reloaded_ok);
     if (reloaded_ok) {
         ASSERT("migrated armor remains stable after another save/load",
-            armor_fields_match(&reloaded.inventory[0], &expected_armor) &&
+            armor_fields_match(&reloaded.inventory[EQUIPMENT_ARMOR], &expected_armor) &&
             armor_fields_match(&reloaded.floor_items[0].item,
                 &expected_drop));
         ASSERT("migrated armor index and defense remain stable",
-            reloaded.equipped_armor == 0 &&
+            reloaded.equipped_armor == EQUIPMENT_ARMOR &&
             reloaded.player.defense == migrated.player.defense);
     }
     remove_test_save(LEGACY_ARMOR_SLOT);
@@ -837,7 +844,7 @@ static void test_migrated_weapon_round_trip(void) {
     Item expected_weapon = item_make_magic_greatsword();
     Item expected_drop = item_make_magic_longbow();
     ASSERT("migrated equipped weapon uses current fields",
-        weapon_fields_match(&migrated.inventory[0], &expected_weapon));
+        weapon_fields_match(&migrated.inventory[EQUIPMENT_STRONG_HAND], &expected_weapon));
     ASSERT("migration preserves equipped attack total",
         migrated.player.attack == 14 + expected_weapon.attack_bonus);
     ASSERT("migrated floor weapon uses current fields",
@@ -848,11 +855,11 @@ static void test_migrated_weapon_round_trip(void) {
     ASSERT("migrated save can be loaded again", reloaded_ok);
     if (reloaded_ok) {
         ASSERT("migrated weapon fields remain stable after another save/load",
-            weapon_fields_match(&reloaded.inventory[0], &expected_weapon) &&
+            weapon_fields_match(&reloaded.inventory[EQUIPMENT_STRONG_HAND], &expected_weapon) &&
             weapon_fields_match(&reloaded.floor_items[0].item,
                 &expected_drop));
         ASSERT("migrated equipment and attack remain stable",
-            reloaded.equipped_main_hand == 0 &&
+            reloaded.equipped_main_hand == EQUIPMENT_STRONG_HAND &&
             reloaded.player.attack == migrated.player.attack);
     }
 
@@ -1933,8 +1940,8 @@ static void test_spent_island_map_on_load(void) {
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
     g.inventory[g.inventory_count++] = item_make_treasure_map();
-    g.equipped_armor = g.inventory_count;
     g.inventory[g.inventory_count++] = item_make_chain_mail();
+    game_equip_item(&g, g.inventory_count - 1, EQUIPMENT_ARMOR);
     int original_count = g.inventory_count;
     g.temple_treasure_state = 3;
     g.island_travel_unlocked = 0;
@@ -1945,7 +1952,7 @@ static void test_spent_island_map_on_load(void) {
         loaded_ok && loaded.island_travel_unlocked &&
         !game_has_treasure_map(&loaded) &&
         loaded.inventory_count == original_count - 1 &&
-        loaded.equipped_armor == original_count - 2 &&
+        loaded.equipped_armor == EQUIPMENT_ARMOR &&
         loaded.inventory[loaded.equipped_armor].type == ITEM_ARMOR &&
         game_can_sail_to_island(&loaded));
     if (loaded_ok) {

@@ -73,7 +73,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
 
     int x  = px + 10;
     int y  = 10;
-    int lh = necromancer && r->tiles_y * TILE_SIZE < 600 ? 16 : 20;
+    int lh = 16;
     // On very short windows, keep the encounter warning above the character details.
     int boss_at_top = necromancer && r->tiles_y * TILE_SIZE < 528;
     if (boss_at_top) {
@@ -262,22 +262,15 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     renderer_draw_text(r, lvl_str, x, y, value, r->font_tiny);
     y += lh + 6;
 
-    // Gold
     renderer_draw_text(r, "GOLD", x, y, label, r->font_tiny);
+    renderer_draw_text(r, "SCORE", x + 100, y, label, r->font_tiny);
     y += lh;
-    char gold_str[16];
-    SDL_snprintf(gold_str, sizeof(gold_str), "%d", g->gold);
+    char number[24];
     SDL_Color gold_color = {220, 180, 60, 255};
-    renderer_draw_text(r, gold_str, x, y, gold_color, r->font_tiny);
-    y += lh + 6;
-
-    // Score
-    renderer_draw_text(r, "SCORE", x, y, label, r->font_tiny);
-    y += lh;
-    char score_str[16];
-    SDL_snprintf(score_str, sizeof(score_str), "%d", g->score);
-    SDL_Color score_color = {255, 255, 255, 255};
-    renderer_draw_text(r, score_str, x, y, score_color, r->font_tiny);
+    SDL_snprintf(number, sizeof(number), "%d", g->gold);
+    renderer_draw_text(r, number, x, y, gold_color, r->font_tiny);
+    SDL_snprintf(number, sizeof(number), "%d", g->score);
+    renderer_draw_text(r, number, x + 100, y, value, r->font_tiny);
     y += lh + 10;
 
     if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
@@ -290,71 +283,40 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         y += lh + 6;
     }
     
-    // Equipment grid (2x2)
-    renderer_draw_text(r, "EQUIPPED", x, y, label, r->font_tiny);
+    renderer_draw_text(r, "EQUIPMENT", x, y, label, r->font_tiny);
     y += lh;
-
-    int grid_x1 = x;
-    int grid_x2 = x + ICON_SIZE + 6;
-    int grid_y1 = y;
-    int grid_y2 = y + ICON_SIZE + 6;
-
-    // Slot 1: Main hand (top-left)
-    draw_icon_empty_slot(r, grid_x1, grid_y1);
-    if (g->equipped_main_hand >= 0 &&
-        g->equipped_main_hand < g->inventory_count) {
-        draw_icon_weapon(r, grid_x1, grid_y1,
-            &g->inventory[g->equipped_main_hand]);
-    }
-
-    // Slot 2: Off-hand (top-right)
-    draw_icon_empty_slot(r, grid_x2, grid_y1);
-    int off_hand_unavailable = g->equipped_main_hand >= 0 &&
-        g->equipped_main_hand < g->inventory_count &&
-        g->inventory[g->equipped_main_hand].weapon_hands == WEAPON_HANDS_TWO;
-    if (off_hand_unavailable) {
-        SDL_SetRenderDrawColor(r->sdl, 172, 86, 101, 255);
-        for (int stroke = 0; stroke < 2; stroke++) {
-            SDL_RenderDrawLine(r->sdl, grid_x2 + 6 + stroke, grid_y1 + 6,
-                grid_x2 + 17 + stroke, grid_y1 + 17);
-            SDL_RenderDrawLine(r->sdl, grid_x2 + 6 + stroke, grid_y1 + 17,
-                grid_x2 + 17 + stroke, grid_y1 + 6);
+    const Item *strong = game_equipped_item(g, EQUIPMENT_STRONG_HAND);
+    static const char *slots[] = {"STRONG", "WEAK", "HELMET", "ARMOR", "ACC 1", "ACC 2"};
+    for (int i = 0; i < EQUIPMENT_SLOT_COUNT; i++) {
+        int sx = x + (i % 2) * 100;
+        int sy = y + (i / 2) * 32;
+        EquipmentSlot slot = MAX_INVENTORY + i;
+        const Item *item = game_equipped_item(g, slot);
+        draw_icon_empty_slot(r, sx, sy);
+        if (item) {
+            draw_icon_item(r, sx, sy, item);
         }
-    } else if (g->equipped_off_hand >= 0 &&
-        g->equipped_off_hand < g->inventory_count) {
-        const Item *off_hand = &g->inventory[g->equipped_off_hand];
-        if (off_hand->type == ITEM_SHIELD) {
-            draw_icon_shield(r, grid_x2, grid_y1, off_hand);
-        } else {
-            draw_icon_weapon(r, grid_x2, grid_y1, off_hand);
+        int disabled = slot == EQUIPMENT_WEAK_HAND && strong && strong->weapon_hands == WEAPON_HANDS_TWO;
+        if (disabled) {
+            SDL_SetRenderDrawColor(r->sdl, 172, 86, 101, 255);
+            SDL_RenderDrawLine(r->sdl, sx + 5, sy + 5, sx + 18, sy + 18);
+            SDL_RenderDrawLine(r->sdl, sx + 5, sy + 18, sx + 18, sy + 5);
         }
+        renderer_draw_text(r, slots[i], sx + 29, sy + 6, disabled ? dimmed : value, r->font_tiny);
     }
-
-    // Slot 3: Armor (bottom-left)
-    draw_icon_empty_slot(r, grid_x1, grid_y2);
-    if (g->equipped_armor >= 0 && g->equipped_armor < g->inventory_count) {
-        draw_icon_armor(r, grid_x1, grid_y2,
-            &g->inventory[g->equipped_armor]);
-    }
-
-    // Slot 4: Equipped spell (bottom-right)
-    draw_icon_empty_slot(r, grid_x2, grid_y2);
+    y += 100;
+    renderer_draw_text(r, "EQUIPPED SPELL", x, y, label, r->font_tiny);
+    y += lh;
     int spell_index = g->player.equipped_spell;
+    draw_icon_empty_slot(r, x, y);
     if (spell_index >= 0 && spell_index < g->player.known_spell_count) {
         const Spell *spell = &g->player.known_spells[spell_index];
-        draw_icon_spell(r, grid_x2, grid_y2, spell->id);
-    }
-
-    y = grid_y2 + ICON_SIZE + 5;
-    if (spell_index >= 0 && spell_index < g->player.known_spell_count) {
-        char spell_name[40];
-        SDL_snprintf(spell_name, sizeof(spell_name), "SPELL: %s",
-            g->player.known_spells[spell_index].name);
-        renderer_draw_text(r, spell_name, x, y, value, r->font_tiny);
+        draw_icon_spell(r, x, y, spell->id);
+        renderer_draw_text(r, spell->name, x + 29, y + 6, value, r->font_tiny);
     } else {
-        renderer_draw_text(r, "SPELL: NONE", x, y, dimmed, r->font_tiny);
+        renderer_draw_text(r, "NONE", x + 29, y + 6, dimmed, r->font_tiny);
     }
-    y += lh + 7;
+    y += ICON_SIZE + 8;
 
     // Key hints
     if (necromancer) {

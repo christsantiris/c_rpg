@@ -18,7 +18,9 @@ typedef enum {
     ITEM_GOLD,
     ITEM_POTION_STRENGTH,
     ITEM_POTION_INTELLIGENCE,
-    ITEM_ARROWS
+    ITEM_ARROWS,
+    ITEM_HELMET,
+    ITEM_ACCESSORY
 } ItemType;
 
 typedef enum {
@@ -43,6 +45,14 @@ typedef enum {
     ARMOR_FAMILY_LIGHT,
     ARMOR_FAMILY_ROBE
 } ArmorFamily;
+
+typedef enum {
+    ACCESSORY_FAMILY_NONE = 0,
+    ACCESSORY_FAMILY_GAUNTLETS,
+    ACCESSORY_FAMILY_BRACERS,
+    ACCESSORY_FAMILY_RING,
+    ACCESSORY_FAMILY_AMULET
+} AccessoryFamily;
 
 typedef enum {
     ITEM_RARITY_COMMON = 0,
@@ -133,6 +143,7 @@ typedef struct {
     int spell_power_bonus;
     int armor_penetration_percent;
     ArmorFamily armor_family;
+    AccessoryFamily accessory_family;
     int max_hp_bonus;
     int max_mp_bonus;
     int evasion_chance;
@@ -154,6 +165,13 @@ Item item_make_mana_potion(void);
 Item item_make_arrows(void);
 Item item_make_strength_potion(void);
 Item item_make_intelligence_potion(void);
+Item item_make_leather_cap(void);
+Item item_make_leather_gauntlets(void);
+Item item_make_leather_bracers(void);
+Item item_make_ring_of_vigor(void);
+Item item_make_copper_amulet(void);
+int item_accessory_limit(const Item *item);
+int item_is_jewelry(const Item *item);
 // Item item_make_weapon(const char *name, int attack_bonus, int value);
 Item item_make_armor(const char *name, int defense_bonus, int value);
 
@@ -178,6 +196,7 @@ Item item_make_battle_axe(void);
 Item item_make_magic_battle_axe(void);
 Item item_make_embercleaver(void);
 Item item_make_staff(void);
+Item item_make_worn_staff(void);
 Item item_make_runed_staff(void);
 Item item_make_magic_staff(void);
 Item item_make_sandstorm_staff(void);

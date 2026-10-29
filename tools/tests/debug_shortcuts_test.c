@@ -1321,7 +1321,7 @@ static void test_town_gate_renderer(Renderer *r, GameState *g, SDL_Surface *surf
     draw_town_gate(r, 0, 6, LOCATION_TOWN, 1, 0);
     Item sword = item_make_long_sword();
     Item shield = item_make_tower_shield();
-    draw_player_at(r, 12 * TILE_SIZE, 7 * TILE_SIZE, CLASS_WARRIOR, &sword, &shield, NULL, 0, -1);
+    draw_player_at(r, 12 * TILE_SIZE, 7 * TILE_SIZE, CLASS_WARRIOR, &sword, &shield, NULL, NULL, 0, -1);
     SDL_RenderPresent(r->sdl);
     assert(SDL_SaveBMP(surface, "/tmp/town-gates-native-scale.bmp") == 0);
     for (int n = 0; n < 6; n++) {

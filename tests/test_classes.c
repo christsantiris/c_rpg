@@ -32,11 +32,10 @@ void test_classes(void) {
     ASSERT("mage: mp starts full",                 g.player.mp == 100);
     ASSERT("mage: attack is 4",                    g.player.attack == 4);
     ASSERT("mage: defense is 2",                   g.player.defense == 2);
-    ASSERT("mage: starts with 2 items", g.inventory_count == 2);
+    ASSERT("mage: starts with only one item", g.inventory_count == 1);
     ASSERT("mage: first item is staff",            g.inventory[0].type == ITEM_WEAPON);
-    ASSERT("mage: second item is scroll",          g.inventory[1].type == ITEM_SCROLL);
-    ASSERT("mage: starts with Magic Arrow scroll",
-        g.inventory[1].spell_id == SPELL_MAGIC_ARROW);
+    ASSERT("mage: starter is a poor staff", strcmp(g.inventory[0].name, "Worn Staff") == 0 && g.inventory[0].attack_bonus == 1);
+    ASSERT("mage: no starting scroll", g.player.known_spell_count == 0);
 
     // --- Rogue ---
     g.player.player_class = CLASS_ROGUE;
@@ -49,10 +48,9 @@ void test_classes(void) {
     ASSERT("rogue: mp starts full",         g.player.mp == 40);
     ASSERT("rogue: attack is 10",           g.player.attack == 10);
     ASSERT("rogue: defense is 4",           g.player.defense == 4);
-    ASSERT("rogue: starts with two weapons", g.inventory_count == 2);
-    ASSERT("rogue: also starts with a rusty dagger", strcmp(g.inventory[1].name, "Rusty Dagger") == 0 &&
-        g.inventory[1].weapon_family == WEAPON_FAMILY_DAGGER && g.inventory[1].attack_bonus == 1 &&
-        g.inventory[1].gold_drop_bonus_percent == 10);
-    ASSERT("rogue: starts with Hunting Bow at range three", g.inventory[0].is_ranged == 1 &&
-        strcmp(g.inventory[0].name, "Hunting Bow") == 0 && g.inventory[0].range == 3);
+    ASSERT("rogue: starts with one weapon", g.inventory_count == 1);
+    ASSERT("rogue: also starts with a rusty dagger", strcmp(g.inventory[0].name, "Rusty Dagger") == 0 &&
+        g.inventory[0].weapon_family == WEAPON_FAMILY_DAGGER && g.inventory[0].attack_bonus == 1 &&
+        g.inventory[0].gold_drop_bonus_percent == 10);
+    ASSERT("rogue: does not start with a bow", !g.inventory[0].is_ranged);
 }

@@ -30,7 +30,7 @@ static int sample_gold(Item weapon, int source, int off_hand, int *drops) {
     game.inventory[1] = weapon;
     game_equip_main_hand(&game, 0);
     if (off_hand) {
-        game_equip_off_hand(&game, 1);
+        game_equip_off_hand(&game, 0);
     }
     for (int x = 20; x <= 24; x++) {
         game.map.tiles[12][x] = TILE_FLOOR;
@@ -165,8 +165,10 @@ static void test_dagger_saves(void) {
             game.inventory[i].attack_bonus += sharpened;
             game.inventory[i].sharpened = sharpened;
         }
-        game_equip_main_hand(&game, 0);
-        game_equip_off_hand(&game, 1);
+        // Build a real pre-storage fixture: both worn items still occupy its bag.
+        game.equipped_main_hand = 0;
+        game.equipped_off_hand = 1;
+        game.player.attack += game.inventory[0].attack_bonus + game_off_hand_attack_bonus(&game.inventory[1]);
         game.floor_item_count = 1;
         game.floor_items[0] = (FloorItem){.active = 1, .x = 20, .y = 12, .underlying_tile = TILE_TOWN_PATH, .item = game.inventory[0]};
         game.map.tiles[12][20] = TILE_ITEM;
@@ -179,18 +181,18 @@ static void test_dagger_saves(void) {
         game.rook_quest_state = 2;
         int ok = legacy_save() && load_game(&loaded, DAGGER_SLOT);
         ASSERT("old equipped daggers rebalance both hands without losing sharpening or quest progress", ok &&
-            loaded.inventory[0].attack_bonus == 3 + sharpened && loaded.inventory[1].attack_bonus == 7 + sharpened &&
-            loaded.player.attack == 10 + 3 + sharpened + (8 + sharpened) / 2 && loaded.inventory[0].sharpened == sharpened &&
-            loaded.equipped_main_hand == 0 && loaded.equipped_off_hand == 1 && loaded.gold == 317 && loaded.rook_quest_state == 2);
+            loaded.inventory[EQUIPMENT_STRONG_HAND].attack_bonus == 3 + sharpened && loaded.inventory[EQUIPMENT_WEAK_HAND].attack_bonus == 7 + sharpened &&
+            loaded.player.attack == 10 + 3 + sharpened + (8 + sharpened) / 2 && loaded.inventory[EQUIPMENT_STRONG_HAND].sharpened == sharpened &&
+            loaded.equipped_main_hand == EQUIPMENT_STRONG_HAND && loaded.equipped_off_hand == EQUIPMENT_WEAK_HAND && loaded.gold == 317 && loaded.rook_quest_state == 2);
         ASSERT("legacy dropped and cached daggers gain their gold ratings", ok && loaded.floor_items[0].item.gold_drop_bonus_percent == 25 &&
             loaded.castle_loot[0][0].item.gold_drop_bonus_percent == 50 && loaded.castle_loot[0][0].item.attack_bonus == 7 + sharpened);
-        loaded.inventory[0].gold_drop_bonus_percent = 37;
+        loaded.inventory[EQUIPMENT_STRONG_HAND].gold_drop_bonus_percent = 37;
         loaded.floor_items[0].item.gold_drop_bonus_percent = 13;
         loaded.castle_loot[0][0].item.gold_drop_bonus_percent = 29;
         int attack = loaded.player.attack;
         ASSERT("new gold ratings serialize in inventory, floor loot, and cached castle loot without repeating migrations",
             save_game(&loaded, DAGGER_SLOT) && load_game(&game, DAGGER_SLOT) && game.player.attack == attack &&
-            game.inventory[0].gold_drop_bonus_percent == 37 && game.floor_items[0].item.gold_drop_bonus_percent == 13 &&
+            game.inventory[EQUIPMENT_STRONG_HAND].gold_drop_bonus_percent == 37 && game.floor_items[0].item.gold_drop_bonus_percent == 13 &&
             game.castle_loot[0][0].item.gold_drop_bonus_percent == 29);
     }
     remove(DAGGER_SAVE);
@@ -202,36 +204,33 @@ static void test_inventory_unequip(void) {
     game_init(&game);
     game.inventory[0] = item_make_dagger();
     game.inventory[1] = item_make_rusty_dagger();
+    game.inventory_count = 2;
     game_equip_main_hand(&game, 0);
-    game_equip_off_hand(&game, 1);
+    game_equip_off_hand(&game, 0);
     InventoryScreen screen;
     inventory_init(&screen);
-    ASSERT("inventory offers X to unequip and ignores it on an empty list", inventory_handle_key(&screen, SDL_SCANCODE_X, 2, SDL_SCANCODE_I) == INVENTORY_UNEQUIP &&
-        inventory_handle_key(&screen, SDL_SCANCODE_X, 0, SDL_SCANCODE_I) == INVENTORY_NONE);
-    action_resolve_player(&game, (Action){ACTION_UNEQUIP_ITEM, 1, 0});
-    ASSERT("unequipping the off hand retains both items and removes its attack contribution", game.equipped_main_hand == 0 &&
-        game.equipped_off_hand == -1 && game.inventory_count == 2 && game.player.attack == 13);
-    game_equip_off_hand(&game, 1);
-    action_resolve_player(&game, (Action){ACTION_UNEQUIP_ITEM, 0, 0});
-    ASSERT("unequipping main hand promotes the off-hand weapon at full attack", game.equipped_main_hand == 1 &&
-        game.equipped_off_hand == -1 && game.player.attack == 11);
+    int bag_ignores = inventory_handle_key(&screen, SDL_SCANCODE_X, 0, SDL_SCANCODE_I) == INVENTORY_NONE;
+    inventory_handle_key(&screen, SDL_SCANCODE_TAB, 0, SDL_SCANCODE_I);
+    ASSERT("equipment tab offers X even when the bag is empty", bag_ignores && inventory_handle_key(&screen, SDL_SCANCODE_X, 0, SDL_SCANCODE_I) == INVENTORY_UNEQUIP);
+    action_resolve_player(&game, (Action){ACTION_UNEQUIP_ITEM, EQUIPMENT_WEAK_HAND, 0});
+    ASSERT("unequipping the weak hand returns its item and removes its attack contribution", game.equipped_main_hand == EQUIPMENT_STRONG_HAND && game.equipped_off_hand == -1 && game.inventory_count == 1 && game.player.attack == 13);
+    game_equip_off_hand(&game, 0);
+    action_resolve_player(&game, (Action){ACTION_UNEQUIP_ITEM, EQUIPMENT_STRONG_HAND, 0});
+    ASSERT("unequipping strong hand promotes the weak weapon at full attack", game.equipped_main_hand == EQUIPMENT_STRONG_HAND && game.equipped_off_hand == -1 && game.player.attack == 11);
     action_resolve_player(&game, (Action){ACTION_EQUIP_OFF_HAND, 0, 0});
-    ASSERT("the former main-hand weapon can then move to the off hand", game.equipped_main_hand == 1 &&
-        game.equipped_off_hand == 0 && game.player.attack == 13);
-    ASSERT("swapped hands persist across save and load", save_game(&game, DAGGER_SLOT) && load_game(&loaded, DAGGER_SLOT) &&
-        loaded.equipped_main_hand == 1 && loaded.equipped_off_hand == 0 && loaded.player.attack == 13 &&
-        loaded.inventory[1].visual_id == ITEM_VISUAL_RUSTY_DAGGER && loaded.inventory[1].gold_drop_bonus_percent == 10);
+    ASSERT("the former strong weapon can then move to the weak hand", game.equipped_main_hand == EQUIPMENT_STRONG_HAND && game.equipped_off_hand == EQUIPMENT_WEAK_HAND && game.player.attack == 13);
+    ASSERT("swapped hands persist across save and load", save_game(&game, DAGGER_SLOT) && load_game(&loaded, DAGGER_SLOT) && loaded.equipped_main_hand == EQUIPMENT_STRONG_HAND && loaded.equipped_off_hand == EQUIPMENT_WEAK_HAND && loaded.player.attack == 13 && loaded.inventory[EQUIPMENT_STRONG_HAND].visual_id == ITEM_VISUAL_RUSTY_DAGGER && loaded.inventory[EQUIPMENT_STRONG_HAND].gold_drop_bonus_percent == 10);
+    action_resolve_player(&game, (Action){ACTION_UNEQUIP_ITEM, EQUIPMENT_WEAK_HAND, 0});
     action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, 0, 0});
-    ASSERT("equipping an off-hand weapon in the main hand does not double-count its bonuses", game.equipped_main_hand == 0 &&
-        game.equipped_off_hand == -1 && game.player.attack == 13);
-    game.inventory[2] = item_make_leather_armor();
-    game.inventory_count = 3;
-    action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, 2, 0});
-    action_resolve_player(&game, (Action){ACTION_UNEQUIP_ITEM, 2, 0});
-    ASSERT("unequip also removes armor bonuses without dropping it", game.equipped_armor == -1 && game.player.defense == 4 && game.inventory_count == 3);
-    action_resolve_player(&game, (Action){ACTION_UNEQUIP_ITEM, 0, 0});
+    ASSERT("moving the weak weapon to strong hand does not double-count bonuses", game.equipped_main_hand == EQUIPMENT_STRONG_HAND && game.equipped_off_hand == -1 && game.player.attack == 13);
+    game.inventory[1] = item_make_leather_armor();
+    game.inventory_count = 2;
+    action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, 1, 0});
+    action_resolve_player(&game, (Action){ACTION_UNEQUIP_ITEM, EQUIPMENT_ARMOR, 0});
+    ASSERT("unequip also removes armor bonuses without dropping it", game.equipped_armor == -1 && game.player.defense == 4 && game.inventory_count == 2);
+    action_resolve_player(&game, (Action){ACTION_UNEQUIP_ITEM, EQUIPMENT_STRONG_HAND, 0});
     int attack = game.player.attack;
-    action_resolve_player(&game, (Action){ACTION_UNEQUIP_ITEM, 0, 0});
+    action_resolve_player(&game, (Action){ACTION_UNEQUIP_ITEM, EQUIPMENT_STRONG_HAND, 0});
     action_resolve_player(&game, (Action){ACTION_UNEQUIP_ITEM, -1, 0});
     ASSERT("repeated and invalid unequip actions never subtract stats twice", game.equipped_main_hand == -1 && game.player.attack == attack && attack == 10);
     remove(DAGGER_SAVE);

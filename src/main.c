@@ -376,8 +376,10 @@ static void debug_apply_loadout(GameState *game, const DebugConfig *config) {
             game->inventory[write++] = *item;
         }
         game->inventory_count = write;
-        game->equipped_main_hand = -1;
-        game->equipped_off_hand = -1;
+        if (config->weapon_set) {
+            game_clear_equipment_slot(game, EQUIPMENT_WEAK_HAND);
+            game_clear_equipment_slot(game, EQUIPMENT_STRONG_HAND);
+        }
     }
     if (config->weapon_set && !config->weapon_none &&
         game->inventory_count < MAX_INVENTORY) {
@@ -533,7 +535,7 @@ static void handle_slot_result(SlotResult result, SlotSelect *slots, int saving,
 }
 
 static void handle_inventory_use(GameState *g, InventoryScreen *inv, GameScreen *screen, EnemyProjectiles *shots, Uint32 *started) {
-    if (action_use_inventory_item(g, inv->selected, shots)) {
+    if (!inv->equipment_tab && action_use_inventory_item(g, inv->selected, shots)) {
         *started = SDL_GetTicks();
     }
     if (inv->selected >= g->inventory_count) {
@@ -886,26 +888,11 @@ int main(int argc, char **argv) {
                             screen = SCREEN_PLAYING;
                         } else if (result == INVENTORY_USE) {
                             handle_inventory_use(&game, &inventory_screen, &screen, &enemy_shots, &enemy_shots_started_at);
-                        } else if (result == INVENTORY_EQUIP) {
-                            Action a = {ACTION_EQUIP_ITEM,
-                                inventory_screen.selected, 0};
-                            action_resolve_player(&game, a);
-                        } else if (result == INVENTORY_EQUIP_OFF_HAND) {
-                            Action a = {ACTION_EQUIP_OFF_HAND,
-                                inventory_screen.selected, 0};
-                            action_resolve_player(&game, a);
-                        } else if (result == INVENTORY_UNEQUIP) {
-                            Action a = {ACTION_UNEQUIP_ITEM, inventory_screen.selected, 0};
-                            action_resolve_player(&game, a);
-                        } else if (result == INVENTORY_DROP) {
-                            Action a = {ACTION_DROP_ITEM,
-                                inventory_screen.selected, 0};
-                            action_resolve_player(&game, a);
-                            if (inventory_screen.selected >= game.inventory_count)
-                                inventory_screen.selected = game.inventory_count - 1;
-                            if (inventory_screen.selected < 0)
-                                inventory_screen.selected = 0;
+                        } else if (result != INVENTORY_NONE) {
+                            ActionType type = result == INVENTORY_EQUIP ? ACTION_EQUIP_ITEM : result == INVENTORY_EQUIP_OFF_HAND ? ACTION_EQUIP_OFF_HAND : result == INVENTORY_UNEQUIP ? ACTION_UNEQUIP_ITEM : ACTION_DROP_ITEM;
+                            action_resolve_player(&game, (Action){type, inventory_selected_index(&inventory_screen), inventory_screen.accessory_slot});
                         }
+                        inventory_clamp_selection(&inventory_screen, game.inventory_count);
                         break;
                     }
 
@@ -935,11 +922,11 @@ int main(int argc, char **argv) {
                     }
 
                     if (screen == SCREEN_WORKSHOP) {
-                        WorkshopResult result = workshop_handle_key(&workshop_screen, sc, game.inventory_count);
+                        WorkshopResult result = workshop_handle_key(&workshop_screen, sc, game.inventory_count + 2);
                         if (result == WORKSHOP_CLOSED) {
                             screen = SCREEN_PLAYING;
                         } else if (result == WORKSHOP_SHARPEN) {
-                            game_sharpen_weapon(&game, workshop_screen.selected);
+                            game_sharpen_weapon(&game, game_workshop_item_index(&game, workshop_screen.selected));
                         }
                         break;
                     }
@@ -1343,18 +1330,22 @@ int main(int argc, char **argv) {
                     // Inventory screen clicks
                     if (screen == SCREEN_INVENTORY &&
                         event.button.button == SDL_BUTTON_LEFT) {
-                        int base_y = 130;
-                        for (int i = 0; i < game.inventory_count; i++) {
-                            int item_y = base_y + i * 36;
-                            int item_y_end = item_y + 24;
-                            if (event.button.y >= item_y &&
-                                event.button.y <= item_y_end) {
-                                inventory_screen.selected = i;
+                        int cx = renderer.screen_w / 2;
+                        if (event.button.y >= 95 && event.button.y < 122) {
+                            inventory_screen.equipment_tab = event.button.x >= cx - 50;
+                            inventory_screen.selected = 0;
+                        }
+                        int count = inventory_screen.equipment_tab ? EQUIPMENT_SLOT_COUNT : game.inventory_count;
+                        int rows = inventory_visible_rows(renderer.tiles_y);
+                        int start = inventory_list_start(inventory_screen.selected, count, rows);
+                        if (event.button.y >= 130 && event.button.y < 130 + rows * 36) {
+                            int selected = start + (event.button.y - 130) / 36;
+                            if (selected < count) {
+                                inventory_screen.selected = selected;
                             }
                         }
-                        // Match the inventory's two rows of three action buttons.
                         int hint_y = (renderer.tiles_y - 2) * TILE_SIZE;
-                        int left = renderer.screen_w / 2 - 270;
+                        int left = cx - 270;
                         if (event.button.y >= hint_y && event.button.y < hint_y + 32 &&
                             event.button.x >= left && event.button.x < left + 540) {
                             int button = (event.button.x - left) / 180 + (event.button.y - hint_y) / 16 * 3;
@@ -1363,17 +1354,12 @@ int main(int argc, char **argv) {
                             } else if (button == 5) {
                                 screen = SCREEN_PLAYING;
                             } else {
-                                static const ActionType actions[] = {ACTION_NONE, ACTION_EQUIP_ITEM,
-                                    ACTION_EQUIP_OFF_HAND, ACTION_UNEQUIP_ITEM, ACTION_DROP_ITEM};
-                                action_resolve_player(&game, (Action){actions[button], inventory_screen.selected, 0});
-                                if (inventory_screen.selected >= game.inventory_count) {
-                                    inventory_screen.selected = game.inventory_count - 1;
-                                }
-                                if (inventory_screen.selected < 0) {
-                                    inventory_screen.selected = 0;
-                                }
+                                static const ActionType actions[] = {ACTION_NONE, ACTION_EQUIP_ITEM, ACTION_EQUIP_OFF_HAND, ACTION_UNEQUIP_ITEM, ACTION_DROP_ITEM};
+                                ActionType type = inventory_screen.equipment_tab && button == 1 ? ACTION_UNEQUIP_ITEM : actions[button];
+                                action_resolve_player(&game, (Action){type, inventory_selected_index(&inventory_screen), 0});
                             }
                         }
+                        inventory_clamp_selection(&inventory_screen, game.inventory_count);
                     }
                     // Spellbook screen clicks
                     if (screen == SCREEN_SPELLBOOK &&
@@ -1391,9 +1377,9 @@ int main(int argc, char **argv) {
                     }
                     if (screen == SCREEN_WORKSHOP) {
                         WorkshopResult result = workshop_handle_click(&workshop_screen, event.button.x, event.button.y,
-                            renderer.screen_w, renderer.screen_h, game.inventory_count);
+                            renderer.screen_w, renderer.screen_h, game.inventory_count + 2);
                         if (result == WORKSHOP_SHARPEN) {
-                            game_sharpen_weapon(&game, workshop_screen.selected);
+                            game_sharpen_weapon(&game, game_workshop_item_index(&game, workshop_screen.selected));
                         }
                         break;
                     }

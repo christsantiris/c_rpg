@@ -148,8 +148,8 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Recover Your Equipment", "Royal Dungeon",
         "Return to the Royal Dungeon after escaping with Tomas.",
         "Defeat its Royal Guards; reclaim every item from the evidence chest.",
-        {"Recover confiscated weapons, armor and shields"},
-        "Royal Dungeon", {1, 0, 0, 0}, 0, 0, "Your confiscated equipment"
+        {"Recover all confiscated belongings and gold"},
+        "Royal Dungeon", {1, 0, 0, 0}, 0, 0, "Your belongings, arrows and gold"
     },
     {
         "The Stolen Heartseed", "Forester Tamsin",

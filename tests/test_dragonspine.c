@@ -324,18 +324,19 @@ void test_dragonspine(void) {
         ASSERT("starter weapon can be equipped before testing the base bonus",
             game_equip_main_hand(&loaded, 0));
         int attack = loaded.player.attack;
+        int bag_count = loaded.inventory_count;
         action_resolve_player(&loaded,
-            (Action){ACTION_USE_ITEM, MAX_INVENTORY - 1, 0});
+            (Action){ACTION_USE_ITEM, bag_count - 1, 0});
         ASSERT("Potion of Strength permanently adds one base attack",
             loaded.player.attack == attack + 1 &&
-            loaded.inventory_count == MAX_INVENTORY - 1);
+            loaded.inventory_count == bag_count - 1);
         if (loaded.equipped_main_hand >= 0) {
             int equipped = loaded.equipped_main_hand;
             int weapon_bonus = loaded.inventory[equipped].attack_bonus;
             game_unequip_main_hand(&loaded);
             ASSERT("strength bonus remains after removing a weapon",
                 loaded.player.attack == attack + 1 - weapon_bonus);
-            game_equip_main_hand(&loaded, equipped);
+            game_equip_main_hand(&loaded, loaded.inventory_count - 1);
             ASSERT("strength bonus remains after re-equipping a weapon",
                 loaded.player.attack == attack + 1);
         }
