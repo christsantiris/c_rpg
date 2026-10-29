@@ -119,12 +119,12 @@ static void test_castle_progress(void) {
     start();
     castle_enter(&game, 2);
     castle_travel(&game, 1);
-    ASSERT("living Castellan blocks floor 3", game.level == 2);
+    ASSERT("living Vampire blocks floor 3", game.level == 2);
     kill_boss();
     ASSERT("melee victory records miniboss without ending campaign", game.castle_minibosses == 1 && !game.game_won && !(game.defeated_bosses & (1 << LOCATION_CASTLE_INTERIOR)));
-    ASSERT("Castellan victory leaves ordinary floor without an exit portal", game.map.tiles[52][48] == TILE_CASTLE_FLOOR);
+    ASSERT("Vampire victory leaves ordinary floor without an exit portal", game.map.tiles[52][48] == TILE_CASTLE_FLOOR);
     castle_travel(&game, 1);
-    ASSERT("Castellan victory opens floor 3", game.level == 3);
+    ASSERT("Vampire victory opens floor 3", game.level == 3);
     castle_enter(&game, 4);
     castle_travel(&game, 1);
     ASSERT("living Arcanist blocks floor 5", game.level == 4);
@@ -197,14 +197,15 @@ static void test_castle_combat(void) {
     castle_enter(&game, 2);
     Enemy *e = boss();
     game.player.x = e->x;
-    game.player.y = e->y - 3;
+    game.player.y = e->y - 1;
     int hp = game.player.hp;
     action_resolve_enemies(&game);
-    ASSERT("Castellan warns before damaging player", e->move_timer == 1 && game.player.hp == hp);
-    ASSERT("charge warning marks fixed lane", castle_attack_marks(&game.map, e, game.player.x, game.player.y));
+    ASSERT("Vampire warns before damaging player", e->move_timer == 1 && game.player.hp == hp);
+    ASSERT("Vampire warning marks the committed target", castle_attack_marks(&game.map, e, game.player.x, game.player.y));
     game.player.x++;
     action_resolve_enemies(&game);
-    ASSERT("side step avoids charge and exposes recovery", game.player.hp == hp && e->move_timer == 2);
+    ASSERT("side step avoids the Vampire attack and exposes recovery", game.player.hp == hp && e->move_timer == 2);
+    e = &game.enemies[8];
     e->move_timer = 0;
     e->facing_dx = 0;
     e->facing_dy = -1;
@@ -514,14 +515,15 @@ static void test_castle_mechanisms(void) {
     game.player.y = 33;
     castle_tick(&game);
     castle_tick(&game);
-    ASSERT("Court Herald calls one three-guard patrol", game.enemy_count == 4 && game.enemies[0].revived);
+    ASSERT("Royal Guard attacks without summoning extra patrols", game.enemy_count == 1 && game.enemies[0].type == ENEMY_ROYAL_GUARD);
     for (int i = 0; i < 15; i++) {
         castle_tick(&game);
     }
-    ASSERT("Herald melee attacks cannot repeat reinforcement call", game.enemy_count == 4);
+    ASSERT("Royal Guards never replenish the removed reinforcement call", game.enemy_count == 1);
     castle_leave(&game, 0);
     castle_enter(&game, 3);
-    ASSERT("retreat preserves Herald's spent reinforcement allowance", game.enemies[8].revived);
+    ASSERT("retreat restores the approved court roster", game.enemies[8].type == ENEMY_ROYAL_GUARD);
+
 }
 
 static int save_legacy_layout(int version) {
@@ -723,25 +725,9 @@ static void test_castle_floor_tactics(void) {
     castle_enter(&game, 2);
     Enemy *e = boss();
     Enemy *guard = &game.enemies[8];
-    ASSERT("Castellan has a Warden and Marksman guard detail", guard->type == ENEMY_IRON_WARDEN &&
+    ASSERT("Vampire has a Warden and Marksman guard detail", guard->type == ENEMY_IRON_WARDEN &&
         game.enemies[9].type == ENEMY_ROYAL_MARKSMAN && game.enemy_count == 11);
-    for (int i = 0; i < game.enemy_count; i++) {
-        game.enemies[i].active = &game.enemies[i] == e || &game.enemies[i] == guard;
-    }
-    game.player.x = 46;
-    game.player.y = 45;
-    guard->x = 45;
-    guard->y = 47;
-    guard->move_timer = 2;
-    e->attack_phase = 1;
-    e->boss_aux_x = 31;
-    e->attack_target_x = 45;
-    e->attack_target_y = 44;
-    e->move_timer = 1;
-    castle_tick(&game);
-    ASSERT("baiting Castellan's charge into a guard breaks its defense and interrupts its attack",
-        e->y == 48 && guard->frozen_turns == 2 && guard->attack_target_x == -1 &&
-        castle_enemy_damage(&game, guard, 20) == 20);
+    ASSERT("the replacement Vampire uses its existing combat role without shield armor", e->type == ENEMY_VAMPIRE && castle_enemy_damage(&game, e, 20) == 20);
 
     for (int player_class = CLASS_WARRIOR; player_class <= CLASS_ROGUE; player_class++) {
         start();
@@ -818,7 +804,7 @@ static void test_castle_floor_tactics(void) {
     game.enemies[15].revived = 1;
     castle_leave(&game, 0);
     castle_enter(&game, 6);
-    ASSERT("each Herald retains its own spent call through retreat", !game.enemies[8].revived && game.enemies[15].revived);
+    ASSERT("both former reinforcement positions now contain Royal Guards", game.enemies[8].type == ENEMY_ROYAL_GUARD && game.enemies[15].type == ENEMY_ROYAL_GUARD);
 }
 
 static void test_castle_tactics_saves(void) {
@@ -835,7 +821,7 @@ static void test_castle_tactics_saves(void) {
     game.castle_fire_phase[5] = 1;
     game.enemies[15].revived = 1;
     ASSERT("new castle encounters save and load", save_game(&game, CASTLE_TEST_SLOT) && load_game(&loaded, CASTLE_TEST_SLOT));
-    ASSERT("save restores live and cached fire warnings, ward state, patrol facing and Herald calls",
+    ASSERT("save restores live and cached fire warnings, ward state, patrol facing and Royal Guards",
         loaded.castle_fire_phase[4] == 2 && loaded.castle_fire_phase[5] == 1 && loaded.enemies[15].revived &&
         loaded.castle_cache[3].map.tiles[54][37] == TILE_CASTLE_WARD_SPENT && loaded.castle_cache[4].enemies[0].facing_dx == 1);
     castle_enter(&loaded, 5);

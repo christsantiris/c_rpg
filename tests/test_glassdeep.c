@@ -82,7 +82,7 @@ static void test_layouts(void) {
             int bosses = 0;
             for (int i = 0; i < game.enemy_count; i++) {
                 Enemy *enemy = &game.enemies[i];
-                roster &= ((enemy->type >= ENEMY_CRYSTAL_SPIDER && enemy->type <= ENEMY_PRISM_SOVEREIGN) || enemy->type == ENEMY_IRON_SENTINEL) && visited[enemy->y][enemy->x];
+                roster &= ((enemy->type == ENEMY_OGRE || enemy->type == ENEMY_BLIND_STALKER || enemy->type == ENEMY_SHARD_GOLEM || enemy->type == ENEMY_PRISM_SOVEREIGN) || enemy->type == ENEMY_STONE_GIANT) && visited[enemy->y][enemy->x];
                 bosses += enemy->is_boss;
             }
             roster &= bosses == (level == GLASSDEEP_DEPTH);
@@ -296,9 +296,9 @@ static void setup_actor(EnemyType type) {
 }
 
 static void test_combat_roles(void) {
-    setup_actor(ENEMY_CRYSTAL_SPIDER);
+    setup_actor(ENEMY_OGRE);
     action_resolve_enemies(&game);
-    ASSERT("Crystal Spiders close two tiles without attacking on the second move", abs(game.enemies[0].x - 24) + abs(game.enemies[0].y - 22) == 2 && game.player.hp == 100);
+    ASSERT("Ogres advance with their existing single movement step", abs(game.enemies[0].x - 24) + abs(game.enemies[0].y - 22) == 1 && game.player.hp == 100);
     setup_actor(ENEMY_SHARD_GOLEM);
     action_resolve_enemies(&game);
     ASSERT("Shard Golems rest on their first movement turn", game.enemies[0].x == 24 && game.enemies[0].y == 22);

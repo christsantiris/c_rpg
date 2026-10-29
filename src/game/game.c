@@ -95,6 +95,7 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
     e->dain_fragment = 0;
     e->frozen_turns = 0;
     e->poison_turns = 0;
+    e->alignment_dormant = 0;
     e->attack_target_x = -1;
     e->attack_target_y = -1;
     e->move_timer = 0;
@@ -116,7 +117,6 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
         case ENEMY_HARPY_STORMCALLER:
         case ENEMY_STORM_ELEMENTAL:
         case ENEMY_TEMPEST_MATRIARCH:
-        case ENEMY_IRONHIDE_BOAR:
         case ENEMY_THORN_DRYAD:
         case ENEMY_TREEFOLK:
         case ENEMY_ELDERTHORN:
@@ -125,13 +125,10 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
         case ENEMY_MARSH_SPITTER:
         case ENEMY_LIZARDFOLK_SCALEGUARD:
         case ENEMY_SSZARETH:
-        case ENEMY_ROYAL_GUARD:
         case ENEMY_OATHBOUND_SOLDIER:
         case ENEMY_IRON_WARDEN:
         case ENEMY_ROYAL_MARKSMAN:
         case ENEMY_COURT_HEXER:
-        case ENEMY_BELL_HERALD:
-        case ENEMY_CASTELLAN:
         case ENEMY_ROYAL_ARCANIST:
         case ENEMY_LORD_VEYR:
             break;
@@ -299,11 +296,6 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->attack = 24; e->defense = 9; e->experience = 750;
             e->is_boss = 1;
             break;
-        case ENEMY_CRYSTAL_SPIDER:
-            snprintf(e->name, sizeof(e->name), "Rockworm");
-            e->max_hp = 30; e->hp = 30;
-            e->attack = 11; e->defense = 2; e->experience = 40;
-            break;
         case ENEMY_BLIND_STALKER:
             snprintf(e->name, sizeof(e->name), "Quarry Construct");
             e->max_hp = 38; e->hp = 38;
@@ -313,11 +305,6 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             snprintf(e->name, sizeof(e->name), "Stone Troll");
             e->max_hp = 110; e->hp = 110;
             e->attack = 18; e->defense = 9; e->experience = 130;
-            break;
-        case ENEMY_IRON_SENTINEL:
-            snprintf(e->name, sizeof(e->name), "Iron Sentinel");
-            e->max_hp = 95; e->hp = 95;
-            e->attack = 20; e->defense = 10; e->experience = 120;
             break;
         case ENEMY_PRISM_SOVEREIGN:
             snprintf(e->name, sizeof(e->name), "Quarry Colossus");
@@ -360,15 +347,23 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             e->max_hp = 18; e->hp = 18; e->attack = 7; e->defense = 2;
             e->experience = 20;
             break;
-        case ENEMY_DARK_ELF:
-            strncpy(e->name, "Dark Elf", sizeof(e->name) - 1);
+        case ENEMY_DARK_ELF_ARCHER:
+            snprintf(e->name, sizeof(e->name), "Dark Elf Archer");
             e->max_hp = 22; e->hp = 22; e->attack = 9; e->defense = 3;
             e->experience = 28;
             break;
-        case ENEMY_GIANT_WURM:
-            strncpy(e->name, "Giant Wurm", sizeof(e->name) - 1);
-            e->max_hp = 38; e->hp = 38; e->attack = 12; e->defense = 5;
+        case ENEMY_DARK_ELF_RANGER:
+            snprintf(e->name, sizeof(e->name), "Dark Elf Ranger");
+            e->max_hp = 38; e->hp = 38; e->attack = 12; e->defense = 3;
             e->experience = 42;
+            break;
+        case ENEMY_ROYAL_GUARD:
+            snprintf(e->name, sizeof(e->name), "Royal Guard");
+            e->max_hp = 90;
+            e->hp = 90;
+            e->attack = 16;
+            e->defense = 4;
+            e->experience = 65;
             break;
         case ENEMY_FOREST_TROLL:
             strncpy(e->name, "Forest Troll", sizeof(e->name) - 1);
@@ -389,13 +384,13 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             strncpy(e->name, "Goblin Archer", 15);
             e->max_hp=16; e->hp=16; e->attack=7; e->defense=1; e->experience=19;
             break;
-        case ENEMY_GOBLIN_BOMBER:
-            strncpy(e->name, "Goblin Bomber", 15);
-            e->max_hp=18; e->hp=18; e->attack=9; e->defense=1; e->experience=24;
-            break;
-        case ENEMY_TUNNEL_SPIDER:
-            strncpy(e->name, "Tunnel Spider", 15);
-            e->max_hp=20; e->hp=20; e->attack=8; e->defense=3; e->experience=25;
+        case ENEMY_GOBLIN_WARCHIEF:
+            snprintf(e->name, sizeof(e->name), "Goblin Warchief");
+            e->max_hp = 40;
+            e->hp = 40;
+            e->attack = 12;
+            e->defense = 4;
+            e->experience = 40;
             break;
         case ENEMY_CAVE_TROLL:
             strncpy(e->name, "Cave Troll", 15);
@@ -490,11 +485,6 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             strncpy(e->name, "Serpent Spirit", 15);
             e->max_hp = 58; e->hp = 58; e->attack = 19; e->defense = 5;
             e->experience = 115;
-            break;
-        case ENEMY_TREASURE_WRAITH:
-            strncpy(e->name, "Treasure Wraith", 15);
-            e->max_hp = 62; e->hp = 62; e->attack = 20; e->defense = 6;
-            e->experience = 130;
             break;
         case ENEMY_LUNAR_EFFIGY:
             strncpy(e->name, "Lunar Effigy", 15);
@@ -905,8 +895,8 @@ static int place_dain_map_bearer(GameState *g) {
         target_type = ENEMY_GOBLIN_ARCHER;
         target_bit = DAIN_FRAGMENT_ARCHER;
     } else if (g->level == 3) {
-        target_type = ENEMY_GOBLIN_BOMBER;
-        target_bit = DAIN_FRAGMENT_BOMBER;
+        target_type = ENEMY_GOBLIN_WARCHIEF;
+        target_bit = DAIN_FRAGMENT_WARCHIEF;
     } else if (g->level == 4) {
         target_type = ENEMY_GOBLIN_SHAMAN;
         target_bit = DAIN_FRAGMENT_SHAMAN;
@@ -935,7 +925,7 @@ static int place_dain_map_bearer(GameState *g) {
     strncpy(target->name, "Map Bearer", sizeof(target->name) - 1);
     target->name[sizeof(target->name) - 1] = '\0';
     EnemyType guard = g->level == 2 ? ENEMY_GOBLIN_SCOUT :
-        (g->level == 3 ? ENEMY_TUNNEL_SPIDER : ENEMY_HOBGOBLIN_GUARD);
+        (g->level == 3 ? ENEMY_GIANT_SPIDER : ENEMY_HOBGOBLIN_GUARD);
     spawn_quest_enemy_near(g, guard, target->x, target->y);
     spawn_quest_enemy_near(g, guard, target->x, target->y);
     return 1;
@@ -984,7 +974,7 @@ Enemy *game_raise_grove_servant(GameState *g, int x, int y, int boss_index) {
     for (int i = 0; i < g->enemy_count; i++) {
         Enemy *dead = &g->enemies[i];
         if (!dead->active && !dead->is_boss && !dead->revived &&
-            dead->type >= ENEMY_PIXIE && dead->type <= ENEMY_FOREST_TROLL) {
+            ((dead->type >= ENEMY_PIXIE && dead->type <= ENEMY_FOREST_TROLL) || dead->type == ENEMY_DARK_ELF_RANGER)) {
             servant = dead;
             break;
         }
@@ -1271,11 +1261,11 @@ void enemies_spawn(GameState *g) {
             }
         } else if (g->location == LOCATION_GLASSDEEP) {
             if (g->level < 3) {
-                type = roll < 65 ? ENEMY_CRYSTAL_SPIDER : ENEMY_BLIND_STALKER;
+                type = roll < 65 ? ENEMY_OGRE : ENEMY_BLIND_STALKER;
             } else {
-                type = roll < 25 ? ENEMY_CRYSTAL_SPIDER :
+                type = roll < 25 ? ENEMY_OGRE :
                     (roll < 55 ? ENEMY_BLIND_STALKER :
-                    (g->level >= 4 && roll >= 80 ? ENEMY_IRON_SENTINEL : ENEMY_SHARD_GOLEM));
+                    (g->level >= 4 && roll >= 80 ? ENEMY_STONE_GIANT : ENEMY_SHARD_GOLEM));
             }
         } else if (g->location == LOCATION_ASHEN) {
             if (g->level < 3) {
@@ -1359,16 +1349,16 @@ void enemies_spawn(GameState *g) {
             else if (level == 3)
                 type = roll < 25 ? ENEMY_GOBLIN_SCOUT :
                     (roll < 50 ? ENEMY_GOBLIN_ARCHER :
-                    (roll < 75 ? ENEMY_GOBLIN_BOMBER : ENEMY_TUNNEL_SPIDER));
+                    (roll < 75 ? ENEMY_GOBLIN_WARCHIEF : ENEMY_GIANT_SPIDER));
             else if (level == 4)
                 type = roll < 20 ? ENEMY_GOBLIN_ARCHER :
-                    (roll < 40 ? ENEMY_GOBLIN_BOMBER :
-                    (roll < 60 ? ENEMY_TUNNEL_SPIDER :
+                    (roll < 40 ? ENEMY_GOBLIN_WARCHIEF :
+                    (roll < 60 ? ENEMY_GIANT_SPIDER :
                     (roll < 80 ? ENEMY_CAVE_TROLL : ENEMY_HOBGOBLIN_GUARD)));
             else
                 type = roll < 15 ? ENEMY_GOBLIN_ARCHER :
-                    (roll < 30 ? ENEMY_GOBLIN_BOMBER :
-                    (roll < 45 ? ENEMY_TUNNEL_SPIDER :
+                    (roll < 30 ? ENEMY_GOBLIN_WARCHIEF :
+                    (roll < 45 ? ENEMY_GIANT_SPIDER :
                     (roll < 62 ? ENEMY_CAVE_TROLL :
                     (roll < 82 ? ENEMY_HOBGOBLIN_GUARD : ENEMY_GOBLIN_SHAMAN))));
         } else if (g->location == LOCATION_FOREST) {
@@ -1380,17 +1370,17 @@ void enemies_spawn(GameState *g) {
             else if (level == 3)
                 type = roll < 20 ? ENEMY_PIXIE :
                     (roll < 45 ? ENEMY_BLIGHTED_WOLF :
-                    (roll < 70 ? ENEMY_GIANT_SPIDER : ENEMY_DARK_ELF));
+                    (roll < 70 ? ENEMY_GIANT_SPIDER : ENEMY_DARK_ELF_ARCHER));
             else if (level == 4)
                 type = roll < 20 ? ENEMY_GIANT_SPIDER :
-                    (roll < 45 ? ENEMY_DARK_ELF :
-                    (roll < 70 ? ENEMY_GIANT_WURM : ENEMY_FOREST_TROLL));
+                    (roll < 45 ? ENEMY_DARK_ELF_ARCHER :
+                    (roll < 70 ? ENEMY_DARK_ELF_RANGER : ENEMY_FOREST_TROLL));
             else
                 type = roll < 15 ? ENEMY_PIXIE :
                     (roll < 30 ? ENEMY_BLIGHTED_WOLF :
                     (roll < 45 ? ENEMY_GIANT_SPIDER :
-                    (roll < 65 ? ENEMY_DARK_ELF :
-                    (roll < 82 ? ENEMY_GIANT_WURM : ENEMY_FOREST_TROLL))));
+                    (roll < 65 ? ENEMY_DARK_ELF_ARCHER :
+                    (roll < 82 ? ENEMY_DARK_ELF_RANGER : ENEMY_FOREST_TROLL))));
         } else if (level == 1) {
             type = ENEMY_SKELETON;
         } else if (level == 2) {
@@ -2220,7 +2210,7 @@ static void spawn_alder_guardian(GameState *g) {
         primary = ENEMY_GIANT_SPIDER;
         support = ENEMY_BLIGHTED_WOLF;
     } else if (g->level == 3) {
-        primary = ENEMY_DARK_ELF;
+        primary = ENEMY_DARK_ELF_ARCHER;
         support = ENEMY_PIXIE;
     } else if (g->level == 4) {
         primary = ENEMY_FOREST_TROLL;
@@ -2765,7 +2755,7 @@ found:
             existing++;
         }
     }
-    EnemyType type = g->level == 2 ? ENEMY_CRYSTAL_SPIDER : g->level == 3 ? ENEMY_BLIND_STALKER : ENEMY_SHARD_GOLEM;
+    EnemyType type = g->level == 2 ? ENEMY_OGRE : g->level == 3 ? ENEMY_BLIND_STALKER : ENEMY_SHARD_GOLEM;
     for (int i = existing; i < guards; i++) {
         if (!spawn_quest_guard(g, type, x, y, "Quarry Guardian")) {
             return;
@@ -3305,6 +3295,7 @@ static void sync_temple_floor_state(GameState *g) {
             }
         }
     }
+    game_temple_sync_enemies(g);
     if (g->level == TEMPLE_DEPTH) {
         sun_guardian_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
         sun_guardian_restore_reward(g);
@@ -4039,16 +4030,16 @@ static int crownroad_nearest_open(const GameState *g, const Map *map, const Enem
 static void populate_crownroad(GameState *g, const Map *map, Enemy *roster, int *count, int *cleared) {
     static const EnemyType enemies[CROWNROAD_BASE_ENEMIES] = {
         ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF, ENEMY_BANDIT,
-        ENEMY_HOBGOBLIN_GUARD, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
-        ENEMY_HOBGOBLIN_GUARD, ENEMY_BANDIT,
+        ENEMY_ROYAL_GUARD, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
+        ENEMY_ROYAL_GUARD, ENEMY_BANDIT,
         ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN, ENEMY_ROAD_ARCHER,
         ENEMY_HORSEMAN, ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN,
         ENEMY_ROAD_ARCHER,
         // Second wave, added after the first 15 so older saved roads keep
         // their enemies and gain these on the next visit.
         ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF, ENEMY_BANDIT,
-        ENEMY_HOBGOBLIN_GUARD, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
-        ENEMY_HOBGOBLIN_GUARD, ENEMY_BANDIT,
+        ENEMY_ROYAL_GUARD, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
+        ENEMY_ROYAL_GUARD, ENEMY_BANDIT,
         ENEMY_HORSEMAN, ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN,
         ENEMY_ROAD_ARCHER, ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN,
         ENEMY_ROAD_ARCHER
@@ -5050,15 +5041,15 @@ static void spawn_temple_enemies(GameState *g) {
             ENEMY_LUNAR_EFFIGY},
         {ENEMY_TEMPLE_STALKER, ENEMY_BLOWDART_HUNTER,
             ENEMY_VINEBOUND_GUARDIAN, ENEMY_SUN_PRIEST,
-            ENEMY_SERPENT_SPIRIT, ENEMY_TREASURE_WRAITH,
+            ENEMY_SERPENT_SPIRIT, ENEMY_WRAITH,
             ENEMY_LUNAR_EFFIGY, ENEMY_RELIC_SCARABS},
         {ENEMY_VINEBOUND_GUARDIAN, ENEMY_SUN_PRIEST,
-            ENEMY_SERPENT_SPIRIT, ENEMY_TREASURE_WRAITH,
-            ENEMY_LUNAR_EFFIGY, ENEMY_TREASURE_WRAITH,
+            ENEMY_SERPENT_SPIRIT, ENEMY_WRAITH,
+            ENEMY_LUNAR_EFFIGY, ENEMY_WRAITH,
             ENEMY_TEMPLE_STALKER, ENEMY_RELIC_SCARABS},
         {ENEMY_RELIC_SCARABS, ENEMY_TEMPLE_STALKER,
             ENEMY_BLOWDART_HUNTER, ENEMY_SUN_PRIEST,
-            ENEMY_SERPENT_SPIRIT, ENEMY_TREASURE_WRAITH,
+            ENEMY_SERPENT_SPIRIT, ENEMY_WRAITH,
             ENEMY_FALLEN_SUN_GUARDIAN}
     };
     static const int positions[TEMPLE_DEPTH][8][2] = {
@@ -5084,6 +5075,7 @@ static void spawn_temple_enemies(GameState *g) {
         spawn_enemy(g, &g->enemies[g->enemy_count++], type,
             positions[floor][i][0], positions[floor][i][1]);
     }
+    game_temple_sync_enemies(g);
     if (g->level == TEMPLE_DEPTH) {
         sun_guardian_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
     }
@@ -5159,11 +5151,59 @@ int game_temple_remaining_enemies(const GameState *g) {
     }
     int count = game_temple_dormant_sentinels(g);
     for (int i = 0; i < g->enemy_count; i++) {
-        if (g->enemies[i].active) {
+        if (g->enemies[i].active || g->enemies[i].alignment_dormant) {
             count++;
         }
     }
     return count;
+}
+
+void game_temple_sync_enemies(GameState *g) {
+    if (g->location != LOCATION_TEMPLE) {
+        return;
+    }
+    // Hide the outgoing alignment first so it cannot obstruct incoming actors.
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *e = &g->enemies[i];
+        int hidden = (e->type == ENEMY_SUN_PRIEST && g->temple_alignment) || (e->type == ENEMY_LUNAR_EFFIGY && !g->temple_alignment);
+        if (e->active && e->hp > 0 && hidden) {
+            e->active = 0;
+            e->alignment_dormant = 1;
+        }
+    }
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *e = &g->enemies[i];
+        int visible = (e->type == ENEMY_SUN_PRIEST && !g->temple_alignment) || (e->type == ENEMY_LUNAR_EFFIGY && g->temple_alignment);
+        if (!e->alignment_dormant || !visible || e->hp <= 0) {
+            continue;
+        }
+        int best = MAP_W + MAP_H;
+        int bx = -1;
+        int by = -1;
+        for (int y = 1; y < TEMPLE_H - 1; y++) {
+            for (int x = 1; x < TEMPLE_W - 1; x++) {
+                if (g->map.tiles[y][x] != TILE_TEMPLE_FLOOR || (g->player.x == x && g->player.y == y)) {
+                    continue;
+                }
+                int occupied = 0;
+                for (int n = 0; n < g->enemy_count; n++) {
+                    occupied |= g->enemies[n].active && g->enemies[n].x == x && g->enemies[n].y == y;
+                }
+                int distance = abs(x - e->x) + abs(y - e->y);
+                if (!occupied && distance < best) {
+                    best = distance;
+                    bx = x;
+                    by = y;
+                }
+            }
+        }
+        if (bx >= 0) {
+            e->x = bx;
+            e->y = by;
+            e->active = 1;
+            e->alignment_dormant = 0;
+        }
+    }
 }
 
 int game_has_temple_interaction(const GameState *g) {
@@ -5225,6 +5265,7 @@ static void toggle_temple_alignment(GameState *g) {
             }
         }
     }
+    game_temple_sync_enemies(g);
     game_update_level_progress(g);
     push_message(g, g->temple_alignment
         ? "Moon rises: lunar doors open and sentinels awaken!"
@@ -6462,9 +6503,9 @@ void game_record_dain_kill(GameState *g, EnemyType type) {
     if (type == ENEMY_GOBLIN_ARCHER) {
         target = DAIN_FRAGMENT_ARCHER;
         status = "Map fragment recovered from Archer.";
-    } else if (type == ENEMY_GOBLIN_BOMBER) {
-        target = DAIN_FRAGMENT_BOMBER;
-        status = "Map fragment recovered from Bomber.";
+    } else if (type == ENEMY_GOBLIN_WARCHIEF) {
+        target = DAIN_FRAGMENT_WARCHIEF;
+        status = "Map fragment recovered from Warchief.";
     } else if (type == ENEMY_GOBLIN_SHAMAN) {
         target = DAIN_FRAGMENT_SHAMAN;
         status = "Map fragment recovered from Shaman.";

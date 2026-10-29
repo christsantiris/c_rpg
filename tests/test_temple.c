@@ -54,6 +54,8 @@ static void clear_temple_floor(GameState *g) {
     awaken_temple_sentinels(g);
     for (int i = 0; i < g->enemy_count; i++) {
         g->enemies[i].active = 0;
+        g->enemies[i].alignment_dormant = 0;
+        g->enemies[i].hp = 0;
     }
     game_update_level_progress(g);
 }
@@ -78,6 +80,8 @@ static void test_temple_seals(void) {
         }
         for (int i = 0; i < g.enemy_count; i++) {
             g.enemies[i].active = 0;
+            g.enemies[i].alignment_dormant = 0;
+            g.enemies[i].hp = 0;
         }
         game_update_level_progress(&g);
         ASSERT("clearing only Sun enemies leaves the floor sealed", !g.level_cleared &&

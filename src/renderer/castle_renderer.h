@@ -8,7 +8,6 @@
 void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType tile);
 void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e);
 void castle_draw_warnings(Renderer *r, const GameState *g, const Viewport *v);
-void castle_draw_castellan_status(Renderer *r, const GameState *g, const Viewport *v);
 void castle_draw_arcanist_status(Renderer *r, const GameState *g, const Viewport *v);
 void castle_draw_veyr_status(Renderer *r, const GameState *g, const Viewport *v);
 

@@ -86,7 +86,7 @@ static void mountain_crossing(int ridge, int return_home) {
         int fragments = 0;
         for (int i = 0; i < mountain.enemy_count; i++) {
             if (mountain.enemies[i].active && mountain.enemies[i].dain_fragment) {
-                ASSERT("Dain's bearers are on levels two, three and four", mountain.enemies[i].dain_fragment == (level == 2 ? DAIN_FRAGMENT_ARCHER : level == 3 ? DAIN_FRAGMENT_BOMBER : DAIN_FRAGMENT_SHAMAN));
+                ASSERT("Dain's bearers are on levels two, three and four", mountain.enemies[i].dain_fragment == (level == 2 ? DAIN_FRAGMENT_ARCHER : level == 3 ? DAIN_FRAGMENT_WARCHIEF : DAIN_FRAGMENT_SHAMAN));
                 fragments++;
                 mountain_kill(&mountain, i);
             }

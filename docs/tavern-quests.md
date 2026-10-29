@@ -50,12 +50,12 @@ for the reward.
 
 Dain is a retired dwarven caravan warden who tracks the organized goblin raids
 through the mountains. Goblins tore an old dwarven treasure map into three
-pieces. A Goblin Archer, Goblin Bomber, and Goblin Shaman each carry one
+pieces. A Goblin Archer, Goblin Warchief, and Goblin Shaman each carry one
 fragment. Defeating them recovers their fragments automatically without using
 normal inventory space.
 
 Enter Ridgeshire's south mountain gate and follow the road to the mountain cave.
-Either town entrance starts the climb at level 1. The Archer, Bomber and Shaman
+Either town entrance starts the climb at level 1. The Archer, Warchief and Shaman
 Map Bearers occupy **levels 2, 3 and 4**, before the level-5 Goblin King. After
 victory, exit onto the road north to Ridgeshire or south to Dawnmere.
 Each leader travels with a themed warband, turning every fragment into a

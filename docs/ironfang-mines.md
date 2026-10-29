@@ -50,8 +50,8 @@ enemies have been cleared; standing idle does not advance them.
 
 ## Enemies and boss
 
-The mine reuses the existing **Goblin Scout, Goblin Archer, Goblin Bomber,
-Tunnel Spider, Cave Troll, Hobgoblin Guard, and Goblin Shaman** types and artwork.
+The mine reuses the existing **Goblin Scout, Goblin Archer, Goblin Warchief,
+Giant Spider, Cave Troll, Hobgoblin Guard, and Goblin Shaman** types and artwork.
 Later stages introduce the more heavily defended groups. Enemies spawn only in
 workings reachable on foot from the entrance; none occupy the isolated salvage
 alcove or impassable water. Ordinary sprites keep their established native scale.

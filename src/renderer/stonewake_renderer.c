@@ -108,10 +108,8 @@ void draw_stonewake_props(Renderer *r, const GameState *g, const Viewport *v) {
 int draw_stonewake_enemy(Renderer *r, int sx, int sy, EnemyType type) {
     int index;
     switch (type) {
-        case ENEMY_CRYSTAL_SPIDER: index = 0; break;
         case ENEMY_BLIND_STALKER: index = 1; break;
         case ENEMY_SHARD_GOLEM: index = 2; break;
-        case ENEMY_IRON_SENTINEL: index = 3; break;
         case ENEMY_PRISM_SOVEREIGN: index = 4; break;
         default: return 0;
     }

@@ -19,7 +19,7 @@ its newly raised rows onto the road.
 | --- | --- | --- | --- |
 | 1 | Blackrock Foothills | Open switchbacks and scout camps | Goblin Scouts |
 | 2 | Raider Pass | Timber bridges and overlapping firing lanes | Scouts and Archers |
-| 3 | Cinder Mines | Braided underground routes | Scouts, Archers, Bombers and Tunnel Spiders |
+| 3 | Cinder Mines | Braided underground routes | Scouts, Archers, Warchiefs and Giant Spiders |
 | 4 | Siege Camp | Split routes and fortified positions | Goblin warbands |
 | 5 | Crown Peak | Summit fortress | Full roster and the Goblin King |
 
@@ -34,8 +34,8 @@ to the cave approach for the town used to enter.
 
 - **Goblin Scout:** basic melee pursuer.
 - **Goblin Archer:** fires along clear rows and columns.
-- **Goblin Bomber:** launches high-damage explosives along clear firing lines.
-- **Tunnel Spider:** armored ambusher whose bite applies poison.
+- **Goblin Warchief:** armored melee leader that advances with the warband.
+- **Giant Spider:** armored ambusher whose bite applies poison.
 - **Cave Troll:** slow, high-health bruiser.
 - **Hobgoblin Guard:** heavily armored frontline defender.
 - **Goblin Shaman:** periodically heals a nearby wounded ally.
@@ -66,7 +66,7 @@ save/load.
 ## Mountain Quests
 
 Dain assigns **Recover the Treasure Map** in Dawnmere's Alehouse. The
-Archer, Bomber and Shaman Map Bearers occupy **levels 2, 3 and 4**, respectively,
+Archer, Warchief and Shaman Map Bearers occupy **levels 2, 3 and 4**, respectively,
 with themed guards. Collected fragments do not use inventory space. Return all
 three to Dain for **60 gold and 400 score**.
 

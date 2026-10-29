@@ -2,39 +2,13 @@
 #define GLASSDEEP_ENEMY_ART_H
 
 // Rendering indices only; persistent EnemyType values are unchanged.
-enum { GLASS_ART_CRYSTAL_SPIDER, GLASS_ART_BLIND_STALKER, GLASS_ART_SHARD_GOLEM, GLASS_ART_PRISM_SOVEREIGN, GLASS_ART_COUNT };
+enum { GLASS_ART_BLIND_STALKER, GLASS_ART_SHARD_GOLEM, GLASS_ART_PRISM_SOVEREIGN, GLASS_ART_COUNT };
 
 // Native 24-pixel silhouettes; dots preserve the cavern floor.
 // o outline, s/S/H body shadow/base/light, c/C/v violet crystal, e/y eyes,
 // m/M/N crystal facets, f fang/finger tip, r/R sensory ridge, j/J mouth,
 // p/P prism core.
 static const char glassdeep_enemy_art[GLASS_ART_COUNT][24][25] = {
-    { // CRYSTAL_SPIDER
-        "........................",
-        ".N.........N..........N.",
-        ".oH.......oNCo.......So.",
-        "..H......oNCCco......S..",
-        "..oNH...oNCCvCco...SNo..",
-        "...ooHHoNCCCvCCcoSSoo...",
-        ".....oooNCCCoCCCcoo.....",
-        ".......oNCCcoCCCco......",
-        ".NH....oNCCCoCCcco...SN.",
-        ".HoHHHHoNCCvCCcccoSSSoS.",
-        "Ho.ooooHoNCCCvCCcoooo.oS",
-        "N......ooNCCvCCco......N",
-        "o........oNCCccco......o",
-        "..........oooooo........",
-        ".......HHoHHSSSoS.......",
-        "......H.oHSyySSyoS......",
-        "...HHHoooHSSyySSooSSS...",
-        "..N.o....oSfeefSSo.o.N..",
-        "..Ho...HHooSfffSo...oS..",
-        "..H...H.o..ooooo.S...oS.",
-        ".Ho..Noo........ooN...S.",
-        ".N...H............S...N.",
-        ".o..Ho............oS..o.",
-        "....N..............N....",
-    },
     { // BLIND_STALKER
         "........................",
         "........................",
