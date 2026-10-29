@@ -159,7 +159,7 @@ static void draw_armor_column(Renderer *r, const GameState *g, const Item *item,
     SDL_snprintf(line, sizeof(line), "MAX HP: +%d  MAX MP: +%d",
         item->max_hp_bonus, item->max_mp_bonus);
     renderer_draw_text(r, line, x + 10, y + 63, white, r->font_tiny);
-    SDL_snprintf(line, sizeof(line), "EVASION: %d%%", item->evasion_chance);
+    SDL_snprintf(line, sizeof(line), "ATK: +%d  EVASION: %d%%", item->attack_bonus, item->evasion_chance);
     renderer_draw_text(r, line, x + 10, y + 79, white, r->font_tiny);
     SDL_snprintf(line, sizeof(line), "SPELL COST: -%d%%",
         item->spell_cost_reduction_percent);

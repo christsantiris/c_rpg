@@ -4136,17 +4136,17 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     // Draw player
     const Item *equipped_weapon = NULL;
     if (g->equipped_main_hand >= 0 &&
-        g->equipped_main_hand < g->inventory_count) {
+        g->equipped_main_hand < MAX_CARRIED_ITEMS) {
         equipped_weapon = &g->inventory[g->equipped_main_hand];
     }
     const Item *off_hand_weapon = NULL;
     if (g->equipped_off_hand >= 0 &&
-        g->equipped_off_hand < g->inventory_count) {
+        g->equipped_off_hand < MAX_CARRIED_ITEMS) {
         off_hand_weapon = &g->inventory[g->equipped_off_hand];
     }
     const Item *equipped_armor = NULL;
     if (g->equipped_armor >= 0 &&
-        g->equipped_armor < g->inventory_count) {
+        g->equipped_armor < MAX_CARRIED_ITEMS) {
         equipped_armor = &g->inventory[g->equipped_armor];
     }
     if (jail_prisoner_at(g, g->prisoner_x, g->prisoner_y) && viewport_is_visible(v, g->prisoner_x, g->prisoner_y)) {
@@ -4160,7 +4160,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     mangrove_draw_boat(r, g, v);
     draw_player_at(r, player_px, player_py,
         g->player.player_class, equipped_weapon, off_hand_weapon,
-        equipped_armor,
+        equipped_armor, game_equipped_item(g, EQUIPMENT_HELMET),
         g->player.last_dx, g->player.last_dy);
     if (g->player.poison_turns > 0) {
         draw_icon_poison(r, player_px + 16, player_py + 1);

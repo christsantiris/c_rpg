@@ -27,15 +27,19 @@ void workshop_draw(Renderer *r, const GameState *g, const WorkshopScreen *s) {
     centered(r, text, 110, gold);
     int rows = workshop_visible_rows(r->screen_h);
     int start = workshop_list_start(s->selected, rows);
-    if (!g->inventory_count) {
+    if (!g->inventory_count && !game_equipped_item(g, EQUIPMENT_STRONG_HAND) && !game_equipped_item(g, EQUIPMENT_WEAK_HAND)) {
         centered(r, "BRING A BLADE TO SHARPEN", 170, dimmed);
     }
-    for (int i = start; i < g->inventory_count && i < start + rows; i++) {
-        const Item *item = &g->inventory[i];
+    for (int i = start; i < g->inventory_count + 2 && i < start + rows; i++) {
+        int index = game_workshop_item_index(g, i);
+        const Item *item = &g->inventory[index];
+        if (!item->active) {
+            continue;
+        }
         int y = 150 + (i - start) * 32;
         int eligible = item_can_sharpen(item);
         const char *status = item->sharpened ? "ALREADY SHARPENED" : eligible ? "50 GOLD" : "CANNOT SHARPEN";
-        const char *hand = g->equipped_main_hand == i ? " [MAIN]" : g->equipped_off_hand == i ? " [OFF]" : "";
+        const char *hand = g->equipped_main_hand == index ? " [MAIN]" : g->equipped_off_hand == index ? " [OFF]" : "";
         SDL_snprintf(text, sizeof(text), "%s%s  ATK +%d", item->name, hand, item->attack_bonus);
         renderer_draw_text(r, i == s->selected ? ">" : " ", r->screen_w / 2 - 300, y, gold, r->font_small);
         renderer_draw_text(r, text, r->screen_w / 2 - 278, y, eligible ? white : dimmed, r->font_tiny);

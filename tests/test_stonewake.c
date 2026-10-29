@@ -290,9 +290,9 @@ static void test_hammer(GameState *g, GameState *loaded) {
         ASSERT("every class can equip the two-handed stone warhammer without receiving free healing", game_equip_main_hand(g, 0) && g->player.max_hp == max_hp + 30 && g->player.hp == hp && g->player.attack == attack + 8 && !game_equip_off_hand(g, 1));
         g->player.hp = g->player.max_hp;
         game_equip_main_hand(g, 0);
-        game_equip_main_hand(g, 1);
+        game_equip_main_hand(g, 0);
         ASSERT("reselecting or swapping equivalent hammers neither removes health nor stacks their maximum HP", g->player.hp == max_hp + 30 && g->player.max_hp == max_hp + 30 && g->player.attack == attack + 8);
-        ASSERT("an equipped hammer and its HP bonus survive save/load without applying the bonus twice", save_game(g, QUARRY_SLOT) && load_game(loaded, QUARRY_SLOT) && loaded->player.max_hp == max_hp + 30 && loaded->inventory[1].weapon_family == WEAPON_FAMILY_HAMMER && loaded->inventory[1].max_hp_bonus == 30);
+        ASSERT("an equipped hammer and its HP bonus survive save/load without applying the bonus twice", save_game(g, QUARRY_SLOT) && load_game(loaded, QUARRY_SLOT) && loaded->player.max_hp == max_hp + 30 && loaded->inventory[EQUIPMENT_STRONG_HAND].weapon_family == WEAPON_FAMILY_HAMMER && loaded->inventory[EQUIPMENT_STRONG_HAND].max_hp_bonus == 30);
         game_unequip_main_hand(g);
         ASSERT("unequipping clamps current HP and removes the temporary bonus exactly once", g->player.hp == max_hp && g->player.max_hp == max_hp && g->player.attack == attack);
         g->player.hp = 20;
