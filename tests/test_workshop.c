@@ -66,27 +66,27 @@ static void test_workshop_purchase(void) {
     start();
     game_equip_main_hand(&game, 0);
     int attack = game.player.attack;
-    int value = game.inventory[0].value;
-    ASSERT("50 gold sharpens equipped sword with immediate attack increase", game_sharpen_weapon(&game, 0) &&
-        game.gold == 250 && game.inventory[0].attack_bonus == 4 && game.inventory[0].sharpened && game.player.attack == attack + 1);
-    ASSERT("sharpening preserves weapon identity and value", strcmp(game.inventory[0].name, "Short Sword") == 0 && game.inventory[0].value == value);
-    ASSERT("same weapon cannot be charged or upgraded twice", !game_sharpen_weapon(&game, 0) &&
-        game.gold == 250 && game.inventory[0].attack_bonus == 4 && game.player.attack == attack + 1);
-    ASSERT("another copy of the same weapon has its own allowance", game_sharpen_weapon(&game, 3) &&
-        game.inventory[3].sharpened && game.player.attack == attack + 1 && game.gold == 200);
-    ASSERT("axes are eligible without changing equipped sword attack", game_sharpen_weapon(&game, 2) &&
-        game.inventory[2].attack_bonus == 11 && game.gold == 150 && game.player.attack == attack + 1);
-    ASSERT("bows, staves, potions and invalid slots are rejected without payment", !game_sharpen_weapon(&game, 4) &&
-        !game_sharpen_weapon(&game, 5) && !game_sharpen_weapon(&game, 6) && !game_sharpen_weapon(&game, -1) &&
+    int value = game.inventory[EQUIPMENT_STRONG_HAND].value;
+    ASSERT("50 gold sharpens equipped sword with immediate attack increase", game_sharpen_weapon(&game, EQUIPMENT_STRONG_HAND) &&
+        game.gold == 250 && game.inventory[EQUIPMENT_STRONG_HAND].attack_bonus == 4 && game.inventory[EQUIPMENT_STRONG_HAND].sharpened && game.player.attack == attack + 1);
+    ASSERT("sharpening preserves weapon identity and value", strcmp(game.inventory[EQUIPMENT_STRONG_HAND].name, "Short Sword") == 0 && game.inventory[EQUIPMENT_STRONG_HAND].value == value);
+    ASSERT("same weapon cannot be charged or upgraded twice", !game_sharpen_weapon(&game, EQUIPMENT_STRONG_HAND) &&
+        game.gold == 250 && game.inventory[EQUIPMENT_STRONG_HAND].attack_bonus == 4 && game.player.attack == attack + 1);
+    ASSERT("another copy of the same weapon has its own allowance", game_sharpen_weapon(&game, 2) &&
+        game.inventory[2].sharpened && game.player.attack == attack + 1 && game.gold == 200);
+    ASSERT("axes are eligible without changing equipped sword attack", game_sharpen_weapon(&game, 1) &&
+        game.inventory[1].attack_bonus == 11 && game.gold == 150 && game.player.attack == attack + 1);
+    ASSERT("bows, staves, potions and invalid slots are rejected without payment", !game_sharpen_weapon(&game, 3) &&
+        !game_sharpen_weapon(&game, 4) && !game_sharpen_weapon(&game, 5) && !game_sharpen_weapon(&game, -1) &&
         !game_sharpen_weapon(&game, 7) && game.gold == 150);
-    game_equip_off_hand(&game, 1);
+    game_equip_off_hand(&game, 0);
     int off_attack = game.player.attack;
-    ASSERT("off-hand dagger sharpening respects rounded half attack", game_sharpen_weapon(&game, 1) &&
-        game.inventory[1].attack_bonus == 4 && game.player.attack == off_attack && game.gold == 100);
+    ASSERT("off-hand dagger sharpening respects rounded half attack", game_sharpen_weapon(&game, EQUIPMENT_WEAK_HAND) &&
+        game.inventory[EQUIPMENT_WEAK_HAND].attack_bonus == 4 && game.player.attack == off_attack && game.gold == 100);
     game_unequip_off_hand(&game);
     ASSERT("unequipping sharpened off-hand removes its updated contribution", game.player.attack == attack + 1);
     game_unequip_main_hand(&game);
-    game_equip_main_hand(&game, 0);
+    game_equip_main_hand(&game, game.inventory_count - 1);
     ASSERT("re-equipping sharpened sword does not duplicate upgrade", game.player.attack == attack + 1);
 
     start();
@@ -173,21 +173,21 @@ static void test_workshop_fletcher_migration(void) {
 static void test_workshop_saves(void) {
     start();
     game_equip_main_hand(&game, 0);
+    game_sharpen_weapon(&game, EQUIPMENT_STRONG_HAND);
     game_sharpen_weapon(&game, 0);
-    game_sharpen_weapon(&game, 1);
-    action_resolve_player(&game, (Action){ACTION_DROP_ITEM, 1, 0});
+    action_resolve_player(&game, (Action){ACTION_DROP_ITEM, 0, 0});
     int attack = game.player.attack;
     ASSERT("workshop and dropped sharpened weapon save and load", save_game(&game, WORKSHOP_TEST_SLOT) && load_game(&loaded, WORKSHOP_TEST_SLOT) &&
-        loaded.location == LOCATION_WORKSHOP && loaded.inventory[0].sharpened && loaded.inventory[0].attack_bonus == 4 &&
+        loaded.location == LOCATION_WORKSHOP && loaded.inventory[EQUIPMENT_STRONG_HAND].sharpened && loaded.inventory[EQUIPMENT_STRONG_HAND].attack_bonus == 4 &&
         loaded.floor_items[0].item.sharpened && loaded.floor_items[0].item.attack_bonus == 4 && loaded.player.attack == attack);
-    ASSERT("save/load cannot restore sharpening allowance", !game_sharpen_weapon(&loaded, 0) && loaded.gold == game.gold);
+    ASSERT("save/load cannot restore sharpening allowance", !game_sharpen_weapon(&loaded, EQUIPMENT_STRONG_HAND) && loaded.gold == game.gold);
     action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
     int dagger = loaded.inventory_count - 1;
     ASSERT("dropped and picked-up weapon retains its allowance", loaded.inventory[dagger].sharpened &&
         !game_sharpen_weapon(&loaded, dagger) && loaded.gold == game.gold);
     game = loaded;
     castle_enter(&game, 1);
-    action_resolve_player(&game, (Action){ACTION_DROP_ITEM, 0, 0});
+    action_resolve_player(&game, (Action){ACTION_DROP_ITEM, dagger, 0});
     castle_enter(&game, 2);
     ASSERT("castle loot cache saves sharpened status", save_game(&game, WORKSHOP_TEST_SLOT) && load_game(&loaded, WORKSHOP_TEST_SLOT) &&
         loaded.castle_loot[0][0].item.sharpened && loaded.castle_loot[0][0].item.attack_bonus == 4);

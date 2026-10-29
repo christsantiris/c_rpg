@@ -72,10 +72,10 @@ void test_jail_equipment(void) {
     g->inventory[5] = item_make_shortbow();
     g->inventory[6] = item_make_mana_potion();
     g->inventory_count = 7;
-    game_equip_main_hand(g, 1);
-    game_equip_shield(g, 2);
-    action_resolve_player(g, (Action){ACTION_EQUIP_ITEM, 3, 0});
     Item original[4] = {g->inventory[1], g->inventory[2], g->inventory[3], g->inventory[5]};
+    game_equip_main_hand(g, 1);
+    game_equip_shield(g, 1);
+    action_resolve_player(g, (Action){ACTION_EQUIP_ITEM, 1, 0});
     g->gold = 321;
     arrest(g);
     ASSERT("guards confiscate equipped and spare weapons, armor and shields", g->location == LOCATION_JAIL && g->inventory_count == 3 && g->jail_gear_count == 4 && g->jail_gear_state == 1 && g->equipped_main_hand == -1 && g->equipped_off_hand == -1 && g->equipped_armor == -1);
@@ -137,10 +137,10 @@ void test_jail_equipment(void) {
         g->inventory[g->inventory_count++] = item_make_health_potion();
     }
     chest(g);
-    ASSERT("a full inventory leaves confiscated items safely in the chest", !g->jail_gear_claimed && g->jail_gear_state == 1);
+    ASSERT("a full bag restores empty worn slots and leaves other gear safely in the chest", g->jail_gear_claimed == 6 && g->jail_gear_state == 1 && g->equipped_off_hand == EQUIPMENT_WEAK_HAND && g->equipped_armor == EQUIPMENT_ARMOR);
     game_remove_inventory_item(g, MAX_INVENTORY - 1);
     chest(g);
-    ASSERT("one free slot reclaims the original main weapon with its upgrades", g->jail_gear_claimed == (1 << g->jail_main_hand) && g->jail_gear_state == 1 && !memcmp(&g->inventory[MAX_INVENTORY - 1], &original[0], sizeof(Item)));
+    ASSERT("one free slot reclaims the original main weapon with its upgrades", g->jail_gear_claimed == (7 << 0) && g->jail_gear_state == 1 && !memcmp(&g->inventory[MAX_INVENTORY - 1], &original[0], sizeof(Item)));
     ASSERT("partial recovery and defeated guards survive an active-room save", save_game(g, GEAR_SLOT) && load_game(loaded, GEAR_SLOT) && loaded->jail_gear_claimed == g->jail_gear_claimed && !loaded->enemies[0].active);
     *g = *loaded;
     for (int attempt = 0; g->jail_gear_state == 1 && attempt < 4; attempt++) {
@@ -150,8 +150,8 @@ void test_jail_equipment(void) {
     ASSERT("recovering all confiscated items completes the equipment quest", g->jail_gear_state == 3 && g->jail_gear_claimed == 15);
     int exact = 0;
     for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < g->inventory_count; j++) {
-            exact += !memcmp(&original[i], &g->inventory[j], sizeof(Item));
+        for (int j = 0; j < MAX_CARRIED_ITEMS; j++) {
+            exact += g->inventory[j].active && !memcmp(&original[i], &g->inventory[j], sizeof(Item));
         }
     }
     ASSERT("all original equipment returns with exact bonuses, rarity and sharpening", exact == 4);

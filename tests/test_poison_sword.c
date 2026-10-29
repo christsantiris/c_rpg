@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "equipment_test_utils.h"
 #include "game/game.h"
 #include "game/elderwood.h"
 #include "game/combat_feedback.h"
@@ -53,12 +54,12 @@ static void test_poison_combat(void) {
     setup_combat();
     game.inventory[game.inventory_count++] = item_make_buckler();
     action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, game.inventory_count - 1, 0});
-    ASSERT("the Poison Sword can be paired with a shield", game.equipped_off_hand == game.inventory_count - 1);
+    ASSERT("the Poison Sword can be paired with a shield", game.equipped_off_hand == EQUIPMENT_WEAK_HAND);
     game.inventory[game.inventory_count++] = item_make_short_sword();
     action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, game.inventory_count - 1, 0});
-    action_resolve_player(&game, (Action){ACTION_EQUIP_OFF_HAND, 1, 0});
+    action_resolve_player(&game, (Action){ACTION_EQUIP_OFF_HAND, game.inventory_count - 1, 0});
     action_resolve_player(&game, (Action){ACTION_MOVE, 11, 10});
-    ASSERT("off-hand poison swords contribute attack but never apply poison", game.equipped_off_hand == 1 && !game.enemies[0].poison_turns);
+    ASSERT("off-hand poison swords contribute attack but never apply poison", game.equipped_off_hand == EQUIPMENT_WEAK_HAND && !game.enemies[0].poison_turns);
     setup_combat();
     enemy = &game.enemies[0];
     enemy->hp = 1;
@@ -91,12 +92,12 @@ static void test_poison_save(void) {
     game.level_cache[0].map = game.map;
     game.level_cache[0].enemy_count = 1;
     game.level_cache[0].enemies[0] = game.enemies[0];
-    game.inventory[1].attack_bonus++;
+    game.inventory[EQUIPMENT_STRONG_HAND].attack_bonus++;
     game.player.attack++;
-    game.inventory[1].sharpened = 1;
+    game.inventory[EQUIPMENT_STRONG_HAND].sharpened = 1;
     ASSERT("save/load retains active and cached poison and sharpened Poison Sword identity", save_game(&game, POISON_SLOT) && load_game(&loaded, POISON_SLOT) &&
         loaded.enemies[0].hp == 87 && loaded.enemies[0].poison_turns == 2 && loaded.level_cache[0].enemies[0].poison_turns == 2 &&
-        loaded.inventory[1].visual_id == ITEM_VISUAL_POISON_SWORD && loaded.inventory[1].attack_bonus == 17 && loaded.inventory[1].sharpened);
+        loaded.inventory[EQUIPMENT_STRONG_HAND].visual_id == ITEM_VISUAL_POISON_SWORD && loaded.inventory[EQUIPMENT_STRONG_HAND].attack_bonus == 17 && loaded.inventory[EQUIPMENT_STRONG_HAND].sharpened);
     game = loaded;
     elderwood_enter(&game);
     game.enemies[0].hp = 11;
@@ -118,6 +119,7 @@ static void test_poison_save(void) {
     fclose(file);
     cJSON *root = cJSON_Parse(text);
     free(text);
+    test_legacy_equipment_json(root);
     cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 215);
     cJSON *enemies = cJSON_GetObjectItem(root, "enemies");
     for (int i = 0; i < cJSON_GetArraySize(enemies); i++) {
@@ -130,7 +132,7 @@ static void test_poison_save(void) {
     fclose(file);
     free(text);
     ASSERT("older saves default missing poison to zero without healing enemies or changing gear", load_game(&loaded, POISON_SLOT) &&
-        loaded.enemies[0].hp == 11 && !loaded.enemies[0].poison_turns && loaded.inventory[1].visual_id == ITEM_VISUAL_POISON_SWORD);
+        loaded.enemies[0].hp == 11 && !loaded.enemies[0].poison_turns && loaded.inventory[EQUIPMENT_STRONG_HAND].visual_id == ITEM_VISUAL_POISON_SWORD);
     remove(POISON_SAVE);
 }
 

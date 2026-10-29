@@ -306,13 +306,13 @@ static int enemy_score(EnemyType type) {
 
 static int melee_gold_bonus(const GameState *g) {
     int bonus = 0;
-    if (g->equipped_main_hand >= 0 && g->equipped_main_hand < g->inventory_count) {
+    if (g->equipped_main_hand >= 0 && g->equipped_main_hand < MAX_CARRIED_ITEMS) {
         const Item *weapon = &g->inventory[g->equipped_main_hand];
         if (weapon->weapon_family == WEAPON_FAMILY_DAGGER) {
             bonus = weapon->gold_drop_bonus_percent;
         }
         if (weapon->weapon_hands == WEAPON_HANDS_ONE &&
-            g->equipped_off_hand >= 0 && g->equipped_off_hand < g->inventory_count) {
+            g->equipped_off_hand >= 0 && g->equipped_off_hand < MAX_CARRIED_ITEMS) {
             const Item *off_hand = &g->inventory[g->equipped_off_hand];
             if (off_hand->weapon_family == WEAPON_FAMILY_DAGGER) {
                 bonus += off_hand->gold_drop_bonus_percent / 2;
@@ -723,7 +723,7 @@ static int apply_melee_cleave(GameState *g, Enemy *target, int attack, int perce
 
 static int equipped_spell_power(const GameState *g) {
     if (g->equipped_main_hand < 0 ||
-        g->equipped_main_hand >= g->inventory_count) {
+        g->equipped_main_hand >= MAX_CARRIED_ITEMS) {
         return 0;
     }
     return g->inventory[g->equipped_main_hand].spell_power_bonus;
@@ -731,7 +731,7 @@ static int equipped_spell_power(const GameState *g) {
 
 static const Item *equipped_armor(const GameState *g) {
     if (g->equipped_armor < 0 ||
-        g->equipped_armor >= g->inventory_count) {
+        g->equipped_armor >= MAX_CARRIED_ITEMS) {
         return NULL;
     }
     return &g->inventory[g->equipped_armor];
@@ -744,7 +744,7 @@ static int equipped_spell_cost(const GameState *g, const Spell *spell) {
     }
     int reduction = armor ? armor->spell_cost_reduction_percent : 0;
     if (g->equipped_main_hand >= 0 &&
-        g->equipped_main_hand < g->inventory_count) {
+        g->equipped_main_hand < MAX_CARRIED_ITEMS) {
         reduction += g->inventory[g->equipped_main_hand]
             .spell_cost_reduction_percent;
     }
@@ -772,7 +772,7 @@ static int apply_enemy_damage(GameState *g, int damage, CombatFeedbackArrival ar
     }
     int blocked = -1;
     if (g->equipped_off_hand >= 0 &&
-        g->equipped_off_hand < g->inventory_count) {
+        g->equipped_off_hand < MAX_CARRIED_ITEMS) {
         const Item *shield = &g->inventory[g->equipped_off_hand];
         if (shield->type == ITEM_SHIELD && shield->block_chance > 0 &&
             rand() % 100 < shield->block_chance) {
@@ -1701,90 +1701,46 @@ void action_resolve_player(GameState *g, Action a) {
         return;
     }
 
-    if (a.type == ACTION_EQUIP_ITEM) {
+    if (a.type == ACTION_EQUIP_ITEM || a.type == ACTION_EQUIP_OFF_HAND) {
         int idx = a.target_x;
         if (idx < 0 || idx >= g->inventory_count) {
             return;
         }
-        Item *item = &g->inventory[idx];
-        char msg[MAX_MESSAGE_LEN];
-
-        if (item->type == ITEM_WEAPON) {
-            if (!game_equip_main_hand(g, idx)) {
-                push_message(g, "Your class cannot equip that");
-                return;
+        Item incoming = g->inventory[idx];
+        EquipmentSlot slot = EQUIPMENT_STRONG_HAND;
+        if (a.type == ACTION_EQUIP_OFF_HAND || incoming.type == ITEM_SHIELD) {
+            slot = EQUIPMENT_WEAK_HAND;
+        } else if (incoming.type == ITEM_ARMOR) {
+            slot = EQUIPMENT_ARMOR;
+        } else if (incoming.type == ITEM_HELMET) {
+            slot = EQUIPMENT_HELMET;
+        } else if (incoming.type == ITEM_ACCESSORY) {
+            slot = a.target_y == 2 ? EQUIPMENT_ACCESSORY_2 : EQUIPMENT_ACCESSORY_1;
+            if (!a.target_y && game_equipped_item(g, slot) && !game_equipped_item(g, EQUIPMENT_ACCESSORY_2)) {
+                slot = EQUIPMENT_ACCESSORY_2;
             }
-            snprintf(msg, sizeof(msg), "Equipped %s", item->name);
-            push_message(g, msg);
-        } else if (item->type == ITEM_ARMOR) {
-            if (!item_class_allowed(item, g->player.player_class)) {
-                push_message(g, "Your class cannot equip that");
-                return;
-            }
-            if (g->equipped_main_hand == idx) {
-                g->equipped_main_hand = -1;
-            }
-            if (g->equipped_off_hand == idx) {
-                g->equipped_off_hand = -1;
-            }
-            if (g->equipped_armor >= 0 &&
-                g->equipped_armor < g->inventory_count) {
-                game_remove_armor_bonuses(g,
-                    &g->inventory[g->equipped_armor]);
-            }
-            g->equipped_armor  = idx;
-            game_apply_armor_bonuses(g, item);
-            snprintf(msg, sizeof(msg), "Equipped %s", item->name);
-            push_message(g, msg);
-        } else if (item->type == ITEM_SHIELD) {
-            if (!game_equip_shield(g, idx)) {
-                push_message(g, "Shield requires one-handed weapon");
-                return;
-            }
-            snprintf(msg, sizeof(msg), "Off-hand: %s", item->name);
-            push_message(g, msg);
-        } else {
-            push_message(g, "Cannot equip that item");
         }
-        return;
-    }
-    if (a.type == ACTION_UNEQUIP_ITEM) {
-        int idx = a.target_x;
-        if (idx < 0 || idx >= g->inventory_count) {
-            return;
-        }
-        if (g->equipped_main_hand == idx) {
-            int off_hand = g->equipped_off_hand;
-            game_unequip_main_hand(g);
-            if (off_hand >= 0 && off_hand < g->inventory_count && g->inventory[off_hand].type == ITEM_WEAPON) {
-                game_equip_main_hand(g, off_hand);
-                push_message(g, "Off-hand weapon moved to main hand.");
-            } else {
-                game_unequip_off_hand(g);
-            }
-        } else if (g->equipped_off_hand == idx) {
-            game_unequip_off_hand(g);
-        } else if (g->equipped_armor == idx) {
-            game_remove_armor_bonuses(g, &g->inventory[idx]);
-            g->equipped_armor = -1;
-        } else {
-            push_message(g, "That item is not equipped.");
+        if (!game_equip_item(g, idx, slot)) {
+            push_message(g, "Cannot equip: check class, slot rules and bag space.");
             return;
         }
         char msg[MAX_MESSAGE_LEN];
-        snprintf(msg, sizeof(msg), "Unequipped %s", g->inventory[idx].name);
+        snprintf(msg, sizeof(msg), "Equipped %s", incoming.name);
         push_message(g, msg);
         return;
     }
-    if (a.type == ACTION_EQUIP_OFF_HAND) {
-        int idx = a.target_x;
-        if (game_equip_off_hand(g, idx)) {
-            char msg[MAX_MESSAGE_LEN];
-            snprintf(msg, sizeof(msg), "Off-hand: %s",
-                g->inventory[idx].name);
+    if (a.type == ACTION_UNEQUIP_ITEM) {
+        const Item *item = game_equipped_item(g, a.target_x);
+        if (!item) {
+            push_message(g, "Select a worn item in the Equipment tab.");
+            return;
+        }
+        char msg[MAX_MESSAGE_LEN];
+        snprintf(msg, sizeof(msg), "Unequipped %s", item->name);
+        if (game_unequip_item(g, a.target_x)) {
             push_message(g, msg);
         } else {
-            push_message(g, "Requires two one-handed weapons");
+            push_message(g, "Make room in your bag before unequipping.");
         }
         return;
     }
@@ -2119,7 +2075,7 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         if (g->equipped_main_hand < 0 ||
-            g->equipped_main_hand >= g->inventory_count) {
+            g->equipped_main_hand >= MAX_CARRIED_ITEMS) {
             push_message(g, "No weapon equipped!");
             return;
         }
@@ -2277,7 +2233,7 @@ void action_resolve_player(GameState *g, Action a) {
                 int melee_attack = g->player.attack;
                 Item *melee_weapon = NULL;
                 if (g->equipped_main_hand >= 0 &&
-                    g->equipped_main_hand < g->inventory_count) {
+                    g->equipped_main_hand < MAX_CARRIED_ITEMS) {
                     melee_weapon = &g->inventory[g->equipped_main_hand];
                     if (melee_weapon->weapon_family == WEAPON_FAMILY_BOW) {
                         melee_attack -= melee_weapon->attack_bonus;
@@ -2297,7 +2253,7 @@ void action_resolve_player(GameState *g, Action a) {
                     melee_weapon->weapon_family != WEAPON_FAMILY_BOW
                     ? melee_weapon->critical_chance_bonus : 0;
                 if (g->equipped_off_hand >= 0 &&
-                    g->equipped_off_hand < g->inventory_count) {
+                    g->equipped_off_hand < MAX_CARRIED_ITEMS) {
                     critical_chance +=
                         g->inventory[g->equipped_off_hand]
                             .critical_chance_bonus / 2;

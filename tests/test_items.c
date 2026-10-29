@@ -766,7 +766,7 @@ void test_items(void) {
     int base_attack = g.player.attack;
     Action equip_wpn   = {ACTION_EQUIP_ITEM, 0, 0};
     action_resolve_player(&g, equip_wpn);
-    ASSERT("weapon equipped in main hand", g.equipped_main_hand == 0);
+    ASSERT("weapon equipped in main hand", g.equipped_main_hand == EQUIPMENT_STRONG_HAND);
     ASSERT("off hand remains empty", g.equipped_off_hand == -1);
     ASSERT("attack increased after equip",  g.player.attack == base_attack + 6);
 
@@ -846,115 +846,68 @@ void test_items(void) {
     game_init(&g);
     base_attack = g.player.attack;
     g.inventory[g.inventory_count++] = item_make_short_sword();
-    Action equip_starting_rusty = {ACTION_EQUIP_ITEM, 0, 0};
-    action_resolve_player(&g, equip_starting_rusty);
-    Action equip_short = {ACTION_EQUIP_ITEM, g.inventory_count - 1, 0};
-    action_resolve_player(&g, equip_short);
-    ASSERT("short sword replaces rusty sword in the weapon slot",
-        g.equipped_main_hand == g.inventory_count - 1);
-    ASSERT("switching weapons applies only the short sword bonus",
-        g.player.attack == base_attack + 3);
-    Action equip_rusty = {ACTION_EQUIP_ITEM, 0, 0};
-    action_resolve_player(&g, equip_rusty);
-    ASSERT("rusty sword replaces short sword in the weapon slot",
-        g.equipped_main_hand == 0);
-    ASSERT("switching back applies only the rusty sword bonus",
-        g.player.attack == base_attack + 1);
+    action_resolve_player(&g, (Action){ACTION_EQUIP_ITEM, 0, 0});
+    action_resolve_player(&g, (Action){ACTION_EQUIP_ITEM, 0, 0});
+    ASSERT("short sword replaces rusty sword in the strong slot", g.equipped_main_hand == EQUIPMENT_STRONG_HAND && g.inventory[g.equipped_main_hand].attack_bonus == 3);
+    ASSERT("switching weapons applies only the short sword bonus", g.player.attack == base_attack + 3);
+    action_resolve_player(&g, (Action){ACTION_EQUIP_ITEM, 0, 0});
+    ASSERT("rusty sword replaces short sword in the strong slot", g.equipped_main_hand == EQUIPMENT_STRONG_HAND && g.inventory[g.equipped_main_hand].attack_bonus == 1);
+    ASSERT("switching back applies only the rusty sword bonus", g.player.attack == base_attack + 1);
 
     g.player.player_class = CLASS_ROGUE;
     game_init(&g);
-    int short_index = g.inventory_count;
-    g.inventory[g.inventory_count++] = item_make_short_sword();
-    int dagger_off_index = g.inventory_count;
-    g.inventory[g.inventory_count++] = item_make_dagger();
-    Action equip_short_main = {ACTION_EQUIP_ITEM, short_index, 0};
-    action_resolve_player(&g, equip_short_main);
-    g.equipped_off_hand = dagger_off_index;
-    g.player.attack += game_off_hand_attack_bonus(
-        &g.inventory[dagger_off_index]);
-    Action equip_two_handed_bow = {ACTION_EQUIP_ITEM, 0, 0};
-    action_resolve_player(&g, equip_two_handed_bow);
-    ASSERT("two-handed weapon clears the off-hand slot",
-        g.equipped_main_hand == 0 && g.equipped_off_hand == -1);
-    ASSERT("clearing off-hand removes its attack bonus",
-        g.player.attack == 10 + bow.attack_bonus);
+    g.inventory[0] = item_make_short_sword();
+    g.inventory[1] = item_make_dagger();
+    g.inventory[2] = item_make_bow();
+    g.inventory_count = 3;
+    action_resolve_player(&g, (Action){ACTION_EQUIP_ITEM, 0, 0});
+    action_resolve_player(&g, (Action){ACTION_EQUIP_OFF_HAND, 0, 0});
+    action_resolve_player(&g, (Action){ACTION_EQUIP_ITEM, 0, 0});
+    ASSERT("two-handed weapon clears the weak slot", g.equipped_main_hand == EQUIPMENT_STRONG_HAND && g.equipped_off_hand == -1 && g.inventory_count == 2);
+    ASSERT("clearing weak hand removes its attack bonus", g.player.attack == 10 + bow.attack_bonus);
 
     game_init(&g);
-    short_index = g.inventory_count;
-    g.inventory[g.inventory_count++] = item_make_short_sword();
-    dagger_off_index = g.inventory_count;
     Item off_hand_dagger = item_make_dagger();
     off_hand_dagger.critical_chance_bonus = 200;
-    g.inventory[g.inventory_count++] = off_hand_dagger;
-    action_resolve_player(&g,
-        (Action){ACTION_EQUIP_ITEM, short_index, 0});
-    action_resolve_player(&g,
-        (Action){ACTION_EQUIP_OFF_HAND, dagger_off_index, 0});
-    ASSERT("one-handed weapon equips in the off-hand",
-        g.equipped_main_hand == short_index &&
-        g.equipped_off_hand == dagger_off_index);
-    ASSERT("off-hand contributes half attack rounded up",
-        g.player.attack == 10 + 3 + 2);
+    g.inventory[0] = item_make_short_sword();
+    g.inventory[1] = off_hand_dagger;
+    g.inventory_count = 2;
+    action_resolve_player(&g, (Action){ACTION_EQUIP_ITEM, 0, 0});
+    action_resolve_player(&g, (Action){ACTION_EQUIP_OFF_HAND, 0, 0});
+    ASSERT("one-handed weapon equips in the weak slot", g.equipped_main_hand == EQUIPMENT_STRONG_HAND && g.equipped_off_hand == EQUIPMENT_WEAK_HAND && g.inventory_count == 0);
+    ASSERT("off-hand contributes half attack rounded up", g.player.attack == 10 + 3 + 2);
     g.player.x = 20;
     g.player.y = 12;
     g.enemy_count = 1;
-    g.enemies[0] = (Enemy){0};
-    g.enemies[0].active = 1;
-    g.enemies[0].x = 21;
-    g.enemies[0].y = 12;
-    g.enemies[0].hp = 100;
-    strncpy(g.enemies[0].name, "Target",
-        sizeof(g.enemies[0].name) - 1);
+    g.enemies[0] = (Enemy){.active = 1, .x = 21, .y = 12, .hp = 100};
+    strcpy(g.enemies[0].name, "Target");
     action_resolve_player(&g, (Action){ACTION_MOVE, 21, 12});
-    ASSERT("off-hand contributes half its critical chance",
-        g.enemies[0].hp == 77);
-
-    game_remove_inventory_item(&g, short_index);
-    ASSERT("removing main hand promotes off-hand weapon",
-        g.equipped_main_hand == short_index && g.equipped_off_hand == -1 &&
-        strcmp(g.inventory[g.equipped_main_hand].name, "Dagger") == 0);
-    ASSERT("promoted off-hand contributes full attack",
-        g.player.attack == 10 + off_hand_dagger.attack_bonus);
+    ASSERT("off-hand contributes half its critical chance", g.enemies[0].hp == 77);
+    game_unequip_item(&g, EQUIPMENT_STRONG_HAND);
+    ASSERT("unequipping strong hand promotes off-hand weapon", g.equipped_main_hand == EQUIPMENT_STRONG_HAND && g.equipped_off_hand == -1 && strcmp(g.inventory[g.equipped_main_hand].name, "Dagger") == 0);
+    ASSERT("promoted off-hand contributes full attack", g.player.attack == 10 + off_hand_dagger.attack_bonus);
 
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
-    Item test_shield = {0};
-    test_shield.active = 1;
-    test_shield.type = ITEM_SHIELD;
-    strncpy(test_shield.name, "Test Shield",
-        sizeof(test_shield.name) - 1);
-    test_shield.defense_bonus = 2;
+    game_equip_main_hand(&g, 0);
+    Item test_shield = item_make_buckler();
     test_shield.block_chance = 100;
     test_shield.block_reduction_percent = 50;
-    test_shield.class_mask = ITEM_CLASS_WARRIOR;
-    int test_shield_index = g.inventory_count;
-    g.inventory[g.inventory_count++] = test_shield;
+    g.inventory[0] = test_shield;
+    g.inventory_count = 1;
     action_resolve_player(&g, (Action){ACTION_EQUIP_ITEM, 0, 0});
-    action_resolve_player(&g,
-        (Action){ACTION_EQUIP_ITEM, test_shield_index, 0});
-    ASSERT("shield equips beside a one-handed main weapon",
-        g.equipped_main_hand == 0 &&
-        g.equipped_off_hand == test_shield_index);
-    ASSERT("equipped shield applies defense",
-        g.player.defense == 8);
+    ASSERT("shield equips beside a one-handed strong weapon", g.equipped_main_hand == EQUIPMENT_STRONG_HAND && g.equipped_off_hand == EQUIPMENT_WEAK_HAND);
+    ASSERT("equipped shield applies defense", g.player.defense == 8);
     g.player.x = 10;
     g.player.y = 10;
     g.enemy_count = 1;
-    g.enemies[0] = (Enemy){0};
-    g.enemies[0].active = 1;
-    g.enemies[0].x = 11;
-    g.enemies[0].y = 10;
-    g.enemies[0].attack = 20;
-    strncpy(g.enemies[0].name, "Attacker",
-        sizeof(g.enemies[0].name) - 1);
+    g.enemies[0] = (Enemy){.active = 1, .x = 11, .y = 10, .attack = 20};
+    strcpy(g.enemies[0].name, "Attacker");
     int hp_before_block = g.player.hp;
     action_resolve_enemies(&g);
-    ASSERT("shield block halves post-defense enemy damage",
-        g.player.hp == hp_before_block - 6);
-    game_remove_inventory_item(&g, 0);
-    ASSERT("removing main weapon also unequips shield",
-        g.equipped_main_hand == -1 && g.equipped_off_hand == -1 &&
-        g.player.defense == 6);
+    ASSERT("shield block halves post-defense enemy damage", g.player.hp == hp_before_block - 6);
+    game_unequip_item(&g, EQUIPMENT_STRONG_HAND);
+    ASSERT("unequipping strong weapon also returns shield to bag", g.equipped_main_hand == -1 && g.equipped_off_hand == -1 && g.player.defense == 6);
 
     // --- Equip armor ---
     game_init(&g);
@@ -964,7 +917,7 @@ void test_items(void) {
     int base_defense = g.player.defense;
     Action equip_arm   = {ACTION_EQUIP_ITEM, 0, 0};
     action_resolve_player(&g, equip_arm);
-    ASSERT("armor equipped",                g.equipped_armor == 0);
+    ASSERT("armor equipped",                g.equipped_armor == EQUIPMENT_ARMOR);
     ASSERT("defense increased after equip",
         g.player.defense == base_defense + warrior_armor.defense_bonus);
 
@@ -976,7 +929,7 @@ void test_items(void) {
     Action equip_studded_leather = {ACTION_EQUIP_ITEM, 0, 0};
     action_resolve_player(&g, equip_studded_leather);
     ASSERT("Rogue can equip Studded Leather",
-        g.equipped_armor == 0);
+        g.equipped_armor == EQUIPMENT_ARMOR);
 
     // --- Equipped indices survive consumption ---
     g.player.player_class = CLASS_WARRIOR;
@@ -989,26 +942,25 @@ void test_items(void) {
     g.equipped_off_hand = -1;
     g.equipped_armor = -1;
     Action equip_shift_weapon = {ACTION_EQUIP_ITEM, 1, 0};
-    Action equip_shift_armor = {ACTION_EQUIP_ITEM, 2, 0};
+    Action equip_shift_armor = {ACTION_EQUIP_ITEM, 1, 0};
     action_resolve_player(&g, equip_shift_weapon);
     action_resolve_player(&g, equip_shift_armor);
     g.player.hp--;
     Action consume_first = {ACTION_USE_ITEM, 0, 0};
     action_resolve_player(&g, consume_first);
-    ASSERT("consuming an earlier item shifts equipped weapon index",
-        g.equipped_main_hand == 0 &&
+    ASSERT("consuming a bag item preserves the fixed strong slot",
+        g.equipped_main_hand == EQUIPMENT_STRONG_HAND &&
         g.inventory[g.equipped_main_hand].type == ITEM_WEAPON);
     ASSERT("consumption preserves empty off hand",
         g.equipped_off_hand == -1);
-    ASSERT("consuming an earlier item shifts equipped armor index",
-        g.equipped_armor == 1 &&
+    ASSERT("consuming a bag item preserves the fixed armor slot",
+        g.equipped_armor == EQUIPMENT_ARMOR &&
         g.inventory[g.equipped_armor].type == ITEM_ARMOR);
 
     // --- Pickup cannot occupy a stale equipment index ---
     game_init(&g);
     Action equip_initial_weapon = {ACTION_EQUIP_ITEM, 0, 0};
     action_resolve_player(&g, equip_initial_weapon);
-    g.equipped_main_hand = g.inventory_count;
     g.floor_item_count = 1;
     g.floor_items[0] = (FloorItem){0};
     g.floor_items[0].active = 1;
@@ -1020,7 +972,7 @@ void test_items(void) {
     Action pick_up_sword = {ACTION_PICK_UP, 0, 0};
     action_resolve_player(&g, pick_up_sword);
     ASSERT("picking up a sword does not auto-equip it",
-        g.equipped_main_hand == 0 &&
+        g.equipped_main_hand == EQUIPMENT_STRONG_HAND &&
         g.inventory[g.inventory_count - 1].type == ITEM_WEAPON);
 
     // --- Inventory full ---
@@ -1033,6 +985,7 @@ void test_items(void) {
     // --- Bow combat rules ---
     g.player.player_class = CLASS_ROGUE;
     game_init(&g);
+    g.inventory[0] = item_make_bow();
     Action equip_bow = {ACTION_EQUIP_ITEM, 0, 0};
     action_resolve_player(&g, equip_bow);
     g.player.x = 20;
@@ -1262,7 +1215,8 @@ void test_items(void) {
         g.player.defense == armor_base_defense +
             trait_armor.defense_bonus &&
         g.player.max_hp == base_hp + 20 && g.player.max_mp == base_mp + 10);
-    Action drop_trait_armor = {ACTION_DROP_ITEM, trait_armor_index, 0};
+    game_unequip_item(&g, EQUIPMENT_ARMOR);
+    Action drop_trait_armor = {ACTION_DROP_ITEM, g.inventory_count - 1, 0};
     action_resolve_player(&g, drop_trait_armor);
     ASSERT("removing armor restores base defense and resource caps",
         g.player.defense == armor_base_defense &&

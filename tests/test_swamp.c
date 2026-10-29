@@ -278,7 +278,7 @@ void test_swamp(void) {
         action_resolve_player(&swamp_game,
             (Action){ACTION_EQUIP_ITEM, slot, 0});
         ASSERT("every class can equip the demonic sword",
-            swamp_game.equipped_main_hand == slot);
+            swamp_game.equipped_main_hand == EQUIPMENT_STRONG_HAND);
         game_enter_swamp(&swamp_game);
         swamp_game.enemy_count = 1;
         swamp_game.enemies[0] = (Enemy){0};
@@ -342,9 +342,9 @@ void test_swamp(void) {
         swamp_loaded.swamp_cache[1].valid &&
         swamp_loaded.max_swamp_level_reached == 2);
     ASSERT("equipped demonic sword retains its class and range after load",
-        loaded && swamp_loaded.equipped_main_hand == sword_slot &&
-        swamp_loaded.inventory[sword_slot].class_mask == ITEM_CLASS_ALL &&
-        swamp_loaded.inventory[sword_slot].range == 2);
+        loaded && swamp_loaded.equipped_main_hand == EQUIPMENT_STRONG_HAND &&
+        swamp_loaded.inventory[EQUIPMENT_STRONG_HAND].class_mask == ITEM_CLASS_ALL &&
+        swamp_loaded.inventory[EQUIPMENT_STRONG_HAND].range == 2);
     if (loaded) {
         game_enter_forest_road(&swamp_loaded);
         game_leave_forest_road(&swamp_loaded, LOCATION_TOWN);

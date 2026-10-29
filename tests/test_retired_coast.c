@@ -150,8 +150,8 @@ void test_retired_coast(void) {
             continue;
         }
         ASSERT("removed destinations return to Dawnmere and close obsolete portals", loaded->location == (i == 4 ? LOCATION_TOWN_ROAD : LOCATION_DAWNMERE) && !loaded->portal_active && loaded->portal_location == LOCATION_DUNGEON && loaded->approach_route == -1);
-        ASSERT("migration preserves gold, score, earned equipment, victories and other quests", loaded->gold == 432 && loaded->score == 9876 && loaded->inventory_count == MAX_INVENTORY && loaded->equipped_armor == 0 && !strcmp(loaded->inventory[0].name, "Mariner's Cloak") && loaded->inventory[0].evasion_chance == 5 && loaded->defeated_bosses == (1 << LOCATION_DUNGEON) && loaded->alder_quest_state == 1 && loaded->alder_wardens_rescued == 3);
-        ASSERT("full backpacks retain all cached gear without duplicating the active stage", loaded->retired_coast_item_count == (i == 0 ? 80 : 100));
+        ASSERT("migration preserves gold, score, earned equipment, victories and other quests", loaded->gold == 432 && loaded->score == 9876 && loaded->inventory_count == MAX_INVENTORY - (i == 4) && loaded->equipped_armor == EQUIPMENT_ARMOR && !strcmp(loaded->inventory[EQUIPMENT_ARMOR].name, "Mariner's Cloak") && loaded->inventory[EQUIPMENT_ARMOR].evasion_chance == 5 && loaded->defeated_bosses == (1 << LOCATION_DUNGEON) && loaded->alder_quest_state == 1 && loaded->alder_wardens_rescued == 3);
+        ASSERT("full backpacks retain all cached gear without duplicating the active stage", loaded->retired_coast_item_count == (i == 0 ? 79 : i == 4 ? 100 : 99));
         ASSERT("migration leaves a walkable player with the replacement southern route", map_is_walkable(&loaded->map, loaded->player.x, loaded->player.y) && (i == 4 ? loaded->map.tiles[TOWN_ROAD_H - 1][TOWN_ROAD_W / 2] == TILE_TOWN_ROAD_EXIT_SOUTH : loaded->map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT));
         if (i < 4) {
             ASSERT("retired floor gear stays recoverable beside the restored merchant entrance", loaded->floor_item_count == 1 && loaded->floor_items[0].active && loaded->floor_items[0].item.type == ITEM_SHIELD && map_is_walkable(&loaded->map, loaded->floor_items[0].x, loaded->floor_items[0].y) && loaded->floor_items[0].underlying_tile != TILE_LOCAL_DOOR && loaded->map.tiles[10][9] == TILE_LOCAL_DOOR);
@@ -164,10 +164,11 @@ void test_retired_coast(void) {
         cJSON *root = read_retirement_save();
         ASSERT("new saves omit the pirate region, victory and treasure quest", root && !cJSON_GetObjectItem(root, "pirate_cache") && !cJSON_GetObjectItem(root, "pirate_defeated") && !cJSON_GetObjectItem(root, "pirate_quest_state"));
         cJSON_Delete(root);
-        Item expected = g->retired_coast_items[pending - 1];
         if (g->location == LOCATION_TOWN_ROAD) {
             game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
         }
+        pending = g->retired_coast_item_count;
+        Item expected = g->retired_coast_items[pending - 1];
         game_remove_inventory_item(g, MAX_INVENTORY - 1);
         ASSERT("a free pack slot reclaims the original upgraded weapon exactly once", g->inventory_count == MAX_INVENTORY && g->retired_coast_item_count == pending - 1 && !memcmp(&g->inventory[MAX_INVENTORY - 1], &expected, sizeof(expected)));
     }

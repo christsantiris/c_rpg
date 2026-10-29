@@ -63,6 +63,7 @@ void test_leveling(void);
 void test_region_difficulty_scaling(void);
 void test_items(void);
 void test_equipment_catalog(void);
+void test_equipment_storage(void);
 void test_daggers(void);
 void test_classes(void);
 void test_level_cache_cleared(void);
@@ -292,6 +293,7 @@ int main(void) {
     printf("\n");
     test_items();
     test_equipment_catalog();
+    test_equipment_storage();
     test_daggers();
     printf("\n");
     test_save_load();

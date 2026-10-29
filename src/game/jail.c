@@ -81,27 +81,35 @@ void jail_migrate_castle(GameState *g) {
 }
 
 static int equipment(const Item *item) {
-    return item->type == ITEM_WEAPON || item->type == ITEM_ARMOR || item->type == ITEM_SHIELD;
+    return item->type == ITEM_WEAPON || item->type == ITEM_ARMOR || item->type == ITEM_SHIELD || item->type == ITEM_HELMET || item->type == ITEM_ACCESSORY;
 }
 
 static void confiscate_gear(GameState *g) {
     if (g->jail_gear_state) {
         return;
     }
-    for (int i = 0; i < g->inventory_count; i++) {
-        if (!equipment(&g->inventory[i])) {
+    for (int slot = EQUIPMENT_STRONG_HAND; slot < MAX_CARRIED_ITEMS; slot++) {
+        const Item *item = game_equipped_item(g, slot);
+        if (!item) {
             continue;
         }
         int index = g->jail_gear_count++;
-        g->jail_gear[index] = g->inventory[i];
-        if (g->equipped_main_hand == i) {
+        g->jail_gear[index] = *item;
+        if (slot == EQUIPMENT_STRONG_HAND) {
             g->jail_main_hand = index;
-        }
-        if (g->equipped_off_hand == i) {
+        } else if (slot == EQUIPMENT_WEAK_HAND) {
             g->jail_off_hand = index;
-        }
-        if (g->equipped_armor == i) {
+        } else if (slot == EQUIPMENT_ARMOR) {
             g->jail_armor = index;
+        } else {
+            int extra = slot == EQUIPMENT_HELMET ? 0 : slot - EQUIPMENT_ACCESSORY_1 + 1;
+            g->jail_extra_slots[extra] = index;
+        }
+        game_clear_equipment_slot(g, slot);
+    }
+    for (int i = 0; i < g->inventory_count; i++) {
+        if (equipment(&g->inventory[i])) {
+            g->jail_gear[g->jail_gear_count++] = g->inventory[i];
         }
     }
     for (int i = g->inventory_count - 1; i >= 0; i--) {
@@ -176,31 +184,27 @@ int jail_recover_gear(GameState *g) {
             return 1;
         }
     }
-    // Recover the original equipment first so even one free slot yields a usable weapon.
-    for (int pass = 0; pass < g->jail_gear_count + 3 && g->inventory_count < MAX_INVENTORY; pass++) {
-        int index = pass == 0 ? g->jail_main_hand : pass == 1 ? g->jail_off_hand : pass == 2 ? g->jail_armor : pass - 3;
+    int slots[] = {g->jail_main_hand, g->jail_off_hand, g->jail_extra_slots[0], g->jail_armor, g->jail_extra_slots[1], g->jail_extra_slots[2]};
+    // Restore worn gear directly, even when the bag is full. Revisit unclaimed
+    // bag items after all six slots so accessory constraints see the full set.
+    for (int pass = 0; pass < g->jail_gear_count + EQUIPMENT_SLOT_COUNT; pass++) {
+        int index = pass < EQUIPMENT_SLOT_COUNT ? slots[pass] : pass - EQUIPMENT_SLOT_COUNT;
         if (index < 0 || index >= g->jail_gear_count || (g->jail_gear_claimed & (1 << index))) {
             continue;
         }
-        int slot = g->inventory_count++;
-        g->inventory[slot] = g->jail_gear[index];
-        g->jail_gear_claimed |= 1 << index;
-        if (index == g->jail_main_hand && g->equipped_main_hand < 0) {
-            game_equip_main_hand(g, slot);
-        } else if (index == g->jail_off_hand && g->equipped_off_hand < 0) {
-            if (g->inventory[slot].type == ITEM_SHIELD) {
-                game_equip_shield(g, slot);
-            } else {
-                game_equip_off_hand(g, slot);
-            }
-        } else if (index == g->jail_armor && g->equipped_armor < 0) {
-            g->equipped_armor = slot;
-            game_apply_armor_bonuses(g, &g->inventory[slot]);
+        const Item *item = &g->jail_gear[index];
+        int restored = pass < EQUIPMENT_SLOT_COUNT && game_restore_equipment(g, item, MAX_INVENTORY + pass);
+        if (!restored && g->inventory_count < MAX_INVENTORY) {
+            g->inventory[g->inventory_count++] = *item;
+            restored = 1;
+        }
+        if (restored) {
+            g->jail_gear_claimed |= 1 << index;
         }
     }
     if (g->jail_gear_claimed == (1 << g->jail_gear_count) - 1) {
         g->jail_gear_state = 3;
-        push_message(g, "Completed: Recover Your Equipment. Every confiscated item is back in your pack.");
+        push_message(g, "Completed: Recover Your Equipment. Every confiscated item has been returned.");
     } else {
         push_message(g, "Make room in your pack, then Pick Up again. Unclaimed gear stays safely on the ground.");
     }

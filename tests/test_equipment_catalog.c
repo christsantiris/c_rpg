@@ -115,7 +115,7 @@ void test_equipment_catalog(void) {
         ASSERT("catalog metadata loading preserves wounds, currency and boss victories", loaded->player.hp == 41 && loaded->gold == 413 && loaded->defeated_bosses == g->defeated_bosses);
     }
     game_init(g);
-    Item sword = g->inventory[g->equipped_main_hand];
+    Item sword = g->inventory[0];
     int attack = g->player.attack;
     g->gold = 327;
     g->player.hp = 37;
@@ -124,7 +124,7 @@ void test_equipment_catalog(void) {
         loaded->inventory[i].accessory_family = (AccessoryFamily)999;
     }
     ok = save_game(g, CATALOG_SLOT) && write_legacy_catalog_save() && load_game(loaded, CATALOG_SLOT);
-    ASSERT("version-222 equipment without accessory metadata remains usable", ok && loaded->equipped_main_hand == g->equipped_main_hand && same_catalog_item(&sword, &loaded->inventory[loaded->equipped_main_hand]) && loaded->player.attack == attack && loaded->player.hp == 37 && loaded->gold == 327);
+    ASSERT("version-222 equipment without accessory metadata remains usable", ok && loaded->equipped_main_hand == g->equipped_main_hand && same_catalog_item(&sword, &loaded->inventory[0]) && loaded->player.attack == attack && loaded->player.hp == 37 && loaded->gold == 327);
     if (ok) {
         int defaults = 1;
         for (int i = 0; i < loaded->inventory_count; i++) {

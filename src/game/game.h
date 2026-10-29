@@ -47,6 +47,20 @@
 #define MAX_TRAIL 16
 #define RETIRED_LOOT_STAGES 6
 
+// Bag entries occupy [0, inventory_count). Worn items have fixed, separate
+// storage after the ten bag entries and never contribute to inventory_count.
+typedef enum {
+    EQUIPMENT_STRONG_HAND = MAX_INVENTORY,
+    EQUIPMENT_WEAK_HAND,
+    EQUIPMENT_HELMET,
+    EQUIPMENT_ARMOR,
+    EQUIPMENT_ACCESSORY_1,
+    EQUIPMENT_ACCESSORY_2,
+    MAX_CARRIED_ITEMS
+} EquipmentSlot;
+
+#define EQUIPMENT_SLOT_COUNT 6
+
 // Picks the message bar colour for a message.
 typedef enum {
     MESSAGE_NORMAL = 0,
@@ -328,7 +342,8 @@ typedef struct {
     int jail_quest_state; // 0: not arrested, 1: jailed, 2: escorting, 3: rewarded.
     int prisoner_x;
     int prisoner_y;
-    Item jail_gear[MAX_INVENTORY];
+    Item jail_gear[MAX_CARRIED_ITEMS];
+    int jail_extra_slots[3]; // Helmet, Accessory 1, Accessory 2 evidence indices.
     int jail_gear_count;
     int jail_gear_claimed;
     int jail_gear_state; // 0: none taken, 1: recover gear, 3: recovered.
@@ -373,7 +388,7 @@ typedef struct {
     int max_catacombs_level_reached;
     int catacombs_mantle_unclaimed;
     int max_temple_level_reached;
-    Item      inventory[MAX_INVENTORY];
+    Item inventory[MAX_CARRIED_ITEMS];
     int       inventory_count;
     int       equipped_main_hand;
     int       equipped_off_hand;
@@ -543,6 +558,7 @@ int game_interact_emberforge(GameState *g);
 int game_workshop_near_smith(const GameState *g);
 int game_workshop_near_fletcher(const GameState *g);
 int game_sharpen_weapon(GameState *g, int index);
+int game_workshop_item_index(const GameState *g, int row);
 void game_leave_guild(GameState *g);
 void game_talk_to_guild_seeker(GameState *g);
 void game_collect_desert_lamp(GameState *g);
@@ -606,6 +622,14 @@ int game_has_treasure_map(const GameState *g);
 int game_can_sail_to_island(const GameState *g);
 void game_light_coast_beacon(GameState *g, int x, int y);
 void game_repair_equipment_indices(GameState *g);
+void game_migrate_equipment_storage(GameState *g);
+const Item *game_equipped_item(const GameState *g, EquipmentSlot slot);
+const char *game_equipment_slot_name(EquipmentSlot slot);
+int game_equip_item(GameState *g, int index, EquipmentSlot slot);
+int game_unequip_item(GameState *g, EquipmentSlot slot);
+int game_restore_equipment(GameState *g, const Item *item, EquipmentSlot slot);
+int game_equipment_valid(const GameState *g);
+void game_clear_equipment_slot(GameState *g, EquipmentSlot slot);
 int game_equip_main_hand(GameState *g, int index);
 int game_equip_off_hand(GameState *g, int index);
 int game_equip_shield(GameState *g, int index);
