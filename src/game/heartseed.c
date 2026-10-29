@@ -107,6 +107,34 @@ static int add_guard(GameState *g, EnemyType type, const char *name, int tx, int
     return 0;
 }
 
+void heartseed_carve_grove(Map *map) {
+    // Extend only the eastern clearing, retaining cut paths, logs, actors and loot.
+    for (int y = 28; y <= 40; y++) {
+        for (int x = 47; x <= 59; x++) {
+            if (map->tiles[y][x] == TILE_ELDERWOOD_WALL && elderwood_in_clearing(x, y, 47, 28, 59, 40)) {
+                map->tiles[y][x] = TILE_ELDERWOOD_FLOOR;
+            }
+        }
+    }
+    // A short trail joins the rounded grove to the northern flank.
+    for (int y = 28; y <= 30; y++) {
+        if (map->tiles[y][58] == TILE_ELDERWOOD_WALL) {
+            map->tiles[y][58] = TILE_ELDERWOOD_FLOOR;
+        }
+    }
+    // A bramble passage beside the permanent southern route offers a flank.
+    for (int x = 53; x <= 58; x++) {
+        if (map->tiles[25][x] == TILE_ELDERWOOD_WALL) {
+            map->tiles[25][x] = TILE_ELDERWOOD_FLOOR;
+        }
+    }
+    for (int y = 26; y <= 28; y++) {
+        if (map->tiles[y][58] == TILE_ELDERWOOD_WALL) {
+            map->tiles[y][58] = TILE_ELDERWOOD_BRAMBLE;
+        }
+    }
+}
+
 void heartseed_prepare(GameState *g) {
     if (g->location != LOCATION_ELDERWOOD || (g->level != 2 && g->level != 4)) {
         return;
@@ -120,26 +148,8 @@ void heartseed_prepare(GameState *g) {
         }
         return;
     }
-    // Extend only the eastern clearing, retaining cut paths, logs, actors and loot.
     if (!(g->heartseed_sites & 2)) {
-        for (int y = 28; y <= 40; y++) {
-            for (int x = 47; x <= 59; x++) {
-                if (g->map.tiles[y][x] == TILE_ELDERWOOD_WALL) {
-                    g->map.tiles[y][x] = TILE_ELDERWOOD_FLOOR;
-                }
-            }
-        }
-        // A bramble passage beside the permanent southern route offers a flank.
-        for (int x = 53; x <= 58; x++) {
-            if (g->map.tiles[25][x] == TILE_ELDERWOOD_WALL) {
-                g->map.tiles[25][x] = TILE_ELDERWOOD_FLOOR;
-            }
-        }
-        for (int y = 26; y <= 28; y++) {
-            if (g->map.tiles[y][58] == TILE_ELDERWOOD_WALL) {
-                g->map.tiles[y][58] = TILE_ELDERWOOD_BRAMBLE;
-            }
-        }
+        heartseed_carve_grove(&g->map);
         if ((!g->heartseed_guardian && !add_guard(g, ENEMY_TREEFOLK, "Bound Treefolk", 53, 32)) ||
             !add_guard(g, ENEMY_DARK_ELF, "Heartseed Captor", 48, 34) ||
             !add_guard(g, ENEMY_DARK_ELF, "Heartseed Binder", 57, 35)) {

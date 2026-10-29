@@ -138,52 +138,83 @@ static void add_enemy(GameState *g, EnemyType type, int x, int y) {
     }
 }
 
-static void generate(GameState *g) {
-    ElderwoodCache blank = {0};
-    elderwood_unpack(&blank, &g->map);
+static const int clearing_x[6] = {12, 32, 52, 13, 34, 53};
+static const int clearing_y[6] = {11, 10, 12, 33, 32, 34};
+
+int elderwood_in_clearing(int x, int y, int x0, int y0, int x1, int y1) {
+    // The ellipse inscribed in the rectangle, in doubled units so even spans stay centred.
+    int dx = 2 * x - x0 - x1;
+    int dy = 2 * y - y0 - y1;
+    int rx = x1 - x0;
+    int ry = y1 - y0;
+    return dx * dx * ry * ry + dy * dy * rx * rx <= rx * rx * ry * ry;
+}
+
+static void layout(Map *map, const int width[6], const int height[6], int boss) {
     for (int y = 0; y < ELDERWOOD_H; y++) {
         for (int x = 0; x < ELDERWOOD_W; x++) {
-            g->map.tiles[y][x] = TILE_ELDERWOOD_WALL;
+            map->tiles[y][x] = TILE_ELDERWOOD_WALL;
         }
     }
-    const int cx[6] = {12, 32, 52, 13, 34, 53};
-    const int cy[6] = {11, 10, 12, 33, 32, 34};
+    // Rounded clearings, as in the Haunted Forest.
     for (int i = 0; i < 6; i++) {
-        int width = 5 + rand() % 2;
-        int height = 4 + rand() % 2;
-        for (int y = cy[i] - height; y <= cy[i] + height; y++) {
-            for (int x = cx[i] - width; x <= cx[i] + width; x++) {
-                g->map.tiles[y][x] = TILE_ELDERWOOD_FLOOR;
+        int x0 = clearing_x[i] - width[i];
+        int y0 = clearing_y[i] - height[i];
+        int x1 = clearing_x[i] + width[i];
+        int y1 = clearing_y[i] + height[i];
+        for (int y = y0; y <= y1; y++) {
+            for (int x = x0; x <= x1; x++) {
+                if (elderwood_in_clearing(x, y, x0, y0, x1, y1)) {
+                    map->tiles[y][x] = TILE_ELDERWOOD_FLOOR;
+                }
             }
         }
     }
-    carve(&g->map, 32, 46, 13, 33);
-    carve(&g->map, 13, 33, 53, 34);
-    carve(&g->map, 13, 33, 12, 11);
-    carve(&g->map, 53, 34, 52, 12);
-    carve(&g->map, 12, 11, 52, 12);
-    carve(&g->map, 32, 10, 32, 1);
-    carve(&g->map, 34, 32, 32, 10);
+    carve(map, 32, 46, 13, 33);
+    carve(map, 13, 33, 53, 34);
+    carve(map, 13, 33, 12, 11);
+    carve(map, 53, 34, 52, 12);
+    carve(map, 12, 11, 52, 12);
+    carve(map, 32, 10, 32, 1);
+    carve(map, 34, 32, 32, 10);
     for (int y = 20; y <= 22; y++) {
         for (int x = 31; x <= 33; x++) {
-            g->map.tiles[y][x] = TILE_ELDERWOOD_BRAMBLE;
+            map->tiles[y][x] = TILE_ELDERWOOD_BRAMBLE;
         }
     }
     for (int i = 0; i < 6; i++) {
-        g->map.tiles[cy[i] - 2][cx[i] + 2] = TILE_ELDERWOOD_LOG;
+        map->tiles[clearing_y[i] - 2][clearing_x[i] + 2] = TILE_ELDERWOOD_LOG;
     }
-    g->enemy_count = 0;
-    g->level_cleared = 0;
-    if (g->level == ELDERWOOD_DEPTH) {
+    if (boss) {
         for (int y = 7; y <= 38; y++) {
             for (int x = 17; x <= 47; x++) {
-                g->map.tiles[y][x] = TILE_ELDERWOOD_FLOOR;
+                if (elderwood_in_clearing(x, y, 17, 7, 47, 38)) {
+                    map->tiles[y][x] = TILE_ELDERWOOD_FLOOR;
+                }
             }
         }
         for (int y = 16; y <= 30; y += 14) {
-            g->map.tiles[y][25] = TILE_ELDERWOOD_LOG;
-            g->map.tiles[y][39] = TILE_ELDERWOOD_LOG;
+            map->tiles[y][25] = TILE_ELDERWOOD_LOG;
+            map->tiles[y][39] = TILE_ELDERWOOD_LOG;
         }
+    }
+    map->tiles[46][32] = TILE_ELDERWOOD_ENTRANCE;
+    map->tiles[1][32] = TILE_ELDERWOOD_EXIT;
+}
+
+static void generate(GameState *g) {
+    ElderwoodCache blank = {0};
+    elderwood_unpack(&blank, &g->map);
+    int width[6];
+    int height[6];
+    for (int i = 0; i < 6; i++) {
+        width[i] = 5 + rand() % 2;
+        height[i] = 4 + rand() % 2;
+    }
+    layout(&g->map, width, height, g->level == ELDERWOOD_DEPTH);
+    g->enemy_count = 0;
+    g->level_cleared = 0;
+    if (g->level == ELDERWOOD_DEPTH) {
         if (!g->elderwood_defeated) {
             add_enemy(g, ENEMY_ELDERTHORN, 32, 13);
         }
@@ -195,13 +226,116 @@ static void generate(GameState *g) {
         const EnemyType types[5] = {ENEMY_BLIGHTED_WOLF, ENEMY_IRONHIDE_BOAR, ENEMY_THORN_DRYAD, ENEMY_DARK_ELF, ENEMY_TREEFOLK};
         for (int i = 0; i < 4 + g->level * 2; i++) {
             int room = i % 6;
-            int x = cx[room] + (i / 6) * 2 - 2;
-            int y = cy[room] + 1;
+            int x = clearing_x[room] + (i / 6) * 2 - 2;
+            int y = clearing_y[room] + 1;
             add_enemy(g, types[(i + g->level - 1) % 5], x, y);
         }
     }
-    g->map.tiles[46][32] = TILE_ELDERWOOD_ENTRANCE;
-    g->map.tiles[1][32] = TILE_ELDERWOOD_EXIT;
+}
+
+static int saved_extent(const Map *map, int x, int y, int dx, int dy, int low, int high) {
+    // Count unbroken floor from a clearing's centre along a line no trail crosses.
+    int n = 0;
+    while (n < high && map->tiles[y + dy * (n + 1)][x + dx * (n + 1)] != TILE_ELDERWOOD_WALL) {
+        n++;
+    }
+    return n < low ? low : n;
+}
+
+static int removable(const Map *map, const Map *shape, int x, int y) {
+    return inside(x, y) && map->tiles[y][x] == TILE_ELDERWOOD_FLOOR && shape->tiles[y][x] == TILE_ELDERWOOD_WALL;
+}
+
+static void keep_path(const Map *map, const Map *shape, unsigned char keep[ELDERWOOD_H][ELDERWOOD_W], int x, int y) {
+    // Spare the shortest run of corner tiles linking an occupant to the rounded floor.
+    if (!inside(x, y) || shape->tiles[y][x] != TILE_ELDERWOOD_WALL) {
+        return;
+    }
+    static const int steps[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+    int from[ELDERWOOD_W * ELDERWOOD_H];
+    int queue[ELDERWOOD_W * ELDERWOOD_H];
+    memset(from, -1, sizeof(from));
+    int start = y * ELDERWOOD_W + x;
+    int head = 0;
+    int tail = 0;
+    from[start] = start;
+    queue[tail++] = start;
+    keep[y][x] = 1;
+    while (head < tail) {
+        int cell = queue[head++];
+        for (int i = 0; i < 4; i++) {
+            int nx = cell % ELDERWOOD_W + steps[i][0];
+            int ny = cell / ELDERWOOD_W + steps[i][1];
+            int next = ny * ELDERWOOD_W + nx;
+            if (!inside(nx, ny) || from[next] >= 0) {
+                continue;
+            }
+            if (map->tiles[ny][nx] != TILE_ELDERWOOD_WALL && shape->tiles[ny][nx] != TILE_ELDERWOOD_WALL) {
+                for (int path = cell; path != start; path = from[path]) {
+                    keep[path / ELDERWOOD_W][path % ELDERWOOD_W] = 1;
+                }
+                return;
+            }
+            if (removable(map, shape, nx, ny)) {
+                from[next] = cell;
+                queue[tail++] = next;
+            }
+        }
+    }
+}
+
+static void round_floor(const GameState *g, Map *map, int level, const Enemy *enemies, int count, int live) {
+    int width[6];
+    int height[6];
+    for (int i = 0; i < 6; i++) {
+        width[i] = saved_extent(map, clearing_x[i], clearing_y[i] + 3, 1, 0, 5, 6);
+        height[i] = saved_extent(map, clearing_x[i] + 3, clearing_y[i], 0, 1, 4, 5);
+    }
+    Map shape;
+    layout(&shape, width, height, level == ELDERWOOD_DEPTH);
+    if (level == 4 && (g->heartseed_sites & 2)) {
+        heartseed_carve_grove(&shape);
+    }
+    unsigned char keep[ELDERWOOD_H][ELDERWOOD_W] = {{0}};
+    for (int i = 0; i < count; i++) {
+        if (enemies[i].active) {
+            keep_path(map, &shape, keep, enemies[i].x, enemies[i].y);
+        }
+    }
+    if (g->portal_location == LOCATION_ELDERWOOD && g->portal_level == level) {
+        keep_path(map, &shape, keep, g->portal_x, g->portal_y);
+    }
+    if (live) {
+        keep_path(map, &shape, keep, g->player.x, g->player.y);
+        for (int i = 0; i < g->floor_item_count; i++) {
+            if (g->floor_items[i].active) {
+                keep_path(map, &shape, keep, g->floor_items[i].x, g->floor_items[i].y);
+            }
+        }
+    }
+    for (int y = 0; y < ELDERWOOD_H; y++) {
+        for (int x = 0; x < ELDERWOOD_W; x++) {
+            if (removable(map, &shape, x, y) && !keep[y][x]) {
+                map->tiles[y][x] = TILE_ELDERWOOD_WALL;
+            }
+        }
+    }
+}
+
+void elderwood_round_saved_clearings(GameState *g) {
+    // Floors saved before rounded clearings keep their trails, objects and occupants.
+    for (int level = 1; level <= ELDERWOOD_DEPTH; level++) {
+        ElderwoodCache *cache = &g->elderwood_cache[level - 1];
+        if (cache->valid) {
+            Map map;
+            elderwood_unpack(cache, &map);
+            round_floor(g, &map, level, cache->enemies, cache->enemy_count, 0);
+            elderwood_pack(cache, &map);
+        }
+    }
+    if (g->location == LOCATION_ELDERWOOD && g->level >= 1 && g->level <= ELDERWOOD_DEPTH) {
+        round_floor(g, &g->map, g->level, g->enemies, g->enemy_count, 1);
+    }
 }
 
 static void load_floor(GameState *g) {

@@ -44,6 +44,10 @@ Moonbound Sentinels that must first be awakened at an altar. Downward stairs
 and the island exit remain available for retreat. This rule applies only to
 the Ruined Temple; other areas keep their existing travel rules.
 
+The temple is drawn at the Crown Roads' 1.5× zoom: the camera shows about
+30 × 18 tiles of each 64 × 36 tier around the player and stops at the tier's
+edges. The Ruined Isle itself keeps its whole-island view.
+
 | Tier | Encounter size | Notable addition |
 | ---: | ---: | --- |
 | 1 | 6 enemies | Core temple roster |

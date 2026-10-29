@@ -1,8 +1,8 @@
 # Towns beside the regional roads
 
-All five towns have dense medieval settlement sprites and safe, signed roads around them.
+All five towns have dense medieval settlement sprites and safe, signed roads leading to them.
 Players arriving from a regional approach or Crown Road can enter town or walk
-around it to another connection. Bypassing town does not visit shops, accept
+around it across open grass to another connection; there is no paved ring road. Bypassing town does not visit shops, accept
 quests, heal the player or unlock regional boss roads.
 
 Walk into a connected cardinal side of the sprite to enter town; there is no
@@ -11,7 +11,7 @@ of the road, enters beside the corresponding interior exit gate. North enters
 facing south, east facing west, south facing north, and west facing east.
 Leaving through an interior gate puts the player just
 outside the matching side of the sprite. From there, follow the road to a region or
-around town. Gates are exits from town. Regional road boundaries are open road
+walk around town to another road. Gates are exits from town. Regional road boundaries are open road
 continuations, without a second gate. Streets and services inside all five towns retain their layouts.
 
 | Town | North | East | South | West |
@@ -117,3 +117,6 @@ Dawnmere's resident shop is labelled **Spice Merchant**; its resident is
 **Spice Merchant Corvin**. The northern castle approach now crosses
 [Crown Road North](crown-road-north.md) between Royal Catacombs and Castle
 Grounds.
+
+Save version **221** rebuilds a town exterior saved with the former paved ring
+road, keeping the player's position, exploration and any dropped items.

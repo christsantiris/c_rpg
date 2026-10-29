@@ -7,6 +7,9 @@ boundary stairs; advance through the northern stairs. Ordinary enemies never
 lock travel, including the final departure. The Goblin Mine Boss still guards
 the command seal. See [boss gates](boss-gates.md).
 
+The mines are drawn at the Crown Roads' 1.5× zoom: the camera shows about
+30 × 18 tiles around the player. The Mine Boss begins attacking from up to 16 tiles away; the camera leans toward him, though at 16 rows above or below he can sit just off screen. His rockfall warnings still mark the player's own tile.
+
 | Stage | Working | Layout and discoveries |
 | --- | --- | --- |
 | 1 | Abandoned Workings | Broad excavated chambers, looping galleries, a lamp-lit cart landing, and abandoned side pockets |

@@ -261,6 +261,7 @@ void test_dragonspine(void) {
     g.player.x = ILYA_TAVERN_X;
     g.player.y = ILYA_TAVERN_Y + 1;
     game_talk_to_dragon_seeker(&g);
+    ASSERT("Ilya's directions are not cut off", strstr(g.dialogue_text, "for a Potion of Strength.") != NULL);
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Ilya assigns the Dragonspine treasure quest once",
         g.dragon_treasure_quest_state == 1 && !g.portal_active &&

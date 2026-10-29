@@ -321,15 +321,17 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 
 ### Feature enhancements
 - Expand world map
-   Farms between areas for rest to improve hp. New story lines. More coherent quest structure.
+   Farms between areas for rest to improve hp. New story lines. More coherent quest structure. Use larger scale sprites. 
 - Recruit a party to join the adventure
    NPCs that can team up with the player character and accompany on the quest. Implement resurrection. 
 - Improve difficulty scaling and economy
    Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. Purchasing new weapons, armor and tomes should become necessary to progress.
-- Add paypal integration to buy gold
+- Add paypal/other integration to buy gold
    Add real money feature to buy in-game gold.
 - DnD style stats instead of static class based stats
    Roll for stats. Choose a class based on strengths. Ascending armor class chance to hit. 
 - Add new equipment types
    Add helmets, rings, gauntlets
+- Revamp enemy types
+   Variety of dark elves (dark elf archer, dark elf ranger etc) instead of simly dark elf type, variety of giants, recurring enemies in similar terrain
 

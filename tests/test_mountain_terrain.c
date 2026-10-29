@@ -1,5 +1,6 @@
 #include "test_utils.h"
 #include "../src/game/game.h"
+#include "../src/game/containers.h"
 #include "../src/systems/save_load.h"
 #include <stdlib.h>
 #include <string.h>
@@ -117,7 +118,9 @@ static void test_mountain_interactions(void) {
     int y = 0;
     Action interact = {ACTION_INTERACT, 0, 0};
     for (int side = -1; side <= 1; side += 2) {
+        // A fresh layout starts without the previous layout's chest records.
         map_generate_mountains(&g.map, g.level);
+        containers_forget_floor(&g);
         map_room_center(&g.map.rooms[1], &x, &y);
         g.player.x = x + side * 3;
         g.player.y = y + 1;
@@ -249,9 +252,35 @@ static void test_mountain_persistence(void) {
     remove("saves/savegame_99009.json");
 }
 
+static void test_regenerated_floor_records(void) {
+    // Allocated, not static: another static game state would overflow the runner's data segment.
+    GameState *g = calloc(1, sizeof(*g));
+    ASSERT("regenerated floor fixture allocates", g != NULL);
+    if (!g) {
+        return;
+    }
+    game_init(g);
+    g->location = LOCATION_MOUNTAINS;
+    g->level = 3;
+    map_generate_mountains(&g->map, g->level);
+    g->enemy_count = 0;
+    // A chest record left from an older layout of stage 4, and a live one on stage 3.
+    g->loot_containers[0] = (LootContainer){.location = LOCATION_MOUNTAINS, .level = 4, .x = 5, .y = 5,
+        .kind = TILE_MOUNTAIN_CACHE, .opened = 1, .released = 1};
+    g->loot_containers[1] = (LootContainer){.location = LOCATION_MOUNTAINS, .level = 3, .x = 6, .y = 6,
+        .kind = TILE_MOUNTAIN_CACHE, .opened = 1, .released = 1, .gold = 9};
+    g->loot_container_count = 2;
+    g->mountain_cache[3].valid = 0;
+    game_descend(g);
+    ASSERT("generating a floor drops chest records from its old layout and keeps other floors'",
+        g->level == 4 && g->loot_container_count == 1 && g->loot_containers[0].level == 3 && g->loot_containers[0].gold == 9);
+    free(g);
+}
+
 void test_mountain_terrain(void) {
     printf("Mountain terrain tests:\n");
     test_mountain_generation();
     test_mountain_interactions();
+    test_regenerated_floor_records();
     test_mountain_persistence();
 }
