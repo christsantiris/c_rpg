@@ -270,12 +270,19 @@ static int occupied(const GameState *g, int x, int y) {
 }
 
 static void spawn(GameState *g, EnemyType type, int x, int y) {
-    static const char *names[] = {"Goblin Scout", "Goblin Archer", "Goblin Bomber", "Tunnel Spider", "Cave Troll", "Hobgoblin Guard", "Goblin Shaman"};
-    const int hp[] = {12,16,18,20,52,36,26};
-    const int attack[] = {5,7,9,8,14,11,10};
-    const int defense[] = {1,1,1,3,5,7,2};
+    static const char *names[] = {"Goblin Scout", "Goblin Archer", "Goblin Warchief", "Giant Spider", "Cave Troll", "Hobgoblin Guard", "Goblin Shaman"};
+    const int hp[] = {12,16,40,18,52,36,26};
+    const int attack[] = {5,7,12,7,14,11,10};
+    const int defense[] = {1,1,4,2,5,7,2};
     int boss = type == ENEMY_GOBLIN_MINE_BOSS;
-    int kind = boss ? 0 : type - ENEMY_GOBLIN_SCOUT;
+    int kind = 0;
+    static const EnemyType types[] = {ENEMY_GOBLIN_SCOUT, ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_WARCHIEF, ENEMY_GIANT_SPIDER, ENEMY_CAVE_TROLL, ENEMY_HOBGOBLIN_GUARD, ENEMY_GOBLIN_SHAMAN};
+    while (!boss && kind < 7 && types[kind] != type) {
+        kind++;
+    }
+    if (kind == 7) {
+        return;
+    }
     if (g->enemy_count >= AREA_ENEMY_LIMIT || occupied(g, x, y)) {
         return;
     }
@@ -325,7 +332,8 @@ static void populate(GameState *g) {
             continue;
         }
         int kinds = g->level == 1 ? 4 : g->level == 2 ? 6 : 7;
-        spawn(g, ENEMY_GOBLIN_SCOUT + rand() % kinds, x, y);
+        static const EnemyType types[] = {ENEMY_GOBLIN_SCOUT, ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_WARCHIEF, ENEMY_GIANT_SPIDER, ENEMY_CAVE_TROLL, ENEMY_HOBGOBLIN_GUARD, ENEMY_GOBLIN_SHAMAN};
+        spawn(g, types[rand() % kinds], x, y);
     }
 }
 
@@ -732,7 +740,7 @@ int ironfang_valid(const GameState *g) {
         for (int e = 0; e < state->enemy_count; e++) {
             const Enemy *enemy = &state->enemies[e];
             if (!inside(enemy->x, enemy->y) || (enemy->type != ENEMY_GOBLIN_MINE_BOSS &&
-                (enemy->type < ENEMY_GOBLIN_SCOUT || enemy->type > ENEMY_GOBLIN_SHAMAN))) {
+                (enemy->type != ENEMY_GOBLIN_SCOUT && enemy->type != ENEMY_GOBLIN_ARCHER && enemy->type != ENEMY_GOBLIN_WARCHIEF && enemy->type != ENEMY_GIANT_SPIDER && enemy->type != ENEMY_CAVE_TROLL && enemy->type != ENEMY_HOBGOBLIN_GUARD && enemy->type != ENEMY_GOBLIN_SHAMAN))) {
                 return 0;
             }
         }

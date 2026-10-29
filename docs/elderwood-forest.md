@@ -35,9 +35,9 @@ their existing state. Saving and loading alone does not respawn enemies.
 | Enemy | Role |
 | --- | --- |
 | Blighted Wolf | Pack flanker; closes on ranged enemies' targets |
-| Ironhide Boar | Warns an aligned charge, then smashes through brambles |
+| Dark Elf Ranger | Bow skirmisher that repositions after shooting; shared with Haunted Forest |
 | Thorn Dryad | Ranged thorn volleys and repositioning |
-| Dark Elf | The existing Haunted Forest archer, sharing its art and behavior |
+| Dark Elf Archer | The existing Haunted Forest archer, sharing its art and behavior |
 | Treefolk | Toughest regular enemy; heavy bark armor and warned root attacks |
 | Elderthorn | Stage 5 boss, an ancient stag armored in bark and living roots |
 
@@ -68,7 +68,7 @@ corner. A three-tile trail links the rounded grove to its bramble flank.
 ## The Stolen Heartseed
 
 Forester Tamsin stands beside Oakhaven's northern road. Talk with her and accept
-**The Stolen Heartseed**. Search the Dark Elf camp in stage 2's western clearing
+**The Stolen Heartseed**. Search the Dark Elf Archer camp in stage 2's western clearing
 for orders identifying the **golden-root grove in stage 4's eastern clearing**.
 
 Use **Interact** (A by default) beside each of the grove's three violet-bound

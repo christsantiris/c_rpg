@@ -2,7 +2,7 @@
 #define FOREST_ENEMY_ART_H
 
 // Rendering indices only; persistent EnemyType values are unchanged.
-enum { FOREST_ART_PIXIE, FOREST_ART_BLIGHTED_WOLF, FOREST_ART_GIANT_SPIDER, FOREST_ART_DARK_ELF, FOREST_ART_GIANT_WURM, FOREST_ART_FOREST_TROLL, FOREST_ART_FOREST_NECROMANCER, FOREST_ART_COUNT };
+enum { FOREST_ART_PIXIE, FOREST_ART_BLIGHTED_WOLF, FOREST_ART_GIANT_SPIDER, FOREST_ART_DARK_ELF_ARCHER, FOREST_ART_DARK_ELF_RANGER, FOREST_ART_FOREST_TROLL, FOREST_ART_FOREST_NECROMANCER, FOREST_ART_COUNT };
 
 // Native 24-pixel silhouettes; dots leave the terrain visible.
 // s/S/H skin or shell, c/C/v cloth or plates, e/y eyes, f bone/teeth,
@@ -87,7 +87,7 @@ static const char forest_enemy_art[FOREST_ART_COUNT][24][25] = {
         "o...Ho............oS...o",
         "....H..............S....",
     },
-    { // DARK_ELF
+    { // DARK_ELF_ARCHER
         "........................",
         "..........ovCo.....N.N..",
         "........ovCCCco....N.N..",
@@ -113,31 +113,31 @@ static const char forest_enemy_art[FOREST_ART_COUNT][24][25] = {
         "........okLKoolLkko.....",
         "........ooooo.ooooo.....",
     },
-    { // GIANT_WURM
+    { // DARK_ELF_RANGER
         "........................",
-        "........................",
-        "........................",
-        ".................oCvCo..",
-        "...............ovCvCCco.",
-        "..............ovCCCcccCo",
-        ".............ovCCHSSSCCo",
-        "............ovCCHSSySSCo",
-        "...........oCCHSSSSSSSCo",
-        "..........ovCCHSSooSSSSo",
-        "...........oCCCHSSoefefo",
-        "..........ovCCHSSoeeeeeo",
-        ".........ovCCHSSSoofoo..",
-        "........ovCCHSSSSSSSo...",
-        ".......ovCCHSSSoCCo.....",
-        "......ovCCHSSSCCCco.....",
-        "....ovCCCSoCCcCCco......",
-        "...ovCCSoCCcCCcco.......",
-        "..ovCCSoCCcCCccco.......",
-        ".ovCCSoCCcCCcco.........",
-        ".oCCSoCCcCCccco.........",
-        ".oCCSoCCcCCcco..........",
-        "..oooCCCCcccco..........",
-        ".....ooooooooo..........",
+        "..........ovCo.....N.N..",
+        "........ovCCCco....N.N..",
+        "....W..ovCCCCcco...LoL..",
+        "...WLf.ovCCCCccco..LlL..",
+        "..W..f.ovCooooCCco.LlL..",
+        ".W...f.ovCoHSSoCco.LlL..",
+        ".W...fSovCoSySyoCoSLlL..",
+        ".W...foSCoHSSSoCCoSLlL..",
+        ".W...f..oCofSfoCco.LlL..",
+        ".W...f...oCSsoCco..olo..",
+        ".W...f.ovCCoooCCco.olo..",
+        ".W..SSovCCoCvCCCco.ooo..",
+        ".W...foSSoCvClCcoSoofo..",
+        ".W...foSSoCvCKlcoSSofo..",
+        ".......oooCvClClcoSofo..",
+        "........ovllGlllco.ofo..",
+        "........ovCCcCCcco.ofo..",
+        "........ovCCcCccco.oGo..",
+        "........ovCcoCCco..oGo..",
+        ".........oLlo.oLlo......",
+        ".........oLlo.oLlo......",
+        "........okLKoolLkko.....",
+        "........ooooo.ooooo.....",
     },
     { // FOREST_TROLL
         "........................",

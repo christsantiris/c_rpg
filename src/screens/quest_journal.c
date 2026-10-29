@@ -34,7 +34,7 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Recover the Treasure Map", "Dain",
         "Recover the three Goblin Map Bearer fragments.",
         "Return and speak to Dain in Dawnmere's Alehouse.",
-        {"Defeat Archer Map Bearer", "Defeat Bomber Map Bearer",
+        {"Defeat Archer Map Bearer", "Defeat Warchief Map Bearer",
             "Defeat Shaman Map Bearer"},
         "Goblin Mountains", {2, 3, 4}, 60, 400
     },

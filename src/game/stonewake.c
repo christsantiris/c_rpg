@@ -432,7 +432,7 @@ void stonewake_migrate(GameState *g) {
             migrate_loot(g->floor_items, g->floor_item_count);
         }
         for (int i = 0; i < count; i++) {
-            const char *name = enemies[i].type == ENEMY_CRYSTAL_SPIDER ? "Rockworm" :
+            const char *name = enemies[i].type == ENEMY_OGRE ? "Ogre" :
                 enemies[i].type == ENEMY_BLIND_STALKER ? "Quarry Construct" :
                 enemies[i].type == ENEMY_SHARD_GOLEM ? "Stone Troll" :
                 enemies[i].type == ENEMY_PRISM_SOVEREIGN ? "Quarry Colossus" : NULL;
