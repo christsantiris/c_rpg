@@ -7,8 +7,7 @@ on stage 1 it returns to the approach back to Castle Grounds' north gate. Ordina
 enemies do not block stage travel.
 
 The hollow is drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 ×
-18 tiles around the player. The Cinder Lord acts within twelve tiles, so he may
-begin his telegraphed eruptions from just off screen.
+18 tiles around the player. The Cinder Lord acts within twelve tiles; the camera leans toward him to keep him on screen as his telegraphed eruptions begin.
 
 The entrance is a lone, towering fire mountain. A lava river pours from its
 notched crater and splits around a jagged, fire-lit cleft at its foot, while

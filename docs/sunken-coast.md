@@ -6,8 +6,7 @@ another region does not reset explored coast stages.
 
 The coast is drawn at the Crown Roads' 1.5× zoom: the camera shows about
 30 × 18 tiles around the player. Sirens and water elementals fire along lanes of
-at most six tiles, so their shots start on screen; the Drowned Queen wakes
-within twelve tiles and may begin her telegraphed attacks from just off screen.
+at most six tiles, so their shots start on screen; the Drowned Queen wakes within twelve tiles, and the camera leans toward her to keep her on screen as her telegraphed attacks begin.
 
 ## Coastal entrance path
 

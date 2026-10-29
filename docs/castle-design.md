@@ -12,8 +12,7 @@ castle victories or equipment. See [Royal Dungeon](royal-dungeon.md).
 
 The interior is drawn at the Crown Roads' 1.5× zoom: the camera shows about
 30 × 18 tiles around the player. Ranged defenders fire from at most eight tiles,
-so they stay on screen; a wounded Royal Arcanist or Lord Veyr retaliates from up
-to twelve, so across their 22 × 14 arenas they may act from just off screen.
+so they stay on screen; a wounded Royal Arcanist or Lord Veyr retaliates from up to twelve, and the camera leans toward them to keep them on screen across their 22 × 14 arenas.
 
 ## Floors and appearance
 

@@ -13,8 +13,7 @@ within the swamp remains available; retreat from level 1 returns to the entrance
 path for the town used. Regular enemies do not need to be cleared to advance.
 
 The swamp is drawn at the Crown Roads' 1.5× zoom: the camera shows about
-30 × 18 tiles around the player. The Swamp Demon wakes within twelve tiles, so
-it may begin its telegraphed attacks from just off screen.
+30 × 18 tiles around the player. The Swamp Demon wakes within twelve tiles; the camera leans toward it to keep it on screen as its telegraphed attacks begin.
 
 Braided mudbanks connect irregular islands across broad blackwater channels.
 Rounded cypress islets and reconnecting routes let players approach encounters
