@@ -19,17 +19,17 @@ so they stay on screen; a wounded Royal Arcanist or Lord Veyr retaliates from up
 The player climbs from the gatehouse on floor 1 to the throne on floor 6.
 Charcoal masonry, gold trim, crimson carpets and banners, stained glass,
 torches, pillars, court tables, archives, and a royal throne establish the
-fortress theme. Review sprites supply five regular enemies, two minibosses,
-and three appearances of the final boss.
+fortress theme. The approved roster includes shared Royal Guards and a Vampire
+armory miniboss, alongside dedicated royal defenders and the final boss.
 
 | Floor | Setting | Encounter and progress |
 |---|---|---|
 | 1 | Gatehouse | Two guarded approaches with independent portcullis levers and firing lanes |
-| 2 | Iron Keep | Castellan's two phases, guard detail, finite rally and side portcullis counters |
-| 3 | Forsaken Court | Protected Herald calls a capped three-guard patrol through a marked doorway |
+| 2 | Iron Keep | Vampire miniboss, guard detail and side portcullis controls |
+| 3 | Forsaken Court | Royal Guards defend the court alongside marksmen and hexers |
 | 4 | Crown Chapel | Royal Arcanist's two phases, sequential ward lanes and pedestal counters |
 | 5 | Royal Archives | Shelves narrow sightlines; roaming soldiers and warned fire lanes threaten the approaches |
-| 6 | Throne of No Return | Veyr combines guarded approaches, ward pedestals, a throne-room Herald, fire lanes, and mixed escorts |
+| 6 | Throne of No Return | Veyr combines guarded approaches, ward pedestals, Royal Guards, fire lanes, and mixed escorts |
 
 Each floor has six rooms linked by loops. Closed portcullises and magical
 barriers retain alternate routes. Tables stay outside the carpeted corridors,
@@ -46,43 +46,22 @@ Descending from floor 1 returns you to the castle grounds.
 | Iron Warden | Halves frontal damage and shields nearby allies behind it |
 | Royal Marksman | Shoots through clear lanes; closing a portcullis provides cover |
 | Court Hexer | Ranged magic and an attack bonus for nearby allies |
-| Bell Herald | Announces one reinforcement call; Court and throne-room calls summon up to three guards at a marked doorway; killing or freezing interrupts or delays it |
+| Royal Guard | Shared armored melee defender from the Royal Dungeon and Crown Roads |
+| Vampire | Existing melee enemy; the armory miniboss retains floor-3 progression and its unique reward |
 
 Gold markers show shield facing; they dim during recovery. Flanking and
 recovery attacks bypass shields. Frontal hits always deal at least one damage.
 All three classes can fight the guards and operate levers. Press **Interact**
 (default `A`) on or beside a lever to change its portcullis.
 
-The Castellan's **Shield Commander** phase marks a five-stone cardinal charge
-or a three-stone frontal swing, each with one action of warning. At or below
-half health, **Broken Formation** calls one two-action guard rally, then
-alternates a wider **Formation Sweep** with separately warned charges. Sweeps
-cover two rows of five stones in front of him and allow two actions to escape.
-The current warning finishes before a phase change; healing cannot reverse it.
-The HUD shows the phase, health, signature name, remaining actions and freeze.
-
-Warnings lock their footprint at declaration. Opening a gate cannot extend a
-queued attack. All signatures leave one full recovery action; masonry and guard
-collisions expose the Castellan for two. A struck guard also loses its pending
-attack and shield protection for two turns. Guards can intercept a charge before
-it reaches a player farther down the lane. Charges remain inside the arena.
-If cover or actors eliminate every ordinary walking escape, the attack is marked
-blocked and misses rather than trapping the player in an unavoidable hit.
+The armory Vampire uses ordinary castle melee warnings and recovery. It has no
+charge, shield phase or reinforcement call. Its Warden and Marksman detail
+remains, and its defeat retains the first castle miniboss completion flag.
 
 Two side levers at **(37,51)** and **(53,51)** control their own three-stone
-portcullises at **x=40** and **x=50**, **y=47..49**. Both begin open. Every class
-can Interact on or beside a lever. Closing a gate across a marked charge
-interrupts it and leaves two full counterattack actions after Interact. Actor- or
-loot-occupied cells stay open; operating a partially closed gate closes the remaining empty
-cells, and operating a fully closed gate reopens it. Paths around each gate
-remain walkable, including access to the stairs and both levers.
-
-The rally warns the two muster stones at **(42,46)** and **(48,46)** with **G2**,
-then **G1**. At most one Warden and one Marksman arrive on empty marked stones;
-occupied arrivals are skipped. They act from the following turn and award no
-gold, items or XP. The call is spent at declaration and cannot be replenished by
-saving, floor travel or castle retreat. His original guard detail does not return
-after his defeat.
+portcullises at **x=40** and **x=50**, **y=47..49**. Both begin open. Actor- or
+loot-occupied cells remain open; paths around each gate preserve access to the
+stairs and both levers.
 
 Victory preserves the **100 gold** and floor-3 unlock and reserves **Castellan's
 Bulwark** in the southeast armory chest at **(53,55)**. Interact on or beside it
@@ -92,12 +71,9 @@ leaves it reserved; maximum floor loot cannot prevent the award. The reservation
 survives retreat, floor travel and save/load. Claiming, dropping or selling the
 shield cannot award another copy.
 
-Save version **137** retains phase, fixed warning bits, countdown, facing, spent
-rally, recovery, gates and reward state in active and cached floors. Older saves
-receive the open gates, levers and muster stones without regenerating enemies or
-resetting damage, exploration, traps or loot. Prior victories remain complete
-and reserve the newly introduced Bulwark once, without repeating gold or XP.
-See [Castellan renderer review and play testing](art-sources/castellan-encounter/README.md).
+Save version **222** migrates the replaced castle actors in active and cached
+floors. Existing wounds, deaths, victories, armory reservations and claimed
+items remain intact; retired attack and summon warnings are cleared.
 
 The Royal Arcanist's **Warded Scholar** phase retains a two-action, five-stone
 diamond blast. At or below half health, **Shattered Liturgy** alternates a
@@ -171,8 +147,7 @@ visible and dangerous beneath dropped loot. The throne arena repeats a fire lane
 across its southern approach; entrances, stairs, and trapdoor landing tiles are safe.
 
 Violet outlines mark attacks' fixed destinations before damage is applied.
-Normal attacks and Castellan charges/swings allow one movement turn; Castellan
-sweeps/rallies and Arcanist attacks allow two. Freezing an enemy pauses its pending attack and its ward change.
+Normal attacks allow one movement turn; Arcanist attacks allow two. Freezing an enemy pauses its pending attack and its ward change.
 Cover blocks ranged attacks even if the barrier closes after the warning starts.
 
 Lord Veyr has one continuous health bar and three phases: Armored Ruler above
@@ -220,7 +195,7 @@ Veyr announces at most two escorts per attempt, a Warden and a Marksman, at
 G-marked stones (42,46) and (48,46). They arrive on empty stones when the warning
 resolves and act from the following turn. Occupied arrivals or a full roster
 consume the call without retrying. New escorts grant no gold, items, XP or score.
-The throne-room Herald retains its separate finite patrol call. Returning between
+Royal Guards replace the former reinforcement callers. Returning between
 castle floors preserves the attempt; retreat resets a living Veyr and his escort
 allowance according to existing castle rules.
 
@@ -247,7 +222,7 @@ their names/scores and receive no invented victory status. See the
 
 ## Progression
 
-Defeating the Castellan and Royal Arcanist opens the route to the throne.
+Defeating the armory Vampire and Royal Arcanist opens the route to the throne.
 No regional collectibles are required; visiting other areas is optional.
 
 ## Trapdoors
@@ -273,7 +248,7 @@ Walking out through the floor 1 stairs likewise ends the current attempt.
 
 Ordinary defenders respawn, surviving bosses regain full health, and gates and
 wards reset. Maps, dropped items, defeated minibosses,
-revealed trapdoors, and spent trapdoor/Herald calls persist. Defeated
+revealed trapdoors, and spent trapdoor calls persist. Defeated
 minibosses never respawn or repeat their unique rewards.
 
 Miniboss victories unlock the onward stairs. They do not create exit portals
@@ -296,7 +271,7 @@ Version **120** adds the floor encounters to live and cached castle maps without
 regenerating them. Shelves skip tiles occupied by the player, living enemies, or
 loot. Existing enemy damage, deaths, loot, exploration, and miniboss victories
 remain intact; cleared floors gain no additional guards. Fire warning phases,
-disabled pedestals, patrol directions, and each Herald's spent call survive
+disabled pedestals, patrol directions, and Royal Guard positions survive
 save/load. Migration runs once; resaving does not duplicate new defenders.
 
 Suggested play test:
@@ -304,7 +279,7 @@ Suggested play test:
 1. Enter through both Crown Road approaches and cancel/confirm the entry warning.
 2. Fight the mixed guards; flank Wardens and use levers for ranged cover.
    Try both Gatehouse approaches and their independent levers.
-3. Defeat the Castellan on floor 2 and the Arcanist on floor 4; climb onward and
+3. Defeat the Vampire on floor 2 and the Arcanist on floor 4; climb onward and
    confirm the miniboss stays defeated after retreat, with no shortcut portals.
    Bait a charge into a guard, and disable both chapel pedestals.
 4. Trigger a trapdoor, revisit its open hole, and save/load with loot over it.
@@ -312,7 +287,7 @@ Suggested play test:
 6. Cancel and accept Return to Town; verify surviving defenders reset and
    permanent progress and dropped items survive.
 7. Fight all three Veyr phases, dodge marked areas, and confirm the victory ending.
-8. Interrupt a Court Herald and allow a separate call to observe its doorway patrol.
+8. Fight Royal Guards in the court and throne room; verify they cannot summon patrols.
 9. Walk the Archives' fire lanes during both countdown turns; dodge one eruption
    and deliberately take another. Save during a warning and confirm it resumes.
 

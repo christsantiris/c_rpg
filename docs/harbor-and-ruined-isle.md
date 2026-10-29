@@ -52,7 +52,7 @@ edges. The Ruined Isle itself keeps its whole-island view.
 | ---: | ---: | --- |
 | 1 | 6 enemies | Core temple roster |
 | 2 | 7 enemies | Lunar Effigy |
-| 3 | 8 enemies | Treasure Wraith |
+| 3 | 8 enemies | Wraith |
 | 4 | 8 enemies | Solar traps, flooded galleries, and lunar defenders |
 | 5 | 6 regular enemies and 1 boss | Fallen Sun Guardian and buried vault |
 
@@ -69,6 +69,10 @@ Switching to Sun waits until every open lunar doorway is clear of the player,
 living enemies and loot. This prevents doors closing on occupants or becoming
 hidden beneath walkable items. Loot covering an altar does not disable it.
 
+Sun Priests become dormant during Moon alignment; Lunar Effigies become dormant
+during Sun alignment. They retain wounds and status effects, still count toward
+temple seals, and return only if alive when their alignment returns.
+
 Awakened sentinels remain active if the alignment returns to Sun. Alignment,
 opened routes, awakened enemies, defeated enemies, and the treasure state are
 cached separately for every tier and persist through saving and loading.
@@ -84,10 +88,10 @@ Guardian opens the vault. Clearing a tier keeps its stairs open on later visits.
 - **Temple Stalker:** fast pursuer that moves twice when it advances.
 - **Blowdart Hunter:** ranged attacker whose darts poison the player.
 - **Vinebound Guardian:** slow, durable frontline enemy.
-- **Sun Priest:** ranged support enemy that periodically heals a nearby ally.
+- **Sun Priest (Sun only):** ranged support enemy that periodically heals a nearby ally.
 - **Serpent Spirit:** ranged magical attacker.
-- **Treasure Wraith:** strong late-temple attacker.
-- **Lunar Effigy:** slow, armored temple construct.
+- **Wraith:** strong late-temple attacker.
+- **Lunar Effigy (Moon only):** slow, armored temple construct.
 - **Moonbound Sentinel:** durable ranged construct awakened by Moon alignment.
 - **Fallen Sun Guardian:** summit boss with three phases, fixed solar and lunar
   warnings, alignment guards and sanctuary refuges.

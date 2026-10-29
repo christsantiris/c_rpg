@@ -18,7 +18,7 @@ The quarry is drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 ×
 | 1 | Outer Workings | Learn the connected yard/ramp layout and optional crane walkways. |
 | 2 | Excavation Pits | Reclaim the guarded West Winch. |
 | 3 | Buried Workshops | Reclaim the guarded Workshop Hoist. |
-| 4 | Abandoned Galleries | Reclaim the guarded Main Gantry; Iron Sentinels join the roster. |
+| 4 | Abandoned Galleries | Reclaim the guarded Main Gantry; Stone Giants join the roster. |
 | 5 | Colossus Yard | Defeat the Quarry Colossus, using the nearby crane to interrupt windups. |
 
 Each generator produces nine work yards with two flooded excavation cuts,
@@ -57,10 +57,10 @@ save/load; it no longer lowers a raised crane again before every movement action
 
 | Enemy | Role | Base HP / attack / defense |
 | --- | --- | --- |
-| Rockworm | Small, fast melee pursuer. | 30 / 11 / 2 |
+| Ogre | Shared melee bruiser from Giant’s Peaks. | 42 / 12 / 3 |
 | Quarry Construct | Ambush melee guard with an iron-bound stone body. | 38 / 16 / 3 |
 | Stone Troll | Slow, durable close combat threat. | 110 / 18 / 9 |
-| Iron Sentinel | Heavily armored melee guard introduced on stage 4. | 95 / 20 / 10 |
+| Stone Giant | Shared heavy melee enemy introduced on stage 4. | 60 / 14 / 6 |
 | Quarry Colossus | Stage 5 boss, roughly twice player height. | 275 / 24 / 8 |
 
 These are base values; the existing region/player progression scaling still
@@ -69,12 +69,10 @@ loading keep the current expedition's damage and deaths. Return to Town is a
 one-way escape to the last town visited, with no return portal.
 Boss victory and its guaranteed rewards remain one time.
 
-The 48×48 atlas cells contain padding, not oversized ordinary bodies. Construct
-and Sentinel are 23 pixels tall beside the 24-pixel player; the Rockworm is
-23×14. The deliberately larger Stone Troll is 29×30 and the Colossus is 44×42.
-All five share the player's ground line. See the [renderer before/after scale
-comparison](images/stonewake-enemy-scale.png) and the [complete enemy/area
-mapping](enemy-roster.md).
+The Construct, Stone Troll and Colossus use their established padded atlas cells.
+Ogres and Stone Giants use their existing shared sprites at native player scale.
+All five share the player's ground line. The [approved enemy roster](enemy-roster.md)
+records their shared areas; older scale comparison images show the previous roster.
 
 ### Quarry Colossus
 
@@ -147,11 +145,10 @@ it while retaining their claimed state. Floor loot, wounds, player position and
 portal anchors remain intact. An older cut without enough spare space keeps its
 two-state crossing until a fresh quarry layout replaces that legacy expedition.
 
-The internal `GLASSDEEP`, `PRISM_SOVEREIGN`, `CRYSTAL_SPIDER`, `BLIND_STALKER`
-and `SHARD_GOLEM` identifiers and JSON keys retain their old numeric meanings
-for compatibility. New player-facing labels and runtime art use Stonewake.
-The Iron Sentinel, quarry terrain and hammer metadata append new enum values;
-no existing location, enemy, item or tile IDs are reassigned.
+The internal `GLASSDEEP`, `PRISM_SOVEREIGN`, `BLIND_STALKER` and `SHARD_GOLEM`
+identifiers retain their old numeric meanings for compatibility. Retired creature
+IDs are reserved; save version 222 migrates actors to the approved shared types
+without resetting wounds, deaths, exploration, loot or quest progress.
 
 Crown Road North and the Catacombs structural overhaul are separate follow-up
 change sets. Stormwatch/eastern Dawnmere development remains a later design.

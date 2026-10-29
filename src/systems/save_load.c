@@ -654,6 +654,7 @@ static cJSON *serialize_enemies(const Enemy *enemies, int count) {
         cJSON_AddNumberToObject(obj, "dain_fragment", e->dain_fragment);
         cJSON_AddNumberToObject(obj, "frozen_turns", e->frozen_turns);
         cJSON_AddNumberToObject(obj, "poison_turns", e->poison_turns);
+        cJSON_AddNumberToObject(obj, "alignment_dormant", e->alignment_dormant);
         cJSON_AddNumberToObject(obj, "attack_target_x", e->attack_target_x);
         cJSON_AddNumberToObject(obj, "attack_target_y", e->attack_target_y);
         cJSON_AddNumberToObject(obj, "revived", e->revived);
@@ -679,8 +680,48 @@ static cJSON *serialize_enemies(const Enemy *enemies, int count) {
 
 static void migrate_retired_enemy(Enemy *e) {
     // Only serialized IDs remain here; retired types never enter runtime state.
+    int old_type = e->type;
     const char *name;
     switch ((int)e->type) {
+        case 17:
+            if (strcmp(e->name, "Dark Elf") == 0) {
+                snprintf(e->name, sizeof(e->name), "Dark Elf Archer");
+            }
+            return;
+        case 18:
+        case 96:
+            e->type = ENEMY_DARK_ELF_RANGER;
+            name = "Dark Elf Ranger";
+            break;
+        case 23:
+            e->type = ENEMY_GOBLIN_WARCHIEF;
+            name = "Goblin Warchief";
+            break;
+        case 24:
+            e->type = ENEMY_GIANT_SPIDER;
+            name = "Giant Spider";
+            break;
+        case 43:
+            e->type = ENEMY_WRAITH;
+            name = "Wraith";
+            break;
+        case 78:
+            e->type = ENEMY_OGRE;
+            name = "Ogre";
+            break;
+        case 91:
+            e->type = ENEMY_ROYAL_GUARD;
+            name = "Royal Guard";
+            break;
+        case 92:
+            e->type = ENEMY_VAMPIRE;
+            e->is_boss = 1;
+            name = "Vampire";
+            break;
+        case 113:
+            e->type = ENEMY_STONE_GIANT;
+            name = "Stone Giant";
+            break;
         case 56:
         case 95:
             e->type = ENEMY_BLIGHTED_WOLF;
@@ -722,8 +763,29 @@ static void migrate_retired_enemy(Enemy *e) {
         default:
             return;
     }
+    int roster_change = old_type == 18 || old_type == 23 || old_type == 24 || old_type == 43 || old_type == 78 || old_type == 91 || old_type == 92 || old_type == 96 || old_type == 113;
+    if (roster_change) {
+        static const char *old_names[] = {"Giant Wurm", "Goblin Bomber", "Tunnel Spider", "Treasure Wraith", "Rockworm", "Crystal Spider", "Bell Herald", "Castellan", "Ironhide Boar", "Iron Sentinel"};
+        int standard_name = 0;
+        for (int i = 0; i < (int)(sizeof(old_names) / sizeof(old_names[0])); i++) {
+            standard_name |= strcmp(e->name, old_names[i]) == 0;
+        }
+        if (!standard_name) {
+            return;
+        }
+    }
     if (!strstr(e->name, "Memorial Guard")) {
         snprintf(e->name, sizeof(e->name), "%s", name);
+    }
+}
+
+static void migrate_road_guards(Enemy *enemies, int count) {
+    for (int i = 0; i < count; i++) {
+        Enemy *e = &enemies[i];
+        if (e->type == ENEMY_HOBGOBLIN_GUARD) {
+            e->type = ENEMY_ROYAL_GUARD;
+            snprintf(e->name, sizeof(e->name), "Royal Guard");
+        }
     }
 }
 
@@ -751,7 +813,6 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
             name = "Frost Kraken";
         }
         snprintf(e->name, sizeof(e->name), "%s", name);
-        migrate_retired_enemy(e);
         e->hp         = cJSON_GetObjectItem(obj, "hp")->valueint;
         e->max_hp     = cJSON_GetObjectItem(obj, "max_hp")->valueint;
         e->attack     = cJSON_GetObjectItem(obj, "attack")->valueint;
@@ -770,6 +831,8 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
         const cJSON *poison = cJSON_GetObjectItem(obj, "poison_turns");
         e->poison_turns = poison && cJSON_IsNumber(poison) && poison->valuedouble == poison->valueint &&
             poison->valueint >= 0 && poison->valueint <= POISON_SWORD_TURNS ? poison->valueint : 0;
+        const cJSON *dormant = cJSON_GetObjectItem(obj, "alignment_dormant");
+        e->alignment_dormant = cJSON_IsNumber(dormant) && dormant->valueint == 1 && e->hp > 0 && !e->active;
         e->attack_target_x = cJSON_GetObjectItem(obj, "attack_target_x")->valueint;
         e->attack_target_y = cJSON_GetObjectItem(obj, "attack_target_y")->valueint;
         cJSON *revived = cJSON_GetObjectItem(obj, "revived");
@@ -794,6 +857,20 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
         for (int row = 0; row < DRAGON_WARNING_SIZE; row++) {
             cJSON *bits = cJSON_GetArrayItem(warning, row);
             e->dragon_warning[row] = bits ? (unsigned int)bits->valueint & ((1u << DRAGON_WARNING_WORD_BITS) - 1u) : 0;
+        }
+        int old_type = e->type;
+        migrate_retired_enemy(e);
+        if (!boss && (old_type == 6 || old_type == 8 || old_type == 10)) {
+            e->is_boss = 1;
+        }
+        if (old_type == 18 || old_type == 23 || old_type == 91 || old_type == 92 || old_type == 96) {
+            // Retired charge, bomb and summon warnings cannot survive as a new role.
+            e->attack_phase = 0;
+            e->boss_attack = 0;
+            e->move_timer = 0;
+            e->revive_timer = 0;
+            e->attack_target_x = -1;
+            e->attack_target_y = -1;
         }
         if (cJSON_GetObjectItem(obj, "type")->valueint == 110) {
             // Retire the old charge without moving or healing the saved actor.
@@ -1762,7 +1839,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 221);
+    cJSON_AddNumberToObject(root, "save_version", 222);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -3165,13 +3242,13 @@ static void remove_legacy_wardens(Map *m) {
 
 static void remove_misplaced_map_bearers(Enemy *enemies, int count, int level) {
     int expected = level == 7 ? DAIN_FRAGMENT_ARCHER :
-        (level == 6 ? DAIN_FRAGMENT_BOMBER : (level == 5 ? DAIN_FRAGMENT_SHAMAN : 0));
+        (level == 6 ? DAIN_FRAGMENT_WARCHIEF : (level == 5 ? DAIN_FRAGMENT_SHAMAN : 0));
     for (int i = 0; i < count; i++) {
         Enemy *enemy = &enemies[i];
         if (enemy->dain_fragment && enemy->dain_fragment != expected) {
             enemy->dain_fragment = 0;
             const char *name = enemy->type == ENEMY_GOBLIN_ARCHER ? "Goblin Archer" :
-                (enemy->type == ENEMY_GOBLIN_BOMBER ? "Goblin Bomber" : "Goblin Shaman");
+                (enemy->type == ENEMY_GOBLIN_WARCHIEF ? "Goblin Warchief" : "Goblin Shaman");
             snprintf(enemy->name, sizeof(enemy->name), "%s", name);
         }
     }
@@ -3220,12 +3297,12 @@ static void retire_mountain_markers(Map *map) {
 }
 
 static void relocate_mountain_bearers(Enemy *enemies, int count, int level) {
-    int expected = level == 2 ? DAIN_FRAGMENT_ARCHER : level == 3 ? DAIN_FRAGMENT_BOMBER : level == 4 ? DAIN_FRAGMENT_SHAMAN : 0;
+    int expected = level == 2 ? DAIN_FRAGMENT_ARCHER : level == 3 ? DAIN_FRAGMENT_WARCHIEF : level == 4 ? DAIN_FRAGMENT_SHAMAN : 0;
     for (int i = 0; i < count; i++) {
         Enemy *enemy = &enemies[i];
         if (enemy->dain_fragment && enemy->dain_fragment != expected) {
             enemy->dain_fragment = 0;
-            snprintf(enemy->name, sizeof(enemy->name), "%s", enemy->type == ENEMY_GOBLIN_ARCHER ? "Goblin Archer" : enemy->type == ENEMY_GOBLIN_BOMBER ? "Goblin Bomber" : "Goblin Shaman");
+            snprintf(enemy->name, sizeof(enemy->name), "%s", enemy->type == ENEMY_GOBLIN_ARCHER ? "Goblin Archer" : enemy->type == ENEMY_GOBLIN_WARCHIEF ? "Goblin Warchief" : "Goblin Shaman");
         }
     }
 }
@@ -3647,7 +3724,7 @@ static int migrate_region_routes(GameState *g, Location region) {
                 if (enemy->dain_fragment) {
                     enemy->dain_fragment = 0;
                     const char *name = enemy->type == ENEMY_GOBLIN_ARCHER ? "Goblin Archer" :
-                        (enemy->type == ENEMY_GOBLIN_BOMBER ? "Goblin Bomber" : "Goblin Shaman");
+                        (enemy->type == ENEMY_GOBLIN_WARCHIEF ? "Goblin Warchief" : "Goblin Shaman");
                     snprintf(enemy->name, sizeof(enemy->name), "%s", name);
                 }
             }
@@ -6330,7 +6407,7 @@ int load_game(GameState *g, int slot) {
         red_dragon_migrate(g);
     }
     if (save_version < 137) {
-        castle_migrate_castellan(g);
+        castle_migrate_armory(g);
     }
     if (save_version < 138) {
         royal_arcanist_migrate(g);
@@ -6726,6 +6803,19 @@ int load_game(GameState *g, int slot) {
     // Town exteriors no longer pave a ring around the town.
     if (save_version < 221) {
         town_road_migrate(g);
+    }
+    if (g->location == LOCATION_CROWNROAD || g->location == LOCATION_CROWNROAD_WEST) {
+        migrate_road_guards(g->enemies, g->enemy_count);
+    }
+    if (g->crownroad_cache.valid) {
+        migrate_road_guards(g->crownroad_cache.enemies, g->crownroad_cache.enemy_count);
+    }
+    if (g->crownroad_west_cache.valid) {
+        migrate_road_guards(g->crownroad_west_cache.enemies, g->crownroad_west_cache.enemy_count);
+    }
+    game_temple_sync_enemies(g);
+    if (g->location == LOCATION_TEMPLE) {
+        game_update_level_progress(g);
     }
     cJSON_Delete(root);
     return 1;

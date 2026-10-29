@@ -39,8 +39,8 @@ Travel score is awarded on first visits to stages from either direction.
 - **Pixie:** fragile skirmisher that moves twice per turn.
 - **Blighted Wolf:** fast melee hunter that moves twice per turn.
 - **Giant Spider:** melee controller whose bite applies poison.
-- **Dark Elf:** archer that fires along an unobstructed row or column.
-- **Giant Wurm:** armored heavy enemy that moves every other turn.
+- **Dark Elf Archer:** archer that fires along an unobstructed row or column.
+- **Dark Elf Ranger:** bow skirmisher that fires every third turn and repositions after shooting.
 - **Forest Troll:** high-health bruiser that moves every other turn.
 
 ## Central Encounter and Shortcuts
@@ -103,7 +103,7 @@ Speak to Alder with `T` in **Stillbury's Inn** to accept **The Lost Wardens**.
 Return to him there for 70 gold and 500 score once all three wardens are rescued.
 The quest places captives in guarded groves on **Forest 2, 3 and 4**. Both
 entrances encounter all three before the level-5 Necromancer. Their hunting
-parties are led by a Giant Spider, Dark Elf and Forest Troll. Defeat or evade
+parties are led by a Giant Spider, Dark Elf Archer and Forest Troll. Defeat or evade
 the guards, then stand beside a warden and press `T` to rescue them. A full
 level clear is never required. Accepting the quest starts a fresh forest
 expedition while preserving a previously defeated Necromancer and open road.

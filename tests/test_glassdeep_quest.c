@@ -108,7 +108,7 @@ static void test_quest_flow(void) {
         !(game.defeated_bosses & (1 << LOCATION_GLASSDEEP)));
     game_ascend(&game);
     game_ascend(&game);
-    ASSERT("stage two uses two Rockworm guards", guards(&game, 1) == 2 && game.enemies[game.enemy_count - 1].type == ENEMY_CRYSTAL_SPIDER);
+    ASSERT("stage two uses two Ogre guards", guards(&game, 1) == 2 && game.enemies[game.enemy_count - 1].type == ENEMY_OGRE);
     tune(1);
     ASSERT("Root can be restored after Crown", game.glassdeep_quest_progress == 5 && game.glassdeep_quest_state == 1);
     game_descend(&game);

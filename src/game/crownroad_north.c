@@ -116,7 +116,7 @@ static void spawn_patrols(GameState *g) {
     static const EnemyType types[NORTH_SQUAD_SIZE] = {
         ENEMY_HOBGOBLIN_GUARD, ENEMY_HOBGOBLIN_GUARD, ENEMY_HOBGOBLIN_GUARD, ENEMY_HOBGOBLIN_GUARD,
         ENEMY_GOBLIN_SCOUT, ENEMY_GOBLIN_SCOUT, ENEMY_GOBLIN_SCOUT,
-        ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_BOMBER, ENEMY_GOBLIN_SHAMAN,
+        ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_WARCHIEF, ENEMY_GOBLIN_SHAMAN,
         ENEMY_BLIGHTED_WOLF, ENEMY_BLIGHTED_WOLF, ENEMY_BLIGHTED_WOLF, ENEMY_BLIGHTED_WOLF
     };
     static const int offsets[NORTH_SQUAD_SIZE][2] = {
@@ -209,7 +209,7 @@ void northroad_enter(GameState *g, int from_castle, int portal) {
     g->dialogue_active = 0;
     map_mark_explored(&g->map, g->player.x, g->player.y);
     push_message(g, "Crown Road North: goblin shield lines and wolf packs occupy the castle road.");
-    push_message(g, "Side trails bypass firing lanes. Flank shields; leave marked shots and bombs.");
+    push_message(g, "Side trails bypass firing lanes. Flank shields; leave marked shots.");
 }
 
 void northroad_leave(GameState *g, int castle) {
@@ -370,8 +370,7 @@ int northroad_attack_marks(const GameState *g, const Enemy *enemy, int x, int y)
         return 0;
     }
     int distance = abs(x - enemy->attack_target_x) + abs(y - enemy->attack_target_y);
-    return enemy->boss_attack == NORTH_ARROW ? distance == 0 && line_clear(&g->map, enemy->x, enemy->y, x, y) :
-        enemy->boss_attack == NORTH_BOMB && distance <= 1 && line_clear(&g->map, enemy->attack_target_x, enemy->attack_target_y, x, y);
+    return enemy->boss_attack == NORTH_ARROW && distance == 0 && line_clear(&g->map, enemy->x, enemy->y, x, y);
 }
 
 int northroad_shielded(const GameState *g, const Enemy *enemy) {
@@ -463,13 +462,13 @@ int northroad_tick(GameState *g, Enemy *enemy, int *damage) {
         }
     }
     if (distance > 2 && distance <= 8 && line_clear(&g->map, enemy->x, enemy->y, g->player.x, g->player.y) &&
-        (enemy->type == ENEMY_GOBLIN_BOMBER || (enemy->type == ENEMY_GOBLIN_ARCHER && (!dx || !dy)))) {
-        enemy->boss_attack = enemy->type == ENEMY_GOBLIN_ARCHER ? NORTH_ARROW : NORTH_BOMB;
+        enemy->type == ENEMY_GOBLIN_ARCHER && (!dx || !dy)) {
+        enemy->boss_attack = NORTH_ARROW;
         enemy->attack_phase = 1;
-        enemy->move_timer = enemy->boss_attack == NORTH_BOMB ? 2 : 1;
+        enemy->move_timer = 1;
         enemy->attack_target_x = g->player.x;
         enemy->attack_target_y = g->player.y;
-        push_message(g, enemy->boss_attack == NORTH_BOMB ? "A goblin bomb is marked: two actions to leave the blast!" : "A Goblin Archer aims at the marked square!");
+        push_message(g, "A Goblin Archer aims at the marked square!");
         return 1;
     }
     if (enemy->type == ENEMY_BLIGHTED_WOLF && abs(dx) <= 1 && abs(dy) <= 1) {
@@ -484,7 +483,7 @@ int northroad_tick(GameState *g, Enemy *enemy, int *damage) {
         *damage = enemy->attack;
         return 1;
     }
-    if (enemy->type == ENEMY_GOBLIN_ARCHER || enemy->type == ENEMY_GOBLIN_BOMBER || enemy->type == ENEMY_GOBLIN_SHAMAN) {
+    if (enemy->type == ENEMY_GOBLIN_ARCHER || enemy->type == ENEMY_GOBLIN_SHAMAN) {
         ranged_position(g, enemy);
         return 1;
     }
@@ -508,7 +507,7 @@ int northroad_tick(GameState *g, Enemy *enemy, int *damage) {
 }
 
 static int valid_type(EnemyType type) {
-    return type == ENEMY_GOBLIN_SCOUT || type == ENEMY_GOBLIN_ARCHER || type == ENEMY_GOBLIN_BOMBER ||
+    return type == ENEMY_GOBLIN_SCOUT || type == ENEMY_GOBLIN_ARCHER || type == ENEMY_GOBLIN_WARCHIEF ||
         type == ENEMY_GOBLIN_SHAMAN || type == ENEMY_HOBGOBLIN_GUARD || type == ENEMY_BLIGHTED_WOLF;
 }
 
@@ -524,7 +523,7 @@ static int valid_actors(const Map *map, const Enemy *enemies, int count, const F
         if (!valid_type(enemy->type) || enemy->boss_aux_x < 0 || enemy->boss_aux_x >= NORTH_SQUADS ||
             enemy->boss_aux_y < 0 || enemy->boss_aux_y >= NORTH_SQUAD_SIZE ||
             (enemy->attack_phase && (enemy->attack_phase != 1 ||
-            (enemy->boss_attack != NORTH_ARROW && enemy->boss_attack != NORTH_BOMB) ||
+            enemy->boss_attack != NORTH_ARROW ||
             enemy->move_timer < 1 || enemy->move_timer > 2 || !inside(enemy->attack_target_x, enemy->attack_target_y))) ||
             (enemy->active && (!inside(enemy->x, enemy->y) || !map_is_walkable(map, enemy->x, enemy->y)))) {
             return 0;
