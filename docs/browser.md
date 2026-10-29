@@ -10,10 +10,9 @@ unavailable, the game falls back to SDL's software renderer; it still plays, but
 zoomed areas can show thin seam lines between small tile details.
 
 ## Build and preview locally
-From the Castle of No Return project root, run these two commands in the same terminal:
+From the Castle of No Return project root, run:
 
 ```sh
-source /private/tmp/wolf-browser-emsdk/emsdk_env.sh
 make browser-run
 ```
 
@@ -25,14 +24,16 @@ Press Escape to leave fullscreen; Escape also follows the game's menu rules.
 The controls beneath the canvas show the default bindings; use the game's
 Controls menu to remap them.
 
-Run the `source` command again whenever you open a new terminal. CMake 3.20+,
-Make and Python 3 are also required. The SDK is in a temporary directory; if it
-is removed, install the [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html)
-version **4.0.23** in a permanent location and update the `source` path.
-`make browser` builds without launching the server. The
-build uses both `emcmake` and `emmake`, so CI and local builds use Emscripten's
-compiler and archiver. Browser intermediates live in `build/browser`, separately
-from native builds. No locally installed SDL libraries are needed for this build.
+`make browser` builds without launching the server. Both targets use an
+Emscripten SDK already active in the terminal, as the GitHub workflow does.
+Otherwise the first run downloads the [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html)
+version **4.0.23** into `.emsdk/` in the project root, which takes several
+minutes and about 1 GB of disk; later runs reuse it. `.emsdk/` is ignored by Git
+and survives `make clean`; delete it to reinstall. Git, CMake 3.20+, Make and
+Python 3 are also required. The build uses both `emcmake` and `emmake`, so CI
+and local builds use Emscripten's compiler and archiver. Browser intermediates
+live in `build/browser`, separately from native builds. No locally installed
+SDL libraries are needed for this build.
 
 The deployable files are generated in `dist/browser/`:
 
@@ -110,8 +111,10 @@ the asynchronous storage write can finish.
   fallback because WebGL is unavailable. Enable hardware acceleration in the
   browser settings, or check `chrome://gpu` for WebGL support.
 
-- **`emcmake` or `emmake` not found:** activate `emsdk_env.sh` in the terminal
-  running Make. Browser builds need the SDK, not just a native compiler.
+- **`emcmake` or `emmake` not found:** run the build through `make browser` or
+  `make browser-run`, which install and activate the pinned SDK in `.emsdk/`.
+- **CMake reports a changed compiler or toolchain:** an older browser build used
+  a different SDK. Delete `build/browser` and build again.
 - **Pages says it cannot find the site:** select GitHub Actions as the Pages
   source, then rerun the workflow on `master`.
 - **No deployment after a manual run:** select `master`; other branches only
