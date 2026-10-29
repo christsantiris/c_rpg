@@ -321,7 +321,7 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 
 ### Feature enhancements
 - Expand world map
-   Farms between areas for rest to improve hp. New story lines. More coherent quest structure. Use larger scale sprites. 
+   Farms between areas for rest to improve hp. New story lines. More coherent quest structure. Use larger scale sprites. Chain quests together. Unlock new quests with completion of another. NPCs can offer quest part 2. Max number of active quests - NPC can say come back when you have completed xyz task.
 - Recruit a party to join the adventure
    NPCs that can team up with the player character and accompany on the quest. Implement resurrection. 
 - Improve difficulty scaling and economy
@@ -330,7 +330,4 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Add real money feature to buy in-game gold.
 - DnD style stats instead of static class based stats
    Roll for stats. Choose a class based on strengths. Ascending armor class chance to hit. 
-- Add new equipment types
-   Add helmets, rings, gauntlets
-- Revamp quests. Chain quests together. Unlock new quests with completion of another. NPCs can offer quest part 2. Max number of active quests - NPC can say come back when you have completed xyz task.
 
