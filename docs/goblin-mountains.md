@@ -1,7 +1,8 @@
 # Goblin Mountains
 
 The Goblin Mountains stand beside a straight, single-tile cobblestone road
-between **Dawnmere's north gate** and **Ridgeshire's south gate**. Enter the
+between **Dawnmere's north gate** and **Ridgeshire's south gate**. The road
+climbs a grassy pass between rock walls that open into a meadow at its town end. Enter the
 large fortified mountain cave from either town to start at **level 1** and
 fight upward through five levels. Mountain levels never play in reverse from
 Ridgeshire. Ordinary backtracking within a climb remains available.

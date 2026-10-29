@@ -13,9 +13,10 @@ the road. Transparent backgrounds preserve the underlying terrain.
 
 The bank atlas uses 16 connected-edge masks, four surface variations and six
 regional palettes. Rounded outer corners, joined canopies and rock faces frame
-the crossing. The northern terrain broadens into stands beside the clearings,
-avoiding the old straight row of trees. Terrain stays after victory; only the
-beam and passage status change.
+the crossing. Roads that cut through scenery (Haunted Forest, Blackwater Swamp,
+Goblin Mountains and the northern road) draw their banks with that scenery's
+tiles instead, so only the Dungeon road still shows the atlas. Terrain stays
+after victory; only the beam and passage status change.
 
 ## Renderer inspection
 
