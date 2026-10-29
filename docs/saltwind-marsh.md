@@ -6,6 +6,10 @@ cliffs and open sea prominent. Stonewake Quarry replaces Glassdeep south of Stil
 The five-stage island layouts and skiff mechanics retain their full size.
 Pirate Coast and its treasure quest remain retired.
 
+The marsh is drawn at the Crown Roads' 1.5× zoom: the camera shows about
+30 × 18 tiles around the player. Venom spit and Sszareth's root charge reach six
+tiles, so they start on screen.
+
 Leave Dawnmere through the south gate, follow the exterior road and enter the
 mangrove-and-skiff landmark. A new expedition always starts at stage 1. Both
 retreat and the final departure lead back to this approach; walk north to

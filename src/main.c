@@ -589,9 +589,17 @@ int main(int argc, char **argv) {
 
     Uint32 renderer_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
 #ifdef __EMSCRIPTEN__
-    renderer_flags = SDL_RENDERER_SOFTWARE;
+    // WebGL places zoomed tiles at fractional positions, so patches meet without seams.
+    // The browser's frame clock already paces the loop, so vsync is not requested.
+    renderer_flags = SDL_RENDERER_ACCELERATED;
 #endif
     SDL_Renderer *sdl_renderer = SDL_CreateRenderer(window, -1, renderer_flags);
+#ifdef __EMSCRIPTEN__
+    if (!sdl_renderer) {
+        // Browsers without WebGL still run the game through the software renderer.
+        sdl_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+    }
+#endif
     if (!sdl_renderer) {
         fprintf(stderr, "SDL_CreateRenderer error: %s\n", SDL_GetError());
         SDL_DestroyWindow(window);

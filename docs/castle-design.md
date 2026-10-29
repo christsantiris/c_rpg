@@ -10,6 +10,10 @@ you to the Royal Guards when spoken to with `T`. This one-time arrest begins
 an optional dungeon escape and prisoner escort to Ridgeshire; it does not reset
 castle victories or equipment. See [Royal Dungeon](royal-dungeon.md).
 
+The interior is drawn at the Crown Roads' 1.5× zoom: the camera shows about
+30 × 18 tiles around the player. Ranged defenders fire from at most eight tiles,
+so they stay on screen; a wounded Royal Arcanist or Lord Veyr retaliates from up to twelve, and the camera leans toward them to keep them on screen across their 22 × 14 arenas.
+
 ## Floors and appearance
 
 The player climbs from the gatehouse on floor 1 to the throne on floor 6.

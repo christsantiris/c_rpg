@@ -25,6 +25,7 @@ static inline int game_player_low_health(const GameState *g) {
 }
 
 void game_draw(Renderer *r, GameState *g, Viewport *v);
+float game_camera_zoom(const GameState *g);
 void draw_catacombs_tile(Renderer *r, const Map *m, int sx, int sy, int x, int y, TileType type);
 void game_draw_enemy_projectiles(Renderer *r, const GameState *g, const EnemyProjectiles *shots, const Viewport *v, Uint32 elapsed);
 int game_combat_feedback_active(Uint32 now);

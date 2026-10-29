@@ -593,8 +593,10 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     if (below) {
         bubble_y = npc_bottom + 22;
     }
-    if (bubble_y + bubble_h > viewport_h - 8) {
-        bubble_y = viewport_h - bubble_h - 8;
+    // Dialogue too tall for the play area uses the message bar's space rather than losing lines.
+    int bottom = bubble_h > viewport_h - 16 ? r->screen_h : viewport_h;
+    if (bubble_y + bubble_h > bottom - 8) {
+        bubble_y = bottom - bubble_h - 8;
     }
     if (bubble_y < 8) {
         bubble_y = 8;
@@ -686,9 +688,100 @@ static void draw_weapon_arrow_at(Renderer *r, int cx, int cy, int dx, int dy, in
     }
 }
 
+#define CAMERA_ZOOM 1.5f
+
+static int building_interior(const GameState *g) {
+    return g->location == LOCATION_TAVERN || g->location == LOCATION_INN || g->location == LOCATION_HEALER ||
+        g->location == LOCATION_WITCH || g->location == LOCATION_WORKSHOP || g->location == LOCATION_TOWN_HALL ||
+        g->location == LOCATION_GUILD || town_life_is_interior(g->location);
+}
+
+float game_camera_zoom(const GameState *g) {
+    // Encounters move to the Royal Dungeon's larger tiles one area at a time.
+    switch (g->location) {
+        case LOCATION_CROWNROAD:
+        case LOCATION_CROWNROAD_WEST:
+        case LOCATION_CROWNROAD_NORTH:
+        case LOCATION_ELDERWOOD:
+        case LOCATION_CATACOMBS:
+        case LOCATION_IRONFANG:
+        case LOCATION_STORMWATCH:
+        case LOCATION_GIANTS_CROWN:
+        case LOCATION_MANGROVES:
+        case LOCATION_ESCAPE_TUNNEL:
+        case LOCATION_CASTLE_INTERIOR:
+        case LOCATION_SWAMP:
+        case LOCATION_FROSTFELL:
+        case LOCATION_COAST:
+        case LOCATION_DESERT:
+        case LOCATION_ASHEN:
+        case LOCATION_DRAGONSPINE:
+        case LOCATION_GLASSDEEP:
+        case LOCATION_DUNGEON:
+        case LOCATION_FOREST:
+        case LOCATION_MOUNTAINS:
+        case LOCATION_TEMPLE:
+        case LOCATION_TOWN:
+        case LOCATION_TOWN2:
+        case LOCATION_TOWN3:
+        case LOCATION_TOWN4:
+        case LOCATION_DAWNMERE:
+        case LOCATION_CASTLE:
+            return CAMERA_ZOOM;
+        default:
+            return building_interior(g) ? CAMERA_ZOOM : 1.0f;
+    }
+}
+
+static int zoomed_tiles(int tiles, float zoom) {
+    // Round up so the larger tiles still fill the play area.
+    int zoomed = (int)(tiles / zoom);
+    return zoomed * zoom < tiles ? zoomed + 1 : zoomed;
+}
+
+#define BOSS_LEAN_RANGE 16
+#define BOSS_LEAN_MARGIN 2
+
+static const Enemy *leaning_boss(const GameState *g) {
+    // Bosses begin their warned attacks from up to sixteen tiles away.
+    const Enemy *nearest = NULL;
+    int best = BOSS_LEAN_RANGE + 1;
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || !e->is_boss || e->hp <= 0) {
+            continue;
+        }
+        int dx = abs(e->x - g->player.x);
+        int dy = abs(e->y - g->player.y);
+        int distance = dx > dy ? dx : dy;
+        if (distance < best) {
+            best = distance;
+            nearest = e;
+        }
+    }
+    return nearest;
+}
+
+static int lean_toward(int cam, int view, int player, int boss) {
+    // Shift only far enough to show the boss and its neighbours, keeping the player clear of the edge.
+    if (boss - 1 < cam) {
+        int lowest = player + BOSS_LEAN_MARGIN + 1 - view;
+        int target = boss - 1 > lowest ? boss - 1 : lowest;
+        return target < cam ? target : cam;
+    }
+    if (boss + 1 > cam + view - 1) {
+        int highest = player - BOSS_LEAN_MARGIN;
+        int target = boss + 2 - view < highest ? boss + 2 - view : highest;
+        return target > cam ? target : cam;
+    }
+    return cam;
+}
+
 static int regional_camera(const GameState *g, const Viewport *base, Viewport *out) {
     int w;
     int h;
+    int ox = 0;
+    int oy = 0;
     switch (g->location) {
         case LOCATION_ELDERWOOD: w = ELDERWOOD_W; h = ELDERWOOD_H; break;
         case LOCATION_MANGROVES: w = MANGROVE_W; h = MANGROVE_H; break;
@@ -699,6 +792,13 @@ static int regional_camera(const GameState *g, const Viewport *base, Viewport *o
         case LOCATION_IRONFANG: w = IRON_W; h = IRON_H; break;
         case LOCATION_STORMWATCH: w = STORM_W; h = STORM_H; break;
         case LOCATION_CATACOMBS: w = CATACOMBS_W; h = CATACOMBS_H; break;
+        case LOCATION_TEMPLE: w = TEMPLE_W; h = TEMPLE_H; break;
+        case LOCATION_TOWN:
+        case LOCATION_TOWN2:
+        case LOCATION_TOWN3:
+        case LOCATION_TOWN4:
+        case LOCATION_DAWNMERE:
+        case LOCATION_CASTLE: w = TOWN_W; h = TOWN_H; break;
         case LOCATION_SWAMP:
         case LOCATION_DRAGONSPINE:
         case LOCATION_DESERT:
@@ -706,15 +806,42 @@ static int regional_camera(const GameState *g, const Viewport *base, Viewport *o
         case LOCATION_GLASSDEEP:
         case LOCATION_FROSTFELL: w = SWAMP_MAP_W; h = SWAMP_MAP_H; break;
         default:
-            if (!game_is_crownroad(g)) {
+            if (game_is_crownroad(g)) {
+                w = CROWNROAD_W;
+                h = CROWNROAD_H;
+            } else if (building_interior(g)) {
+                // Building interiors share one room rectangle inside the map.
+                ox = TAVERN_X;
+                oy = TAVERN_Y;
+                w = TAVERN_W;
+                h = TAVERN_H;
+            } else if (game_camera_zoom(g) != 1.0f) {
+                // Original areas fill the whole map; zoom them within its bounds.
+                w = base->map_w;
+                h = base->map_h;
+            } else {
                 return 0;
             }
-            w = CROWNROAD_W;
-            h = CROWNROAD_H;
             break;
     }
-    viewport_init(out, base->tiles_x < w ? base->tiles_x : w, base->tiles_y < h ? base->tiles_y : h, w, h);
+    int tiles_x = zoomed_tiles(base->tiles_x, game_camera_zoom(g));
+    int tiles_y = zoomed_tiles(base->tiles_y, game_camera_zoom(g));
+    viewport_init(out, tiles_x < w ? tiles_x : w, tiles_y < h ? tiles_y : h, ox + w, oy + h);
     viewport_center_on(out, g->player.x, g->player.y);
+    const Enemy *boss = leaning_boss(g);
+    if (boss) {
+        // Lean toward a nearby boss so its warned attacks begin on screen.
+        int x = lean_toward(out->cam_x, out->tiles_x, g->player.x, boss->x);
+        int y = lean_toward(out->cam_y, out->tiles_y, g->player.y, boss->y);
+        viewport_center_on(out, x + out->tiles_x / 2, y + out->tiles_y / 2);
+    }
+    // A room offset inside the map keeps the camera from scrolling past its near walls.
+    if (out->cam_x < ox) {
+        out->cam_x = ox;
+    }
+    if (out->cam_y < oy) {
+        out->cam_y = oy;
+    }
     return 1;
 }
 
@@ -728,6 +855,11 @@ void game_draw_enemy_projectiles(Renderer *r, const GameState *g, const EnemyPro
     SDL_BlendMode old_blend;
     SDL_GetRenderDrawBlendMode(r->sdl, &old_blend);
     SDL_Rect play_area = {0, 0, r->screen_w - INFO_PANEL_W, r->tiles_y * TILE_SIZE};
+    // Shots share the map's zoom; the clip rectangle is in zoomed units.
+    float zoom = game_camera_zoom(g);
+    SDL_RenderSetScale(r->sdl, zoom, zoom);
+    play_area.w = (int)(play_area.w / zoom);
+    play_area.h = (int)(play_area.h / zoom);
     SDL_RenderSetClipRect(r->sdl, &play_area);
     SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
     int impact = elapsed >= ENEMY_PROJECTILE_TRAVEL_MS;
@@ -839,6 +971,8 @@ void game_draw_enemy_projectiles(Renderer *r, const GameState *g, const EnemyPro
             SDL_RenderDrawPoint(r->sdl, cx, cy);
         }
     }
+    // Restore the unzoomed scale first; the saved clip is in screen units.
+    SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
     SDL_RenderSetClipRect(r->sdl, clipped ? &old_clip : NULL);
     SDL_SetRenderDrawBlendMode(r->sdl, old_blend);
 }
@@ -2090,15 +2224,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     Viewport town_view;
     int temple_remaining = game_temple_remaining_enemies(g);
     int kraken_warning = kraken_tentacles_raised(g);
-    int town_scaled = g->location == LOCATION_TOWN ||
-        g->location == LOCATION_TOWN2 ||
-        g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4 ||
-        g->location == LOCATION_DAWNMERE || g->location == LOCATION_CASTLE;
-    int tavern_scaled = g->location == LOCATION_TAVERN ||
-        g->location == LOCATION_INN || g->location == LOCATION_HEALER || g->location == LOCATION_WITCH ||
-        g->location == LOCATION_WORKSHOP ||
-        g->location == LOCATION_TOWN_HALL || g->location == LOCATION_GUILD ||
-        town_life_is_interior(g->location);
     int island_scaled = g->location == LOCATION_ISLAND;
     int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
     int road_scaled = g->location == LOCATION_MANGROVE_PATH || g->location == LOCATION_FOREST_ROAD ||
@@ -2106,12 +2231,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         g->location == LOCATION_HIGH_PASS ||
         game_is_crownroad(g) || g->location == LOCATION_SWAMP_ROAD;
     int jail_scaled = g->location == LOCATION_JAIL || g->location == LOCATION_JAIL_ARMORY;
-    if (town_scaled || island_scaled || labyrinth_scaled || jail_scaled) {
+    if (island_scaled || labyrinth_scaled || jail_scaled) {
         // Keep the entire fixed map inside the play area.
-        int map_w = jail_scaled ? JAIL_ROOM_W : town_scaled ? TOWN_W :
-            (island_scaled ? ISLAND_W : LABYRINTH_W);
-        int map_h = jail_scaled ? JAIL_ROOM_H : town_scaled ? TOWN_H :
-            (island_scaled ? ISLAND_H : LABYRINTH_H);
+        int map_w = jail_scaled ? JAIL_ROOM_W : island_scaled ? ISLAND_W : LABYRINTH_W;
+        int map_h = jail_scaled ? JAIL_ROOM_H : island_scaled ? ISLAND_H : LABYRINTH_H;
         viewport_init(&town_view, map_w, map_h, map_w, map_h);
         v = &town_view;
         int play_w = r->screen_w - INFO_PANEL_W;
@@ -2127,6 +2250,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             (float)play_h / (map_h * TILE_SIZE));
     } else if (regional_camera(g, v, &town_view)) {
         v = &town_view;
+        SDL_RenderSetScale(r->sdl, game_camera_zoom(g), game_camera_zoom(g));
     } else if (road_scaled) {
         int road_w = g->location == LOCATION_MANGROVE_PATH ? MANGROVE_PATH_W : g->location == LOCATION_TOWN_ROAD ? TOWN_ROAD_W : g->location == LOCATION_APPROACH ? APPROACH_W : g->location == LOCATION_HIGH_PASS ? HIGH_PASS_W :
             (game_is_crownroad(g) ? CROWNROAD_W :
@@ -2145,29 +2269,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_center_on(&town_view, TOWN_ROAD_W / 2, TOWN_ROAD_H / 2);
         }
         v = &town_view;
-    } else if (tavern_scaled) {
-        // Fit the entire room without stretching sprites or showing unused map tiles.
-        viewport_init(&town_view, TAVERN_W, TAVERN_H, MAP_W, MAP_H);
-        town_view.cam_x = TAVERN_X;
-        town_view.cam_y = TAVERN_Y;
-        v = &town_view;
-        int play_w = r->screen_w - INFO_PANEL_W;
-        int play_h = r->tiles_y * TILE_SIZE;
-        if (play_w < 1) {
-            play_w = 1;
-        }
-        if (play_h < 1) {
-            play_h = 1;
-        }
-        float scale_x = (float)play_w / (TAVERN_W * TILE_SIZE);
-        float scale_y = (float)play_h / (TAVERN_H * TILE_SIZE);
-        float scale = scale_x < scale_y ? scale_x : scale_y;
-        int room_w = (int)(TAVERN_W * TILE_SIZE * scale);
-        int room_h = (int)(TAVERN_H * TILE_SIZE * scale);
-        SDL_Rect room_view = {(play_w - room_w) / 2, (play_h - room_h) / 2,
-            room_w, room_h};
-        SDL_RenderSetViewport(r->sdl, &room_view);
-        SDL_RenderSetScale(r->sdl, scale, scale);
     }
     int landmark_x = -1;
     int landmark_y = -1;
@@ -4156,13 +4257,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_combat_feedback(r, g, v);
 
-    draw_dialogue_bubble(r, g, v);
-
-    if (town_scaled || tavern_scaled || island_scaled || labyrinth_scaled || jail_scaled) {
+    float world_sx;
+    float world_sy;
+    SDL_RenderGetScale(r->sdl, &world_sx, &world_sy);
+    if (island_scaled || labyrinth_scaled || jail_scaled || game_camera_zoom(g) != 1.0f) {
         SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
-    }
-    if (tavern_scaled) {
-        SDL_RenderSetViewport(r->sdl, NULL);
     }
 
     draw_low_health_warning(r, g);
@@ -4198,4 +4297,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     // Draw minimap overlay in top-left corner of the viewport
     minimap_draw(r, g);
+
+    // Conversations sit above the HUD, so a long one may extend over the message bar in a small window.
+    SDL_RenderSetScale(r->sdl, world_sx, world_sy);
+    draw_dialogue_bubble(r, g, v);
+    SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
 }

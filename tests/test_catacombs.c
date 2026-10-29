@@ -60,10 +60,78 @@ static Enemy *skeleton(EnemyType type) {
     return e;
 }
 
+// Flood from the stairs up; true when both stairways and every walkable tile join it.
+static int flood_from_stairs(const Map *m) {
+    memset(visited, 0, sizeof(visited));
+    int head = 0;
+    int tail = 1;
+    queue[0] = m->stairs_up_y * MAP_W + m->stairs_up_x;
+    visited[m->stairs_up_y][m->stairs_up_x] = 1;
+    const int dx[4] = {0, 1, 0, -1};
+    const int dy[4] = {-1, 0, 1, 0};
+    while (head < tail) {
+        int x = queue[head] % MAP_W;
+        int y = queue[head++] / MAP_W;
+        for (int d = 0; d < 4; d++) {
+            int tx = x + dx[d];
+            int ty = y + dy[d];
+            if (map_is_walkable(m, tx, ty) && !visited[ty][tx]) {
+                visited[ty][tx] = 1;
+                queue[tail++] = ty * MAP_W + tx;
+            }
+        }
+    }
+    int all = visited[m->stairs_down_y][m->stairs_down_x];
+    for (int y = 0; y < CATACOMBS_H; y++) {
+        for (int x = 0; x < CATACOMBS_W; x++) {
+            all &= !map_is_walkable(m, x, y) || visited[y][x];
+        }
+    }
+    return all;
+}
+
+// Passage tiles outside the chambers with a single open neighbour.
+static int dead_ends(const Map *m) {
+    int count = 0;
+    for (int y = 1; y < CATACOMBS_H - 1; y++) {
+        for (int x = 1; x < CATACOMBS_W - 1; x++) {
+            if (m->tiles[y][x] != TILE_CATACOMBS_FLOOR || catacombs_room_at(m, x, y) >= 0) {
+                continue;
+            }
+            int open = map_is_walkable(m, x + 1, y) + map_is_walkable(m, x - 1, y) +
+                map_is_walkable(m, x, y + 1) + map_is_walkable(m, x, y - 1);
+            count += open == 1;
+        }
+    }
+    return count;
+}
+
+// True when some chamber sits off the retired two-column grid.
+static int off_grid(const Map *m) {
+    for (int i = 0; i < m->room_count; i++) {
+        int column = m->rooms[i].x == 6 || m->rooms[i].x == 33;
+        int row = (m->rooms[i].y - 5) % 18 == 0 && m->rooms[i].y >= 5 && m->rooms[i].y <= 59;
+        if (!column || !row) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int room_gap(const Map *m) {
+    int ax, ay, bx, by;
+    map_room_center(&m->rooms[0], &ax, &ay);
+    map_room_center(&m->rooms[m->room_count - 1], &bx, &by);
+    return abs(ax - bx) + abs(ay - by);
+}
+
 static void test_layouts(void) {
     int connected = 1;
     int safe = 1;
     int roster = 1;
+    int crypt = 1;
+    int placement[12];
+    int placements = 0;
     for (int seed = 0; seed < 12; seed++) {
         start_catacombs();
         srand((unsigned)seed);
@@ -71,26 +139,18 @@ static void test_layouts(void) {
             game.level = level;
             map_generate_catacombs(&game.map, level);
             enemies_spawn(&game);
-            memset(visited, 0, sizeof(visited));
-            int head = 0;
-            int tail = 1;
-            queue[0] = game.map.stairs_up_y * MAP_W + game.map.stairs_up_x;
-            visited[game.map.stairs_up_y][game.map.stairs_up_x] = 1;
-            const int dx[4] = {0, 1, 0, -1};
-            const int dy[4] = {-1, 0, 1, 0};
-            while (head < tail) {
-                int x = queue[head] % MAP_W;
-                int y = queue[head++] / MAP_W;
-                for (int d = 0; d < 4; d++) {
-                    int tx = x + dx[d];
-                    int ty = y + dy[d];
-                    if (map_is_walkable(&game.map, tx, ty) && !visited[ty][tx]) {
-                        visited[ty][tx] = 1;
-                        queue[tail++] = ty * MAP_W + tx;
-                    }
+            connected &= flood_from_stairs(&game.map);
+            crypt &= dead_ends(&game.map) >= 3 && off_grid(&game.map) && room_gap(&game.map) >= 45;
+            if (level == 1) {
+                int key = game.map.rooms[1].y * MAP_W + game.map.rooms[1].x;
+                int seen = 0;
+                for (int i = 0; i < placements; i++) {
+                    seen |= placement[i] == key;
+                }
+                if (!seen) {
+                    placement[placements++] = key;
                 }
             }
-            connected &= visited[game.map.stairs_down_y][game.map.stairs_down_x];
             int bosses = 0;
             int ancient = 0;
             int conjurers = 0;
@@ -123,7 +183,9 @@ static void test_layouts(void) {
             safe &= catacombs_lit_braziers(&game.map, game.map.room_count - 1) == (level == CATACOMBS_DEPTH ? 2 : 1);
         }
     }
-    ASSERT("all seeded catacomb floors connect both stairs and every enemy", connected);
+    ASSERT("all seeded catacomb floors connect both stairs, every passage and every enemy", connected);
+    ASSERT("catacomb floors scatter their chambers, keep the final tomb far from the stairs and include dead ends", crypt);
+    ASSERT("chamber placement changes from seed to seed", placements >= 10);
     ASSERT("tougher skeletons, floor-two Vampires, floor-three Conjurers and a floor-five boss recur across seeds", roster);
     ASSERT("burial lines protect stairs and the final tomb contains two braziers", safe);
 }
@@ -436,6 +498,57 @@ static void test_migration(void) {
     ASSERT("migrated saves rewrite and reload successfully", save_game(&loaded, CATACOMBS_TEST_SLOT) && load_game(&game, CATACOMBS_TEST_SLOT));
 }
 
+static int set_save_version(int version) {
+    FILE *file = fopen("saves/savegame_99134.json", "rb");
+    if (!file) {
+        return 0;
+    }
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    rewind(file);
+    char *text = malloc((size_t)size + 1);
+    size_t read = fread(text, 1, (size_t)size, file);
+    text[read] = '\0';
+    fclose(file);
+    cJSON *root = cJSON_Parse(text);
+    free(text);
+    if (!root) {
+        return 0;
+    }
+    cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), version);
+    char *json = cJSON_PrintUnformatted(root);
+    cJSON_Delete(root);
+    file = fopen("saves/savegame_99134.json", "wb");
+    int ok = json && file && fputs(json, file) >= 0;
+    if (file) {
+        fclose(file);
+    }
+    free(json);
+    return ok;
+}
+
+static void test_grid_migration(void) {
+    start_catacombs();
+    game_descend(&game);
+    game_descend(&game);
+    // Floor two's memorial was silenced before Oswin's quest, so that floor keeps its map.
+    Map *second = &game.catacombs_cache[1].map;
+    const Room *memorial = &second->rooms[CATACOMBS_MEMORIAL_ROOM];
+    second->tiles[memorial->y + 1][memorial->x + 1] = TILE_OSSUARY_COLD;
+    int px = game.player.x;
+    int py = game.player.y;
+    int ok = save_game(&game, CATACOMBS_TEST_SLOT) && set_save_version(219) && load_game(&loaded, CATACOMBS_TEST_SLOT);
+    ASSERT("pre-220 catacomb saves load on their current floor", ok && loaded.location == LOCATION_CATACOMBS && loaded.level == 3 &&
+        loaded.player.x == px && loaded.player.y == py);
+    ASSERT("grid floors regenerate later while a floor holding memorial credit stays", ok && !loaded.catacombs_cache[0].valid &&
+        loaded.catacombs_cache[1].valid && loaded.catacombs_cache[1].map.tiles[memorial->y + 1][memorial->x + 1] == TILE_OSSUARY_COLD);
+    game = loaded;
+    game_ascend(&game);
+    game_ascend(&game);
+    ASSERT("a regenerated floor uses the crypt layout with both stairways connected", game.level == 1 && game.map.room_count == 8 &&
+        flood_from_stairs(&game.map) && dead_ends(&game.map) >= 3);
+}
+
 void test_catacombs(void) {
     printf("Royal Catacombs:\n");
     int unused = !save_exists(CATACOMBS_TEST_SLOT);
@@ -449,5 +562,6 @@ void test_catacombs(void) {
     test_traps();
     test_boss();
     test_migration();
+    test_grid_migration();
     remove("saves/savegame_99134.json");
 }

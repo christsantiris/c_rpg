@@ -29,6 +29,7 @@
 #include "../game/town_life.h"
 #include "../game/approach.h"
 #include "../game/elderwood.h"
+#include "../game/catacombs.h"
 #include "../game/heartseed.h"
 #include "../game/spice_skiff.h"
 #include "../game/mangrove.h"
@@ -1761,7 +1762,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 218);
+    cJSON_AddNumberToObject(root, "save_version", 221);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -6713,6 +6714,18 @@ int load_game(GameState *g, int slot) {
     // The taller sandstone Goblin Mountains block three more rows of their road.
     if (save_version < 218 && approach_route(g) && approach_route(g)->area == LOCATION_MOUNTAINS) {
         boss_gate_migrate(g);
+    }
+    // Elderwood clearings are now rounded; reshape floors saved as rectangles.
+    if (save_version < 219) {
+        elderwood_round_saved_clearings(g);
+    }
+    // Catacombs floors now scatter their chambers; regenerate floors saved on the old grid.
+    if (save_version < 220) {
+        catacombs_regenerate_saved_floors(g);
+    }
+    // Town exteriors no longer pave a ring around the town.
+    if (save_version < 221) {
+        town_road_migrate(g);
     }
     cJSON_Delete(root);
     return 1;

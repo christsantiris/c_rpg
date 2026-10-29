@@ -553,6 +553,22 @@ static Uint32 rendered_pixel(SDL_Surface *surface, int x, int y) {
     return ((Uint32 *)((unsigned char *)surface->pixels + y * surface->pitch))[x];
 }
 
+// Screen pixel of a map tile under the area's zoomed camera, which shows fewer, larger tiles.
+static void zoomed_screen(const GameState *g, const Viewport *view, int map_w, int map_h, int tx, int ty, int *x, int *y) {
+    float zoom = game_camera_zoom(g);
+    Viewport zoomed;
+    viewport_init(&zoomed, (int)(view->tiles_x / zoom + 0.999f), (int)(view->tiles_y / zoom + 0.999f), map_w, map_h);
+    if (zoomed.tiles_x > map_w) {
+        zoomed.tiles_x = map_w;
+    }
+    if (zoomed.tiles_y > map_h) {
+        zoomed.tiles_y = map_h;
+    }
+    viewport_center_on(&zoomed, g->player.x, g->player.y);
+    *x = (int)(viewport_to_screen_x(&zoomed, tx) * TILE_SIZE * zoom);
+    *y = (int)(viewport_to_screen_y(&zoomed, ty) * TILE_SIZE * zoom);
+}
+
 static unsigned int creature_pixels(SDL_Surface *surface, int x, int y) {
     unsigned int hash = 2166136261u;
     for (int py = y - 20; py < y + TILE_SIZE; py++) {
@@ -675,8 +691,9 @@ static void test_northroad_renderer(Renderer *r, GameState *g, SDL_Surface *surf
     g->enemy_count = 1;
     Enemy *enemy = &g->enemies[0];
     *enemy = (Enemy){.x = 32, .y = 82, .hp = 50, .max_hp = 50};
-    int x = viewport_to_screen_x(&view, enemy->x) * TILE_SIZE;
-    int y = viewport_to_screen_y(&view, enemy->y) * TILE_SIZE;
+    int x;
+    int y;
+    zoomed_screen(g, &view, CROWN_NORTH_W, CROWN_NORTH_H, enemy->x, enemy->y, &x, &y);
     for (int i = 0; i < 6; i++) {
         enemy->active = 0;
         renderer_begin_frame(r);
@@ -690,7 +707,7 @@ static void test_northroad_renderer(Renderer *r, GameState *g, SDL_Surface *surf
         renderer_end_frame(r);
         assert(creature_pixels(surface, x, y) != ground);
     }
-    printf("PASS: Crown Road North's six recurring enemy types render visibly on their road terrain at native scale.\n");
+    printf("PASS: Crown Road North's six recurring enemy types render visibly on their road terrain at the zoomed camera scale.\n");
 }
 
 static void test_stonewake_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
@@ -767,8 +784,9 @@ static void test_stonewake_renderer(Renderer *r, GameState *g, SDL_Surface *surf
         char path[80];
         snprintf(path, sizeof(path), "/tmp/stonewake-crane-pose-%d.bmp", mode);
         assert(SDL_SaveBMP(surface, path) == 0);
-        int px = viewport_to_screen_x(&view, 18) * TILE_SIZE;
-        int py = viewport_to_screen_y(&view, 26) * TILE_SIZE;
+        int px;
+        int py;
+        zoomed_screen(g, &view, SWAMP_MAP_W, SWAMP_MAP_H, 18, 26, &px, &py);
         poses[mode] = 2166136261u;
         for (int y = py - 48; y < py + 24; y++) {
             for (int x = px - 18; x < px + 54; x++) {
@@ -894,8 +912,9 @@ static void test_stormwatch_renderer(Renderer *r, GameState *g, SDL_Surface *sur
     Viewport view;
     viewport_init(&view, r->tiles_x < STORM_W ? r->tiles_x : STORM_W, r->tiles_y < STORM_H ? r->tiles_y : STORM_H, STORM_W, STORM_H);
     viewport_center_on(&view, g->player.x, g->player.y);
-    int x = viewport_to_screen_x(&view, enemy->x) * TILE_SIZE;
-    int y = viewport_to_screen_y(&view, enemy->y) * TILE_SIZE;
+    int x;
+    int y;
+    zoomed_screen(g, &view, STORM_W, STORM_H, enemy->x, enemy->y, &x, &y);
     for (int type = ENEMY_HARPY_RAIDER; type <= ENEMY_TEMPEST_MATRIARCH; type++) {
         enemy->active = 0;
         renderer_begin_frame(r);
@@ -917,7 +936,7 @@ static void test_stormwatch_renderer(Renderer *r, GameState *g, SDL_Surface *sur
     assert(!g->stormwatch_defeated && g->enemies[g->enemy_count - 1].type == ENEMY_TEMPEST_MATRIARCH);
     stormwatch_change_level(g, 1);
     assert(g->location == LOCATION_APPROACH && g->approach_route == 18 && !g->stormwatch_defeated);
-    printf("PASS: five Stormwatch enemies render visibly; debug opens final departure without defeating its boss.\n");
+    printf("PASS: five Stormwatch enemies render visibly at the zoomed camera scale; debug opens final departure without defeating its boss.\n");
 }
 
 static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
@@ -932,8 +951,9 @@ static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
     Viewport view;
     viewport_init(&view, r->tiles_x, r->tiles_y, MANGROVE_W, MANGROVE_H);
     viewport_center_on(&view, g->player.x, g->player.y);
-    int x = viewport_to_screen_x(&view, enemy->x) * TILE_SIZE;
-    int y = viewport_to_screen_y(&view, enemy->y) * TILE_SIZE;
+    int x;
+    int y;
+    zoomed_screen(g, &view, MANGROVE_W, MANGROVE_H, enemy->x, enemy->y, &x, &y);
     const EnemyType marsh_types[] = {ENEMY_LIZARDFOLK_SCOUT, ENEMY_REED_SPEARHUNTER, ENEMY_MARSH_SPITTER, ENEMY_GIANT_CRAB, ENEMY_LIZARDFOLK_SCALEGUARD, ENEMY_SSZARETH};
     for (int i = 0; i < (int)(sizeof(marsh_types) / sizeof(marsh_types[0])); i++) {
         enemy->active = 0;
@@ -1003,9 +1023,13 @@ static void test_regional_projectiles(Renderer *r, GameState *g, SDL_Surface *su
         Viewport base;
         viewport_init(&base, (r->screen_w - INFO_PANEL_W) / TILE_SIZE, r->tiles_y, MAP_W, MAP_H);
         viewport_center_on(&base, g->player.x, g->player.y);
+        // Zoomed areas show fewer, larger tiles; screen pixels scale by the zoom.
+        float zoom = game_camera_zoom(g);
+        int tiles_x = (int)(base.tiles_x / zoom + 0.999f);
+        int tiles_y = (int)(base.tiles_y / zoom + 0.999f);
         Viewport expected;
-        viewport_init(&expected, base.tiles_x < widths[area] ? base.tiles_x : widths[area],
-            base.tiles_y < heights[area] ? base.tiles_y : heights[area], widths[area], heights[area]);
+        viewport_init(&expected, tiles_x < widths[area] ? tiles_x : widths[area],
+            tiles_y < heights[area] ? tiles_y : heights[area], widths[area], heights[area]);
         viewport_center_on(&expected, g->player.x, g->player.y);
         renderer_begin_frame(r);
         game_draw(r, g, &base);
@@ -1019,17 +1043,17 @@ static void test_regional_projectiles(Renderer *r, GameState *g, SDL_Surface *su
             Uint32 elapsed = frame * ENEMY_PROJECTILE_TRAVEL_MS / 2;
             game_draw_enemy_projectiles(r, g, &shots, &base, elapsed);
             renderer_end_frame(r);
-            int cx = ((2 - frame) * shots.shots[0].start_x + frame * shots.shots[0].target_x) * TILE_SIZE / 2 - expected.cam_x * TILE_SIZE + TILE_SIZE / 2;
-            int cy = (g->player.y - expected.cam_y) * TILE_SIZE + TILE_SIZE / 2;
+            int cx = (int)((((2 - frame) * shots.shots[0].start_x + frame * shots.shots[0].target_x) * TILE_SIZE / 2 - expected.cam_x * TILE_SIZE + TILE_SIZE / 2) * zoom);
+            int cy = (int)(((g->player.y - expected.cam_y) * TILE_SIZE + TILE_SIZE / 2) * zoom);
             int changed = 0;
             for (int y = 0; y < surface->h; y++) {
                 for (int x = 0; x < surface->w; x++) {
                     Uint32 before = ((Uint32 *)(baseline + y * surface->pitch))[x];
                     if (rendered_pixel(surface, x, y) != before) {
-                        if (abs(x - cx) > TILE_SIZE || abs(y - cy) > TILE_SIZE) {
+                        if (abs(x - cx) > TILE_SIZE * zoom || abs(y - cy) > TILE_SIZE * zoom) {
                             fprintf(stderr, "Regional projectile %d frame %d: pixel %d,%d outside impact %d,%d\n", area, frame, x, y, cx, cy);
                         }
-                        assert(abs(x - cx) <= TILE_SIZE && abs(y - cy) <= TILE_SIZE);
+                        assert(abs(x - cx) <= TILE_SIZE * zoom && abs(y - cy) <= TILE_SIZE * zoom);
                         changed++;
                     }
                 }
@@ -1467,6 +1491,57 @@ static void test_ironfang_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
     puts("PASS: Ironfang's eight enemy sprites render at native scale; bound Interact boards a cart, arrows drive it, Ridgeshire uses its road gate, and debug repairs optional passages.");
 }
 
+static void test_boss_camera_lean(Renderer *r, GameState *g, SDL_Surface *surface) {
+    game_init(g);
+    g->location = LOCATION_DUNGEON;
+    g->level = 1;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            g->map.tiles[y][x] = TILE_FLOOR;
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    g->player.x = 40;
+    g->player.y = 20;
+    g->enemy_count = 1;
+    Viewport base;
+    viewport_init(&base, (r->screen_w - INFO_PANEL_W) / TILE_SIZE, r->tiles_y, MAP_W, MAP_H);
+    viewport_center_on(&base, g->player.x, g->player.y);
+    float zoom = game_camera_zoom(g);
+    int rows = (int)(r->tiles_y / zoom + 0.999f);
+    int cols = (int)(base.tiles_x / zoom + 0.999f);
+    assert(rows == 18);
+    size_t bytes = (size_t)surface->pitch * surface->h;
+    unsigned char *first = malloc(bytes);
+    assert(first);
+    // Fourteen rows below is outside the centred view; only the lean can show the boss.
+    for (int frame = 0; frame < 2; frame++) {
+        game_spawn_enemy(g, &g->enemies[0], ENEMY_MOUNTAIN_GOBLIN_KING, g->player.x + frame, g->player.y + 14);
+        assert(g->enemies[0].active && g->enemies[0].is_boss);
+        renderer_begin_frame(r);
+        game_draw(r, g, &base);
+        renderer_end_frame(r);
+        if (frame == 0) {
+            memcpy(first, surface->pixels, bytes);
+        }
+    }
+    // The lean keeps the player two rows from the top, which puts the boss on row 16.
+    int tile = (int)(TILE_SIZE * zoom);
+    int boss_x = cols / 2;
+    int changed = 0;
+    for (int y = 0; y < surface->h; y++) {
+        for (int x = 0; x < surface->w; x++) {
+            if (((Uint32 *)(first + y * surface->pitch))[x] != rendered_pixel(surface, x, y)) {
+                assert(y >= 15 * tile && y < 17 * tile && x >= (boss_x - 1) * tile && x < (boss_x + 3) * tile);
+                changed++;
+            }
+        }
+    }
+    assert(changed > 0);
+    free(first);
+    puts("PASS: the zoomed camera leans toward a boss fourteen rows away, keeping the player two rows from the edge.");
+}
+
 int main(void) {
     char *project = getcwd(NULL, 0);
     char *assets = realpath("assets", NULL);
@@ -1828,6 +1903,7 @@ int main(void) {
     assert(game->location == LOCATION_TOWN4 && game->jail_quest_state == 3 && game->gold == gold + ESCAPE_REWARD_GOLD);
     test_stormwatch_input(game);
     test_ironfang_renderer(&renderer, game, surface);
+    test_boss_camera_lean(&renderer, game, surface);
     test_northroad_renderer(&renderer, game, surface);
     test_giants_renderer(&renderer, game, surface);
     test_heartseed_renderer(&renderer, game, surface);

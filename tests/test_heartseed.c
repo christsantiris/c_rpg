@@ -140,6 +140,7 @@ void test_heartseed(void) {
     g->player.x = TAMSIN_X + 1;
     g->player.y = TAMSIN_Y;
     ASSERT("Tamsin offers an explicit quest choice", heartseed_talk(g) && game_quest_offer_active(g));
+    ASSERT("Tamsin's briefing is not cut off", strstr(g->dialogue_text, "bring both seed and orders to me for 120 gold.") != NULL);
     game_handle_quest_offer_key(g, SDL_SCANCODE_N, 0);
     ASSERT("declining leaves the quest available", !g->heartseed_quest_state && !g->dialogue_active);
     accept(g);
@@ -148,6 +149,9 @@ void test_heartseed(void) {
         quest_journal_get_entry(g, QUEST_TAB_ACTIVE, 0, &entry) && !strcmp(entry.title, "The Stolen Heartseed") &&
         entry.stages[0] == 2 && entry.stages[1] == 4 && entry.stages[2] == 4 &&
         entry.reward_gold == 120 && entry.reward_score == 800);
+    heartseed_talk(g);
+    ASSERT("Tamsin's progress report is not cut off", strstr(g->dialogue_text, "Bring the orders and seed back here.") != NULL);
+    g->dialogue_active = 0;
     stage(g, 2);
     int count = g->enemy_count;
     interact(g, HEARTSEED_ORDERS_X, HEARTSEED_ORDERS_Y + 1);
