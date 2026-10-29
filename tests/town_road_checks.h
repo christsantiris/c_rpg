@@ -5,7 +5,7 @@
 #include "game/town_road.h"
 #include "game/actions.h"
 
-// Walk real road tiles, avoiding every other town gate and regional exit.
+// Walk the exterior's roads and grass, avoiding every other town gate and regional exit.
 static inline void walk_town_road_to(GameState *g, int x, int y) {
     int previous[TOWN_ROAD_W * TOWN_ROAD_H];
     int queue[TOWN_ROAD_W * TOWN_ROAD_H];
@@ -29,7 +29,8 @@ static inline void walk_town_road_to(GameState *g, int x, int y) {
                 continue;
             }
             int next = ny * TOWN_ROAD_W + nx;
-            if (previous[next] < 0 && (next == target || g->map.tiles[ny][nx] == TILE_TOWN_PATH)) {
+            TileType tile = g->map.tiles[ny][nx];
+            if (previous[next] < 0 && (next == target || tile == TILE_TOWN_PATH || tile == TILE_TOWN_FLOOR)) {
                 previous[next] = cell;
                 queue[tail++] = next;
             }

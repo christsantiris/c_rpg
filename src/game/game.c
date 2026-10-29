@@ -3101,6 +3101,7 @@ void game_refresh_quest_encounters(GameState *g) {
 }
 
 static void generate_active_level(GameState *g) {
+    containers_forget_floor(g);
     if (g->location == LOCATION_FOREST) {
         map_generate_forest(&g->map, g->level);
     } else if (g->location == LOCATION_MOUNTAINS) {

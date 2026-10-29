@@ -7,6 +7,10 @@ the ruined giant hall. This optional five-stage region rises from grassy western
 foothills into the frost-covered remains of a giant kingdom. Ashen Hollow lies
 north of Castle Grounds, reached around the castle's western perimeter.
 
+The peaks are drawn at the Crown Roads' 1.5× zoom: the camera shows about
+30 × 18 tiles around the player. Hill Giant boulders and the Last Jarl's maul
+reach six tiles, so every warned strike starts on screen.
+
 | Stage | Location | Exploration |
 | --- | --- | --- |
 | 1 | Terraced Foothills | Rounded grassy terraces, broken monuments, and several reconnecting approaches |

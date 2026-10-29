@@ -6,52 +6,196 @@
 #include <string.h>
 
 static void carve_path(Map *m, int x, int y, int tx, int ty) {
-    while (x != tx) {
-        m->tiles[y][x] = TILE_CATACOMBS_FLOOR;
-        x += tx > x ? 1 : -1;
-    }
-    while (y != ty) {
-        m->tiles[y][x] = TILE_CATACOMBS_FLOOR;
-        y += ty > y ? 1 : -1;
+    // Random elbows keep passages from lining up into a grid.
+    int horizontal_first = rand() % 2;
+    for (int leg = 0; leg < 2; leg++) {
+        if ((leg == 0) == horizontal_first) {
+            while (x != tx) {
+                m->tiles[y][x] = TILE_CATACOMBS_FLOOR;
+                x += tx > x ? 1 : -1;
+            }
+        } else {
+            while (y != ty) {
+                m->tiles[y][x] = TILE_CATACOMBS_FLOOR;
+                y += ty > y ? 1 : -1;
+            }
+        }
     }
     m->tiles[y][x] = TILE_CATACOMBS_FLOOR;
 }
 
-void map_generate_catacombs(Map *m, int level) {
+static int room_distance(const Room *a, const Room *b) {
+    int ax, ay, bx, by;
+    map_room_center(a, &ax, &ay);
+    map_room_center(b, &bx, &by);
+    return abs(ax - bx) + abs(ay - by);
+}
+
+static int place_rooms(Map *m) {
+    // Burial chambers scatter through the crypt; the final tomb lies far from the stairs down.
+    m->room_count = 0;
+    for (int attempt = 0; attempt < 2000 && m->room_count < 8; attempt++) {
+        Room room = {0, 0, 14 + rand() % 5, 10 + rand() % 3};
+        room.x = 2 + rand() % (CATACOMBS_W - room.w - 3);
+        room.y = 2 + rand() % (CATACOMBS_H - room.h - 3);
+        int clear = 1;
+        for (int i = 0; i < m->room_count && clear; i++) {
+            const Room *other = &m->rooms[i];
+            clear = room.x + room.w + 3 < other->x || other->x + other->w + 3 < room.x ||
+                room.y + room.h + 3 < other->y || other->y + other->h + 3 < room.y;
+        }
+        if (clear && m->room_count == 7 && room_distance(&room, &m->rooms[0]) < 45) {
+            clear = 0;
+        }
+        if (clear) {
+            m->rooms[m->room_count++] = room;
+        }
+    }
+    return m->room_count == 8;
+}
+
+static int spur_open(const Map *m, int x, int y, int from_x, int from_y) {
+    // A dead end may only bore through solid rock, never into another space.
+    if (x < 2 || y < 2 || x >= CATACOMBS_W - 2 || y >= CATACOMBS_H - 2 || m->tiles[y][x] != TILE_CATACOMBS_WALL) {
+        return 0;
+    }
+    const int dx[4] = {0, 1, 0, -1};
+    const int dy[4] = {-1, 0, 1, 0};
+    for (int d = 0; d < 4; d++) {
+        int nx = x + dx[d];
+        int ny = y + dy[d];
+        if (!(nx == from_x && ny == from_y) && m->tiles[ny][nx] != TILE_CATACOMBS_WALL) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void carve_dead_ends(Map *m) {
+    const int dx[4] = {0, 1, 0, -1};
+    const int dy[4] = {-1, 0, 1, 0};
+    static int corridor[CATACOMBS_W * CATACOMBS_H];
+    int count = 0;
+    for (int y = 2; y < CATACOMBS_H - 2; y++) {
+        for (int x = 2; x < CATACOMBS_W - 2; x++) {
+            if (m->tiles[y][x] == TILE_CATACOMBS_FLOOR && catacombs_room_at(m, x, y) < 0) {
+                corridor[count++] = y * CATACOMBS_W + x;
+            }
+        }
+    }
+    int wanted = 4 + rand() % 3;
+    for (int attempt = 0; attempt < 300 && wanted > 0 && count > 0; attempt++) {
+        int origin = corridor[rand() % count];
+        int px = origin % CATACOMBS_W;
+        int py = origin / CATACOMBS_W;
+        // Bore a blind passage with one bend through solid rock, stopping where it would break through.
+        int path_x[16];
+        int path_y[16];
+        int length = 0;
+        int d = rand() % 4;
+        int first = 3 + rand() % 4;
+        int total = first + rand() % 5;
+        for (int step = 0; step < total; step++) {
+            if (step == first) {
+                d = (d + (rand() % 2 ? 1 : 3)) % 4;
+            }
+            int nx = px + dx[d];
+            int ny = py + dy[d];
+            int ok = spur_open(m, nx, ny, px, py);
+            for (int i = 0; i + 1 < length && ok; i++) {
+                ok = abs(path_x[i] - nx) + abs(path_y[i] - ny) > 1;
+            }
+            if (!ok) {
+                break;
+            }
+            path_x[length] = nx;
+            path_y[length] = ny;
+            length++;
+            px = nx;
+            py = ny;
+        }
+        if (length < 3) {
+            continue;
+        }
+        for (int i = 0; i < length; i++) {
+            m->tiles[path_y[i]][path_x[i]] = TILE_CATACOMBS_FLOOR;
+        }
+        wanted--;
+    }
+}
+
+static int floor_connected(const Map *m) {
+    // Every floor tile, both stairways and every chamber must join the stairs up.
+    static unsigned char seen[CATACOMBS_H][CATACOMBS_W];
+    static int queue[CATACOMBS_W * CATACOMBS_H];
+    memset(seen, 0, sizeof(seen));
+    const int dx[4] = {0, 1, 0, -1};
+    const int dy[4] = {-1, 0, 1, 0};
+    int head = 0;
+    int tail = 0;
+    seen[m->stairs_up_y][m->stairs_up_x] = 1;
+    queue[tail++] = m->stairs_up_y * CATACOMBS_W + m->stairs_up_x;
+    while (head < tail) {
+        int x = queue[head] % CATACOMBS_W;
+        int y = queue[head++] / CATACOMBS_W;
+        for (int d = 0; d < 4; d++) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            if (nx >= 0 && ny >= 0 && nx < CATACOMBS_W && ny < CATACOMBS_H && !seen[ny][nx] && map_is_walkable(m, nx, ny)) {
+                seen[ny][nx] = 1;
+                queue[tail++] = ny * CATACOMBS_W + nx;
+            }
+        }
+    }
+    for (int y = 0; y < CATACOMBS_H; y++) {
+        for (int x = 0; x < CATACOMBS_W; x++) {
+            if (map_is_walkable(m, x, y) && !seen[y][x]) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+static void generate_layout(Map *m, int level) {
     memset(m, 0, sizeof(*m));
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
             m->tiles[y][x] = TILE_CATACOMBS_WALL;
         }
     }
-    m->room_count = 8;
+    if (!place_rooms(m)) {
+        return;
+    }
     for (int i = 0; i < m->room_count; i++) {
         Room *room = &m->rooms[i];
-        *room = (Room){6 + (i % 2) * 27, 5 + (i / 2) * 18, 14 + rand() % 5, 10 + rand() % 3};
         for (int y = room->y; y < room->y + room->h; y++) {
             for (int x = room->x; x < room->x + room->w; x++) {
                 m->tiles[y][x] = TILE_CATACOMBS_FLOOR;
             }
         }
     }
-    // Cross passages and two vertical routes form loops around burial chambers.
-    for (int i = 0; i < m->room_count; i++) {
-        int x;
-        int y;
+    // Each chamber joins its nearest earlier chamber, so outer chambers become dead ends;
+    // one extra passage keeps a single loop through the crypt.
+    for (int i = 1; i < m->room_count; i++) {
+        int nearest = 0;
+        for (int j = 1; j < i; j++) {
+            if (room_distance(&m->rooms[i], &m->rooms[j]) < room_distance(&m->rooms[i], &m->rooms[nearest])) {
+                nearest = j;
+            }
+        }
+        int x, y, tx, ty;
         map_room_center(&m->rooms[i], &x, &y);
-        if (i % 2 == 0) {
-            int tx;
-            int ty;
-            map_room_center(&m->rooms[i + 1], &tx, &ty);
-            carve_path(m, x, y, tx, ty);
-        }
-        if (i + 2 < m->room_count) {
-            int tx;
-            int ty;
-            map_room_center(&m->rooms[i + 2], &tx, &ty);
-            carve_path(m, x, y, tx, ty);
-        }
+        map_room_center(&m->rooms[nearest], &tx, &ty);
+        carve_path(m, x, y, tx, ty);
     }
+    int a = rand() % m->room_count;
+    int b = (a + 2 + rand() % (m->room_count - 3)) % m->room_count;
+    int x, y, tx, ty;
+    map_room_center(&m->rooms[a], &x, &y);
+    map_room_center(&m->rooms[b], &tx, &ty);
+    carve_path(m, x, y, tx, ty);
+    carve_dead_ends(m);
     map_room_center(&m->rooms[0], &m->stairs_up_x, &m->stairs_up_y);
     Room *last = &m->rooms[m->room_count - 1];
     m->stairs_down_x = last->x + last->w / 2;
@@ -71,6 +215,12 @@ void map_generate_catacombs(Map *m, int level) {
         *trap = (BurialTrap){room->x + room->w / 2, room->y + room->h / 2 + 2, i % 2, 0, 0};
         m->tiles[trap->y][trap->x] = TILE_BURIAL_PLATE;
     }
+}
+
+void map_generate_catacombs(Map *m, int level) {
+    do {
+        generate_layout(m, level);
+    } while (m->room_count != 8 || !floor_connected(m));
 }
 
 int catacombs_room_at(const Map *m, int x, int y) {
@@ -175,6 +325,33 @@ void catacombs_accept_quest(GameState *g) {
         const LevelCache *cache = &g->catacombs_cache[level - 1];
         if (cache->valid && memorial_is_cold(&cache->map)) {
             g->catacombs_quest_progress |= 1 << (level - 2);
+        }
+    }
+}
+
+static int keeps_unique_state(const GameState *g, int level) {
+    // A memorial silenced before Oswin's quest earns credit from the saved floor, and a
+    // wounded Grave Marshal keeps his fight; both floors stay as saved.
+    const LevelCache *cache = &g->catacombs_cache[level - 1];
+    if (!g->catacombs_quest_state && level >= 2 && level <= 4 && memorial_is_cold(&cache->map)) {
+        return 1;
+    }
+    for (int i = 0; i < cache->enemy_count; i++) {
+        const Enemy *e = &cache->enemies[i];
+        if (e->active && e->type == ENEMY_GRAVE_MARSHAL && e->hp < e->max_hp) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void catacombs_regenerate_saved_floors(GameState *g) {
+    // Floors saved on the old grid regenerate on the next visit. Memorials, the ledger,
+    // the Grave Marshal and his reward are restored from state kept outside the map.
+    for (int level = 1; level <= CATACOMBS_DEPTH; level++) {
+        int here = g->location == LOCATION_CATACOMBS && g->level == level;
+        if (!here && g->catacombs_cache[level - 1].valid && !keeps_unique_state(g, level)) {
+            g->catacombs_cache[level - 1].valid = 0;
         }
     }
 }

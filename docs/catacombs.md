@@ -8,10 +8,17 @@ stretch of this castle route. They can also be reached from Castle Grounds'
 south exit by crossing that road. The
 castle's north entrance leads separately to the six-floor [castle interior](castle-design.md).
 
+The Catacombs are drawn at the Crown Roads' 1.5× zoom: the camera shows about
+30 × 18 tiles around the player.
+
 ## Exploration and travel
 
-Five floors contain eight burial chambers each, with varied room sizes and
-looping passages. Ivory burial niches, cracked stone, sarcophagi, and animated
+Five floors contain eight burial chambers each, scattered at random through the
+crypt rather than on a grid. Each chamber branches from its nearest neighbour,
+so outlying chambers are dead ends; one extra passage keeps a loop, and four to
+six blind passages bend off into solid rock. The final tomb always lies at least
+45 tiles from the stairs up, and every floor connects both stairways to every
+chamber. Ivory burial niches, cracked stone, sarcophagi, and animated
 blue ossuary flames distinguish the catacombs from OakHaven's early dungeon.
 The castle's south exit is signed CROWN ROAD NORTH.
 
@@ -137,6 +144,12 @@ when space permits. Full loot capacity reserves it in a royal reliquary without
 discarding other items. Interact on or beside that cache with contextual **A**,
 or press **P** on it; full inventory leaves it available. First claim is permanent,
 so selling or deliberately dropping it cannot create a replacement.
+
+Save version **220** regenerates floors saved on the old grid on their next
+visit; the floor the player is standing on keeps its map. A floor whose
+memorial was silenced before Brother Oswin's quest, or whose Grave Marshal is
+wounded, also stays as saved. Memorials, the ledger, the Grave Marshal and his
+reward are restored on regenerated floors.
 
 Save version **130** adds `grave_marshal_reward_state` (not earned, unclaimed,
 claimed), preserving the old `catacombs_mantle_unclaimed` behavior. Existing

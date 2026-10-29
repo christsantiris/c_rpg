@@ -29,5 +29,7 @@ int elderwood_marks(const Enemy *enemy, int x, int y);
 void elderwood_defeat(GameState *g);
 void elderwood_portal(GameState *g);
 void elderwood_hide_portal(GameState *g);
+int elderwood_in_clearing(int x, int y, int x0, int y0, int x1, int y1);
+void elderwood_round_saved_clearings(GameState *g);
 
 #endif

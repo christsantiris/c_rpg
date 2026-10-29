@@ -9,3 +9,5 @@ dist/
 castle.iconset/
 castle.icns
 __pycache__/
+/.emsdk
+

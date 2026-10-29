@@ -24,5 +24,6 @@ int catacombs_enemy_damage(const GameState *g, const Enemy *e, int damage);
 void catacombs_restore_reward(GameState *g);
 void catacombs_refresh_quest(GameState *g);
 void catacombs_accept_quest(GameState *g);
+void catacombs_regenerate_saved_floors(GameState *g);
 
 #endif
