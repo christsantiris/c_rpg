@@ -4,9 +4,11 @@
 void spellbook_draw(Renderer *r, const GameState *g, const SpellbookScreen *s) {
     int full_tiles_x = r->screen_w / TILE_SIZE;
 
-    for (int y = 0; y < r->tiles_y; y++)
-        for (int x = 0; x < full_tiles_x; x++)
+    for (int y = 0; y < r->tiles_y; y++) {
+        for (int x = 0; x < full_tiles_x; x++) {
             draw_floor(r, x, y);
+        }
+    }
 
     for (int x = 0; x < full_tiles_x; x++) {
         draw_wall(r, x, 0);
@@ -17,12 +19,11 @@ void spellbook_draw(Renderer *r, const GameState *g, const SpellbookScreen *s) {
         draw_wall(r, full_tiles_x - 1, y);
     }
 
-    SDL_Color gold   = {220, 180,  60, 255};
-    SDL_Color green  = { 80, 160,  80, 255};
+    SDL_Color gold = {220, 180, 60, 255};
     SDL_Color dimmed = { 80,  80,  80, 255};
-    SDL_Color hint   = { 50,  70,  50, 255};
-    SDL_Color white  = {200, 200, 200, 255};
-    SDL_Color blue   = { 80, 140, 220, 255};
+    SDL_Color hint = {50, 70, 50, 255};
+    SDL_Color white = {200, 200, 200, 255};
+    SDL_Color blue = {80, 140, 220, 255};
 
     int cx = r->screen_w / 2;
     int cy = r->screen_h / 2;
@@ -38,9 +39,11 @@ void spellbook_draw(Renderer *r, const GameState *g, const SpellbookScreen *s) {
             const Spell *sp = &g->player.known_spells[i];
             int item_y = 130 + i * 40;
 
+            const char *suffix = sp->rank == 2 ? " II" : sp->rank == 3 ? " III" : "";
+            char name[40];
+            SDL_snprintf(name, sizeof(name), "%s%s", sp->name, suffix);
             char label[64];
-            SDL_snprintf(label, sizeof(label), "%-16s R%d  %d MP",
-                sp->name, sp->rank, sp->mp_cost);
+            SDL_snprintf(label, sizeof(label), "%-20s %d MP", name, sp->mp_cost);
 
             int is_equipped = (g->player.equipped_spell == i);
             SDL_Color color = is_equipped ? gold : white;
@@ -48,12 +51,14 @@ void spellbook_draw(Renderer *r, const GameState *g, const SpellbookScreen *s) {
             if (s->selected == i) {
                 renderer_draw_text(r, ">", cx - 200, item_y, gold, r->font_small);
                 renderer_draw_text(r, label, cx - 180, item_y, color, r->font_small);
-                if (is_equipped)
+                if (is_equipped) {
                     renderer_draw_text(r, "[E]", cx + 120, item_y, blue, r->font_small);
+                }
             } else {
                 renderer_draw_text(r, label, cx - 180, item_y, color, r->font_small);
-                if (is_equipped)
+                if (is_equipped) {
                     renderer_draw_text(r, "[E]", cx + 120, item_y, blue, r->font_small);
+                }
             }
         }
     }
