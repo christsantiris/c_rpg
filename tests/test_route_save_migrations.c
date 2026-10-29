@@ -679,19 +679,19 @@ static void test_forest_adventure_migration(void) {
     game_init(&original);
     original.defeated_bosses |= 1 << LOCATION_FOREST;
     approach_enter(&original, 0, 12);
-    // A player on the former crossroads arm can be saved off the new road.
+    // A player on the former crossroads arm can be saved off the new road, on its verge.
     original.player.x = 55;
-    original.player.y = 31;
-    map_mark_explored(&original.map, 55, 31);
+    original.player.y = 26;
+    map_mark_explored(&original.map, 55, 26);
     original.floor_item_count = 1;
-    original.floor_items[0] = (FloorItem){.active = 1, .x = 54, .y = 31,
+    original.floor_items[0] = (FloorItem){.active = 1, .x = 54, .y = 26,
         .underlying_tile = TILE_FOREST_FLOOR, .item = item_make_health_potion()};
-    original.map.tiles[31][54] = TILE_ITEM;
+    original.map.tiles[26][54] = TILE_ITEM;
     ok = make_legacy_save(171) && load_game(&loaded, ROUTE_SAVE_SLOT);
     int x;
     int y;
     ASSERT("old crossroads saves gain the boss-unlocked forest road", ok && loaded.location == LOCATION_APPROACH && approach_forest_town_exit(&loaded, &x, &y) && !approach_boss_exit(&loaded, &x, &y));
-    ASSERT("crossroads migration preserves exploration and accessible player and loot positions", loaded.player.x == 55 && loaded.player.y == 31 && map_is_explored(&loaded.map, 55, 31) && map_is_walkable(&loaded.map, 55, 31) && loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded.map.tiles[31][54] == TILE_ITEM);
+    ASSERT("crossroads migration preserves exploration and accessible player and loot positions", loaded.player.x == 55 && loaded.player.y == 26 && map_is_explored(&loaded.map, 55, 26) && map_is_walkable(&loaded.map, 55, 26) && loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded.map.tiles[26][54] == TILE_ITEM);
     remove("saves/savegame_99123.json");
 }
 

@@ -1457,6 +1457,8 @@ void game_init(GameState *g) {
     g->jail_gear_count = 0;
     g->jail_gear_claimed = 0;
     g->jail_gear_state = 0;
+    g->jail_gold = 0;
+    g->jail_arrows = 0;
     g->jail_main_hand = -1;
     g->jail_off_hand = -1;
     g->jail_armor = -1;
