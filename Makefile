@@ -14,9 +14,20 @@ dmg:
 linux:
 	bash package/linux/build_linux.sh
 
-browser:
-	emcmake cmake -S . -B build/browser -DCMAKE_BUILD_TYPE=Release
-	emmake cmake --build build/browser --target conr
+# Use an Emscripten already on PATH (as CI does); otherwise install the pinned SDK once into .emsdk.
+EMSDK_VERSION := 4.0.23
+EMSDK_DIR := $(CURDIR)/.emsdk
+EMSDK_LOCAL := $(if $(shell command -v emcmake 2>/dev/null),,$(EMSDK_DIR)/.emscripten)
+EMSDK_SOURCE := $(if $(EMSDK_LOCAL),. "$(EMSDK_DIR)/emsdk_env.sh" > /dev/null 2>&1 &&)
+
+$(EMSDK_DIR)/.emscripten:
+	[ -d "$(EMSDK_DIR)" ] || git clone --depth 1 --branch $(EMSDK_VERSION) https://github.com/emscripten-core/emsdk.git "$(EMSDK_DIR)"
+	"$(EMSDK_DIR)/emsdk" install $(EMSDK_VERSION)
+	"$(EMSDK_DIR)/emsdk" activate $(EMSDK_VERSION)
+
+browser: $(EMSDK_LOCAL)
+	$(EMSDK_SOURCE) emcmake cmake -S . -B build/browser -DCMAKE_BUILD_TYPE=Release
+	$(EMSDK_SOURCE) emmake cmake --build build/browser --target conr
 
 browser-run: browser
 	python3 -m http.server 8000 --bind 127.0.0.1 --directory dist/browser
