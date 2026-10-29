@@ -6,8 +6,7 @@ stage's west exit return to Stillbury. The Desert Pharaoh does not block the fin
 and drops the Sandstorm Staff.
 
 The wastes are drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 ×
-18 tiles around the player. The Desert Pharaoh acts within twelve tiles, so it
-may begin its telegraphed beams from just off screen.
+18 tiles around the player. The Desert Pharaoh acts within twelve tiles; the camera leans toward it to keep it on screen as its telegraphed beams begin.
 
 Incoming combat damage is reduced by **15% after defense**, rounded to the
 nearest whole HP with a minimum of 1, before shield blocks. This includes the
