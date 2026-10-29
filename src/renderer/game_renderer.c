@@ -593,8 +593,10 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     if (below) {
         bubble_y = npc_bottom + 22;
     }
-    if (bubble_y + bubble_h > viewport_h - 8) {
-        bubble_y = viewport_h - bubble_h - 8;
+    // Dialogue too tall for the play area uses the message bar's space rather than losing lines.
+    int bottom = bubble_h > viewport_h - 16 ? r->screen_h : viewport_h;
+    if (bubble_y + bubble_h > bottom - 8) {
+        bubble_y = bottom - bubble_h - 8;
     }
     if (bubble_y < 8) {
         bubble_y = 8;
@@ -4255,8 +4257,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_combat_feedback(r, g, v);
 
-    draw_dialogue_bubble(r, g, v);
-
+    float world_sx;
+    float world_sy;
+    SDL_RenderGetScale(r->sdl, &world_sx, &world_sy);
     if (island_scaled || labyrinth_scaled || jail_scaled || game_camera_zoom(g) != 1.0f) {
         SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
     }
@@ -4294,4 +4297,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     // Draw minimap overlay in top-left corner of the viewport
     minimap_draw(r, g);
+
+    // Conversations sit above the HUD, so a long one may extend over the message bar in a small window.
+    SDL_RenderSetScale(r->sdl, world_sx, world_sy);
+    draw_dialogue_bubble(r, g, v);
+    SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
 }

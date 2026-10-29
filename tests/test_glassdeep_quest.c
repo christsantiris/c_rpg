@@ -93,6 +93,7 @@ static void test_quest_flow(void) {
         !game.dain_quest_state && !game.sunscar_lamp_quest_state);
     game_talk_to_orin(&game);
     ASSERT("repeat conversation gives instructions without rewarding early", game.glassdeep_quest_state == 1 && strstr(game.dialogue_text, "press A"));
+    ASSERT("Orin's instructions are not cut off", strstr(game.dialogue_text, "Return to me here in Rosemoor's Guild.") != NULL);
     game_leave_guild(&game);
     game_enter_glassdeep(&game);
     int x = -1;
