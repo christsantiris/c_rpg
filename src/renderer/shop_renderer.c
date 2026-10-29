@@ -199,7 +199,7 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
         } else if (selected->type == ITEM_WEAPON) {
             const Item *equipped = NULL;
             if (g->equipped_main_hand >= 0 &&
-                g->equipped_main_hand < g->inventory_count) {
+                g->equipped_main_hand < MAX_CARRIED_ITEMS) {
                 equipped = &g->inventory[g->equipped_main_hand];
             }
             draw_weapon_comparison(r, g, selected, equipped,
@@ -207,7 +207,7 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
         } else if (selected->type == ITEM_ARMOR) {
             const Item *equipped = NULL;
             if (g->equipped_armor >= 0 &&
-                g->equipped_armor < g->inventory_count) {
+                g->equipped_armor < MAX_CARRIED_ITEMS) {
                 equipped = &g->inventory[g->equipped_armor];
             }
             draw_armor_comparison(r, g, selected, equipped,
@@ -215,7 +215,7 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
         } else if (selected->type == ITEM_SHIELD) {
             const Item *equipped = NULL;
             if (g->equipped_off_hand >= 0 &&
-                g->equipped_off_hand < g->inventory_count &&
+                g->equipped_off_hand < MAX_CARRIED_ITEMS &&
                 g->inventory[g->equipped_off_hand].type == ITEM_SHIELD) {
                 equipped = &g->inventory[g->equipped_off_hand];
             }

@@ -13,10 +13,12 @@ to the Royal Guards, who imprison them. The arrest dialogue explains exactly
 what happened. Walking nearby, bumping into him, or pressing Interact does not
 cause arrest. The dungeon's front gate is locked.
 
-Guards confiscate **all weapons, armor, and shields**, including spare items in
-the pack. Their exact upgrades and bonuses are stored for recovery. Equipped
-bonuses are removed normally. Gold, consumables, quest items, and regional
-progress stay with the player. Arrest assigns **Recover Your Equipment**.
+Guards confiscate **all carried items, all six equipped slots, gold, and arrows**.
+This includes potions, scrolls, tomes, accessories, and physical quest items in
+the pack. Exact item properties and the original equipment slots are stored in
+the evidence chest for recovery. Equipped bonuses are removed normally. Learned
+spells, completed quests, score, and regional progress remain intact. Arrest
+assigns **Recover Your Equipment** when anything was confiscated.
 The player appears in a barred stone cell with fellow prisoner **Tomas**;
 guards stand beyond the bars.
 Speak to Tomas with **T**, then **Y** to accept **Guide Tomas Home**. He
@@ -28,9 +30,11 @@ This remains true when using `./tools/debug_shortcuts.sh`.
 
 Walking onto the hatch takes both characters into the **Escape Tunnel**.
 Tomas closes it behind them to prevent pursuit, so there is no return to the cell.
-After confiscation he supplies a Smuggled Dagger for the escape, small enough
-to hide in a cell. Every class can wield it.
-This does not return any confiscated equipment. The first enemies stand farther
+On the first conversation in the Royal Dungeon, Tomas supplies one Smuggled
+Dagger hidden in the cell. It is equipped immediately and every class can wield
+it. The player receives no additional supplies or arrows. Repeated conversation,
+save/load, and entering the tunnel cannot award a second dagger.
+This does not return any confiscated belongings. The first enemies stand farther
 along the passage, leaving space to prepare after arriving.
 The tunnel is a single 190-tile combat map with thirty enemies. Its original
 passage has room to maneuver; deeper stretches narrow to three tiles and add
@@ -69,12 +73,15 @@ kill the player. Leave through the southern door to retreat to Castle Grounds.
 Town portals are blocked inside the evidence room, with a message directing
 the player to that door.
 
-Stand beside the evidence chest and press **Interact** to reclaim equipment.
-Original equipped items are returned first. Empty equipment slots are restored
+Stand beside the evidence chest and press **Interact** to reclaim belongings.
+Gold returns once, even with a full pack, without adding score or overwriting
+money earned since the arrest. Confiscated arrows refill the quiver only as far
+as its limit; any remainder stays in the chest. Original equipped items are
+returned first. Empty equipment slots are restored
 where possible; current equipment choices are retained. If the pack fills,
 unclaimed items stay in the chest. Make space and interact again. The recovery
-quest completes only after every confiscated item has been reclaimed. Repeated
-interaction cannot duplicate items or grant another reward.
+quest completes only after every confiscated item, arrow, and coin has been
+reclaimed. Repeated interaction cannot duplicate items or grant another reward.
 
 Guard wounds and defeats, dropped loot, confiscated item metadata, and partial
 recovery persist through retreat, reentry, and save/load. The evidence room
@@ -98,13 +105,20 @@ saves already in the dungeon or the tunnel keep their equipment and escort progr
 the migration does not confiscate items retrospectively. An old visible hatch
 is hidden again if Tomas's quest has not been accepted.
 
+Version **225** adds saved confiscated gold and arrow balances, accepts all
+carried item types in evidence, and moves the single dagger handoff into the
+cell. Older arrests keep their current possessions and recovery progress; new
+balances default to zero, without retroactive confiscation. New arrests use the
+complete confiscation rules.
+
 For play testing:
 
 1. Talk to the townsman east of the castle crossroads and read the arrest reason.
-2. Check that weapons, armor, and shields are gone but gold and other items remain.
+2. Check that the bag, all six equipment slots, gold, and quiver are empty.
 3. Confirm the hatch is hidden, including in debug mode. Talk to Tomas with T
    and accept with Y; locate the newly revealed hatch.
-4. Save/load in the cell, enter the tunnel, and check the supplied Smuggled Dagger.
+4. Check the one all-class Smuggled Dagger is supplied in the cell; repeat the
+   conversation, save/load, and enter the tunnel to confirm it cannot duplicate.
 5. Try Teleport, Space, and an early exit attempt while Tomas is behind you.
 6. Save/load mid-escort; confirm enemy damage, loot, and Tomas's position persist.
 7. Reach central Ridgeshire together and check the reward and Completed journal.
@@ -112,8 +126,9 @@ For play testing:
    that its damage and any dropped loot remain when reentering.
 9. Defeat all three guards, then interact with the chest with a full pack and
    with one free slot. Save/load during partial recovery, then reclaim the rest.
-10. Confirm every original item retains its bonuses and sharpening, recovery
-    completes in the journal, and neither arrest nor rewards can repeat.
+10. Confirm every original item retains its bonuses and sharpening, gold returns
+    once, and arrows never exceed the quiver limit. Recover any remainder, check
+    the completed journal, and confirm neither arrest nor rewards can repeat.
 
 SDL renderer checks: [hidden hatch](art-sources/jail-recovery/jail-hidden.png),
 [revealed hatch](art-sources/jail-recovery/jail-revealed.png), and

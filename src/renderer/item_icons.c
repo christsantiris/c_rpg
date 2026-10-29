@@ -325,6 +325,12 @@ void draw_icon_item(Renderer *r, int px, int py, const Item *item) {
     }
     int art = ICON_ART_POTION;
     switch (item->type) {
+        case ITEM_HELMET: art = ICON_ART_CAP; break;
+        case ITEM_ACCESSORY:
+            art = item->accessory_family == ACCESSORY_FAMILY_RING ? ICON_ART_RING
+                : item->accessory_family == ACCESSORY_FAMILY_AMULET ? ICON_ART_AMULET
+                : item->accessory_family == ACCESSORY_FAMILY_BRACERS ? ICON_ART_BRACERS : ICON_ART_GAUNTLETS;
+            break;
         case ITEM_SCROLL: art = ICON_ART_SCROLL; break;
         case ITEM_SPELL_TOME: art = ICON_ART_BOOK; break;
         case ITEM_TREASURE_MAP: art = ICON_ART_MAP; break;

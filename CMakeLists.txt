@@ -99,6 +99,12 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     )
     target_include_directories(debug_shortcuts_test PRIVATE src ${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS} ${SDL2_MIXER_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/external)
     target_link_libraries(debug_shortcuts_test PRIVATE ${SDL2_LIBRARIES} ${SDL2_TTF_LIBRARIES} ${SDL2_MIXER_LIBRARIES})
+    add_executable(equipment_renderer_test EXCLUDE_FROM_ALL
+        ${DEBUG_SHORTCUT_TEST_SOURCES}
+        ${CMAKE_SOURCE_DIR}/tools/tests/equipment_renderer_test.c
+    )
+    target_include_directories(equipment_renderer_test PRIVATE src ${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS} ${SDL2_MIXER_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/external)
+    target_link_libraries(equipment_renderer_test PRIVATE ${SDL2_LIBRARIES} ${SDL2_TTF_LIBRARIES} ${SDL2_MIXER_LIBRARIES})
     add_custom_target(test-debug-shortcuts
         COMMAND $<TARGET_FILE:debug_shortcuts_test>
         DEPENDS debug_shortcuts_test

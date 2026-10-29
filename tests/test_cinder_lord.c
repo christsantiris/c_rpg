@@ -404,12 +404,14 @@ static void test_ring(void) {
 
 static void test_weapon(void) {
     setup();
-    game.inventory[0] = item_make_embercleaver();
+    game.inventory[0] = item_make_short_sword();
     game.inventory[1] = item_make_buckler();
-    game.inventory_count = 2;
-    game.equipped_off_hand = 1;
+    game.inventory[2] = item_make_embercleaver();
+    game.inventory_count = 3;
     action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, 0, 0});
-    ASSERT("equipping Embercleaver clears the off hand like every two-handed weapon", game.equipped_main_hand == 0 && game.equipped_off_hand == -1);
+    action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, 0, 0});
+    action_resolve_player(&game, (Action){ACTION_EQUIP_ITEM, 0, 0});
+    ASSERT("equipping Embercleaver clears the off hand like every two-handed weapon", game.equipped_main_hand == EQUIPMENT_STRONG_HAND && game.equipped_off_hand == -1);
     game.player.attack = 30;
     game.enemies[0].defense = 20;
     game.enemies[0].hp = 260;
@@ -418,7 +420,7 @@ static void test_weapon(void) {
     action_resolve_player(&game, (Action){ACTION_MOVE, 28, 22});
     ASSERT("Embercleaver applies its actual armor penetration and cleaves an adjacent target", game.enemies[0].hp == 245 && game.enemies[1].hp == 93);
     int ok = save_game(&game, 99193) && load_game(&loaded, 99193);
-    ASSERT("equipped Embercleaver persists its attack, penetration, cleave, hands and visual", ok && loaded.equipped_main_hand == 0 && loaded.inventory[0].attack_bonus == 11 && loaded.inventory[0].armor_penetration_percent == 25 && loaded.inventory[0].cleave_percent == 25 && loaded.inventory[0].weapon_hands == WEAPON_HANDS_TWO && loaded.inventory[0].visual_id == ITEM_VISUAL_EMBERCLEAVER);
+    ASSERT("equipped Embercleaver persists its attack, penetration, cleave, hands and visual", ok && loaded.equipped_main_hand == EQUIPMENT_STRONG_HAND && loaded.inventory[EQUIPMENT_STRONG_HAND].attack_bonus == 11 && loaded.inventory[EQUIPMENT_STRONG_HAND].armor_penetration_percent == 25 && loaded.inventory[EQUIPMENT_STRONG_HAND].cleave_percent == 25 && loaded.inventory[EQUIPMENT_STRONG_HAND].weapon_hands == WEAPON_HANDS_TWO && loaded.inventory[EQUIPMENT_STRONG_HAND].visual_id == ITEM_VISUAL_EMBERCLEAVER);
 }
 
 static unsigned char visited[MAP_H][MAP_W];
