@@ -1,7 +1,8 @@
 # Elderwood Forest and the northern castle road
 
-Oakhaven's north exit reaches a safe cobblestone road. A living woodland sprite
-stands beside it; touching the landmark starts Elderwood at level 1. Elderthorn
+Oakhaven's north exit reaches a safe cobblestone road through dense Elderwood
+trees, matching Crown Road North beyond it. The road opens into clearings at
+both ends and around each landmark. A living woodland sprite stands beside it; touching the landmark starts Elderwood at level 1. Elderthorn
 blocks the road farther north. Defeating it opens the route to a separate Royal
 Catacombs sprite. Defeating the Grave Marshal opens the remaining passage into
 Castle Grounds. The existing Crown Roads remain available.

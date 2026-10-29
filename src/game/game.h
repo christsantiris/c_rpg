@@ -347,6 +347,8 @@ typedef struct {
     int jail_gear_count;
     int jail_gear_claimed;
     int jail_gear_state; // 0: none taken, 1: recover gear, 3: recovered.
+    int jail_gold;
+    int jail_arrows;
     int jail_main_hand;
     int jail_off_hand;
     int jail_armor;

@@ -43,7 +43,9 @@ void boss_gate_draw_bank(Renderer *r, const GameState *g, int sx, int sy, int x,
 void boss_gate_draw_banks(Renderer *r, const GameState *g, const Viewport *v) {
     RoadCheckpoint points[2];
     int count = boss_gate_checkpoints(g, points);
-    if (!count) {
+    const TownApproach *route = approach_route(g);
+    // Roads with scenery draw their banks as that scenery instead.
+    if (!count || (route && approach_scenery(route->area) != TILE_WALL)) {
         return;
     }
     // Connected bank edges share a continuous canopy or rock face.

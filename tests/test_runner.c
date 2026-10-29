@@ -9,6 +9,7 @@ int tests_passed = 0;
 void test_movement(void);
 void test_approaches(void);
 void test_boss_gates(void);
+void test_road_scenery(void);
 void test_town_roads(void);
 void test_jail(void);
 void test_jail_equipment(void);
@@ -150,6 +151,7 @@ int main(void) {
     test_movement();
     test_town_roads();
     test_boss_gates();
+    test_road_scenery();
     test_approaches();
     test_enemy_projectiles();
     printf("\n");

@@ -1352,6 +1352,8 @@ static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
     g->jail_gear_count = 0;
     g->jail_gear_claimed = 0;
     g->jail_gear_state = 0;
+    g->jail_gold = 0;
+    g->jail_arrows = 0;
     g->jail_main_hand = -1;
     g->jail_off_hand = -1;
     g->jail_armor = -1;
@@ -1363,6 +1365,16 @@ static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
     g->jail_armory_loot_count = 0;
     if (version < 183) {
         return 1;
+    }
+    if (version >= 225) {
+        const cJSON *gold = cJSON_GetObjectItem(root, "jail_gold");
+        const cJSON *arrows = cJSON_GetObjectItem(root, "jail_arrows");
+        if (!cJSON_IsNumber(gold) || gold->valuedouble != gold->valueint || gold->valueint < 0 ||
+            !cJSON_IsNumber(arrows) || arrows->valuedouble != arrows->valueint || arrows->valueint < 0 || arrows->valueint > MAX_ARROWS) {
+            return 0;
+        }
+        g->jail_gold = gold->valueint;
+        g->jail_arrows = arrows->valueint;
     }
     const char *names[] = {"jail_gear_claimed", "jail_gear_state", "jail_main_hand", "jail_off_hand", "jail_armor", "jail_supplies_taken", "jail_armory_initialized"};
     int *fields[] = {&g->jail_gear_claimed, &g->jail_gear_state, &g->jail_main_hand, &g->jail_off_hand, &g->jail_armor, &g->jail_supplies_taken, &g->jail_armory_initialized};
@@ -1400,7 +1412,7 @@ static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
     }
     for (int i = 0; i < g->jail_gear_count; i++) {
         g->jail_gear[i] = stored[i].item;
-        if (stored[i].item.type != ITEM_WEAPON && stored[i].item.type != ITEM_ARMOR && stored[i].item.type != ITEM_SHIELD && stored[i].item.type != ITEM_HELMET && stored[i].item.type != ITEM_ACCESSORY) {
+        if (!stored[i].item.active || stored[i].item.type <= ITEM_NONE || stored[i].item.type > ITEM_ACCESSORY) {
             return 0;
         }
     }
@@ -1418,11 +1430,12 @@ static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
         }
     }
     int mask = (1 << g->jail_gear_count) - 1;
+    int pending = g->jail_gear_claimed != mask || g->jail_gold || g->jail_arrows;
     if (g->jail_gear_claimed < 0 || (g->jail_gear_claimed & ~mask) ||
         (g->jail_gear_state != 0 && g->jail_gear_state != 1 && g->jail_gear_state != 3) ||
-        (g->jail_gear_state == 0 && g->jail_gear_count) ||
-        (g->jail_gear_state == 1 && (!g->jail_gear_count || g->jail_gear_claimed == mask)) ||
-        (g->jail_gear_state == 3 && (!g->jail_gear_count || g->jail_gear_claimed != mask)) ||
+        (g->jail_gear_state == 0 && (g->jail_gear_count || g->jail_gold || g->jail_arrows)) ||
+        (g->jail_gear_state == 1 && !pending) ||
+        (g->jail_gear_state == 3 && pending) ||
         g->jail_main_hand < -1 || g->jail_main_hand >= g->jail_gear_count ||
         g->jail_off_hand < -1 || g->jail_off_hand >= g->jail_gear_count ||
         g->jail_armor < -1 || g->jail_armor >= g->jail_gear_count ||
@@ -1876,7 +1889,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 224);
+    cJSON_AddNumberToObject(root, "save_version", 225);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -1925,6 +1938,8 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "prisoner_y", g->prisoner_y);
     cJSON_AddNumberToObject(root, "jail_gear_claimed", g->jail_gear_claimed);
     cJSON_AddNumberToObject(root, "jail_gear_state", g->jail_gear_state);
+    cJSON_AddNumberToObject(root, "jail_gold", g->jail_gold);
+    cJSON_AddNumberToObject(root, "jail_arrows", g->jail_arrows);
     cJSON_AddNumberToObject(root, "jail_main_hand", g->jail_main_hand);
     cJSON_AddNumberToObject(root, "jail_off_hand", g->jail_off_hand);
     cJSON_AddNumberToObject(root, "jail_armor", g->jail_armor);
@@ -6879,6 +6894,8 @@ int load_game(GameState *g, int slot) {
     if (save_version < 221) {
         town_road_migrate(g);
     }
+    // Forest, swamp, mountain and northern roads now cut through scenery; detect saves without it.
+    approach_migrate_scenery(g);
     if (g->location == LOCATION_CROWNROAD || g->location == LOCATION_CROWNROAD_WEST) {
         migrate_road_guards(g->enemies, g->enemy_count);
     }
