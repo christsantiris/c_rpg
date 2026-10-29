@@ -1044,6 +1044,21 @@ static cJSON *serialize_castle_loot(const FloorItem *items, int count) {
     return floor_items;
 }
 
+static int stored_item_valid(const cJSON *entry) {
+    const cJSON *item = cJSON_GetObjectItem(entry, "item");
+    const char *fields[] = {"active", "type", "attack_bonus", "defense_bonus", "value", "spell_id", "is_ranged", "range"};
+    if (!cJSON_IsString(cJSON_GetObjectItem(item, "name")) || !cJSON_IsNumber(cJSON_GetObjectItem(entry, "active")) ||
+        !cJSON_IsNumber(cJSON_GetObjectItem(entry, "x")) || !cJSON_IsNumber(cJSON_GetObjectItem(entry, "y"))) {
+        return 0;
+    }
+    for (int i = 0; i < 8; i++) {
+        if (!cJSON_IsNumber(cJSON_GetObjectItem(item, fields[i]))) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int deserialize_castle_loot(const cJSON *floor_items, FloorItem *items, int *count) {
     if (!cJSON_IsArray(floor_items) || cJSON_GetArraySize(floor_items) > MAX_FLOOR_ITEMS) {
         return 0;
@@ -1340,6 +1355,9 @@ static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
     g->jail_main_hand = -1;
     g->jail_off_hand = -1;
     g->jail_armor = -1;
+    for (int i = 0; i < 3; i++) {
+        g->jail_extra_slots[i] = -1;
+    }
     g->jail_supplies_taken = 0;
     g->jail_armory_initialized = 0;
     g->jail_armory_loot_count = 0;
@@ -1356,7 +1374,7 @@ static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
         *fields[i] = value->valueint;
     }
     const cJSON *gear = cJSON_GetObjectItem(root, "jail_gear");
-    if (!cJSON_IsArray(gear) || cJSON_GetArraySize(gear) > MAX_INVENTORY) {
+    if (!cJSON_IsArray(gear) || cJSON_GetArraySize(gear) > MAX_CARRIED_ITEMS) {
         return 0;
     }
     const char *required[] = {"active", "type", "attack_bonus", "defense_bonus", "value", "spell_id", "is_ranged", "range"};
@@ -1376,14 +1394,27 @@ static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
             return 0;
         }
     }
-    FloorItem stored[MAX_INVENTORY] = {0};
+    FloorItem stored[MAX_CARRIED_ITEMS] = {0};
     if (!deserialize_castle_loot(gear, stored, &g->jail_gear_count)) {
         return 0;
     }
     for (int i = 0; i < g->jail_gear_count; i++) {
         g->jail_gear[i] = stored[i].item;
-        if (stored[i].item.type != ITEM_WEAPON && stored[i].item.type != ITEM_ARMOR && stored[i].item.type != ITEM_SHIELD) {
+        if (stored[i].item.type != ITEM_WEAPON && stored[i].item.type != ITEM_ARMOR && stored[i].item.type != ITEM_SHIELD && stored[i].item.type != ITEM_HELMET && stored[i].item.type != ITEM_ACCESSORY) {
             return 0;
+        }
+    }
+    if (version >= 224) {
+        const cJSON *slots = cJSON_GetObjectItem(root, "jail_extra_slots");
+        if (!cJSON_IsArray(slots) || cJSON_GetArraySize(slots) != 3) {
+            return 0;
+        }
+        for (int i = 0; i < 3; i++) {
+            const cJSON *value = cJSON_GetArrayItem(slots, i);
+            if (!cJSON_IsNumber(value) || value->valueint < -1 || value->valueint >= g->jail_gear_count) {
+                return 0;
+            }
+            g->jail_extra_slots[i] = value->valueint;
         }
     }
     int mask = (1 << g->jail_gear_count) - 1;
@@ -1845,7 +1876,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 223);
+    cJSON_AddNumberToObject(root, "save_version", 224);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -1897,9 +1928,14 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "jail_main_hand", g->jail_main_hand);
     cJSON_AddNumberToObject(root, "jail_off_hand", g->jail_off_hand);
     cJSON_AddNumberToObject(root, "jail_armor", g->jail_armor);
+    cJSON *extra_slots = cJSON_CreateArray();
+    for (int i = 0; i < 3; i++) {
+        cJSON_AddItemToArray(extra_slots, cJSON_CreateNumber(g->jail_extra_slots[i]));
+    }
+    cJSON_AddItemToObject(root, "jail_extra_slots", extra_slots);
     cJSON_AddNumberToObject(root, "jail_supplies_taken", g->jail_supplies_taken);
     cJSON_AddNumberToObject(root, "jail_armory_initialized", g->jail_armory_initialized);
-    FloorItem stored_gear[MAX_INVENTORY] = {0};
+    FloorItem stored_gear[MAX_CARRIED_ITEMS] = {0};
     for (int i = 0; i < g->jail_gear_count; i++) {
         stored_gear[i].item = g->jail_gear[i];
     }
@@ -1998,6 +2034,11 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "rook_quest_completions",
         g->rook_quest_completions);
     cJSON_AddNumberToObject(root, "score",             g->score);
+    FloorItem worn[EQUIPMENT_SLOT_COUNT] = {0};
+    for (int i = 0; i < EQUIPMENT_SLOT_COUNT; i++) {
+        worn[i].item = g->inventory[MAX_INVENTORY + i];
+    }
+    cJSON_AddItemToObject(root, "equipment", serialize_castle_loot(worn, EQUIPMENT_SLOT_COUNT));
     cJSON_AddNumberToObject(root, "equipped_main_hand",
         g->equipped_main_hand);
     cJSON_AddNumberToObject(root, "equipped_off_hand",
@@ -3990,10 +4031,20 @@ static void migrate_rebalanced_weapons(GameState *g, int retire_goblin) {
         int old_attack = item->attack_bonus;
         if (retire_goblin && item->type == ITEM_WEAPON && strcmp(item->name, "Goblin King's Greatsword") == 0) {
             if (g->equipped_main_hand == i) {
-                game_unequip_main_hand(g);
+                g->player.attack -= item->attack_bonus;
+                g->player.max_hp -= item->max_hp_bonus;
+                g->player.max_mp -= item->max_mp_bonus;
+                if (g->player.hp > g->player.max_hp) {
+                    g->player.hp = g->player.max_hp;
+                }
+                if (g->player.mp > g->player.max_mp) {
+                    g->player.mp = g->player.max_mp;
+                }
+                g->equipped_main_hand = -1;
             }
             if (g->equipped_off_hand == i) {
-                game_unequip_off_hand(g);
+                g->player.attack -= game_off_hand_attack_bonus(item);
+                g->equipped_off_hand = -1;
             }
         }
         migrate_rebalanced_weapon(item, retire_goblin);
@@ -4583,8 +4634,13 @@ int load_game(GameState *g, int slot) {
     }
 
     // Inventory
+    memset(g->inventory, 0, sizeof(g->inventory));
     g->inventory_count = cJSON_GetObjectItem(root, "inventory_count")->valueint;
     cJSON *inventory = cJSON_GetObjectItem(root, "inventory");
+    if (g->inventory_count < 0 || g->inventory_count > MAX_INVENTORY || !cJSON_IsArray(inventory) || cJSON_GetArraySize(inventory) != g->inventory_count) {
+        cJSON_Delete(root);
+        return 0;
+    }
     for (int i = 0; i < g->inventory_count; i++) {
         cJSON *it = cJSON_GetArrayItem(inventory, i);
         Item *item = &g->inventory[i];
@@ -4600,7 +4656,9 @@ int load_game(GameState *g, int slot) {
         item->range         = cJSON_GetObjectItem(it, "range")->valueint;
         deserialize_item_metadata(it, item);
     }
-    game_repair_equipment_indices(g);
+    if (save_version < 224) {
+        game_repair_equipment_indices(g);
+    }
     if (!g->island_travel_unlocked &&
         (g->location == LOCATION_ISLAND || g->location == LOCATION_TEMPLE ||
         g->temple_treasure_state > 0 || g->temple_alignment > 0 ||
@@ -4611,6 +4669,17 @@ int load_game(GameState *g, int slot) {
         for (int i = 0; i < g->inventory_count;) {
             if (g->inventory[i].type == ITEM_TREASURE_MAP) {
                 game_remove_inventory_item(g, i);
+                if (save_version < 224) {
+                    if (g->equipped_main_hand > i) {
+                        g->equipped_main_hand--;
+                    }
+                    if (g->equipped_off_hand > i) {
+                        g->equipped_off_hand--;
+                    }
+                    if (g->equipped_armor > i) {
+                        g->equipped_armor--;
+                    }
+                }
             } else {
                 i++;
             }
@@ -6687,7 +6756,6 @@ int load_game(GameState *g, int slot) {
     if (pirate_prototype) {
         migrate_removed_pirate_coast(g, pirate_return);
     }
-    game_recover_retired_items(g);
     if (save_version < 191) {
         mangrove_migrate_town(g);
         coastal_migrate_travel(g);
@@ -6737,7 +6805,6 @@ int load_game(GameState *g, int slot) {
             return 0;
         }
         migrate_western_geography(g, removed_garden, pending);
-        game_recover_retired_items(g);
     }
     if (save_version < 200) {
         ironfang_migrate_road(g);
@@ -6825,6 +6892,39 @@ int load_game(GameState *g, int slot) {
     if (g->location == LOCATION_TEMPLE) {
         game_update_level_progress(g);
     }
+    if (save_version < 224) {
+        // Existing totals already include worn bonuses. Move items only.
+        game_migrate_equipment_storage(g);
+    } else {
+        FloorItem worn[MAX_FLOOR_ITEMS] = {0};
+        int count = 0;
+        const cJSON *equipment = cJSON_GetObjectItem(root, "equipment");
+        if (!cJSON_IsArray(equipment) || cJSON_GetArraySize(equipment) != EQUIPMENT_SLOT_COUNT) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        for (int i = 0; i < EQUIPMENT_SLOT_COUNT; i++) {
+            if (!stored_item_valid(cJSON_GetArrayItem(equipment, i))) {
+                cJSON_Delete(root);
+                return 0;
+            }
+        }
+        if (!deserialize_castle_loot(equipment, worn, &count)) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        for (int i = 0; i < count; i++) {
+            g->inventory[MAX_INVENTORY + i] = worn[i].item;
+        }
+        if (!game_equipment_valid(g)) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        g->equipped_main_hand = game_equipped_item(g, EQUIPMENT_STRONG_HAND) ? EQUIPMENT_STRONG_HAND : -1;
+        g->equipped_off_hand = game_equipped_item(g, EQUIPMENT_WEAK_HAND) ? EQUIPMENT_WEAK_HAND : -1;
+        g->equipped_armor = game_equipped_item(g, EQUIPMENT_ARMOR) ? EQUIPMENT_ARMOR : -1;
+    }
+    game_recover_retired_items(g);
     cJSON_Delete(root);
     return 1;
 }

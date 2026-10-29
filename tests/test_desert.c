@@ -590,7 +590,7 @@ static void test_pharaoh_reward(void) {
     }
     action_resolve_player(g, (Action){ACTION_EQUIP_ITEM, staff_index, 0});
     ASSERT("a Mage can equip the two-handed Sandstorm Staff",
-        g->equipped_main_hand == staff_index && g->equipped_off_hand == -1 &&
+        g->equipped_main_hand == EQUIPMENT_STRONG_HAND && g->equipped_off_hand == -1 &&
         g->player.max_mp == base_mp + 25);
     game_open_town_portal(g);
     saved = save_game(g, slot) && load_game(&desert_loaded, slot);
@@ -600,9 +600,9 @@ static void test_pharaoh_reward(void) {
     }
     int in_pack = 0;
     int metadata_ok = 0;
-    for (int i = 0; i < g->inventory_count; i++) {
+    for (int i = 0; i < MAX_CARRIED_ITEMS; i++) {
         const Item *item = &g->inventory[i];
-        if (strcmp(item->name, "Sandstorm Staff") == 0) {
+        if (item->active && strcmp(item->name, "Sandstorm Staff") == 0) {
             in_pack++;
             metadata_ok = item->attack_bonus == 7 && item->spell_power_bonus == 6 &&
                 item->max_mp_bonus == 25 && item->spell_cost_reduction_percent == 7 &&
@@ -612,7 +612,7 @@ static void test_pharaoh_reward(void) {
         }
     }
     ASSERT("saving after pickup preserves staff bonuses and equipment without duplicating it",
-        saved && in_pack == 1 && metadata_ok && g->equipped_main_hand == staff_index &&
+        saved && in_pack == 1 && metadata_ok && g->equipped_main_hand == EQUIPMENT_STRONG_HAND &&
         !g->sandstorm_staff_unclaimed && sandstorm_staves_on_floor(g) == 0 && find_pharaoh(g) < 0);
     remove("saves/savegame_99023.json");
 

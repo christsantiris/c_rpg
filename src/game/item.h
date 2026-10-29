@@ -196,6 +196,7 @@ Item item_make_battle_axe(void);
 Item item_make_magic_battle_axe(void);
 Item item_make_embercleaver(void);
 Item item_make_staff(void);
+Item item_make_worn_staff(void);
 Item item_make_runed_staff(void);
 Item item_make_magic_staff(void);
 Item item_make_sandstorm_staff(void);

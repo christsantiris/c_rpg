@@ -273,6 +273,17 @@ Item item_make_embercleaver(void) {
     return item;
 }
 
+Item item_make_worn_staff(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_WEAPON;
+    strncpy(item.name, "Worn Staff", sizeof(item.name) - 1);
+    item.attack_bonus = 1;
+    item.value = 10;
+    set_weapon_metadata(&item, WEAPON_FAMILY_STAFF, WEAPON_HANDS_TWO, ITEM_RARITY_COMMON, ITEM_CLASS_MAGE, ITEM_VISUAL_STAFF);
+    return item;
+}
+
 Item item_make_staff(void) {
     Item it = {0};
     it.active = 1;
@@ -528,6 +539,8 @@ void item_apply_legacy_metadata(Item *item) {
         definition = item_make_embercleaver();
     } else if (strcmp(item->name, "Magic Battle Axe") == 0) {
         definition = item_make_magic_battle_axe();
+    } else if (strcmp(item->name, "Worn Staff") == 0) {
+        definition = item_make_worn_staff();
     } else if (strcmp(item->name, "Staff") == 0) {
         definition = item_make_staff();
     } else if (strcmp(item->name, "Runed Staff") == 0) {

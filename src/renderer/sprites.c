@@ -1633,16 +1633,29 @@ static void player_body_palette(SDL_Color *palette, PlayerClass player_class, co
         suit.g + (255 - suit.g) / 3, suit.b + (255 - suit.b) / 3, 255};
 }
 
-static void draw_player_body(Renderer *r, int x, int y, PlayerClass player_class, const Item *armor, int dx, int dy) {
+static void draw_player_body(Renderer *r, int x, int y, PlayerClass player_class, const Item *armor, const Item *helmet, int dx, int dy) {
     SDL_Color palette[128] = {{0}};
     player_body_palette(palette, player_class, armor);
+    if (!armor) {
+        palette['m'] = palette['b'];
+        palette['M'] = palette['c'];
+        palette['H'] = palette['C'];
+    }
+    static const char heads[3][10][25] = {
+        {"........................", "........................", ".........oooooo.........", "........oCCcccco........", ".......oCCccccbbo.......", ".......occffffsbo.......", ".......ocfefefsbo.......", "........ofFffso.........", "........offfsso.........", ".........ossso.........."},
+        {"........................", "........................", ".........oooooo.........", "........oCCcccco........", ".......oCCccccbbo.......", ".......oCcccccbbo.......", ".......occcccbbbo.......", "........occccbbo........", "........obbbbbo.........", ".........ossso.........."},
+        {"........................", "........................", "........oooooo..........", ".......oCCcccco.........", ".......oCccccbbo........", ".......occcFffo.........", ".......occfFfeo.........", "........ocfFfffo........", "........ocfsso..........", ".........osso..........."}
+    };
     int view = dx != 0 ? 2 : (dy > 0 ? 0 : 1);
+    int head_offset = player_class == CLASS_MAGE ? 2 : 0;
     const char (*pixels)[25] = player_art[player_class][view];
     for (int row = 0; row < 24; row++) {
         for (int col = 0; col < 24;) {
-            char ink = pixels[row][col];
+            int head = row < 10 + head_offset;
+            const char *line = head ? row < head_offset ? "........................" : heads[view][row - head_offset] : pixels[row];
+            char ink = line[col];
             int end = col + 1;
-            while (end < 24 && pixels[row][end] == ink) {
+            while (end < 24 && line[end] == ink) {
                 end++;
             }
             if (ink != '.') {
@@ -1663,7 +1676,14 @@ static void draw_player_body(Renderer *r, int x, int y, PlayerClass player_class
                             detail = 'r';
                         }
                     }
-                    fill_rect(r, x + start + pixel, y + row, 1, 1, palette[(unsigned char)detail]);
+                    SDL_Color color = palette[(unsigned char)detail];
+                    if (head && (ink == 'b' || ink == 'c' || ink == 'C')) {
+                        color = ink == 'b' ? (SDL_Color){47, 30, 26, 255} : ink == 'c' ? (SDL_Color){81, 48, 31, 255} : (SDL_Color){126, 79, 43, 255};
+                        if (helmet) {
+                            color = ink == 'b' ? (SDL_Color){67, 41, 28, 255} : ink == 'c' ? (SDL_Color){133, 87, 48, 255} : (SDL_Color){182, 128, 73, 255};
+                        }
+                    }
+                    fill_rect(r, x + start + pixel, y + row, 1, 1, color);
                 }
             }
             col = end;
@@ -1681,7 +1701,7 @@ static void draw_player_off_hand(Renderer *r, const Item *item, int x, int y, in
 
 // Draws the player with its top-left corner at pixel (x, y), so it can be
 // shown partway between tiles while sliding.
-void draw_player_at(Renderer *r, int x, int y, PlayerClass player_class, const Item *main_hand, const Item *off_hand, const Item *armor, int facing_dx, int facing_dy) {
+void draw_player_at(Renderer *r, int x, int y, PlayerClass player_class, const Item *main_hand, const Item *off_hand, const Item *armor, const Item *helmet, int facing_dx, int facing_dy) {
     if (player_class < CLASS_WARRIOR || player_class > CLASS_ROGUE) {
         player_class = CLASS_WARRIOR;
     }
@@ -1700,7 +1720,7 @@ void draw_player_at(Renderer *r, int x, int y, PlayerClass player_class, const I
     if (off_behind) {
         draw_player_off_hand(r, off_hand, x, y, facing_dx, facing_dy);
     }
-    draw_player_body(r, x, y, player_class, armor, facing_dx, facing_dy);
+    draw_player_body(r, x, y, player_class, armor, helmet, facing_dx, facing_dy);
     if (!main_behind) {
         draw_equipped_player_weapon(r, main_hand, x, y, facing_dx, facing_dy, 1);
     }
