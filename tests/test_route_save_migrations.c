@@ -149,7 +149,7 @@ static void prepare_legacy_mountains(int level) {
         map_room_center(&cache->map.rooms[0], &x, &y);
         cache->enemies[0] = (Enemy){.active = 1, .type = ENEMY_GOBLIN_SCOUT, .x = x + 1, .y = y, .hp = 50 + i, .max_hp = 100};
         if (i == 1 || i == 2 || i == 4) {
-            cache->enemies[0].type = i == 1 ? ENEMY_GOBLIN_ARCHER : (i == 2 ? ENEMY_GOBLIN_BOMBER : ENEMY_GOBLIN_SHAMAN);
+            cache->enemies[0].type = i == 1 ? ENEMY_GOBLIN_ARCHER : (i == 2 ? ENEMY_GOBLIN_WARCHIEF : ENEMY_GOBLIN_SHAMAN);
             cache->enemies[0].dain_fragment = i == 1 ? 1 : (i == 2 ? 2 : 4);
             snprintf(cache->enemies[0].name, sizeof(cache->enemies[0].name), "Map Bearer");
         }
@@ -186,7 +186,7 @@ static void test_mountain_migration(void) {
         if (new_levels[i] == 2) {
             int bearers = 0;
             for (int enemy = 0; enemy < loaded.enemy_count; enemy++) {
-                bearers += loaded.enemies[enemy].dain_fragment == DAIN_FRAGMENT_BOMBER;
+                bearers += loaded.enemies[enemy].dain_fragment == DAIN_FRAGMENT_WARCHIEF;
             }
             ASSERT("migration removes Bomber fragments from the old second stage", bearers == 0 && loaded.enemies[0].dain_fragment == 0);
         }
@@ -373,7 +373,7 @@ static void test_split_mountain_migration(void) {
                     loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == original.floor_items[0].underlying_tile);
             }
             ASSERT("old active Shaman becomes a regular enemy without losing damage", loaded.level == 3 && (collected ?
-                loaded.enemies[0].dain_fragment == DAIN_FRAGMENT_BOMBER :
+                loaded.enemies[0].dain_fragment == DAIN_FRAGMENT_WARCHIEF :
                 (!loaded.enemies[0].dain_fragment && loaded.enemies[0].hp == 9 && strcmp(loaded.enemies[0].name, "Goblin Shaman") == 0)));
             if (!collected) {
                 loaded.player.attack = 10000;
@@ -432,8 +432,8 @@ static void test_near_side_quest_migration(void) {
                 int y;
                 map_room_center(&snapshot->map.rooms[0], &x, &y);
                 snapshot->enemies[0] = (Enemy){.active = 1, .x = x, .y = y,
-                    .type = forest ? ENEMY_BLIGHTED_WOLF : ENEMY_GOBLIN_BOMBER,
-                    .hp = 17, .max_hp = 50, .dain_fragment = !forest && stage == 2 ? DAIN_FRAGMENT_BOMBER : 0};
+                    .type = forest ? ENEMY_BLIGHTED_WOLF : ENEMY_GOBLIN_WARCHIEF,
+                    .hp = 17, .max_hp = 50, .dain_fragment = !forest && stage == 2 ? DAIN_FRAGMENT_WARCHIEF : 0};
                 map_mark_explored(&snapshot->map, x, y);
             }
             original.map = cache[1].map;
@@ -475,7 +475,7 @@ static void test_near_side_quest_migration(void) {
                     (!portal || (loaded.portal_level == 2 && loaded.portal_origin_tile == TILE_FOREST_FLOOR)));
             } else {
                 ASSERT("obsolete cached Map Bearers keep their health but lose fragment markers", saved[1].enemies[0].hp == 17 &&
-                    !saved[1].enemies[0].dain_fragment && strcmp(saved[1].enemies[0].name, "Goblin Bomber") == 0);
+                    !saved[1].enemies[0].dain_fragment && strcmp(saved[1].enemies[0].name, "Goblin Warchief") == 0);
             }
             if (portal) {
                 test_restore_cached_floor(&loaded);
@@ -507,7 +507,7 @@ static void test_near_side_quest_migration(void) {
                 }
             }
             for (int enemy = 0; enemy < loaded.enemy_count; enemy++) {
-                objectives += loaded.enemies[enemy].active && loaded.enemies[enemy].dain_fragment == DAIN_FRAGMENT_BOMBER;
+                objectives += loaded.enemies[enemy].active && loaded.enemies[enemy].dain_fragment == DAIN_FRAGMENT_WARCHIEF;
             }
             int enemies = loaded.enemy_count;
             game_refresh_quest_encounters(&loaded);

@@ -223,7 +223,6 @@ static int enemy_score(EnemyType type) {
         case ENEMY_PIXIE: return 15;
         case ENEMY_BLIGHTED_WOLF: return 22;
         case ENEMY_GIANT_SPIDER: return 32;
-        case ENEMY_IRONHIDE_BOAR: return 90;
         case ENEMY_THORN_DRYAD: return 80;
         case ENEMY_TREEFOLK: return 200;
         case ENEMY_LIZARDFOLK_SCOUT: return 35;
@@ -239,14 +238,13 @@ static int enemy_score(EnemyType type) {
         case ENEMY_SSZARETH: return 0;
         case ENEMY_ROYAL_GUARD: return 85;
         case ENEMY_ELDERTHORN: return 0; // Awarded once by elderwood_defeat.
-        case ENEMY_DARK_ELF: return 48;
-        case ENEMY_GIANT_WURM: return 70;
+        case ENEMY_DARK_ELF_ARCHER: return 48;
+        case ENEMY_DARK_ELF_RANGER: return 70;
         case ENEMY_FOREST_TROLL: return 80;
         case ENEMY_FOREST_NECROMANCER: return 1100;
         case ENEMY_GOBLIN_SCOUT: return 18;
         case ENEMY_GOBLIN_ARCHER: return 28;
-        case ENEMY_GOBLIN_BOMBER: return 36;
-        case ENEMY_TUNNEL_SPIDER: return 34;
+        case ENEMY_GOBLIN_WARCHIEF: return 36;
         case ENEMY_CAVE_TROLL: return 85;
         case ENEMY_HOBGOBLIN_GUARD: return 70;
         case ENEMY_GOBLIN_SHAMAN: return 76;
@@ -266,7 +264,6 @@ static int enemy_score(EnemyType type) {
         case ENEMY_VINEBOUND_GUARDIAN: return 180;
         case ENEMY_SUN_PRIEST: return 170;
         case ENEMY_SERPENT_SPIRIT: return 185;
-        case ENEMY_TREASURE_WRAITH: return 210;
         case ENEMY_LUNAR_EFFIGY: return 220;
         case ENEMY_MOONBOUND_SENTINEL: return 300;
         case ENEMY_FALLEN_SUN_GUARDIAN: return 2200;
@@ -294,10 +291,8 @@ static int enemy_score(EnemyType type) {
         case ENEMY_ASH_HOUND: return 70;
         case ENEMY_OBSIDIAN_GUARDIAN: return 180;
         case ENEMY_CINDER_LORD: return 1900;
-        case ENEMY_CRYSTAL_SPIDER: return 60;
         case ENEMY_BLIND_STALKER: return 85;
         case ENEMY_SHARD_GOLEM: return 190;
-        case ENEMY_IRON_SENTINEL: return 170;
         case ENEMY_PRISM_SOVEREIGN: return 2000;
         case ENEMY_OGRE: return 85;
         case ENEMY_HILL_GIANT: return 135;
@@ -417,15 +412,12 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_SSZARETH: break;
         case ENEMY_ROYAL_GUARD: gold = 10; break;
         case ENEMY_ELDERTHORN: break; // Its one-time reward was handled above.
-        case ENEMY_IRONHIDE_BOAR: gold = 5 + rand() % 5; break;
         case ENEMY_THORN_DRYAD: gold = 8 + rand() % 6; break;
         case ENEMY_TREEFOLK: gold = 15 + rand() % 10; break;
         case ENEMY_OATHBOUND_SOLDIER:
         case ENEMY_IRON_WARDEN:
         case ENEMY_ROYAL_MARKSMAN:
         case ENEMY_COURT_HEXER:
-        case ENEMY_BELL_HERALD:
-        case ENEMY_CASTELLAN:
         case ENEMY_ROYAL_ARCANIST:
         case ENEMY_LORD_VEYR:
             break;
@@ -440,14 +432,13 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_PIXIE: gold = 2 + rand() % 4; break;
         case ENEMY_BLIGHTED_WOLF: gold = 3 + rand() % 5; break;
         case ENEMY_GIANT_SPIDER: gold = 4 + rand() % 6; break;
-        case ENEMY_DARK_ELF: gold = 7 + rand() % 8; break;
-        case ENEMY_GIANT_WURM: gold = 10 + rand() % 10; break;
+        case ENEMY_DARK_ELF_ARCHER: gold = 7 + rand() % 8; break;
+        case ENEMY_DARK_ELF_RANGER: gold = 10 + rand() % 10; break;
         case ENEMY_FOREST_TROLL: gold = 12 + rand() % 12; break;
         case ENEMY_FOREST_NECROMANCER: gold = 50; break;
         case ENEMY_GOBLIN_SCOUT: gold = 3 + rand() % 5; break;
         case ENEMY_GOBLIN_ARCHER: gold = 5 + rand() % 7; break;
-        case ENEMY_GOBLIN_BOMBER: gold = 6 + rand() % 8; break;
-        case ENEMY_TUNNEL_SPIDER: gold = 4 + rand() % 6; break;
+        case ENEMY_GOBLIN_WARCHIEF: gold = 6 + rand() % 8; break;
         case ENEMY_CAVE_TROLL: gold = 12 + rand() % 12; break;
         case ENEMY_HOBGOBLIN_GUARD: gold = 10 + rand() % 10; break;
         case ENEMY_GOBLIN_SHAMAN: gold = 11 + rand() % 11; break;
@@ -467,7 +458,6 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_VINEBOUND_GUARDIAN: gold = 10; break;
         case ENEMY_SUN_PRIEST: gold = 12; break;
         case ENEMY_SERPENT_SPIRIT: gold = 9; break;
-        case ENEMY_TREASURE_WRAITH: gold = 16; break;
         case ENEMY_LUNAR_EFFIGY: gold = 12; break;
         case ENEMY_MOONBOUND_SENTINEL: gold = 14; break;
         case ENEMY_FALLEN_SUN_GUARDIAN: gold = 0; break;
@@ -495,10 +485,8 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_ASH_HOUND: gold = 7 + rand() % 8; break;
         case ENEMY_OBSIDIAN_GUARDIAN: gold = 15 + rand() % 12; break;
         case ENEMY_CINDER_LORD: gold = 85; break;
-        case ENEMY_CRYSTAL_SPIDER: gold = 6 + rand() % 7; break;
         case ENEMY_BLIND_STALKER: gold = 8 + rand() % 8; break;
         case ENEMY_SHARD_GOLEM: gold = 16 + rand() % 12; break;
-        case ENEMY_IRON_SENTINEL: gold = 15 + rand() % 12; break;
         case ENEMY_PRISM_SOVEREIGN: gold = 90; break;
         case ENEMY_OGRE: gold = 8 + rand() % 8; break;
         case ENEMY_HILL_GIANT: gold = 16 + rand() % 12; break;
@@ -3191,11 +3179,10 @@ static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES])
 
 static int enemy_prefers_range(const Enemy *e) {
     return e->type == ENEMY_CRYPT_CONJURER ||
-        e->type == ENEMY_DARK_ELF || e->type == ENEMY_THORN_DRYAD ||
+        e->type == ENEMY_DARK_ELF_ARCHER || e->type == ENEMY_DARK_ELF_RANGER || e->type == ENEMY_THORN_DRYAD ||
         e->type == ENEMY_GOBLIN_ARCHER ||
         e->type == ENEMY_ROAD_ARCHER ||
         e->type == ENEMY_FROST_ARCHER ||
-        e->type == ENEMY_GOBLIN_BOMBER ||
         e->type == ENEMY_SIREN ||
         e->type == ENEMY_WATER_ELEMENTAL ||
         e->type == ENEMY_BLOWDART_HUNTER ||
@@ -3208,15 +3195,13 @@ static int enemy_prefers_range(const Enemy *e) {
 }
 
 static int enemy_prefers_flank(const Enemy *e) {
-    return e->type == ENEMY_CRYPT_BAT ||
-        e->type == ENEMY_CRYSTAL_SPIDER ||
+    return e->type == ENEMY_DARK_ELF_RANGER || e->type == ENEMY_CRYPT_BAT ||
         e->type == ENEMY_BLIND_STALKER ||
         e->type == ENEMY_ASH_HOUND ||
         e->type == ENEMY_PIXIE ||
         e->type == ENEMY_BLIGHTED_WOLF ||
         e->type == ENEMY_GIANT_SPIDER ||
         e->type == ENEMY_GOBLIN_SCOUT ||
-        e->type == ENEMY_TUNNEL_SPIDER ||
         e->type == ENEMY_RELIC_SCARABS ||
         e->type == ENEMY_SCARAB ||
         e->type == ENEMY_TEMPLE_STALKER;
@@ -3926,7 +3911,6 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                     continue;
                 }
                 if (e->type == ENEMY_GIANT_SPIDER ||
-                    e->type == ENEMY_TUNNEL_SPIDER ||
                     e->type == ENEMY_VIPER) {
                     g->player.poison_turns = 3;
                     push_message_kind(g, e->type == ENEMY_VIPER
@@ -4043,8 +4027,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
 
         if ((e->type == ENEMY_GOBLIN_ARCHER ||
             e->type == ENEMY_ROAD_ARCHER ||
-            e->type == ENEMY_FROST_ARCHER ||
-            e->type == ENEMY_GOBLIN_BOMBER) &&
+            e->type == ENEMY_FROST_ARCHER) &&
             e->move_timer % 2 == 0 && clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) dmg = 1;
@@ -4053,8 +4036,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 continue;
             }
             char msg[MAX_MESSAGE_LEN];
-            const char *attack_name = e->type == ENEMY_GOBLIN_BOMBER ?
-                "Goblin bomb" : e->type == ENEMY_ROAD_ARCHER ?
+            const char *attack_name = e->type == ENEMY_ROAD_ARCHER ?
                 "Road arrow" : e->type == ENEMY_FROST_ARCHER ?
                 "Frost arrow" : "Goblin arrow";
             snprintf(msg, sizeof(msg), "%s: %d dmg", attack_name, dmg);
@@ -4081,7 +4063,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             if (healed) continue;
         }
 
-        if ((e->type == ENEMY_DARK_ELF || e->type == ENEMY_THORN_DRYAD) && e->move_timer % 2 == 0 &&
+        if ((e->type == ENEMY_DARK_ELF_ARCHER || e->type == ENEMY_DARK_ELF_RANGER || e->type == ENEMY_THORN_DRYAD) && e->move_timer % (e->type == ENEMY_DARK_ELF_RANGER ? 3 : 2) == 0 &&
             clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
             if (dmg < 1) dmg = 1;
@@ -4092,6 +4074,9 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             char msg[MAX_MESSAGE_LEN];
             snprintf(msg, sizeof(msg), "%s: %d dmg", e->type == ENEMY_THORN_DRYAD ? "Thorn volley" : "Dark Elf arrow", dmg);
             push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
+            if (e->type == ENEMY_DARK_ELF_RANGER) {
+                enemy_move_to_flank(g, i);
+            }
             continue;
         }
 
@@ -4119,7 +4104,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
-        if (e->type == ENEMY_ZOMBIE || e->type == ENEMY_GIANT_WURM ||
+        if (e->type == ENEMY_ZOMBIE ||
             e->type == ENEMY_FOREST_TROLL || e->type == ENEMY_CAVE_TROLL ||
             e->type == ENEMY_GIANT_CRAB ||
             e->type == ENEMY_ANIMATED_STATUE ||
@@ -4127,7 +4112,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             e->type == ENEMY_MUMMY ||
             e->type == ENEMY_GOLEM ||
             e->type == ENEMY_OBSIDIAN_GUARDIAN ||
-            e->type == ENEMY_SHARD_GOLEM || e->type == ENEMY_IRON_SENTINEL ||
+            e->type == ENEMY_SHARD_GOLEM ||
             e->type == ENEMY_VINEBOUND_GUARDIAN ||
             e->type == ENEMY_LUNAR_EFFIGY ||
             e->type == ENEMY_MOONBOUND_SENTINEL) {
@@ -4142,7 +4127,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         if (!moved) {
             moved = enemy_move_toward(g, i);
         }
-        if ((e->type == ENEMY_CRYPT_BAT || e->type == ENEMY_ASH_HOUND || e->type == ENEMY_CRYSTAL_SPIDER) && moved) {
+        if ((e->type == ENEMY_CRYPT_BAT || e->type == ENEMY_ASH_HOUND) && moved) {
             // Fast enemies close distance without attacking on their second move.
             enemy_move_toward(g, i);
         }

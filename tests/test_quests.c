@@ -277,7 +277,7 @@ void test_dain_quest(void) {
 
     int target_levels[3] = {2, 3, 4};
     EnemyType target_types[3] = {
-        ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_BOMBER, ENEMY_GOBLIN_SHAMAN
+        ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_WARCHIEF, ENEMY_GOBLIN_SHAMAN
     };
     g.location = LOCATION_MOUNTAINS;
     for (int target = 0; target < 3; target++) {
@@ -310,7 +310,7 @@ void test_dain_quest(void) {
     int cached_enemies = 0;
     for (int i = 0; i < g.enemy_count; i++) {
         if (g.enemies[i].active &&
-            g.enemies[i].dain_fragment == DAIN_FRAGMENT_BOMBER) {
+            g.enemies[i].dain_fragment == DAIN_FRAGMENT_WARCHIEF) {
             cached_bearers++;
         }
         cached_enemies += g.enemies[i].active;
@@ -321,7 +321,7 @@ void test_dain_quest(void) {
     int refreshed_bearers = 0;
     for (int i = 0; i < g.enemy_count; i++) {
         if (g.enemies[i].active &&
-            g.enemies[i].dain_fragment == DAIN_FRAGMENT_BOMBER) {
+            g.enemies[i].dain_fragment == DAIN_FRAGMENT_WARCHIEF) {
             refreshed_bearers++;
         }
     }
@@ -331,10 +331,10 @@ void test_dain_quest(void) {
     game_record_dain_kill(&g, ENEMY_GOBLIN_ARCHER);
     ASSERT("Archer defeat recovers its map fragment",
         g.dain_map_fragments == DAIN_FRAGMENT_ARCHER);
-    game_record_dain_kill(&g, ENEMY_GOBLIN_BOMBER);
-    ASSERT("Bomber defeat recovers its map fragment",
+    game_record_dain_kill(&g, ENEMY_GOBLIN_WARCHIEF);
+    ASSERT("Warchief defeat recovers its map fragment",
         g.dain_map_fragments ==
-            (DAIN_FRAGMENT_ARCHER | DAIN_FRAGMENT_BOMBER));
+            (DAIN_FRAGMENT_ARCHER | DAIN_FRAGMENT_WARCHIEF));
     game_record_dain_kill(&g, ENEMY_GOBLIN_SHAMAN);
     ASSERT("three map fragments make Dain's quest ready",
         g.dain_quest_state == 2 && g.dain_map_fragments == 7);
@@ -440,7 +440,7 @@ void test_alder_quest(void) {
 
     int target_levels[3] = {2, 3, 4};
     EnemyType guardian_types[3] = {
-        ENEMY_GIANT_SPIDER, ENEMY_DARK_ELF, ENEMY_FOREST_TROLL
+        ENEMY_GIANT_SPIDER, ENEMY_DARK_ELF_ARCHER, ENEMY_FOREST_TROLL
     };
     game_enter_forest(&g);
     for (int target = 0; target < 3; target++) {

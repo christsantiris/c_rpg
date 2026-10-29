@@ -70,17 +70,7 @@ def gateway():
 
 def creature(index):
     canvas = Image.new('RGBA', (64, 64))
-    if index == 1:
-        # Side-facing boar with an armored hump and tusks.
-        shape(canvas, [(19, 48), (21, 39), (27, 35), (37, 37), (42, 43),
-                       (46, 42), (48, 46), (43, 49), (41, 53), (38, 53), (36, 48),
-                       (28, 48), (25, 54), (22, 54), (23, 47), (18, 45), (15, 38)], BARK)
-        details = Layer(64, 64)
-        for x, y in line_points(25, 39, 38, 40):
-            details.put(x, y, (142, 139, 106))
-        stamp(details, 40, 42, ['e..', '.dd', '..d'], {'e': (224, 183, 66), 'd': (212, 203, 157)})
-        composite(canvas, details, None)
-    elif index == 2:
+    if index == 2:
         # Dryad: a leaf-crowned humanoid with a thorn bow and root skirt.
         shape(canvas, [(29, 34), (35, 34), (37, 40), (35, 44), (39, 54), (31, 51),
                        (26, 55), (28, 43), (25, 41)], BARK)
@@ -128,7 +118,7 @@ def creature(index):
 def main():
     save_sprite(gateway(), ROOT / 'assets/images/elderwood-entrance.bmp')
     atlas = Image.new('RGBA', (256, 64))
-    for i in range(1, 5):
+    for i in range(2, 5):
         atlas.alpha_composite(creature(i), ((i - 1) * 64, 0))
     save_sprite(atlas, ROOT / 'assets/images/elderwood-enemies.bmp')
 
