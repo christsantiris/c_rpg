@@ -9,8 +9,7 @@ The atlas keeps the beaches and cliff-backed shoreline below the quarry,
 Sunken Coast's sheltered cove and Oakhaven's connected branching docks.
 
 The quarry is drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 ×
-18 tiles around the player. The Quarry Colossus acts within twelve tiles, so it
-may begin its telegraphed windups from just off screen.
+18 tiles around the player. The Quarry Colossus acts within twelve tiles; the camera leans toward it to keep it on screen as its telegraphed windups begin.
 
 ## Five stages
 

@@ -8,9 +8,7 @@ lock travel, including the final departure. The Goblin Mine Boss still guards
 the command seal. See [boss gates](boss-gates.md).
 
 The mines are drawn at the Crown Roads' 1.5× zoom: the camera shows about
-30 × 18 tiles around the player. The Mine Boss begins attacking from up to 16
-tiles away, so he may start just off screen; his rockfall warnings still mark
-the player's own tile.
+30 × 18 tiles around the player. The Mine Boss begins attacking from up to 16 tiles away; the camera leans toward him, though at 16 rows above or below he can sit just off screen. His rockfall warnings still mark the player's own tile.
 
 | Stage | Working | Layout and discoveries |
 | --- | --- | --- |

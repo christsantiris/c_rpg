@@ -8,8 +8,7 @@ Its interior never plays backward from Stillbury. Ordinary backtracking within
 an expedition remains available.
 
 The forest is drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 ×
-18 tiles around the player. The Necromancer acts within twelve tiles, so he may
-begin his warned spirit bolts and root lanes from just off screen.
+18 tiles around the player. The Necromancer acts within twelve tiles; the camera leans toward him to keep him on screen as his warned spirit bolts and root lanes begin.
 
 The Necromancer occupies **Forest 5**. Defeat him, collect his reward, and use
 the normal grove exit to emerge onto the road. Walk **west to Stillbury** or

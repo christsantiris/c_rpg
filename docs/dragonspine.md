@@ -13,9 +13,7 @@ Save version **163** relocates existing approach paths and town portals to this
 gate while preserving exploration, loot, combat maps, and quest progress.
 
 Dragonspine is drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 ×
-18 tiles around the player. The Red Dragon acts within sixteen tiles or whenever
-the player is in its chamber, so its warned breath cones may begin from off
-screen.
+18 tiles around the player. The Red Dragon acts within sixteen tiles or whenever the player is in its chamber; the camera leans toward it, though at 16 rows above or below it can sit just off screen. Its breath reaches twelve tiles, so every cone that can reach the player starts on screen.
 
 Dragonspine has five generated stages with independent progress and saved
 floor caches. Broad cliff ledges fork around deep ravines, joining a lower
