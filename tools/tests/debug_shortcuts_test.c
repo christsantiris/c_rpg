@@ -1491,6 +1491,57 @@ static void test_ironfang_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
     puts("PASS: Ironfang's eight enemy sprites render at native scale; bound Interact boards a cart, arrows drive it, Ridgeshire uses its road gate, and debug repairs optional passages.");
 }
 
+static void test_boss_camera_lean(Renderer *r, GameState *g, SDL_Surface *surface) {
+    game_init(g);
+    g->location = LOCATION_DUNGEON;
+    g->level = 1;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            g->map.tiles[y][x] = TILE_FLOOR;
+            map_mark_explored(&g->map, x, y);
+        }
+    }
+    g->player.x = 40;
+    g->player.y = 20;
+    g->enemy_count = 1;
+    Viewport base;
+    viewport_init(&base, (r->screen_w - INFO_PANEL_W) / TILE_SIZE, r->tiles_y, MAP_W, MAP_H);
+    viewport_center_on(&base, g->player.x, g->player.y);
+    float zoom = game_camera_zoom(g);
+    int rows = (int)(r->tiles_y / zoom + 0.999f);
+    int cols = (int)(base.tiles_x / zoom + 0.999f);
+    assert(rows == 18);
+    size_t bytes = (size_t)surface->pitch * surface->h;
+    unsigned char *first = malloc(bytes);
+    assert(first);
+    // Fourteen rows below is outside the centred view; only the lean can show the boss.
+    for (int frame = 0; frame < 2; frame++) {
+        game_spawn_enemy(g, &g->enemies[0], ENEMY_MOUNTAIN_GOBLIN_KING, g->player.x + frame, g->player.y + 14);
+        assert(g->enemies[0].active && g->enemies[0].is_boss);
+        renderer_begin_frame(r);
+        game_draw(r, g, &base);
+        renderer_end_frame(r);
+        if (frame == 0) {
+            memcpy(first, surface->pixels, bytes);
+        }
+    }
+    // The lean keeps the player two rows from the top, which puts the boss on row 16.
+    int tile = (int)(TILE_SIZE * zoom);
+    int boss_x = cols / 2;
+    int changed = 0;
+    for (int y = 0; y < surface->h; y++) {
+        for (int x = 0; x < surface->w; x++) {
+            if (((Uint32 *)(first + y * surface->pitch))[x] != rendered_pixel(surface, x, y)) {
+                assert(y >= 15 * tile && y < 17 * tile && x >= (boss_x - 1) * tile && x < (boss_x + 3) * tile);
+                changed++;
+            }
+        }
+    }
+    assert(changed > 0);
+    free(first);
+    puts("PASS: the zoomed camera leans toward a boss fourteen rows away, keeping the player two rows from the edge.");
+}
+
 int main(void) {
     char *project = getcwd(NULL, 0);
     char *assets = realpath("assets", NULL);
@@ -1852,6 +1903,7 @@ int main(void) {
     assert(game->location == LOCATION_TOWN4 && game->jail_quest_state == 3 && game->gold == gold + ESCAPE_REWARD_GOLD);
     test_stormwatch_input(game);
     test_ironfang_renderer(&renderer, game, surface);
+    test_boss_camera_lean(&renderer, game, surface);
     test_northroad_renderer(&renderer, game, surface);
     test_giants_renderer(&renderer, game, surface);
     test_heartseed_renderer(&renderer, game, surface);

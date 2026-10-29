@@ -737,6 +737,44 @@ static int zoomed_tiles(int tiles, float zoom) {
     return zoomed * zoom < tiles ? zoomed + 1 : zoomed;
 }
 
+#define BOSS_LEAN_RANGE 16
+#define BOSS_LEAN_MARGIN 2
+
+static const Enemy *leaning_boss(const GameState *g) {
+    // Bosses begin their warned attacks from up to sixteen tiles away.
+    const Enemy *nearest = NULL;
+    int best = BOSS_LEAN_RANGE + 1;
+    for (int i = 0; i < g->enemy_count; i++) {
+        const Enemy *e = &g->enemies[i];
+        if (!e->active || !e->is_boss || e->hp <= 0) {
+            continue;
+        }
+        int dx = abs(e->x - g->player.x);
+        int dy = abs(e->y - g->player.y);
+        int distance = dx > dy ? dx : dy;
+        if (distance < best) {
+            best = distance;
+            nearest = e;
+        }
+    }
+    return nearest;
+}
+
+static int lean_toward(int cam, int view, int player, int boss) {
+    // Shift only far enough to show the boss and its neighbours, keeping the player clear of the edge.
+    if (boss - 1 < cam) {
+        int lowest = player + BOSS_LEAN_MARGIN + 1 - view;
+        int target = boss - 1 > lowest ? boss - 1 : lowest;
+        return target < cam ? target : cam;
+    }
+    if (boss + 1 > cam + view - 1) {
+        int highest = player - BOSS_LEAN_MARGIN;
+        int target = boss + 2 - view < highest ? boss + 2 - view : highest;
+        return target > cam ? target : cam;
+    }
+    return cam;
+}
+
 static int regional_camera(const GameState *g, const Viewport *base, Viewport *out) {
     int w;
     int h;
@@ -788,6 +826,13 @@ static int regional_camera(const GameState *g, const Viewport *base, Viewport *o
     int tiles_y = zoomed_tiles(base->tiles_y, game_camera_zoom(g));
     viewport_init(out, tiles_x < w ? tiles_x : w, tiles_y < h ? tiles_y : h, ox + w, oy + h);
     viewport_center_on(out, g->player.x, g->player.y);
+    const Enemy *boss = leaning_boss(g);
+    if (boss) {
+        // Lean toward a nearby boss so its warned attacks begin on screen.
+        int x = lean_toward(out->cam_x, out->tiles_x, g->player.x, boss->x);
+        int y = lean_toward(out->cam_y, out->tiles_y, g->player.y, boss->y);
+        viewport_center_on(out, x + out->tiles_x / 2, y + out->tiles_y / 2);
+    }
     // A room offset inside the map keeps the camera from scrolling past its near walls.
     if (out->cam_x < ox) {
         out->cam_x = ox;
