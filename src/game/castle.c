@@ -13,53 +13,6 @@ static int boss_arena(int x, int y) {
     return x >= 34 && x < 56 && y >= 44 && y < 58;
 }
 
-// Castellan: boss_attack = latched health phase; boss_wave_used = spent rally;
-// boss_aux_x = locked footprint bits; boss_aux_y = next phase-two attack;
-// revive_timer = extra recovery action after a successful arena counter.
-int castle_castellan_marks(const Enemy *e, int x, int y) {
-    if (!e->active || e->type != ENEMY_CASTELLAN || e->attack_target_x < 0) {
-        return 0;
-    }
-    if (e->attack_phase == CASTELLAN_RALLY) {
-        return y == 46 && (x == 42 || x == 48);
-    }
-    int dx = (e->attack_target_x > e->x) - (e->attack_target_x < e->x);
-    int dy = (e->attack_target_y > e->y) - (e->attack_target_y < e->y);
-    int forward = (x - e->x) * dx + (y - e->y) * dy;
-    int side = (x - e->x) * -dy + (y - e->y) * dx;
-    int bit = -1;
-    if (e->attack_phase == CASTELLAN_CHARGE && side == 0 && forward >= 1 && forward <= 5) {
-        bit = forward - 1;
-    } else if (e->attack_phase == CASTELLAN_SWING && forward == 1 && abs(side) <= 1) {
-        bit = side + 1;
-    } else if (e->attack_phase == CASTELLAN_SWEEP && forward >= 1 && forward <= 2 && abs(side) <= 2) {
-        bit = (forward - 1) * 5 + side + 2;
-    }
-    return bit >= 0 && (e->boss_aux_x & (1 << bit));
-}
-
-static void lock_castellan_attack(const Map *m, Enemy *e) {
-    e->boss_aux_x = 0;
-    int dx = (e->attack_target_x > e->x) - (e->attack_target_x < e->x);
-    int dy = (e->attack_target_y > e->y) - (e->attack_target_y < e->y);
-    int reach = e->attack_phase == CASTELLAN_CHARGE ? 5 : e->attack_phase == CASTELLAN_SWEEP ? 2 : 1;
-    int width = e->attack_phase == CASTELLAN_CHARGE ? 0 : e->attack_phase == CASTELLAN_SWEEP ? 2 : 1;
-    for (int forward = 1; forward <= reach; forward++) {
-        if (e->attack_phase == CASTELLAN_CHARGE && (!boss_arena(e->x + dx * forward, e->y + dy * forward) || !map_is_walkable(m, e->x + dx * forward, e->y + dy * forward))) {
-            break;
-        }
-        for (int side = -width; side <= width; side++) {
-            int x = e->x + dx * forward - dy * side;
-            int y = e->y + dy * forward + dx * side;
-            if (boss_arena(x, y) && map_is_walkable(m, x, y)) {
-                int bit = e->attack_phase == CASTELLAN_CHARGE ? forward - 1 :
-                    e->attack_phase == CASTELLAN_SWING ? side + 1 : (forward - 1) * 5 + side + 2;
-                e->boss_aux_x |= 1 << bit;
-            }
-        }
-    }
-}
-
 static TileType tile_at(const GameState *g, int x, int y) {
     if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) {
         return TILE_CASTLE_WALL;
@@ -302,36 +255,29 @@ static int occupied(const GameState *g, int x, int y) {
     return 0;
 }
 
-static int castellan_can_escape(const GameState *g, const Enemy *e, int x, int y, int turns) {
-    if (!castle_castellan_marks(e, x, y)) {
-        return 1;
-    }
-    if (!turns) {
-        return 0;
-    }
-    for (int d = 0; d < 4; d++) {
-        int nx = x + dxs[d];
-        int ny = y + dys[d];
-        if (!occupied(g, nx, ny) && castellan_can_escape(g, e, nx, ny, turns - 1)) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
 static Enemy *add_enemy(GameState *g, EnemyType type, int x, int y) {
     if (g->enemy_count >= NON_ROAD_ENEMY_LIMIT || occupied(g, x, y)) {
         return NULL;
     }
+    if (type == ENEMY_ROYAL_GUARD || type == ENEMY_VAMPIRE) {
+        Enemy *e = &g->enemies[g->enemy_count++];
+        game_spawn_enemy(g, e, type, x, y);
+        e->is_boss = type == ENEMY_VAMPIRE;
+        g->level_cleared = 0;
+        return e;
+    }
     int n = type - ENEMY_OATHBOUND_SOLDIER;
-    static const char *names[8] = {"Oathbound Soldier", "Iron Warden", "Royal Marksman", "Court Hexer", "Bell Herald", "Castellan", "Royal Arcanist", "Lord Veyr"};
-    static const int hp[8] = {95, 150, 75, 90, 65, 420, 470, 950};
-    static const int attack[8] = {24, 28, 26, 27, 18, 34, 36, 42};
-    static const int defense[8] = {7, 11, 5, 6, 4, 12, 9, 14};
+    if (type >= ENEMY_ROYAL_ARCANIST) {
+        n -= 2;
+    }
+    static const char *names[6] = {"Oathbound Soldier", "Iron Warden", "Royal Marksman", "Court Hexer", "Royal Arcanist", "Lord Veyr"};
+    static const int hp[6] = {95, 150, 75, 90, 470, 950};
+    static const int attack[6] = {24, 28, 26, 27, 36, 42};
+    static const int defense[6] = {7, 11, 5, 6, 9, 14};
     Enemy *e = &g->enemies[g->enemy_count++];
     *e = (Enemy){.active = 1, .type = type, .x = x, .y = y, .max_hp = hp[n], .hp = hp[n],
-        .attack = attack[n] + g->level / 2, .defense = defense[n], .experience = n >= 5 ? 1000 : 100,
-        .is_boss = n >= 5, .attack_target_x = -1, .attack_target_y = -1, .facing_dy = -1};
+        .attack = attack[n] + g->level / 2, .defense = defense[n], .experience = n >= 4 ? 1000 : 100,
+        .is_boss = n >= 4, .attack_target_x = -1, .attack_target_y = -1, .facing_dy = -1};
     snprintf(e->name, sizeof(e->name), "%s", names[n]);
     g->level_cleared = 0;
     return e;
@@ -363,7 +309,7 @@ static void spawn_detail(GameState *g) {
         }
     }
     if (g->level == 6) {
-        add_enemy(g, ENEMY_BELL_HERALD, 53, 48);
+        add_enemy(g, ENEMY_ROYAL_GUARD, 53, 48);
     }
 }
 
@@ -388,11 +334,11 @@ void castle_spawn(GameState *g) {
         add_enemy(g, g->level >= 3 && i % 2 == 0 ? ENEMY_COURT_HEXER : ENEMY_ROYAL_MARKSMAN, x + 2, y + 1);
     }
     if (g->level >= 3) {
-        add_enemy(g, ENEMY_BELL_HERALD, 49, 32);
+        add_enemy(g, ENEMY_ROYAL_GUARD, 49, 32);
     }
     spawn_detail(g);
     if (g->level == 2 && !(g->castle_minibosses & 1)) {
-        add_enemy(g, ENEMY_CASTELLAN, 45, 49);
+        add_enemy(g, ENEMY_VAMPIRE, 45, 49);
     } else if (g->level == 4 && !(g->castle_minibosses & 2)) {
         add_enemy(g, ENEMY_ROYAL_ARCANIST, 45, 49);
     } else if (g->level == 6 && !g->game_won) {
@@ -470,7 +416,7 @@ void castle_store(GameState *g) {
     g->castle_loot_count[i] = g->floor_item_count;
 }
 
-static void migrate_castellan_floor(Map *m, Enemy *enemies, int count, FloorItem *loot, int items) {
+static void migrate_armory_floor(Map *m, FloorItem *loot, int items) {
     for (int y = 44; y < 58; y++) {
         for (int x = 34; x < 56; x++) {
             m->tiles[y][x] = encounter_tile(2, x, y, m->tiles[y][x]);
@@ -479,27 +425,17 @@ static void migrate_castellan_floor(Map *m, Enemy *enemies, int count, FloorItem
     for (int i = 0; i < items; i++) {
         loot[i].underlying_tile = encounter_tile(2, loot[i].x, loot[i].y, loot[i].underlying_tile);
     }
-    for (int i = 0; i < count; i++) {
-        Enemy *e = &enemies[i];
-        if (e->type == ENEMY_CASTELLAN) {
-            e->boss_attack = 0;
-            e->boss_wave_used = 0;
-            e->boss_aux_y = 0;
-            e->revive_timer = 0;
-            lock_castellan_attack(m, e);
-        }
-    }
 }
 
-void castle_migrate_castellan(GameState *g) {
+void castle_migrate_armory(GameState *g) {
     // Keep historical victories and gold; reserve the newly introduced shield once.
     g->castellan_reward_state = (g->castle_minibosses & 1) ? 1 : 0;
     if (g->castle_cache[1].valid) {
         LevelCache *c = &g->castle_cache[1];
-        migrate_castellan_floor(&c->map, c->enemies, c->enemy_count, g->castle_loot[1], g->castle_loot_count[1]);
+        migrate_armory_floor(&c->map, g->castle_loot[1], g->castle_loot_count[1]);
     }
     if (g->location == LOCATION_CASTLE_INTERIOR && g->level == 2) {
-        migrate_castellan_floor(&g->map, g->enemies, g->enemy_count, g->floor_items, g->floor_item_count);
+        migrate_armory_floor(&g->map, g->floor_items, g->floor_item_count);
     }
 }
 
@@ -567,11 +503,11 @@ void castle_enter(GameState *g, int level) {
     char message[MAX_MESSAGE_LEN];
     static const char *hints[CASTLE_DEPTH] = {
         "Two approaches: use their levers to control shooting lanes.",
-        "Bait charges into guards; side levers interrupt charges and split the formation.",
-        "Stop the Herald before a patrol arrives at the marked doorway.",
+        "Defeat the Vampire in the armory; use side levers to split the defenders.",
+        "Royal Guards defend the court. Use cover to approach the marksmen.",
         "Interact beside the two glowing pedestals to weaken the Arcanist.",
         "Patrols circle the shelves. Fire runes flash twice before burning.",
-        "Break the wards, silence the Herald, and watch the throne's fire lane."
+        "Break the wards, defeat the Royal Guards, and watch the throne's fire lane."
     };
     snprintf(message, sizeof(message), "%s: %s", castle_floor_name(level), hints[level - 1]);
     push_message(g, message);
@@ -593,27 +529,7 @@ void castle_leave(GameState *g, int escape) {
         }
         g->level = i + 1;
         g->map = c->map;
-        int calls[MAX_ENEMIES];
-        int heralds = 0;
-        for (int j = 0; j < c->enemy_count; j++) {
-            if (c->enemies[j].type == ENEMY_BELL_HERALD || c->enemies[j].type == ENEMY_CASTELLAN) {
-                calls[heralds++] = c->enemies[j].type == ENEMY_CASTELLAN ? c->enemies[j].boss_wave_used : c->enemies[j].revived;
-            }
-        }
         castle_spawn(g);
-        int herald = 0;
-        for (int j = 0; j < g->enemy_count; j++) {
-            if (g->enemies[j].type == ENEMY_BELL_HERALD || g->enemies[j].type == ENEMY_CASTELLAN) {
-                if (herald < heralds) {
-                    if (g->enemies[j].type == ENEMY_CASTELLAN) {
-                        g->enemies[j].boss_wave_used = calls[herald];
-                    } else {
-                        g->enemies[j].revived = calls[herald];
-                    }
-                }
-                herald++;
-            }
-        }
         memcpy(c->enemies, g->enemies, sizeof(c->enemies));
         c->enemy_count = g->enemy_count;
         c->level_cleared = 0;
@@ -790,18 +706,6 @@ int castle_interact(GameState *g) {
         for (int gy = 47; gy <= 49; gy++) {
             // Keep loot-covered cells open; TILE_ITEM remains walkable in the map.
             if (open || (!occupied(g, gx, gy) && g->map.tiles[gy][gx] != TILE_ITEM)) {
-                for (int i = 0; i < g->enemy_count; i++) {
-                    Enemy *e = &g->enemies[i];
-                    if (!open && e->type == ENEMY_CASTELLAN && e->attack_phase == CASTELLAN_CHARGE && castle_castellan_marks(e, gx, gy)) {
-                        e->attack_target_x = -1;
-                        e->attack_target_y = -1;
-                        e->boss_aux_x = 0;
-                        e->move_timer = 2;
-                        // The Interact action also advances the enemy clock.
-                        e->revive_timer = 2;
-                        push_message(g, "The portcullis cuts off the charge! Castellan exposed for two actions.");
-                    }
-                }
                 set_tile(g, gx, gy, open ? TILE_CASTLE_GATE_OPEN : TILE_CASTLE_GATE);
             }
         }
@@ -859,13 +763,7 @@ int castle_attack_marks(const Map *m, const Enemy *e, int x, int y) {
     if (e->type == ENEMY_ROYAL_ARCANIST) {
         return royal_arcanist_marks(e, x, y);
     }
-    if (e->type == ENEMY_CASTELLAN) {
-        return e->attack_phase != CASTELLAN_RALLY && castle_castellan_marks(e, x, y);
-    }
     if (!e->active || e->attack_target_x < 0 || e->attack_target_y < 0 || !map_is_walkable(m, x, y)) {
-        return 0;
-    }
-    if (e->type == ENEMY_BELL_HERALD && !e->revived) {
         return 0;
     }
     if ((e->type == ENEMY_ROYAL_MARKSMAN || e->type == ENEMY_COURT_HEXER) && !line_clear(m, e->x, e->y, e->attack_target_x, e->attack_target_y)) {
@@ -1011,28 +909,6 @@ static int tick_fire(GameState *g) {
     return 0;
 }
 
-static void call_patrol(GameState *g, Enemy *e) {
-    int court = g->level == 3;
-    int throne = g->level == 6 && e->y >= 44;
-    if (court || throne) {
-        int y = court ? 35 : 46;
-        const EnemyType types[3] = {ENEMY_OATHBOUND_SOLDIER, ENEMY_IRON_WARDEN, ENEMY_ROYAL_MARKSMAN};
-        for (int i = 0; i < 3; i++) {
-            // Doorway and adjacent arrival tiles; newcomers act next turn.
-            add_enemy(g, types[i], i == 1 ? 52 : 53, i == 2 ? y - 1 : y);
-        }
-        push_message(g, "The bell calls a patrol through the marked doorway!");
-    } else {
-        for (int d = 0; d < 4; d++) {
-            if (add_enemy(g, ENEMY_OATHBOUND_SOLDIER, e->x + dxs[d], e->y + dys[d])) {
-                break;
-            }
-        }
-        push_message(g, "The Herald's bell calls one royal guard!");
-    }
-    e->revived = 1;
-}
-
 int castle_barrier_warning(const GameState *g, int x, int y) {
     if ((x != 40 && x != 50) || y < 47 || y > 49) {
         return 0;
@@ -1079,11 +955,6 @@ int castle_tick(GameState *g) {
         if ((e->is_boss && !boss_arena(g->player.x, g->player.y) && !arcanist_retaliates && !veyr_retaliates) || (!e->is_boss && distances[e->y][e->x] > 12)) {
             e->attack_target_x = -1;
             e->move_timer = 0;
-            if (e->type == ENEMY_CASTELLAN) {
-                e->attack_target_y = -1;
-                e->boss_aux_x = 0;
-                e->revive_timer = 0;
-            }
             if (e->type == ENEMY_ROYAL_ARCANIST) {
                 royal_arcanist_cancel(e);
             }
@@ -1114,82 +985,16 @@ int castle_tick(GameState *g) {
             continue;
         }
         if (e->move_timer == 1) {
-            if (e->type == ENEMY_BELL_HERALD && !e->revived) {
-                call_patrol(g, e);
-            } else if (e->type == ENEMY_CASTELLAN && e->attack_phase == CASTELLAN_RALLY) {
-                for (int side = 0; side < 2; side++) {
-                    Enemy *guard = add_enemy(g, side ? ENEMY_ROYAL_MARKSMAN : ENEMY_IRON_WARDEN, side ? 48 : 42, 46);
-                    if (guard) {
-                        guard->experience = 0;
+            if (castle_attack_marks(&g->map, e, g->player.x, g->player.y)) {
+                int hit = e->attack - g->player.defense;
+                for (int j = 0; j < count; j++) {
+                    const Enemy *hexer = &g->enemies[j];
+                    if (hexer->active && hexer->type == ENEMY_COURT_HEXER && hexer != e && abs(hexer->x - e->x) + abs(hexer->y - e->y) <= 4) {
+                        hit += 5;
+                        break;
                     }
                 }
-                push_message(g, "The marked rally arrives! This guard call is spent, even after retreat.");
-            } else {
-                int strikes = castle_attack_marks(&g->map, e, g->player.x, g->player.y);
-                if (strikes && e->type == ENEMY_CASTELLAN && e->attack_phase == CASTELLAN_CHARGE) {
-                    int sx = (e->attack_target_x > e->x) - (e->attack_target_x < e->x);
-                    int sy = (e->attack_target_y > e->y) - (e->attack_target_y < e->y);
-                    for (int step = 1; step <= 5; step++) {
-                        int x = e->x + sx * step;
-                        int y = e->y + sy * step;
-                        if (x == g->player.x && y == g->player.y) {
-                            break;
-                        }
-                        if (occupied(g, x, y)) {
-                            strikes = 0;
-                            break;
-                        }
-                    }
-                }
-                if (strikes) {
-                    int hit = e->attack - g->player.defense;
-                    for (int j = 0; j < count; j++) {
-                        const Enemy *hexer = &g->enemies[j];
-                        if (hexer->active && hexer->type == ENEMY_COURT_HEXER && hexer != e &&
-                            abs(hexer->x - e->x) + abs(hexer->y - e->y) <= 4) {
-                            hit += 5;
-                            break;
-                        }
-                    }
-                    damage += hit > 3 ? hit : 3;
-                }
-                if (e->type == ENEMY_CASTELLAN && e->attack_phase == CASTELLAN_CHARGE) {
-                    int sx = (e->attack_target_x > e->x) - (e->attack_target_x < e->x);
-                    int sy = (e->attack_target_y > e->y) - (e->attack_target_y < e->y);
-                    for (int step = 0; step < 5; step++) {
-                        if (!(e->boss_aux_x & (1 << step))) {
-                            if (!map_is_walkable(&g->map, e->x + sx, e->y + sy)) {
-                                e->revive_timer = 1;
-                                push_message(g, "The Castellan crashes into masonry! Exposed for two actions.");
-                            }
-                            break;
-                        }
-                        if (occupied(g, e->x + sx, e->y + sy)) {
-                            if (!map_is_walkable(&g->map, e->x + sx, e->y + sy)) {
-                                e->revive_timer = 1;
-                                push_message(g, "The Castellan crashes into stone! Exposed for two actions.");
-                            }
-                            for (int j = 0; j < count; j++) {
-                                Enemy *guard = &g->enemies[j];
-                                if (guard->active && !guard->is_boss && guard->x == e->x + sx && guard->y == e->y + sy) {
-                                    guard->frozen_turns = 2;
-                                    guard->move_timer = 2;
-                                    guard->attack_target_x = -1;
-                                    guard->attack_target_y = -1;
-                                    e->revive_timer = 1;
-                                    push_message(g, "The Castellan crashes into his guard and breaks its defense!");
-                                }
-                            }
-                            break;
-                        }
-                        e->x += sx;
-                        e->y += sy;
-                    }
-                    // Facing and footprint stay fixed until the charge has finished.
-                    e->facing_dx = sx;
-                    e->facing_dy = sy;
-                }
-                push_message(g, "The royal attack strikes the marked stones!");
+                damage += hit > 3 ? hit : 3;
             }
             e->attack_target_x = -1;
             e->attack_target_y = -1;
@@ -1197,73 +1002,22 @@ int castle_tick(GameState *g) {
             continue;
         }
         if (e->move_timer == 2) {
-            if (e->type == ENEMY_CASTELLAN && e->revive_timer > 0) {
-                e->revive_timer--;
-                continue;
-            }
             e->move_timer = 0;
             continue;
         }
-        if (e->type == ENEMY_BELL_HERALD && !e->revived && distance <= 8) {
-            e->move_timer = 1;
-            push_message(g, "The Bell Herald raises its bell! Kill or freeze it to interrupt.");
-            continue;
-        }
-        if (e->type == ENEMY_CASTELLAN) {
-            int phase = e->hp * 2 <= e->max_hp ? 2 : 1;
-            if (phase > e->boss_attack) {
-                e->boss_attack = phase;
-                push_message(g, phase == 2 ? "Broken Formation! Wider shield sweeps alternate with charges; one rally answers his call." :
-                    "Shield Commander! Flank the shield or bait a charge into guards, masonry or a side portcullis.");
-            }
-            if (e->boss_attack == 2 && !e->boss_wave_used) {
-                e->boss_wave_used = 1;
-                e->attack_phase = CASTELLAN_RALLY;
-                e->attack_target_x = 42;
-                e->attack_target_y = 46;
-                e->move_timer = 3;
-                push_message(g, "Guard Rally: two actions! Two marked muster stones; occupying one prevents its arrival.");
-                continue;
-            }
-        }
         int ranged = e->type == ENEMY_ROYAL_MARKSMAN || e->type == ENEMY_COURT_HEXER;
         if ((ranged && distance <= 8 && line_clear(&g->map, e->x, e->y, g->player.x, g->player.y)) ||
-            (!ranged && distance <= 2) || (e->type == ENEMY_CASTELLAN && distance <= 6)) {
+            (!ranged && distance <= 2)) {
             e->attack_target_x = g->player.x;
             e->attack_target_y = g->player.y;
             e->attack_phase = 0;
-            if (e->type == ENEMY_CASTELLAN) {
-                int sx = (g->player.x > e->x) - (g->player.x < e->x);
-                int sy = (g->player.y > e->y) - (g->player.y < e->y);
-                if (abs(g->player.x - e->x) >= abs(g->player.y - e->y)) {
-                    sy = 0;
-                } else {
-                    sx = 0;
-                }
-                e->attack_phase = e->boss_attack == 2 ? (e->boss_aux_y ? CASTELLAN_CHARGE : CASTELLAN_SWEEP) :
-                    distance <= 2 ? CASTELLAN_SWING : CASTELLAN_CHARGE;
-                e->boss_aux_y = e->attack_phase == CASTELLAN_SWEEP;
-                e->attack_target_x = e->x + sx * (e->attack_phase == CASTELLAN_CHARGE ? 5 : 1);
-                e->attack_target_y = e->y + sy * (e->attack_phase == CASTELLAN_CHARGE ? 5 : 1);
-                lock_castellan_attack(&g->map, e);
-                if (!castellan_can_escape(g, e, g->player.x, g->player.y, e->attack_phase == CASTELLAN_SWEEP ? 2 : 1)) {
-                    e->boss_aux_x = 0;
-                    push_message(g, "The formation has no safe escape lane. Castellan's blocked attack will miss.");
-                }
-            }
-            e->move_timer = e->type == ENEMY_CASTELLAN && e->attack_phase == CASTELLAN_SWEEP ? 3 : 1;
+            e->move_timer = 1;
             int fx = g->player.x - e->x;
             int fy = g->player.y - e->y;
             e->facing_dx = abs(fx) >= abs(fy) ? (fx > 0 ? 1 : -1) : 0;
             e->facing_dy = e->facing_dx == 0 ? (fy > 0 ? 1 : -1) : 0;
             char message[MAX_MESSAGE_LEN];
-            if (e->type == ENEMY_CASTELLAN) {
-                snprintf(message, sizeof(message), "%s: %s. Leave the fixed marked stones!",
-                    e->attack_phase == CASTELLAN_CHARGE ? "Shield Charge" : e->attack_phase == CASTELLAN_SWEEP ? "Formation Sweep" : "Shield Swing",
-                    e->move_timer == 3 ? "two actions" : "one action");
-            } else {
-                snprintf(message, sizeof(message), "%s prepares an attack. Leave the marked stones!", e->name);
-            }
+            snprintf(message, sizeof(message), "%s prepares an attack. Leave the marked stones!", e->name);
             push_message(g, message);
         } else if (distances[e->y][e->x] >= 0) {
             advance(g, e);
@@ -1276,7 +1030,7 @@ int castle_enemy_damage(const GameState *g, const Enemy *e, int damage) {
     if (g->location != LOCATION_CASTLE_INTERIOR) {
         return damage;
     }
-    if ((e->type == ENEMY_IRON_WARDEN || e->type == ENEMY_CASTELLAN || (e->type == ENEMY_LORD_VEYR && e->attack_phase <= 1)) && e->move_timer != 2 && !e->frozen_turns) {
+    if ((e->type == ENEMY_IRON_WARDEN || (e->type == ENEMY_LORD_VEYR && e->attack_phase <= 1)) && e->move_timer != 2 && !e->frozen_turns) {
         int front = (g->player.x - e->x) * e->facing_dx + (g->player.y - e->y) * e->facing_dy > 0;
         if (front) {
             damage /= 2;
@@ -1303,11 +1057,11 @@ int castle_enemy_damage(const GameState *g, const Enemy *e, int damage) {
 }
 
 void castle_record_death(GameState *g, Enemy *e) {
-    if (e->type == ENEMY_CASTELLAN || e->type == ENEMY_ROYAL_ARCANIST) {
-        if (g->castle_minibosses & (e->type == ENEMY_CASTELLAN ? 1 : 2)) {
+    if ((e->type == ENEMY_VAMPIRE && e->is_boss) || e->type == ENEMY_ROYAL_ARCANIST) {
+        if (g->castle_minibosses & (e->type == ENEMY_VAMPIRE ? 1 : 2)) {
             return;
         }
-        if (e->type == ENEMY_CASTELLAN && !g->castellan_reward_state) {
+        if (e->type == ENEMY_VAMPIRE && !g->castellan_reward_state) {
             g->castellan_reward_state = 1;
             push_message(g, "Castellan's Bulwark awaits in the southeast armory chest. Interact beside it to claim.");
         }
@@ -1315,7 +1069,7 @@ void castle_record_death(GameState *g, Enemy *e) {
             g->arcanist_reward_state = 1;
             push_message(g, "Crown Chapel Vestments await in the southeast chapel chest. Interact beside it to claim.");
         }
-        g->castle_minibosses |= e->type == ENEMY_CASTELLAN ? 1 : 2;
+        g->castle_minibosses |= e->type == ENEMY_VAMPIRE ? 1 : 2;
         g->gold += 100;
         push_message(g, "Miniboss defeated! The way to the next castle floor is open.");
     } else if (e->type == ENEMY_LORD_VEYR) {

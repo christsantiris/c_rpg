@@ -107,8 +107,8 @@ static void make_enemy(Enemy *enemy, EnemyType type, int x, int y, int level) {
     int attack = 7;
     int defense = 1;
     int xp = 28;
-    if (type == ENEMY_IRONHIDE_BOAR) {
-        name = "Ironhide Boar";
+    if (type == ENEMY_DARK_ELF_RANGER) {
+        name = "Dark Elf Ranger";
         hp = 42; attack = 10; defense = 3; xp = 40;
     } else if (type == ENEMY_THORN_DRYAD) {
         name = "Thorn Dryad";
@@ -116,8 +116,8 @@ static void make_enemy(Enemy *enemy, EnemyType type, int x, int y, int level) {
     } else if (type == ENEMY_TREEFOLK) {
         name = "Treefolk";
         hp = 92; attack = 15; defense = 8; xp = 90;
-    } else if (type == ENEMY_DARK_ELF) {
-        name = "Dark Elf";
+    } else if (type == ENEMY_DARK_ELF_ARCHER) {
+        name = "Dark Elf Archer";
         hp = 22; attack = 9; defense = 3; xp = 28;
     } else if (type == ENEMY_ELDERTHORN) {
         name = "Elderthorn";
@@ -219,11 +219,11 @@ static void generate(GameState *g) {
             add_enemy(g, ENEMY_ELDERTHORN, 32, 13);
         }
         add_enemy(g, ENEMY_TREEFOLK, 21, 27);
-        add_enemy(g, ENEMY_DARK_ELF, 43, 26);
+        add_enemy(g, ENEMY_DARK_ELF_ARCHER, 43, 26);
         add_enemy(g, ENEMY_BLIGHTED_WOLF, 26, 35);
         add_enemy(g, ENEMY_THORN_DRYAD, 38, 34);
     } else {
-        const EnemyType types[5] = {ENEMY_BLIGHTED_WOLF, ENEMY_IRONHIDE_BOAR, ENEMY_THORN_DRYAD, ENEMY_DARK_ELF, ENEMY_TREEFOLK};
+        const EnemyType types[5] = {ENEMY_BLIGHTED_WOLF, ENEMY_DARK_ELF_RANGER, ENEMY_THORN_DRYAD, ENEMY_DARK_ELF_ARCHER, ENEMY_TREEFOLK};
         for (int i = 0; i < 4 + g->level * 2; i++) {
             int room = i % 6;
             int x = clearing_x[room] + (i / 6) * 2 - 2;
@@ -523,8 +523,7 @@ int elderwood_marks(const Enemy *enemy, int x, int y) {
 }
 
 int elderwood_tick(GameState *g, Enemy *enemy, int *damage) {
-    if (g->location != LOCATION_ELDERWOOD || (enemy->type != ENEMY_IRONHIDE_BOAR &&
-        enemy->type != ENEMY_TREEFOLK && enemy->type != ENEMY_ELDERTHORN)) {
+    if (g->location != LOCATION_ELDERWOOD || (enemy->type != ENEMY_TREEFOLK && enemy->type != ENEMY_ELDERTHORN)) {
         return 0;
     }
     *damage = 0;

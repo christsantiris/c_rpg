@@ -1036,7 +1036,7 @@ static void test_necromancer_opens_exit(void) {
         };
         g.enemies[1] = (Enemy){
             .x = 20, .y = 20, .active = 1, .hp = 10,
-            .type = ENEMY_DARK_ELF
+            .type = ENEMY_DARK_ELF_ARCHER
         };
         g.player.x = i == 0 ? 11 : 10;
         g.player.y = 10;
@@ -1188,8 +1188,9 @@ void test_forest(void) {
         for (int i = 0; i < g.enemy_count; i++) {
             EnemyType type = g.enemies[i].type;
             if (g.enemies[i].is_boss) bosses++;
-            if (type < ENEMY_PIXIE || type > ENEMY_FOREST_NECROMANCER)
+            if ((type < ENEMY_PIXIE || type > ENEMY_FOREST_NECROMANCER) && type != ENEMY_DARK_ELF_RANGER) {
                 invalid_enemy = 1;
+            }
         }
         ASSERT("forest floors use only forest roster", !invalid_enemy);
         if (level != FOREST_BOSS_LEVEL) {
@@ -1741,8 +1742,9 @@ void test_mountains(void) {
         for (int i = 0; i < g.enemy_count; i++) {
             EnemyType type = g.enemies[i].type;
             if (g.enemies[i].is_boss) bosses++;
-            if (type < ENEMY_GOBLIN_SCOUT ||
-                type > ENEMY_MOUNTAIN_GOBLIN_KING) invalid = 1;
+            if ((type < ENEMY_GOBLIN_SCOUT || type > ENEMY_MOUNTAIN_GOBLIN_KING) && type != ENEMY_GIANT_SPIDER && type != ENEMY_GOBLIN_WARCHIEF) {
+                invalid = 1;
+            }
         }
         ASSERT("mountains use only mountain enemy roster", !invalid);
         if (level != MOUNTAIN_BOSS_LEVEL) {

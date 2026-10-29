@@ -131,6 +131,10 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
 }
 
 void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {
+    if (e->type == ENEMY_ROYAL_GUARD || e->type == ENEMY_VAMPIRE) {
+        draw_enemy(r, sx, sy, e->type);
+        return;
+    }
     // Native frames are bottom-centered in 32-pixel regular / 40-pixel boss cells.
     static const SDL_Rect regular[5] = {{4, 6, 24, 26}, {36, 6, 24, 26}, {68, 6, 24, 26}, {4, 38, 24, 26}, {36, 38, 24, 26}};
     static const SDL_Rect bosses[5] = {{2, 4, 36, 36}, {42, 4, 36, 36}, {82, 4, 36, 36}, {2, 44, 36, 36}, {42, 44, 36, 36}};
@@ -145,9 +149,7 @@ void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {
     }
     SDL_Rect destination = {sx * 24 - (e->is_boss ? 6 : 0), sy * 24 - (e->is_boss ? 12 : 2), e->is_boss ? 36 : 24, e->is_boss ? 36 : 26};
     if (texture) {
-        if (e->type == ENEMY_CASTELLAN && e->boss_attack == 2) {
-            SDL_SetTextureColorMod(texture, 255, 203, 185);
-        } else if (e->type == ENEMY_ROYAL_ARCANIST && e->attack_phase == 2) {
+        if (e->type == ENEMY_ROYAL_ARCANIST && e->attack_phase == 2) {
             SDL_SetTextureColorMod(texture, 190, 224, 255);
         }
         SDL_RenderCopy(r->sdl, texture, &source, &destination);
@@ -155,7 +157,7 @@ void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {
     } else {
         draw_armored_guard(r, sx, sy);
     }
-    if (e->type == ENEMY_IRON_WARDEN || e->type == ENEMY_CASTELLAN ||
+    if (e->type == ENEMY_IRON_WARDEN ||
         (e->type == ENEMY_LORD_VEYR && e->attack_phase <= 1)) {
         int cx = sx * 24 + 12 + e->facing_dx * 10;
         int cy = sy * 24 + 12 + e->facing_dy * 10;
@@ -180,7 +182,7 @@ void castle_draw_warnings(Renderer *r, const GameState *g, const Viewport *v) {
             }
             for (int i = 0; i < g->enemy_count; i++) {
                 const Enemy *e = &g->enemies[i];
-                int rally = (e->attack_phase == CASTELLAN_RALLY && castle_castellan_marks(e, x, y)) || lord_veyr_escort_marks(e, x, y);
+                int rally = lord_veyr_escort_marks(e, x, y);
                 int barrier = royal_arcanist_barrier_change(e, x, y) + lord_veyr_barrier_change(e, x, y);
                 int attack_marks = castle_attack_marks(&g->map, e, x, y);
                 if (attack_marks || rally || barrier) {
@@ -192,11 +194,7 @@ void castle_draw_warnings(Renderer *r, const GameState *g, const Viewport *v) {
                     SDL_RenderFillRect(r->sdl, &tile);
                     SDL_SetRenderDrawColor(r->sdl, 236, 159, 252, 255);
                     SDL_RenderDrawRect(r->sdl, &tile);
-                    if (e->type == ENEMY_CASTELLAN) {
-                        char text[8];
-                        snprintf(text, sizeof(text), "%s%d", rally ? "G" : "", e->move_timer >= 3 ? e->move_timer - 1 : 1);
-                        renderer_draw_text(r, text, tile.x + (rally ? 3 : 8), tile.y + 4, (SDL_Color){255, 231, 174, 255}, r->font_tiny);
-                    } else if (e->type == ENEMY_ROYAL_ARCANIST || e->type == ENEMY_LORD_VEYR) {
+                    if (e->type == ENEMY_ROYAL_ARCANIST || e->type == ENEMY_LORD_VEYR) {
                         char text[8];
                         int turns = e->move_timer >= 3 ? e->move_timer - 1 : 1;
                         int west = e->type == ENEMY_LORD_VEYR ? e->boss_attack == VEYR_WEST_LANE : e->boss_attack == ARCANIST_WEST_LANE;
@@ -257,48 +255,6 @@ void castle_draw_arcanist_status(Renderer *r, const GameState *g, const Viewport
         }
         renderer_draw_text(r, text, x + 10, top + 38, (SDL_Color){178, 232, 245, 255}, r->font_tiny);
         renderer_draw_text(r, width < 300 ? "W/E PEDESTALS: A" : "DISABLE THE LINKED W/E PEDESTAL: A", x + 10, top + 55, (SDL_Color){218, 201, 240, 255}, r->font_tiny);
-    }
-}
-
-void castle_draw_castellan_status(Renderer *r, const GameState *g, const Viewport *v) {
-    if (g->location != LOCATION_CASTLE_INTERIOR || g->level != 2) {
-        return;
-    }
-    for (int i = 0; i < g->enemy_count; i++) {
-        const Enemy *e = &g->enemies[i];
-        if (!e->active || e->type != ENEMY_CASTELLAN || e->max_hp <= 0 || !viewport_is_visible(v, e->x, e->y) || !map_is_explored(&g->map, e->x, e->y)) {
-            continue;
-        }
-        int width = r->screen_w - INFO_PANEL_W - 16;
-        if (width > 380) {
-            width = 380;
-        }
-        if (width < 160) {
-            return;
-        }
-        int x = (r->screen_w - INFO_PANEL_W - width) / 2;
-        int top = x < SWAMP_MAP_W / 2 + 12 ? SWAMP_MAP_H / 2 + 16 : 8;
-        rect(r, x, top, width, 78, (SDL_Color){35, 25, 39, 255});
-        char text[80];
-        if (width < 300) {
-            snprintf(text, sizeof(text), "CASTELLAN: PHASE %d", e->boss_attack == 2 ? 2 : 1);
-        } else {
-            snprintf(text, sizeof(text), "CASTELLAN: %s", e->boss_attack == 2 ? "BROKEN FORMATION" : "SHIELD COMMANDER");
-        }
-        renderer_draw_text(r, text, x + 10, top + 8, (SDL_Color){255, 220, 171, 255}, r->font_tiny);
-        rect(r, x + 10, top + 23, width - 20, 8, (SDL_Color){75, 42, 59, 255});
-        rect(r, x + 10, top + 23, (width - 20) * e->hp / e->max_hp, 8, (SDL_Color){211, 153, 89, 255});
-        static const char *attacks[] = {"PREPARING", "CHARGE", "SHIELD SWING", "FORMATION SWEEP", "GUARD RALLY"};
-        if (e->attack_target_x >= 0) {
-            int attack = e->attack_phase >= CASTELLAN_CHARGE && e->attack_phase <= CASTELLAN_RALLY ? e->attack_phase : 0;
-            snprintf(text, sizeof(text), "%s: %d%s", !e->boss_aux_x && attack != CASTELLAN_RALLY ? "BLOCKED ATTACK" : attacks[attack], e->move_timer >= 3 ? e->move_timer - 1 : 1, e->frozen_turns > 0 ? " FROZEN" : "");
-        } else if (e->move_timer == 2) {
-            snprintf(text, sizeof(text), "RECOVERY: %d%s", 1 + e->revive_timer, e->frozen_turns > 0 ? " FROZEN" : "");
-        } else {
-            snprintf(text, sizeof(text), "PREPARING ATTACK");
-        }
-        renderer_draw_text(r, text, x + 10, top + 38, (SDL_Color){255, 203, 143, 255}, r->font_tiny);
-        renderer_draw_text(r, width < 300 ? "SIDE LEVERS: A" : "SIDE LEVERS INTERRUPT CHARGES; A TO USE", x + 10, top + 55, (SDL_Color){196, 209, 215, 255}, r->font_tiny);
     }
 }
 

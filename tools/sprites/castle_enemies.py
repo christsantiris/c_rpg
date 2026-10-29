@@ -13,10 +13,10 @@ REGULAR_CROPS = (
     (480, 45, 1050, 525),  # Iron Warden
     (1080, 85, 1536, 525),  # Royal Marksman
     (210, 525, 615, 1005),  # Court Hexer
-    (630, 525, 1070, 1005),  # Bell Herald
+    None,  # Reserved atlas slot; shared enemy artwork is drawn separately.
 )
 BOSS_CROPS = (
-    (0, 25, 555, 490),  # Castellan
+    None,  # Reserved atlas slot; shared enemy artwork is drawn separately.
     (590, 25, 1020, 490),  # Royal Arcanist
     (1060, 25, 1515, 490),  # Lord Veyr: armored
     (15, 520, 545, 980),  # Lord Veyr: damaged
@@ -27,6 +27,8 @@ BOSS_CROPS = (
 def import_sheet(source, crops, frame_size, cell, destination):
     atlas = Image.new('RGBA', (cell * 3, cell * 2))
     for index, crop in enumerate(crops):
+        if crop is None:
+            continue
         sprite = source.crop(crop)
         bounds = sprite.getchannel('A').point(lambda a: 255 if a >= 128 else 0).getbbox()
         if bounds is None:

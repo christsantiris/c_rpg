@@ -190,12 +190,12 @@ def humanoid(kind):
     # Author bodies at their gameplay size; the atlas cell is padding, never a scale target.
     size = 48 if kind == 'colossus' else 32 if kind == 'troll' else 24
     canvas=Image.new('RGBA',(size,size))
-    boss=kind=='colossus'; troll=kind=='troll'; sentinel=kind=='sentinel'
+    boss=kind=='colossus'; troll=kind=='troll'
     base=size-2
     cx=size//2; scale=1.2 if boss else .80 if troll else .60
     def p(pts):
         return [(int(cx+x*scale),int(base+y*scale)) for x,y in pts]
-    skin=IRON if sentinel else STONE
+    skin=STONE
     # Feet, separated knees, broad angular torso, heavy articulated forearms.
     parts=[([(-9,-1),(-9,-6),(-4,-12),(-2,-9),(-3,-1)],skin),
            ([(3,-1),(2,-9),(5,-12),(9,-6),(10,-1)],skin),
@@ -225,15 +225,6 @@ def humanoid(kind):
         line(layer,2,14,11,11,STONE[1:4],1)
         for xx,yy in [(11,8),(23,15),(9,24)]:
             box(layer,xx,yy,3,2,GREEN[1])
-    elif sentinel:
-        # Closed visor and sword/shield, at the same 24px scale as dungeon armor.
-        box(layer,9,head_y-1,6,1,IRON[3])
-        box(layer,9,head_y+1,7,1,IRON[0])
-        box(layer,12,head_y,1,4,IRON[2])
-        polygon(layer,[(17,11),(22,12),(21,19),(19,21),(16,18)],IRON[1])
-        line(layer,17,12,21,13,IRON[3:],1)
-        line(layer,3,21,4,8,IRON,1)
-        line(layer,1,17,7,17,WOOD[3:],1)
     elif boss:
         # Giant squared stone hammer; one green fault line across the head.
         line(layer,5,44,10,16,WOOD,3)
@@ -250,19 +241,6 @@ def humanoid(kind):
     composite(canvas,layer,OUT)
     return canvas
 
-
-def rockworm():
-    canvas=Image.new('RGBA',(24,16))
-    for i,(x,y) in enumerate([(19,10),(17,7),(14,5),(11,5),(8,7),(6,11)]):
-        body_segment(canvas,[(x-2,y-2),(x+1,y-2),(x+3,y),(x+2,y+2),(x-2,y+2),(x-3,y)],STONE,23+i)
-    layer=Layer(24,16)
-    polygon(layer,[(2,10),(8,10),(9,14),(3,14)],STONE[1])
-    box(layer,3,11,5,2,OUT)
-    for xx in [3,5,7]:
-        layer.put(xx,11,STONE[5]);layer.put(xx,13,STONE[4])
-    layer.put(3,9,GREEN[3]);layer.put(7,9,GREEN[3])
-    composite(canvas,layer,OUT)
-    return canvas
 
 
 def machinery(repaired=False):
@@ -327,7 +305,7 @@ def build():
     save_sprite(entrance(),OUTDIR/'stonewake-entrance.bmp')
     save_sprite(workshop(),OUTDIR/'stonewake-workshop.bmp')
     enemies=Image.new('RGBA',(240,48))
-    for i,im in enumerate([rockworm(),humanoid('construct'),humanoid('troll'),humanoid('sentinel'),humanoid('colossus')]):
+    for i,im in [(1,humanoid('construct')),(2,humanoid('troll')),(4,humanoid('colossus'))]:
         enemies.alpha_composite(im,(i*48+(48-im.width)//2,48-im.getbbox()[3]))
     save_sprite(enemies,OUTDIR/'stonewake-enemies.bmp')
     derricks=Image.new('RGBA',(216,72))

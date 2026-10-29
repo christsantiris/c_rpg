@@ -11,7 +11,7 @@ and 300 score.
 
 Dain assigns **Recover the Treasure Map** in **Dawnmere's Alehouse**.
 Enter its south mountain gate.
-The Archer, Bomber, and Shaman Map Bearers occupy levels **2, 3, and 4** before
+The Archer, Warchief, and Shaman Map Bearers occupy levels **2, 3, and 4** before
 the level-5 Goblin King. Return to Dain in Dawnmere's Alehouse for 60 gold and 400 score.
 
 Alder assigns **The Lost Wardens** in **Stillbury's Inn**. Enter Stillbury's
@@ -85,7 +85,7 @@ Completed tab retains quests whose rewards have been collected. Each entry
 shows its quest giver, description, target area and stages, objective progress,
 status, gold reward, and score reward. The Bosses tab always lists every
 regional boss, including Stonewake Quarry's Quarry Colossus, with their
-defeated or undefeated status. It also tracks the castle's Castellan, Royal
+defeated or undefeated status. It also tracks the castle's armory Vampire, Royal
 Arcanist, and Lord Veyr. Miniboss victories remain recorded after retreat;
 Veyr's defeat ends the campaign with victory.
 

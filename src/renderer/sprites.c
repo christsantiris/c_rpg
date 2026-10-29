@@ -1987,19 +1987,19 @@ static void draw_forest_enemy(Renderer *r, int tx, int ty, EnemyType type) {
         case ENEMY_PIXIE: art = FOREST_ART_PIXIE; break;
         case ENEMY_BLIGHTED_WOLF: art = FOREST_ART_BLIGHTED_WOLF; break;
         case ENEMY_GIANT_SPIDER: art = FOREST_ART_GIANT_SPIDER; break;
-        case ENEMY_DARK_ELF: art = FOREST_ART_DARK_ELF; break;
-        case ENEMY_GIANT_WURM: art = FOREST_ART_GIANT_WURM; break;
+        case ENEMY_DARK_ELF_ARCHER: art = FOREST_ART_DARK_ELF_ARCHER; break;
+        case ENEMY_DARK_ELF_RANGER: art = FOREST_ART_DARK_ELF_RANGER; break;
         case ENEMY_FOREST_TROLL: art = FOREST_ART_FOREST_TROLL; break;
         case ENEMY_FOREST_NECROMANCER: art = FOREST_ART_FOREST_NECROMANCER; break;
         default: return;
     }
     static const SDL_Color bodies[FOREST_ART_COUNT] = {
         {238, 189, 84, 255}, {83, 87, 108, 255}, {106, 64, 103, 255},
-        {185, 166, 178, 255}, {127, 103, 65, 255}, {92, 111, 98, 255}, {208, 195, 163, 255}
+        {185, 166, 178, 255}, {185, 166, 178, 255}, {92, 111, 98, 255}, {208, 195, 163, 255}
     };
     static const SDL_Color clothes[FOREST_ART_COUNT] = {
         {100, 72, 133, 255}, {83, 87, 108, 255}, {106, 64, 103, 255},
-        {83, 63, 109, 255}, {182, 151, 90, 255}, {105, 73, 47, 255}, {69, 53, 94, 255}
+        {83, 63, 109, 255}, {49, 101, 69, 255}, {105, 73, 47, 255}, {69, 53, 94, 255}
     };
     static const SDL_Color eyes[FOREST_ART_COUNT] = {
         {213, 238, 203, 255}, {125, 210, 102, 255}, {239, 117, 88, 255},
@@ -2063,8 +2063,7 @@ static void draw_mountain_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     switch (type) {
         case ENEMY_GOBLIN_SCOUT: art = MOUNTAIN_ART_GOBLIN_SCOUT; break;
         case ENEMY_GOBLIN_ARCHER: art = MOUNTAIN_ART_GOBLIN_ARCHER; break;
-        case ENEMY_GOBLIN_BOMBER: art = MOUNTAIN_ART_GOBLIN_BOMBER; break;
-        case ENEMY_TUNNEL_SPIDER: art = MOUNTAIN_ART_TUNNEL_SPIDER; break;
+        case ENEMY_GOBLIN_WARCHIEF: art = MOUNTAIN_ART_GOBLIN_WARCHIEF; break;
         case ENEMY_CAVE_TROLL: art = MOUNTAIN_ART_CAVE_TROLL; break;
         case ENEMY_HOBGOBLIN_GUARD: art = MOUNTAIN_ART_HOBGOBLIN_GUARD; break;
         case ENEMY_GOBLIN_SHAMAN: art = MOUNTAIN_ART_GOBLIN_SHAMAN; break;
@@ -2072,11 +2071,11 @@ static void draw_mountain_enemy(Renderer *r, int tx, int ty, EnemyType type) {
         default: return;
     }
     static const SDL_Color bodies[MOUNTAIN_ART_COUNT] = {
-        {91, 121, 45, 255}, {91, 121, 45, 255}, {91, 121, 45, 255}, {103, 91, 88, 255},
+        {91, 121, 45, 255}, {91, 121, 45, 255}, {91, 121, 45, 255},
         {103, 91, 88, 255}, {91, 121, 45, 255}, {91, 121, 45, 255}, {91, 121, 45, 255}
     };
     static const SDL_Color clothes[MOUNTAIN_ART_COUNT] = {
-        {128, 48, 30, 255}, {128, 48, 30, 255}, {128, 48, 30, 255}, {128, 48, 30, 255},
+        {128, 48, 30, 255}, {128, 48, 30, 255}, {155, 51, 41, 255},
         {85, 62, 45, 255}, {128, 48, 30, 255}, {128, 48, 30, 255}, {105, 35, 32, 255}
     };
     SDL_Color body = bodies[art];
@@ -2584,18 +2583,17 @@ static void draw_glassdeep_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     }
     int art;
     switch (type) {
-        case ENEMY_CRYSTAL_SPIDER: art = GLASS_ART_CRYSTAL_SPIDER; break;
         case ENEMY_BLIND_STALKER: art = GLASS_ART_BLIND_STALKER; break;
         case ENEMY_SHARD_GOLEM:
-        case ENEMY_IRON_SENTINEL: art = GLASS_ART_SHARD_GOLEM; break;
+            art = GLASS_ART_SHARD_GOLEM; break;
         case ENEMY_PRISM_SOVEREIGN: art = GLASS_ART_PRISM_SOVEREIGN; break;
         default: return;
     }
     static const SDL_Color bodies[GLASS_ART_COUNT] = {
-        {86, 181, 216, 255}, {163, 170, 185, 255}, {86, 181, 216, 255}, {146, 109, 213, 255}
+        {163, 170, 185, 255}, {86, 181, 216, 255}, {146, 109, 213, 255}
     };
     static const SDL_Color clothes[GLASS_ART_COUNT] = {
-        {146, 109, 213, 255}, {69, 63, 89, 255}, {49, 41, 78, 255}, {146, 109, 213, 255}
+        {69, 63, 89, 255}, {49, 41, 78, 255}, {146, 109, 213, 255}
     };
     SDL_Color body = bodies[art];
     SDL_Color cloth = clothes[art];
@@ -2716,8 +2714,8 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         SDL_RenderCopy(r->sdl, r->mangrove_enemy_texture, &source, &dest);
         return;
     }
-    if (type >= ENEMY_IRONHIDE_BOAR && type <= ENEMY_ELDERTHORN) {
-        int index = type - ENEMY_IRONHIDE_BOAR;
+    if (type >= ENEMY_THORN_DRYAD && type <= ENEMY_ELDERTHORN) {
+        int index = type - ENEMY_THORN_DRYAD + 1;
         SDL_Rect source = {index * 64, 0, 64, 64};
         SDL_Rect dest = {tile_x * TILE_SIZE - 20, tile_y * TILE_SIZE - 40, 64, 64};
         SDL_RenderCopy(r->sdl, r->elderwood_enemy_texture, &source, &dest);
@@ -2743,7 +2741,6 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_ROYAL_GUARD:
             draw_royal_guard_overlay(r, tile_x, tile_y, 0);
             break;
-        case ENEMY_IRONHIDE_BOAR:
         case ENEMY_THORN_DRYAD:
         case ENEMY_TREEFOLK:
         case ENEMY_ELDERTHORN:
@@ -2752,8 +2749,6 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_IRON_WARDEN:
         case ENEMY_ROYAL_MARKSMAN:
         case ENEMY_COURT_HEXER:
-        case ENEMY_BELL_HERALD:
-        case ENEMY_CASTELLAN:
         case ENEMY_ROYAL_ARCANIST:
         case ENEMY_LORD_VEYR:
             draw_armored_guard(r, tile_x, tile_y);
@@ -2766,8 +2761,6 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_MINOTAUR:
             draw_swamp_enemy(r, tile_x, tile_y, type);
             break;
-        case ENEMY_IRON_SENTINEL:
-        case ENEMY_CRYSTAL_SPIDER:
         case ENEMY_BLIND_STALKER:
         case ENEMY_SHARD_GOLEM:
         case ENEMY_PRISM_SOVEREIGN:
@@ -2815,15 +2808,14 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_PIXIE:
         case ENEMY_BLIGHTED_WOLF:
         case ENEMY_GIANT_SPIDER:
-        case ENEMY_DARK_ELF:
-        case ENEMY_GIANT_WURM:
+        case ENEMY_DARK_ELF_ARCHER:
+        case ENEMY_DARK_ELF_RANGER:
         case ENEMY_FOREST_TROLL:
         case ENEMY_FOREST_NECROMANCER:
             draw_forest_enemy(r, tile_x, tile_y, type); break;
         case ENEMY_GOBLIN_SCOUT:
         case ENEMY_GOBLIN_ARCHER:
-        case ENEMY_GOBLIN_BOMBER:
-        case ENEMY_TUNNEL_SPIDER:
+        case ENEMY_GOBLIN_WARCHIEF:
         case ENEMY_CAVE_TROLL:
         case ENEMY_HOBGOBLIN_GUARD:
         case ENEMY_GOBLIN_SHAMAN:
@@ -2844,7 +2836,6 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_VINEBOUND_GUARDIAN:
         case ENEMY_SUN_PRIEST:
         case ENEMY_SERPENT_SPIRIT:
-        case ENEMY_TREASURE_WRAITH:
         case ENEMY_LUNAR_EFFIGY:
         case ENEMY_MOONBOUND_SENTINEL:
         case ENEMY_FALLEN_SUN_GUARDIAN: {
@@ -2858,7 +2849,6 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
                 case ENEMY_VINEBOUND_GUARDIAN: art = 3; break;
                 case ENEMY_SUN_PRIEST: art = 4; break;
                 case ENEMY_SERPENT_SPIRIT: art = 5; break;
-                case ENEMY_TREASURE_WRAITH: art = 6; break;
                 case ENEMY_LUNAR_EFFIGY: art = 7; break;
                 case ENEMY_MOONBOUND_SENTINEL: art = 8; break;
                 case ENEMY_FALLEN_SUN_GUARDIAN: art = 9; break;

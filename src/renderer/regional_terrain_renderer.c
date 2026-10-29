@@ -320,8 +320,8 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         line1 = "LEAVE WARNED FIRE AND ATTACK LANES";
         line2 = "USE LEVERS TO OPEN PORTCULLISES";
         if (g->level == 2) {
-            line1 = "SIDE LEVERS INTERRUPT CHARGES";
-            line2 = "DEFEAT THE CASTELLAN TO CLIMB";
+            line1 = "SIDE LEVERS SPLIT THE DEFENDERS";
+            line2 = "DEFEAT THE VAMPIRE TO CLIMB";
         } else if (g->level == 4) {
             line1 = "DISABLE THE LINKED WARD PEDESTAL";
             line2 = "DEFEAT THE ARCANIST TO CLIMB";

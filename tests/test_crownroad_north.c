@@ -152,15 +152,13 @@ static void test_tactics(GameState *g) {
 
     arena(g);
     g->enemy_count = 1;
-    g->enemies[0] = actor(ENEMY_GOBLIN_BOMBER, 28, 30, 9);
+    g->enemies[0] = actor(ENEMY_GOBLIN_WARCHIEF, 28, 30, 9);
     northroad_tick(g, &g->enemies[0], &damage);
-    ASSERT("bombers announce a fixed cross-shaped blast for two player actions", !damage && g->enemies[0].move_timer == 2 &&
-        northroad_attack_marks(g, &g->enemies[0], 28, 35) && northroad_attack_marks(g, &g->enemies[0], 29, 35) &&
-        !northroad_attack_marks(g, &g->enemies[0], 29, 36));
-    g->player.x += 2;
+    ASSERT("Warchiefs close into melee without a bomb warning", !damage && !g->enemies[0].attack_phase && g->enemies[0].y > 30);
+    g->enemies[0].x = g->player.x;
+    g->enemies[0].y = g->player.y - 1;
     northroad_tick(g, &g->enemies[0], &damage);
-    northroad_tick(g, &g->enemies[0], &damage);
-    ASSERT("moving twice escapes the bomb without its target tracking the player", !damage && !g->enemies[0].attack_phase);
+    ASSERT("Warchiefs attack in melee using their existing attack stat", damage == g->enemies[0].attack);
 
     arena(g);
     g->enemy_count = 4;

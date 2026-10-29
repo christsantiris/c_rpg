@@ -3,14 +3,12 @@
 
 #include "game.h"
 
-enum { CASTELLAN_CHARGE = 1, CASTELLAN_SWING, CASTELLAN_SWEEP, CASTELLAN_RALLY };
 
 const char *castle_floor_name(int level);
 void castle_generate(Map *m, int level);
 void castle_migrate_layout(GameState *g);
 int castle_migrate_encounters(GameState *g);
-void castle_migrate_castellan(GameState *g);
-int castle_castellan_marks(const Enemy *e, int x, int y);
+void castle_migrate_armory(GameState *g);
 void castle_spawn(GameState *g);
 void castle_summon_guard(GameState *g, EnemyType type, int x, int y);
 void castle_store(GameState *g);

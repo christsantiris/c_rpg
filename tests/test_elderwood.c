@@ -419,7 +419,7 @@ static void test_wolf_save_migration(GameState *g, GameState *loaded) {
     ASSERT("wolf migration preserves named hunt and quest encounters", strcmp(loaded->enemies[2].name, "Rimefang") == 0 &&
         strcmp(loaded->enemies[3].name, "Expedition Guardian I") == 0 && strcmp(loaded->enemies[0].name, "Blighted Wolf") == 0);
     ASSERT("retiring wolf variants leaves unrelated serialized enemy IDs unchanged", ENEMY_FROST_ARCHER == 57 &&
-        ENEMY_IRONHIDE_BOAR == 96 && ENEMY_ROYAL_GUARD == 100 && ENEMY_GOBLIN_MINE_BOSS == 119);
+        ENEMY_THORN_DRYAD == 97 && ENEMY_ROYAL_GUARD == 100 && ENEMY_GOBLIN_MINE_BOSS == 119);
 }
 
 void test_elderwood(void) {

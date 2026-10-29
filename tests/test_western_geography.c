@@ -76,7 +76,7 @@ void test_western_geography(void) {
         town_road_connection(LOCATION_TOWN3, TOWN_SIDE_WEST, &route) && route.area == LOCATION_GIANTS_CROWN &&
         town_road_connection(LOCATION_TOWN4, TOWN_SIDE_EAST, &route) && route.area == LOCATION_IRONFANG && !approach_enter_region(g, 10));
     ASSERT("removing the garden leaves surviving serialized IDs unchanged", LOCATION_ASHEN == 25 &&
-        TILE_ASHEN_FLOOR == 160 && ENEMY_CINDER_IMP == 74 && ENEMY_IRON_SENTINEL == 113);
+        TILE_ASHEN_FLOOR == 160 && ENEMY_CINDER_IMP == 74 && ENEMY_STONE_GIANT == 5);
 
     game_enter_town3(g);
     game_enter_ashen(g);

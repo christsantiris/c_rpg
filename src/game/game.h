@@ -33,7 +33,7 @@
 #define HUNT_REWARD_SCORE 1500
 
 #define DAIN_FRAGMENT_ARCHER 1
-#define DAIN_FRAGMENT_BOMBER 2
+#define DAIN_FRAGMENT_WARCHIEF 2
 #define DAIN_FRAGMENT_SHAMAN 4
 
 #define ALDER_WARDEN_STAGE_2 1
@@ -562,6 +562,7 @@ int game_has_temple_interaction(const GameState *g);
 int game_interact_temple(GameState *g);
 int game_temple_dormant_sentinels(const GameState *g);
 int game_temple_remaining_enemies(const GameState *g);
+void game_temple_sync_enemies(GameState *g);
 void game_record_temple_enemy_defeated(GameState *g, EnemyType type);
 int game_has_island_interaction(const GameState *g);
 int game_interact_island(GameState *g);
