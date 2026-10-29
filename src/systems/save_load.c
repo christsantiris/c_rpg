@@ -885,6 +885,11 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
 }
 
 static void deserialize_item_metadata(const cJSON *obj, Item *item) {
+    const cJSON *accessory = cJSON_GetObjectItem(obj, "accessory_family");
+    item->accessory_family = ACCESSORY_FAMILY_NONE;
+    if (item->type == ITEM_ACCESSORY && cJSON_IsNumber(accessory) && accessory->valuedouble == accessory->valueint && accessory->valueint >= ACCESSORY_FAMILY_GAUNTLETS && accessory->valueint <= ACCESSORY_FAMILY_AMULET) {
+        item->accessory_family = accessory->valueint;
+    }
     // Migrate bow names and ranges in inventory, floor loot and castle loot.
     if (item->type == ITEM_WEAPON && strcmp(item->name, "Bow") == 0) {
         snprintf(item->name, sizeof(item->name), "Hunting Bow");
@@ -1022,6 +1027,7 @@ static cJSON *serialize_castle_loot(const FloorItem *items, int count) {
         cJSON_AddNumberToObject(it, "armor_penetration_percent",
             fi->item.armor_penetration_percent);
         cJSON_AddNumberToObject(it, "armor_family", fi->item.armor_family);
+        cJSON_AddNumberToObject(it, "accessory_family", fi->item.accessory_family);
         cJSON_AddNumberToObject(it, "max_hp_bonus", fi->item.max_hp_bonus);
         cJSON_AddNumberToObject(it, "max_mp_bonus", fi->item.max_mp_bonus);
         cJSON_AddNumberToObject(it, "evasion_chance",
@@ -1839,7 +1845,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 222);
+    cJSON_AddNumberToObject(root, "save_version", 223);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -2142,6 +2148,7 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "armor_penetration_percent",
             item->armor_penetration_percent);
         cJSON_AddNumberToObject(it, "armor_family", item->armor_family);
+        cJSON_AddNumberToObject(it, "accessory_family", item->accessory_family);
         cJSON_AddNumberToObject(it, "max_hp_bonus", item->max_hp_bonus);
         cJSON_AddNumberToObject(it, "max_mp_bonus", item->max_mp_bonus);
         cJSON_AddNumberToObject(it, "evasion_chance", item->evasion_chance);
@@ -2193,6 +2200,7 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddNumberToObject(it, "armor_penetration_percent",
             fi->item.armor_penetration_percent);
         cJSON_AddNumberToObject(it, "armor_family", fi->item.armor_family);
+        cJSON_AddNumberToObject(it, "accessory_family", fi->item.accessory_family);
         cJSON_AddNumberToObject(it, "max_hp_bonus", fi->item.max_hp_bonus);
         cJSON_AddNumberToObject(it, "max_mp_bonus", fi->item.max_mp_bonus);
         cJSON_AddNumberToObject(it, "evasion_chance",
