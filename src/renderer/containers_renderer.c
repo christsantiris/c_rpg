@@ -48,7 +48,7 @@ static void floor_tile(Renderer *r, const GameState *g, int sx, int sy, int x, i
         case LOCATION_MANGROVES: mangrove_draw_tile(r, g, sx, sy, x, y, g->level == 4 ? TILE_MANGROVE_DECK : TILE_MANGROVE_MUD); break;
         case LOCATION_IRONFANG: ironfang_draw_tile(r, g, sx, sy, x, y, TILE_IRON_FLOOR); break;
         case LOCATION_STORMWATCH: stormwatch_draw_tile(r, g, sx, sy, x, y, TILE_STORM_GRASS); break;
-        case LOCATION_CROWNROAD_NORTH: northroad_draw_tile(r, sx, sy, x, y, TILE_ELDERWOOD_FLOOR); break;
+        case LOCATION_CROWNROAD_NORTH: northroad_draw_tile(r, g, sx, sy, x, y, TILE_ELDERWOOD_FLOOR); break;
         case LOCATION_CASTLE_INTERIOR: castle_draw_tile(r, g, sx, sy, x, y, TILE_CASTLE_FLOOR); break;
         case LOCATION_JAIL_ARMORY: jail_draw_tile(r, g, sx, sy, x, y, TILE_CASTLE_FLOOR); break;
         default: draw_floor(r, sx, sy); break;
