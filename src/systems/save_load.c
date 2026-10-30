@@ -887,7 +887,7 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
 static void deserialize_item_metadata(const cJSON *obj, Item *item) {
     const cJSON *accessory = cJSON_GetObjectItem(obj, "accessory_family");
     item->accessory_family = ACCESSORY_FAMILY_NONE;
-    if (item->type == ITEM_ACCESSORY && cJSON_IsNumber(accessory) && accessory->valuedouble == accessory->valueint && accessory->valueint >= ACCESSORY_FAMILY_GAUNTLETS && accessory->valueint <= ACCESSORY_FAMILY_AMULET) {
+    if (item->type == ITEM_ACCESSORY && cJSON_IsNumber(accessory) && accessory->valuedouble == accessory->valueint && accessory->valueint >= ACCESSORY_FAMILY_GAUNTLETS && accessory->valueint <= ACCESSORY_FAMILY_BOOTS) {
         item->accessory_family = accessory->valueint;
     }
     // Migrate bow names and ranges in inventory, floor loot and castle loot.
@@ -1889,7 +1889,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 227);
+    cJSON_AddNumberToObject(root, "save_version", 228);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -6948,6 +6948,9 @@ int load_game(GameState *g, int slot) {
         g->equipped_armor = game_equipped_item(g, EQUIPMENT_ARMOR) ? EQUIPMENT_ARMOR : -1;
     }
     if (save_version < 226 && g->location == LOCATION_TOWN) {
+        town_life_migrate(g);
+    }
+    if (save_version < 228 && (g->location == LOCATION_TOWN2 || g->location == LOCATION_DAWNMERE)) {
         town_life_migrate(g);
     }
     game_recover_retired_items(g);

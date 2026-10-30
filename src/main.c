@@ -956,6 +956,10 @@ int main(int argc, char **argv) {
                             if (!shop_accepts_item(shop_screen.type, &item)) {
                                 push_message(&game, item_is_jewelry(&item)
                                     ? "Take rings and amulets to the Goldsmith in Oakhaven."
+                                    : item.type == ITEM_ACCESSORY && item.accessory_family == ACCESSORY_FAMILY_BOOTS
+                                        ? "Take boots to the Cobbler in Stillbury."
+                                    : item.type == ITEM_ACCESSORY && item.accessory_family == ACCESSORY_FAMILY_BELT
+                                        ? "Take belts to the Belt Maker in Dawnmere."
                                     : item.type == ITEM_WEAPON || item.type == ITEM_ARMOR || item.type == ITEM_SHIELD || item.type == ITEM_HELMET || item.type == ITEM_ACCESSORY
                                         ? "Take weapons and equipment to the blacksmith."
                                         : "Take potions, scrolls and tomes to the alchemist.");
@@ -1069,9 +1073,9 @@ int main(int argc, char **argv) {
                                 screen = SCREEN_HELP;
                                 break;
                             case CONTROL_TALK: {
-                                if (town_life_near_goldsmith(&game)) {
+                                if (town_life_near_goldsmith(&game) || town_life_near_cobbler(&game) || town_life_near_belt_maker(&game)) {
                                     game.dialogue_active = 0;
-                                    shop_init(&shop_screen, SHOP_TYPE_GOLDSMITH, game.defeated_bosses, game.player.player_class);
+                                    shop_init(&shop_screen, game.location == LOCATION_COBBLER ? SHOP_TYPE_COBBLER : game.location == LOCATION_BELT_MAKER ? SHOP_TYPE_BELT_MAKER : SHOP_TYPE_GOLDSMITH, game.defeated_bosses, game.player.player_class);
                                     screen = SCREEN_SHOP;
                                     break;
                                 }
@@ -1442,6 +1446,10 @@ int main(int argc, char **argv) {
                                         if (!shop_accepts_item(shop_screen.type, &item)) {
                                             push_message(&game, item_is_jewelry(&item)
                                                 ? "Take rings and amulets to the Goldsmith in Oakhaven."
+                                                : item.type == ITEM_ACCESSORY && item.accessory_family == ACCESSORY_FAMILY_BOOTS
+                                                    ? "Take boots to the Cobbler in Stillbury."
+                                                : item.type == ITEM_ACCESSORY && item.accessory_family == ACCESSORY_FAMILY_BELT
+                                                    ? "Take belts to the Belt Maker in Dawnmere."
                                                 : item.type == ITEM_WEAPON || item.type == ITEM_ARMOR || item.type == ITEM_SHIELD || item.type == ITEM_HELMET || item.type == ITEM_ACCESSORY
                                                     ? "Take weapons and equipment to the blacksmith."
                                                     : "Take potions, scrolls and tomes to the alchemist.");

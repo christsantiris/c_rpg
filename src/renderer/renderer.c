@@ -98,7 +98,9 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
         "assets/images/monastery.bmp",
         "assets/images/spice-merchant.bmp",
         "assets/images/alehouse.bmp",
-        "assets/images/goldsmith.bmp"
+        "assets/images/goldsmith.bmp",
+        "assets/images/cobbler.bmp",
+        "assets/images/belt-maker.bmp"
     };
     for (int i = 0; i < LOCAL_BUILDING_TEXTURE_COUNT; i++) {
         r->local_building_textures[i] = load_sprite_texture(sdl, local_paths[i]);

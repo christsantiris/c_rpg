@@ -190,7 +190,9 @@ typedef enum {
     LOCATION_CROWNROAD_NORTH,
     LOCATION_GIANTS_CROWN,
     LOCATION_ALEHOUSE,
-    LOCATION_GOLDSMITH
+    LOCATION_GOLDSMITH,
+    LOCATION_COBBLER,
+    LOCATION_BELT_MAKER
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the

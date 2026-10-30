@@ -153,6 +153,12 @@ static void icon_palette(SDL_Color *pal, const Item *item) {
         } else if (strcmp(item->name, "Goblin King's Shield") == 0) {
             cloth = (SDL_Color){74, 115, 59, 255};
         }
+        if (item->type == ITEM_ACCESSORY && item->rarity != ITEM_RARITY_COMMON) {
+            wood = item->rarity == ITEM_RARITY_RARE ? (SDL_Color){94, 64, 127, 255} : (SDL_Color){99, 111, 123, 255};
+            cloth = wood;
+            accent = item->rarity == ITEM_RARITY_RARE ? (SDL_Color){174, 131, 240, 255} : (SDL_Color){128, 205, 230, 255};
+            trim = item->rarity == ITEM_RARITY_RARE ? (SDL_Color){229, 195, 112, 255} : (SDL_Color){180, 197, 208, 255};
+        }
         if (item->type == ITEM_POTION_HEALTH) {
             accent = (SDL_Color){211, 60, 71, 255};
         } else if (item->type == ITEM_POTION_MANA) {
@@ -329,7 +335,9 @@ void draw_icon_item(Renderer *r, int px, int py, const Item *item) {
         case ITEM_ACCESSORY:
             art = item->accessory_family == ACCESSORY_FAMILY_RING ? ICON_ART_RING
                 : item->accessory_family == ACCESSORY_FAMILY_AMULET ? ICON_ART_AMULET
-                : item->accessory_family == ACCESSORY_FAMILY_BRACERS ? ICON_ART_BRACERS : ICON_ART_GAUNTLETS;
+                : item->accessory_family == ACCESSORY_FAMILY_BRACERS ? ICON_ART_BRACERS
+                : item->accessory_family == ACCESSORY_FAMILY_BELT ? ICON_ART_BELT
+                : item->accessory_family == ACCESSORY_FAMILY_BOOTS ? ICON_ART_BOOTS : ICON_ART_GAUNTLETS;
             break;
         case ITEM_SCROLL: art = ICON_ART_SCROLL; break;
         case ITEM_SPELL_TOME: art = ICON_ART_BOOK; break;

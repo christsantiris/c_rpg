@@ -76,7 +76,7 @@ void test_equipment_catalog(void) {
     for (int cls = CLASS_WARRIOR; cls <= CLASS_ROGUE; cls++) {
         shop_init(&smith, SHOP_TYPE_BLACKSMITH, (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) | (1 << LOCATION_SWAMP), cls);
         shop_init(&jeweler, SHOP_TYPE_GOLDSMITH, 0, cls);
-        stocks_valid &= smith.item_count == 39 && smith.item_count <= MAX_SHOP_ITEMS && jeweler.item_count == 2;
+        stocks_valid &= smith.item_count == 43 && smith.item_count <= MAX_SHOP_ITEMS && jeweler.item_count == 2;
         for (int i = 0; i < smith.item_count; i++) {
             stocks_valid &= shop_accepts_item(SHOP_TYPE_BLACKSMITH, &smith.items[i]) && !item_is_jewelry(&smith.items[i]);
         }

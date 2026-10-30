@@ -27,6 +27,8 @@ void town_life_enter(GameState *g, int x, int y);
 void town_life_leave(GameState *g);
 int town_life_talk(GameState *g, int greeting);
 int town_life_near_goldsmith(const GameState *g);
+int town_life_near_cobbler(const GameState *g);
+int town_life_near_belt_maker(const GameState *g);
 void town_life_migrate(GameState *g);
 
 #endif

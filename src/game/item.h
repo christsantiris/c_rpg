@@ -51,7 +51,9 @@ typedef enum {
     ACCESSORY_FAMILY_GAUNTLETS,
     ACCESSORY_FAMILY_BRACERS,
     ACCESSORY_FAMILY_RING,
-    ACCESSORY_FAMILY_AMULET
+    ACCESSORY_FAMILY_AMULET,
+    ACCESSORY_FAMILY_BELT,
+    ACCESSORY_FAMILY_BOOTS
 } AccessoryFamily;
 
 typedef enum {
@@ -166,6 +168,7 @@ Item item_make_arrows(void);
 Item item_make_strength_potion(void);
 Item item_make_intelligence_potion(void);
 Item item_make_leather_cap(void);
+Item item_make_accessory(AccessoryFamily family, int tier);
 Item item_make_leather_gauntlets(void);
 Item item_make_leather_bracers(void);
 Item item_make_ring_of_vigor(void);

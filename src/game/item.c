@@ -47,28 +47,52 @@ Item item_make_leather_cap(void) {
     return item;
 }
 
-Item item_make_leather_gauntlets(void) {
-    Item item = make_accessory("Leather Gauntlets", ACCESSORY_FAMILY_GAUNTLETS, 60);
-    item.attack_bonus = 1;
+typedef struct {
+    const char *name;
+    int value;
+    int attack;
+    int defense;
+    int hp;
+    int mp;
+} AccessorySpec;
+
+static const AccessorySpec accessory_catalog[6][3] = {
+    {{"Leather Gauntlets", 60, 1, 0, 0, 0}, {"Iron Gauntlets", 160, 2, 0, 0, 0}, {"Runed Gauntlets", 350, 3, 0, 0, 5}},
+    {{"Leather Bracers", 40, 0, 1, 0, 0}, {"Iron Bracers", 120, 0, 2, 0, 0}, {"Runed Bracers", 300, 0, 3, 5, 0}},
+    {{"Ring of Vigor", 80, 0, 0, 10, 0}, {"Ring of Fortitude", 200, 0, 0, 20, 0}, {"Ring of Vitality", 360, 0, 0, 30, 0}},
+    {{"Copper Amulet", 80, 0, 0, 0, 10}, {"Silver Amulet", 200, 0, 0, 0, 20}, {"Moonstone Amulet", 360, 0, 0, 0, 30}},
+    {{"Leather Belt", 50, 0, 0, 5, 0}, {"Studded Belt", 150, 0, 0, 15, 0}, {"Guardian Belt", 300, 0, 1, 25, 0}},
+    {{"Leather Boots", 50, 0, 1, 0, 0}, {"Reinforced Boots", 140, 0, 2, 0, 0}, {"Warden Boots", 300, 0, 3, 5, 0}}
+};
+
+Item item_make_accessory(AccessoryFamily family, int tier) {
+    if (family < ACCESSORY_FAMILY_GAUNTLETS || family > ACCESSORY_FAMILY_BOOTS || tier < 1 || tier > 3) {
+        return (Item){0};
+    }
+    const AccessorySpec *spec = &accessory_catalog[family - ACCESSORY_FAMILY_GAUNTLETS][tier - 1];
+    Item item = make_accessory(spec->name, family, spec->value);
+    item.attack_bonus = spec->attack;
+    item.defense_bonus = spec->defense;
+    item.max_hp_bonus = spec->hp;
+    item.max_mp_bonus = spec->mp;
+    item.rarity = tier - 1;
     return item;
+}
+
+Item item_make_leather_gauntlets(void) {
+    return item_make_accessory(ACCESSORY_FAMILY_GAUNTLETS, 1);
 }
 
 Item item_make_leather_bracers(void) {
-    Item item = make_accessory("Leather Bracers", ACCESSORY_FAMILY_BRACERS, 40);
-    item.defense_bonus = 1;
-    return item;
+    return item_make_accessory(ACCESSORY_FAMILY_BRACERS, 1);
 }
 
 Item item_make_ring_of_vigor(void) {
-    Item item = make_accessory("Ring of Vigor", ACCESSORY_FAMILY_RING, 80);
-    item.max_hp_bonus = 10;
-    return item;
+    return item_make_accessory(ACCESSORY_FAMILY_RING, 1);
 }
 
 Item item_make_copper_amulet(void) {
-    Item item = make_accessory("Copper Amulet", ACCESSORY_FAMILY_AMULET, 80);
-    item.max_mp_bonus = 10;
-    return item;
+    return item_make_accessory(ACCESSORY_FAMILY_AMULET, 1);
 }
 
 int item_accessory_limit(const Item *item) {
@@ -81,6 +105,8 @@ int item_accessory_limit(const Item *item) {
         case ACCESSORY_FAMILY_GAUNTLETS:
         case ACCESSORY_FAMILY_BRACERS:
         case ACCESSORY_FAMILY_AMULET:
+        case ACCESSORY_FAMILY_BELT:
+        case ACCESSORY_FAMILY_BOOTS:
             return 1;
         default:
             return 0;
