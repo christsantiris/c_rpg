@@ -5,7 +5,7 @@
 #include <SDL2/SDL_ttf.h>
 
 #define TILE_SIZE 24
-#define LOCAL_BUILDING_TEXTURE_COUNT 6
+#define LOCAL_BUILDING_TEXTURE_COUNT 8
 
 typedef enum {
     TOWN_EXIT_DUNGEON,

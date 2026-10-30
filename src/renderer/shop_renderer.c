@@ -84,6 +84,8 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
         : s->type == SHOP_TYPE_HEALER ? "HEALER"
         : s->type == SHOP_TYPE_FLETCHER ? "FLETCHER"
         : s->type == SHOP_TYPE_GOLDSMITH ? "GOLDSMITH"
+        : s->type == SHOP_TYPE_COBBLER ? "COBBLER"
+        : s->type == SHOP_TYPE_BELT_MAKER ? "BELT MAKER"
         : s->type == SHOP_TYPE_APOTHECARY ? "APOTHECARY" : "WITCH";
     renderer_draw_text(r, title, cx - 60, 40, gold, r->font_large);
 
@@ -91,11 +93,12 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
     SDL_snprintf(gold_str, sizeof(gold_str), "YOUR GOLD: %d", g->gold);
     renderer_draw_text(r, gold_str, cx - 60, 80, gold, r->font_small);
 
-    if (s->type == SHOP_TYPE_ALCHEMIST || s->type == SHOP_TYPE_BLACKSMITH) {
+    if (s->type == SHOP_TYPE_ALCHEMIST || s->type == SHOP_TYPE_BLACKSMITH || s->type == SHOP_TYPE_GOLDSMITH || s->type == SHOP_TYPE_COBBLER || s->type == SHOP_TYPE_BELT_MAKER) {
         char tier[32];
-        SDL_snprintf(tier, sizeof(tier), "STOCK TIER %d/4", s->stock_tier);
+        int max_tier = s->type == SHOP_TYPE_GOLDSMITH || s->type == SHOP_TYPE_COBBLER || s->type == SHOP_TYPE_BELT_MAKER ? 3 : 4;
+        SDL_snprintf(tier, sizeof(tier), "STOCK TIER %d/%d", s->stock_tier, max_tier);
         renderer_draw_text(r, tier, cx + 100, 80, gold, r->font_tiny);
-        const char *unlock = s->stock_tier < 4
+        const char *unlock = s->stock_tier < max_tier
             ? "NEXT TIER: DEFEAT AN AREA BOSS"
             : "ALL STOCK TIERS UNLOCKED";
         renderer_draw_text(r, unlock, cx + 100, 96, dimmed, r->font_tiny);

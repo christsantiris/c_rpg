@@ -25,7 +25,13 @@ static const TownBuilding buildings[] = {
         "ALEHOUSE", "Dain", NULL, NULL},
     {LOCATION_TOWN, LOCATION_GOLDSMITH, 25, 17, 5, 4, 5, 0,
         "GOLDSMITH", "Goldsmith Iven",
-        "Welcome! I buy and sell rings and amulets. Approach my counter and Talk to browse the jewelry.", NULL}
+        "Welcome! I buy and sell rings and amulets. Approach my counter and Talk to browse the jewelry.", NULL},
+    {LOCATION_TOWN2, LOCATION_COBBLER, 25, 16, 5, 4, 6, 0,
+        "COBBLER", "Cobbler Elin",
+        "Welcome! I buy and sell boots. Approach my counter and Talk to browse my stock.", NULL},
+    {LOCATION_DAWNMERE, LOCATION_BELT_MAKER, 7, 17, 5, 4, 7, 0,
+        "BELT MAKER", "Belt Maker Torren",
+        "Welcome! I buy and sell belts. Approach my counter and Talk to browse my stock.", NULL}
 };
 
 const TownBuilding *town_life_building(Location location) {
@@ -122,6 +128,16 @@ void town_life_generate(Map *map, Location interior, int *sx, int *sy) {
 
 int town_life_near_goldsmith(const GameState *g) {
     return g->location == LOCATION_GOLDSMITH &&
+        abs(g->player.x - RESIDENT_X) <= 1 && abs(g->player.y - RESIDENT_Y) <= 1;
+}
+
+int town_life_near_cobbler(const GameState *g) {
+    return g->location == LOCATION_COBBLER &&
+        abs(g->player.x - RESIDENT_X) <= 1 && abs(g->player.y - RESIDENT_Y) <= 1;
+}
+
+int town_life_near_belt_maker(const GameState *g) {
+    return g->location == LOCATION_BELT_MAKER &&
         abs(g->player.x - RESIDENT_X) <= 1 && abs(g->player.y - RESIDENT_Y) <= 1;
 }
 
