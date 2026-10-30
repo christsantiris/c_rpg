@@ -68,14 +68,17 @@ void quest_journal_draw(Renderer *r, const GameState *g, const QuestJournalScree
 
     renderer_draw_text(r, "QUEST JOURNAL", r->screen_w / 2 - 110, 35,
         gold, r->font_large);
-    SDL_Color active_tab = screen->tab == QUEST_TAB_ACTIVE ? gold : dimmed;
-    SDL_Color completed_tab = screen->tab == QUEST_TAB_COMPLETED
-        ? gold : dimmed;
-    renderer_draw_text(r, "ACTIVE", margin, 82, active_tab, r->font_small);
-    renderer_draw_text(r, "COMPLETED", margin + 120, 82, completed_tab,
-        r->font_small);
-    renderer_draw_text(r, "BOSSES", margin + 260, 82,
-        screen->tab == QUEST_TAB_BOSSES ? gold : dimmed, r->font_small);
+    int active = game_active_quest_count(g);
+    char active_label[32];
+    SDL_snprintf(active_label, sizeof(active_label), "ACTIVE %d/%d", active, MAX_ACTIVE_QUESTS);
+    const char *tabs[QUEST_TAB_COUNT] = {active_label, "COMPLETED", "BOSSES"};
+    int tab_x = margin;
+    for (int tab = 0; tab < QUEST_TAB_COUNT; tab++) {
+        renderer_draw_text(r, tabs[tab], tab_x, 82, screen->tab == tab ? gold : dimmed, r->font_small);
+        int width = 0;
+        TTF_SizeText(r->font_small, tabs[tab], &width, NULL);
+        tab_x += width + 24;
+    }
     if (screen->tab == QUEST_TAB_BOSSES) {
         draw_boss_progress(r, g);
         return;
@@ -86,8 +89,7 @@ void quest_journal_draw(Renderer *r, const GameState *g, const QuestJournalScree
 
     int count = quest_journal_count(g, screen->tab);
     if (count == 0) {
-        const char *empty = screen->tab == QUEST_TAB_ACTIVE
-            ? "NO ACTIVE QUESTS" : "NO COMPLETED QUESTS";
+        const char *empty = screen->tab == QUEST_TAB_ACTIVE ? "NO ACTIVE QUESTS" : "NO COMPLETED QUESTS";
         renderer_draw_text(r, empty, margin + 20, top + 25, dimmed,
             r->font_small);
     }
@@ -120,7 +122,7 @@ void quest_journal_draw(Renderer *r, const GameState *g, const QuestJournalScree
         renderer_draw_text(r, line, x, y, dimmed, r->font_tiny);
         y += 24;
         const char *status = entry.state == 3 ? "COMPLETED" :
-            (entry.state == 2 ? "RETURN TO NPC" : "ACTIVE");
+            (entry.state == 2 ? "COMPLETED - REWARD PENDING" : "ACTIVE");
         SDL_snprintf(line, sizeof(line), "STATUS: %s", status);
         renderer_draw_text(r, line, x, y,
             entry.state == 1 ? white : green, r->font_tiny);
@@ -162,6 +164,10 @@ void quest_journal_draw(Renderer *r, const GameState *g, const QuestJournalScree
         renderer_draw_text(r, line, x, y, gold, r->font_small);
     }
 
+    renderer_draw_text(r, active > MAX_ACTIVE_QUESTS ?
+        "Existing quests kept. Finish active quests to free a slot." :
+        "Completed quests free a slot. Escape and recovery use no slots.",
+        margin, 62, dimmed, r->font_tiny);
     renderer_draw_text(r,
         "UP/DOWN SELECT   TAB/LEFT/RIGHT CHANGE TAB   Q/ESC CLOSE",
         r->screen_w / 2 - 285, r->screen_h - 45, dimmed, r->font_tiny);
