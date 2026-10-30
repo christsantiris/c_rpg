@@ -330,4 +330,6 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Add real money feature to buy in-game gold.
 - DnD style stats instead of static class based stats
    Roll for stats. Choose a class based on strengths. Ascending armor class chance to hit. 
+- Fix wasted space in labrynth area. Rescale to 1.5x? 
+   Minotaur too easy. Ivory rook uses a not p.
 
