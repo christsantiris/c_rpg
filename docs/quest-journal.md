@@ -110,7 +110,10 @@ The Labyrinth entry tracks the Minotaur guarding Rook's ivory rook. Previous
 Maze Warden victories count as completed Minotaur encounters.
 
 Use the up and down arrows to select a quest. Use `Tab`, left, or right to
-change tabs. Press `Q` or `Esc` to return to the game. Completing every
+change tabs. Long entry text wraps inside the details panel, and short windows
+tighten its spacing. Windows narrower than about 850 pixels hide the quest list
+and give the details the full width; **QUEST 1 OF 3** beside the tabs shows the
+selection, and the arrows still step through quests. Press `Q` or `Esc` to return to the game. Completing every
 objective moves a quest to `Completed`; pending rewards must still be collected
 from the original quest giver, except Tomas's escort reward, awarded on arrival.
 Boss victories are recorded immediately and
