@@ -527,8 +527,8 @@ static void draw_castle_front(Renderer *r, int sx, int sy) {
     SDL_RenderCopy(r->sdl, r->castle_texture, NULL, &destination);
 }
 
-// Measure and draw with the same wrapping so every conversation fits its panel.
-static int dialogue_text(Renderer *r, const char *text, int x, int y, int max_chars, TTF_Font *font, SDL_Color color, int draw) {
+// Measure and draw with the same wrapping so conversations and journal entries fit their panels.
+int draw_wrapped_text(Renderer *r, const char *text, int x, int y, int max_chars, TTF_Font *font, SDL_Color color, int draw) {
     int lines = 0;
     int line_h = TTF_FontHeight(font) + 8;
     while (*text) {
@@ -647,9 +647,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
             max_chars = 1;
         }
         line_h = TTF_FontHeight(font) + 8;
-        speaker_lines = dialogue_text(r, g->dialogue_speaker, 0, 0, max_chars, font, accent, 0);
-        body_lines = dialogue_text(r, g->dialogue_text, 0, 0, max_chars, font, ink, 0);
-        hint_lines = dialogue_text(r, hint, 0, 0, max_chars, font, accent, 0);
+        speaker_lines = draw_wrapped_text(r, g->dialogue_speaker, 0, 0, max_chars, font, accent, 0);
+        body_lines = draw_wrapped_text(r, g->dialogue_text, 0, 0, max_chars, font, ink, 0);
+        hint_lines = draw_wrapped_text(r, hint, 0, 0, max_chars, font, accent, 0);
         bubble_h = 28 + (speaker_lines + body_lines + hint_lines) * line_h + 8 + (hint_lines > 0 ? 8 : 0);
         if (bubble_h <= viewport_h - 16) {
             break;
@@ -709,11 +709,11 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     }
 
     int text_y = bubble_y + 14;
-    dialogue_text(r, g->dialogue_speaker, bubble_x + 14, text_y, max_chars, font, accent, 1);
+    draw_wrapped_text(r, g->dialogue_speaker, bubble_x + 14, text_y, max_chars, font, accent, 1);
     text_y += speaker_lines * line_h + 8;
-    dialogue_text(r, g->dialogue_text, bubble_x + 14, text_y, max_chars, font, ink, 1);
+    draw_wrapped_text(r, g->dialogue_text, bubble_x + 14, text_y, max_chars, font, ink, 1);
     text_y += body_lines * line_h + 8;
-    dialogue_text(r, hint, bubble_x + 14, text_y, max_chars, font, accent, 1);
+    draw_wrapped_text(r, hint, bubble_x + 14, text_y, max_chars, font, accent, 1);
 
     SDL_RenderSetViewport(r->sdl, &world_view);
     SDL_RenderSetScale(r->sdl, scale_x, scale_y);

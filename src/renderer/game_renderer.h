@@ -28,6 +28,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v);
 float game_camera_zoom(const GameState *g);
 void draw_catacombs_tile(Renderer *r, const Map *m, int sx, int sy, int x, int y, TileType type);
 void draw_crownroad_tile(Renderer *r, int sx, int sy, int x, int y, int kind);
+int draw_wrapped_text(Renderer *r, const char *text, int x, int y, int max_chars, TTF_Font *font, SDL_Color color, int draw);
 void game_draw_enemy_projectiles(Renderer *r, const GameState *g, const EnemyProjectiles *shots, const Viewport *v, Uint32 elapsed);
 int game_combat_feedback_active(Uint32 now);
 int game_player_hit_flash(const GameState *g, Uint32 now);
