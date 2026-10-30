@@ -1,4 +1,7 @@
 #include "game/game.h"
+#include "game/town_life.h"
+#include "renderer/town_life_renderer.h"
+#include "renderer/shop_renderer.h"
 #include "renderer/renderer.h"
 #include "renderer/game_renderer.h"
 #include "renderer/info_panel.h"
@@ -116,6 +119,52 @@ int main(void) {
         capture(&r, surface, "/tmp/equipment-existing-save.bmp");
         remove("saves/savegame_99227.json");
     }
+    assert(r.local_building_textures[5]);
+    renderer_begin_frame(&r);
+    draw_shop_blacksmith(&r, 3, 3);
+    TownBuilding display = *town_life_building(LOCATION_GOLDSMITH);
+    display.x = 11;
+    display.y = 3;
+    Viewport comparison;
+    viewport_init(&comparison, r.tiles_x, r.tiles_y, MAP_W, MAP_H);
+    comparison.cam_x = 0;
+    comparison.cam_y = 0;
+    town_life_draw_building(&r, &comparison, &display);
+    capture(&r, surface, "/tmp/equipment-goldsmith-comparison.bmp");
+    assert(chdir(project) == 0);
+    source = fopen("saves/savegame_1.json", "rb");
+    assert(chdir(temporary) == 0);
+    if (source) {
+        FILE *copy = fopen("saves/savegame_99227.json", "wb");
+        assert(copy);
+        char block[8192];
+        size_t count;
+        while ((count = fread(block, 1, sizeof(block), source)) > 0) {
+            assert(fwrite(block, 1, count, copy) == count);
+        }
+        fclose(source);
+        fclose(copy);
+        assert(load_game(g, 99227));
+        const TownBuilding *goldsmith = town_life_building(LOCATION_GOLDSMITH);
+        assert(g->location == LOCATION_TOWN);
+        assert(g->map.tiles[goldsmith->y + goldsmith->h - 1][goldsmith->x + goldsmith->w / 2] == TILE_LOCAL_DOOR);
+        viewport_center_on(&view, 20, 15);
+        renderer_begin_frame(&r);
+        game_draw(&r, g, &view);
+        capture(&r, surface, "/tmp/equipment-goldsmith-existing-town.bmp");
+        remove("saves/savegame_99227.json");
+    }
+    town_life_generate(&g->map, LOCATION_GOLDSMITH, &g->player.x, &g->player.y);
+    g->location = LOCATION_GOLDSMITH;
+    viewport_center_on(&view, g->player.x, g->player.y);
+    renderer_begin_frame(&r);
+    game_draw(&r, g, &view);
+    capture(&r, surface, "/tmp/equipment-goldsmith-interior.bmp");
+    ShopScreen shop;
+    shop_init(&shop, SHOP_TYPE_GOLDSMITH, 0, g->player.player_class);
+    renderer_begin_frame(&r);
+    shop_draw(&r, g, &shop);
+    capture(&r, surface, "/tmp/equipment-goldsmith-shop.bmp");
     free(g);
     renderer_free(&r);
     SDL_DestroyRenderer(sdl);

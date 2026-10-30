@@ -3,7 +3,7 @@
 
 #include "../game/game.h"
 
-#define MAX_SHOP_ITEMS 36
+#define MAX_SHOP_ITEMS 48
 #define ARROW_BUNDLE_SIZE 20
 
 typedef enum {
@@ -19,7 +19,8 @@ typedef enum {
     SHOP_TYPE_HEALER,
     SHOP_TYPE_WITCH,
     SHOP_TYPE_APOTHECARY,
-    SHOP_TYPE_FLETCHER
+    SHOP_TYPE_FLETCHER,
+    SHOP_TYPE_GOLDSMITH
 } ShopType;
 
 typedef struct {
