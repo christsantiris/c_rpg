@@ -115,14 +115,23 @@ static TileType approach_wall(Location area) {
     }
 }
 
-TileType approach_scenery(Location area) {
-    // Roads without scenery return TILE_WALL.
+TileType approach_scenery(Location area, int progress) {
+    // Scenery by progress from the town (0) to the landmark (100); roads without scenery return TILE_WALL.
     switch (area) {
         case LOCATION_FOREST: return TILE_FOREST_WALL;
-        case LOCATION_MOUNTAINS: return TILE_MOUNTAIN_WALL;
+        case LOCATION_MOUNTAINS:
+        case LOCATION_DRAGONSPINE:
+        case LOCATION_IRONFANG:
+        case LOCATION_GLASSDEEP:
+        case LOCATION_GIANTS_CROWN:
+        case LOCATION_STORMWATCH: return TILE_MOUNTAIN_WALL;
         case LOCATION_SWAMP: return TILE_SWAMP_WALL;
+        case LOCATION_DUNGEON:
         case LOCATION_ELDERWOOD:
         case LOCATION_CATACOMBS: return TILE_ELDERWOOD_WALL;
+        case LOCATION_FROSTFELL: return progress < 65 ? TILE_ELDERWOOD_WALL : TILE_FROST_WALL;
+        case LOCATION_DESERT: return progress < 30 ? TILE_ELDERWOOD_WALL : TILE_DESERT_WALL;
+        case LOCATION_ASHEN: return progress < 30 ? TILE_ELDERWOOD_WALL : progress < 65 ? TILE_FOREST_WALL : TILE_ASHEN_WALL;
         default: return TILE_WALL;
     }
 }
@@ -131,9 +140,61 @@ TileType approach_ground(Location area) {
     return area == LOCATION_SWAMP ? TILE_SWAMP_FLOOR : TILE_TOWN_FLOOR;
 }
 
-void approach_grow_scenery(Map *map, TileType wall, TileType ground, int through) {
-    // Woods, bog or rock close in on the road; landmarks keep clearings and the town end opens out.
-    // A checkpoint bank closes the far end of a gated road, so only a through road opens at both ends.
+static unsigned int scenery_noise(int x, int y) {
+    unsigned int seed = (unsigned int)x * 73856093u ^ (unsigned int)y * 19349663u;
+    seed ^= seed >> 13;
+    seed *= 2246822519u;
+    return seed ^ (seed >> 16);
+}
+
+static int road_distance(const Map *map, int x, int y) {
+    // Distance from the town toward the landmark, whose terrain continues beyond it.
+    int vertical = map->stairs_up_y == 0 || map->stairs_up_y == APPROACH_H - 1;
+    int span = vertical ? abs(map->stairs_down_y - map->stairs_up_y) : abs(map->stairs_down_x - map->stairs_up_x);
+    int along = vertical ? abs(y - map->stairs_up_y) : abs(x - map->stairs_up_x);
+    return span && along < span ? along * 100 / span : 100;
+}
+
+int approach_progress(const Map *map, int x, int y) {
+    // Dappled patches let neighbouring scenery and ground overlap.
+    return road_distance(map, x, y) + (int)(scenery_noise(x / 2, y / 2) % 51u) - 25;
+}
+
+static int scenery_grows(const Map *map, Location area, int x, int y) {
+    // Light woodland and scattered boulders leave open grass between them; other roads fill in completely.
+    int progress = approach_progress(map, x, y);
+    int chance = (int)(scenery_noise(x + 7, y + 3) % 100u);
+    switch (area) {
+        case LOCATION_DUNGEON: return scenery_noise(x / 2 + 31, y / 2 + 17) % 100u < 35u;
+        case LOCATION_GLASSDEEP:
+        case LOCATION_GIANTS_CROWN: return chance < (progress - 40) / 5;
+        case LOCATION_STORMWATCH: return chance < (progress - 15) * 2 / 5;
+        default: return 1;
+    }
+}
+
+static TileType scenery_at(const Map *map, Location area, int x, int y) {
+    int progress = approach_progress(map, x, y);
+    if (area == LOCATION_FROSTFELL) {
+        // The woods end in one ragged tree line where the frozen ground begins.
+        int vertical = map->stairs_up_y == 0 || map->stairs_up_y == APPROACH_H - 1;
+        progress = road_distance(map, x, y) + (int)(scenery_noise(vertical ? x / 3 : 0, vertical ? 0 : y / 3) % 17u) - 8;
+    }
+    TileType scenery = approach_scenery(area, progress);
+    // Lava pools break up the basalt nearest Ashen Hollow.
+    if (scenery == TILE_ASHEN_WALL && progress >= 80 && scenery_noise(x / 2 + 97, y / 2 + 53) % 5u == 0u) {
+        return TILE_ASHEN_LAVA;
+    }
+    return scenery;
+}
+
+void approach_grow_scenery(Map *map, Location area) {
+    // Scenery closes in on the road; landmarks keep clearings and the town end opens out.
+    // A checkpoint paves a gated road's full length later and closes its far end; the northern road opens at both ends.
+    const BossGateRule *rule = boss_gate_rule(area);
+    int gated = rule && rule->policy == BOSS_GATE_ROAD;
+    int through = area == LOCATION_ELDERWOOD || area == LOCATION_CATACOMBS;
+    TileType ground = approach_ground(area);
     int vertical = map->stairs_up_y == 0 || map->stairs_up_y == APPROACH_H - 1;
     int length = vertical ? APPROACH_H : APPROACH_W;
     int features[APPROACH_W * APPROACH_H];
@@ -141,13 +202,13 @@ void approach_grow_scenery(Map *map, TileType wall, TileType ground, int through
     for (int y = 1; y < APPROACH_H - 1; y++) {
         for (int x = 1; x < APPROACH_W - 1; x++) {
             TileType tile = map->tiles[y][x];
-            // A closed checkpoint paves the rest of the road later, so keep its verge too.
-            int road = vertical ? x == map->stairs_up_x : y == map->stairs_up_y;
+            int road = gated && (vertical ? x == map->stairs_up_x : y == map->stairs_up_y);
             if (road || (tile != TILE_TOWN_FLOOR && tile != TILE_ROAD_BANK)) {
                 features[count++] = y * APPROACH_W + x;
             }
         }
     }
+    unsigned char grown[APPROACH_H][APPROACH_W] = {{0}};
     for (int y = 1; y < APPROACH_H - 1; y++) {
         for (int x = 1; x < APPROACH_W - 1; x++) {
             if (map->tiles[y][x] != TILE_TOWN_FLOOR) {
@@ -157,13 +218,48 @@ void approach_grow_scenery(Map *map, TileType wall, TileType ground, int through
             int end = through && length - 1 - along < along ? length - 1 - along : along;
             unsigned int seed = (unsigned int)(x / 3) * 73856093u ^ (unsigned int)(y / 3) * 19349663u;
             int reach = 2 + (int)(seed % 3u) + (end < APPROACH_OPENING ? APPROACH_OPENING - end : 0);
+            // A gated road narrows into its checkpoint, so the far bank cannot cut off a verge.
+            int pinch = gated && !through && length - 1 - along < APPROACH_OPENING;
+            if (pinch) {
+                reach = 1;
+            }
             int open = 0;
             for (int i = 0; i < count && !open; i++) {
                 int dx = features[i] % APPROACH_W - x;
                 int dy = features[i] / APPROACH_W - y;
                 open = dx * dx + dy * dy <= reach * reach;
             }
-            map->tiles[y][x] = open ? ground : wall;
+            grown[y][x] = !open && (pinch || scenery_grows(map, area, x, y));
+            map->tiles[y][x] = grown[y][x] ? scenery_at(map, area, x, y) : ground;
+        }
+    }
+    // Verge pockets the road cannot reach become scenery too.
+    unsigned char reached[APPROACH_H][APPROACH_W] = {{0}};
+    int queue[APPROACH_W * APPROACH_H];
+    int tail = 0;
+    for (int i = 0; i < count; i++) {
+        if (map_is_walkable(map, features[i] % APPROACH_W, features[i] / APPROACH_W)) {
+            reached[features[i] / APPROACH_W][features[i] % APPROACH_W] = 1;
+            queue[tail++] = features[i];
+        }
+    }
+    const int steps[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+    for (int head = 0; head < tail; head++) {
+        for (int side = 0; side < 4; side++) {
+            int x = queue[head] % APPROACH_W + steps[side][0];
+            int y = queue[head] / APPROACH_W + steps[side][1];
+            if (x > 0 && y > 0 && x < APPROACH_W - 1 && y < APPROACH_H - 1 && !reached[y][x] && !grown[y][x] && map->tiles[y][x] == ground) {
+                reached[y][x] = 1;
+                queue[tail++] = y * APPROACH_W + x;
+            }
+        }
+    }
+    for (int y = 1; y < APPROACH_H - 1; y++) {
+        for (int x = 1; x < APPROACH_W - 1; x++) {
+            if (!grown[y][x] && !reached[y][x] && map->tiles[y][x] == ground) {
+                grown[y][x] = 1;
+                map->tiles[y][x] = scenery_at(map, area, x, y);
+            }
         }
     }
     // The map edge continues whatever grows beside it.
@@ -171,8 +267,8 @@ void approach_grow_scenery(Map *map, TileType wall, TileType ground, int through
         for (int x = 0; x < APPROACH_W; x++) {
             int cx = x < 1 ? 1 : x > APPROACH_W - 2 ? APPROACH_W - 2 : x;
             int cy = y < 1 ? 1 : y > APPROACH_H - 2 ? APPROACH_H - 2 : y;
-            if ((cx != x || cy != y) && !map_is_walkable(map, x, y) && map->tiles[cy][cx] == wall) {
-                map->tiles[y][x] = wall;
+            if ((cx != x || cy != y) && !map_is_walkable(map, x, y) && grown[cy][cx]) {
+                map->tiles[y][x] = map->tiles[cy][cx];
             }
         }
     }
@@ -181,18 +277,22 @@ void approach_grow_scenery(Map *map, TileType wall, TileType ground, int through
 void approach_migrate_scenery(GameState *g) {
     // Roads saved before their scenery grew are open grass; rebuild them, keeping loot and exploration.
     const TownApproach *route = approach_route(g);
-    TileType scenery = route ? approach_scenery(route->area) : TILE_WALL;
-    if (scenery == TILE_WALL) {
+    if (!route || approach_scenery(route->area, 100) == TILE_WALL) {
         return;
     }
     for (int y = 1; y < APPROACH_H - 1; y++) {
         for (int x = 1; x < APPROACH_W - 1; x++) {
-            if (g->map.tiles[y][x] == scenery) {
+            TileType tile = g->map.tiles[y][x];
+            if (tile == approach_scenery(route->area, 0) || tile == approach_scenery(route->area, 100)) {
                 return;
             }
         }
     }
-    boss_gate_migrate(g);
+    if (approach_entrance_rows(route->area) && !northern_approach(g)) {
+        approach_refresh_entrance(g);
+    } else {
+        boss_gate_migrate(g);
+    }
 }
 
 void approach_refresh_dungeon(GameState *g) {
@@ -237,6 +337,7 @@ void approach_refresh_dungeon(GameState *g) {
     g->map.tiles[ty - 1][g->map.stairs_down_x] = TILE_TOWN_PATH;
     g->map.tiles[ty][tx] = TILE_APPROACH_TOWN;
     g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] = TILE_APPROACH_AREA;
+    approach_grow_scenery(&g->map, route->area);
     if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
         g->player.x = g->map.stairs_down_x;
         g->player.y = ty;
@@ -316,7 +417,7 @@ void approach_refresh_forest(GameState *g) {
     if (open) {
         g->map.tiles[oy][ox] = TILE_APPROACH_DUNGEON_TOWN;
     }
-    approach_grow_scenery(&g->map, approach_scenery(route->area), approach_ground(route->area), 0);
+    approach_grow_scenery(&g->map, route->area);
     if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
         g->player.x = door_x;
         g->player.y = ty;
@@ -389,7 +490,7 @@ void approach_refresh_mountains(GameState *g) {
     if (open) {
         g->map.tiles[oy][ox] = TILE_APPROACH_DUNGEON_TOWN;
     }
-    approach_grow_scenery(&g->map, approach_scenery(route->area), approach_ground(route->area), 0);
+    approach_grow_scenery(&g->map, route->area);
     if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
         g->player.x = tx;
         g->player.y = junction;
@@ -461,7 +562,7 @@ void approach_refresh_swamp(GameState *g) {
     if (open) {
         g->map.tiles[oy][ox] = TILE_APPROACH_DUNGEON_TOWN;
     }
-    approach_grow_scenery(&g->map, approach_scenery(route->area), approach_ground(route->area), 0);
+    approach_grow_scenery(&g->map, route->area);
     if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
         g->player.x = tx;
         g->player.y = junction;
@@ -562,6 +663,9 @@ void approach_refresh_entrance(GameState *g) {
     }
     g->map.tiles[ty][tx] = TILE_APPROACH_TOWN;
     g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] = TILE_APPROACH_AREA;
+    if (approach_scenery(route->area, 100) != TILE_WALL) {
+        approach_grow_scenery(&g->map, route->area);
+    }
     if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
         g->player.x = jx;
         g->player.y = jy;

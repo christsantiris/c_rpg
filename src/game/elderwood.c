@@ -693,7 +693,7 @@ void northern_refresh(GameState *g) {
     g->map.stairs_up_y = route->town == LOCATION_CASTLE ? 0 : ELDERWOOD_H - 1;
     g->map.stairs_down_x = route->area == LOCATION_CATACOMBS ? NORTH_CAT_X : NORTH_ELDER_X;
     g->map.stairs_down_y = route->area == LOCATION_CATACOMBS ? NORTH_CAT_Y : NORTH_ELDER_Y;
-    approach_grow_scenery(&g->map, approach_scenery(route->area), approach_ground(route->area), 1);
+    approach_grow_scenery(&g->map, route->area);
     boss_gate_refresh(g);
 }
 

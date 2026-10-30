@@ -9,8 +9,9 @@ reveal the terrain for review; they are not full quest playthroughs.
 - [Dawnmere's Spice Merchant sign and doorway path](spice-merchant.png).
 
 The six recurring enemy types use their existing native sprites. The woodland
-uses the adjoining Elderwood's existing floor and tree art, with a single-tile
-stone road, timber barricades and supply caches. Dawnmere's building artwork
+uses Elderwood tree art over the dark ground and stone paving of Crown Road East
+and West, with timber barricades and supply caches. These captures predate that
+ground and still show the Elderwood floor. Dawnmere's building artwork
 retains its established textures and doorway scale; its label and Corvin's
 title change to Spice Merchant.
 
