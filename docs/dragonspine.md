@@ -4,8 +4,9 @@ The Goblin Mountains connect Dawnmere and Ridgeshire through a safe road.
 Enter the mountain cave from either town to climb five levels from the foot.
 Defeating the level-5 Goblin King opens the road north to Ridgeshire and south
 to Dawnmere. The summit exit returns onto that road.
-Ridgeshire's north gate leads along a safe approach to Dragonspine, placing its
-snowy peaks at the northern edge of the world alongside Frostfell Wastes.
+Ridgeshire's north gate leads along a safe approach through rock walls to
+Dragonspine, placing its snowy peaks at the northern edge of the world alongside
+Frostfell Wastes. See [road scenery](road-scenery.md).
 Leaving the first stage or completing the summit returns to that approach;
 walk south to reach Ridgeshire's north gate. Return to Town travels directly
 to town, with its portal beside the north gate.

@@ -4,6 +4,24 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+void draw_boulder(Renderer *r, int sx, int sy) {
+    int px = sx * TILE_SIZE;
+    int py = sy * TILE_SIZE;
+    SDL_SetRenderDrawColor(r->sdl, 24, 29, 35, 255);
+    SDL_Rect shadow = {px + 3, py + 17, 19, 5};
+    SDL_RenderFillRect(r->sdl, &shadow);
+    static const int widths[8] = {8, 12, 16, 18, 18, 18, 14, 10};
+    for (int row = 0; row < 8; row++) {
+        SDL_SetRenderDrawColor(r->sdl, 130 - row * 8, 142 - row * 8, 150 - row * 8, 255);
+        SDL_Rect rock = {px + (TILE_SIZE - widths[row]) / 2, py + 4 + row * 2, widths[row], 2};
+        SDL_RenderFillRect(r->sdl, &rock);
+    }
+    SDL_SetRenderDrawColor(r->sdl, 171, 185, 190, 255);
+    SDL_RenderDrawLine(r->sdl, px + 8, py + 7, px + 13, py + 5);
+    SDL_SetRenderDrawColor(r->sdl, 65, 77, 86, 255);
+    SDL_RenderDrawLine(r->sdl, px + 15, py + 9, px + 11, py + 14);
+}
+
 void draw_wilds_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType tile) {
     int px = sx * TILE_SIZE;
     int py = sy * TILE_SIZE;
@@ -32,19 +50,7 @@ void draw_wilds_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int
         return;
     }
     draw_dragonspine_floor(r, sx, sy, x, y, tile == TILE_DRAGON_ASH_BOULDER ? 1 : 0);
-    SDL_SetRenderDrawColor(r->sdl, 24, 29, 35, 255);
-    SDL_Rect shadow = {px + 3, py + 17, 19, 5};
-    SDL_RenderFillRect(r->sdl, &shadow);
-    static const int widths[8] = {8, 12, 16, 18, 18, 18, 14, 10};
-    for (int row = 0; row < 8; row++) {
-        SDL_SetRenderDrawColor(r->sdl, 130 - row * 8, 142 - row * 8, 150 - row * 8, 255);
-        SDL_Rect rock = {px + (TILE_SIZE - widths[row]) / 2, py + 4 + row * 2, widths[row], 2};
-        SDL_RenderFillRect(r->sdl, &rock);
-    }
-    SDL_SetRenderDrawColor(r->sdl, 171, 185, 190, 255);
-    SDL_RenderDrawLine(r->sdl, px + 8, py + 7, px + 13, py + 5);
-    SDL_SetRenderDrawColor(r->sdl, 65, 77, 86, 255);
-    SDL_RenderDrawLine(r->sdl, px + 15, py + 9, px + 11, py + 14);
+    draw_boulder(r, sx, sy);
     if (abs(g->player.x - x) + abs(g->player.y - y) == 1) {
         char hint[48];
         snprintf(hint, sizeof(hint), "%s: PUSH BOULDER", controls_key_name(g->key_bindings[CONTROL_MOVE_LEFT]));

@@ -1,6 +1,7 @@
 # Stormwatch Headland
 
-Follow Dawnmere's eastern road and walk into the watchfort sprite to enter.
+Follow Dawnmere's eastern road, where grass turns to boulder-strewn gravel near
+the headland, and walk into the watchfort sprite to enter.
 Stormwatch is a five-stage coastal fort region with warm grass, gray masonry,
 cliffs, animated teal water, side lookouts and searchable supply chests.
 The approach uses travel music; the adventure uses the dungeon theme.
