@@ -1889,7 +1889,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 226);
+    cJSON_AddNumberToObject(root, "save_version", 227);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -2172,6 +2172,7 @@ int save_game(const GameState *g, int slot) {
         cJSON_AddItemToArray(key_bindings, cJSON_CreateNumber(g->key_bindings[i]));
     }
     cJSON_AddItemToObject(root, "key_bindings", key_bindings);
+    cJSON_AddNumberToObject(root, "quick_potion_type", g->quick_potion_type);
 
     // Inventory
     cJSON *inventory = cJSON_CreateArray();
@@ -4636,16 +4637,21 @@ int load_game(GameState *g, int slot) {
     // defaults so another character's keys never carry over.
     controls_reset(g->key_bindings);
     cJSON *key_bindings = cJSON_GetObjectItem(root, "key_bindings");
-    if (cJSON_IsArray(key_bindings) &&
-        cJSON_GetArraySize(key_bindings) == CONTROL_COUNT) {
+    int binding_count = cJSON_IsArray(key_bindings) ? cJSON_GetArraySize(key_bindings) : 0;
+    if (binding_count == CONTROL_COUNT || binding_count == CONTROL_DRINK_POTION) {
         int saved[CONTROL_COUNT];
-        for (int i = 0; i < CONTROL_COUNT; i++) {
+        for (int i = 0; i < binding_count; i++) {
             cJSON *key = cJSON_GetArrayItem(key_bindings, i);
-            saved[i] = cJSON_IsNumber(key) ? key->valueint : 0;
+            saved[i] = cJSON_IsNumber(key) && key->valuedouble == key->valueint ? key->valueint : 0;
         }
-        if (controls_valid(saved)) {
-            memcpy(g->key_bindings, saved, sizeof(saved));
-        }
+        controls_migrate(g->key_bindings, saved, binding_count);
+    }
+
+    g->quick_potion_type = ITEM_POTION_HEALTH;
+    cJSON *quick_potion = cJSON_GetObjectItem(root, "quick_potion_type");
+    if (cJSON_IsNumber(quick_potion) && quick_potion->valuedouble == quick_potion->valueint &&
+        (quick_potion->valueint == ITEM_POTION_HEALTH || quick_potion->valueint == ITEM_POTION_MANA)) {
+        g->quick_potion_type = quick_potion->valueint;
     }
 
     // Inventory

@@ -2963,6 +2963,19 @@ int action_use_inventory_item(GameState *g, int index, EnemyProjectiles *shots) 
     return 0;
 }
 
+int action_drink_quick_potion(GameState *g, EnemyProjectiles *shots) {
+    for (int i = 0; i < g->inventory_count; i++) {
+        if (g->inventory[i].type == g->quick_potion_type &&
+            (g->quick_potion_type == ITEM_POTION_HEALTH || g->quick_potion_type == ITEM_POTION_MANA)) {
+            return action_use_inventory_item(g, i, shots);
+        }
+    }
+    push_message(g, g->quick_potion_type == ITEM_POTION_MANA
+        ? "No Mana Potions remain. Choose another type in inventory."
+        : "No Health Potions remain. Choose another type in inventory.");
+    return 0;
+}
+
 static int enemy_position_occupied(const GameState *g, int skip, int x, int y) {
     if (jail_prisoner_at(g, x, y)) {
         return 1;

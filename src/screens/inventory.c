@@ -54,6 +54,11 @@ InventoryResult inventory_handle_key(InventoryScreen *s, int scancode, int item_
                 return INVENTORY_USE;
             }
             break;
+        case SDL_SCANCODE_Q:
+            if (!s->equipment_tab && count > 0) {
+                return INVENTORY_SET_QUICK_POTION;
+            }
+            break;
         case SDL_SCANCODE_1:
         case SDL_SCANCODE_2:
             s->accessory_slot = scancode == SDL_SCANCODE_1 ? 1 : 2;

@@ -97,6 +97,12 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
         }
     }
 
+    char quick[96];
+    SDL_snprintf(quick, sizeof(quick), "QUICK: %s (%d) | %s DRINK IN GAME",
+        g->quick_potion_type == ITEM_POTION_MANA ? "MANA" : "HEALTH", game_quick_potion_count(g),
+        SDL_GetScancodeName(g->key_bindings[CONTROL_DRINK_POTION]));
+    renderer_draw_text(r, quick, cx - 300, 86, gold, r->font_tiny);
+
     int selected_index = inventory_selected_index(s);
     if (s->selected >= 0 && s->selected < count && g->inventory[selected_index].active) {
         const Item *selected = &g->inventory[selected_index];
@@ -128,7 +134,7 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
     if (g->message_count > 0) {
         renderer_draw_text(r, g->messages[g->message_count - 1], cx - 300, (r->tiles_y - 3) * TILE_SIZE + 10, white, r->font_tiny);
     }
-    const char *buttons[] = {"U USE", s->equipment_tab ? "E/ENTER UNEQUIP" : "E/ENTER EQUIP", "O OFF-HAND", "X UNEQUIP (GEAR)", "D DROP", "ESC CLOSE"};
+    const char *buttons[] = {"U USE", s->equipment_tab ? "E/ENTER UNEQUIP" : "E/ENTER EQUIP", "O OFF-HAND", s->equipment_tab ? "X UNEQUIP" : "Q SET QUICK POTION", "D DROP", "ESC CLOSE"};
     for (int i = 0; i < 6; i++) {
         renderer_draw_text(r, buttons[i], cx - 270 + (i % 3) * 180,
             (r->tiles_y - 2) * TILE_SIZE + (i / 3) * 16, hint, r->font_tiny);
