@@ -13,6 +13,8 @@ void town_life_draw_goods(Renderer *r, int tx, int ty, int style, int shelf) {
     WorldPropArt art = style == 0 ? PROP_BREAD : style == 1 ? PROP_MEAT : style == 2 ? PROP_CANDLE : PROP_SPICES;
     if (style == 4) {
         art = PROP_GOBLET;
+    } else if (style == 5) {
+        art = shelf ? PROP_CRYSTAL : PROP_RELIC;
     }
     draw_world_prop(r, tx, ty, art, (SDL_Color){239, 145, 42, 255});
 }
@@ -41,7 +43,7 @@ void town_life_draw_building(Renderer *r, const Viewport *v, const TownBuilding 
 void town_life_draw_resident(Renderer *r, int tx, int ty, int style) {
     static const NpcArt residents[4] = {NPC_ART_NESSA, NPC_ART_HOLT, NPC_ART_EDRIC, NPC_ART_SURI};
     if (style < 0 || style >= 4) {
-        style = 0;
+        style = style == 5 ? 3 : 0;
     }
     draw_tavern_floor(r, tx, ty);
     npc_draw(r, tx, ty, residents[style], 0);

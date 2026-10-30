@@ -1889,7 +1889,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 225);
+    cJSON_AddNumberToObject(root, "save_version", 226);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -6940,6 +6940,9 @@ int load_game(GameState *g, int slot) {
         g->equipped_main_hand = game_equipped_item(g, EQUIPMENT_STRONG_HAND) ? EQUIPMENT_STRONG_HAND : -1;
         g->equipped_off_hand = game_equipped_item(g, EQUIPMENT_WEAK_HAND) ? EQUIPMENT_WEAK_HAND : -1;
         g->equipped_armor = game_equipped_item(g, EQUIPMENT_ARMOR) ? EQUIPMENT_ARMOR : -1;
+    }
+    if (save_version < 226 && g->location == LOCATION_TOWN) {
+        town_life_migrate(g);
     }
     game_recover_retired_items(g);
     cJSON_Delete(root);

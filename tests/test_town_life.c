@@ -173,7 +173,82 @@ static void test_alehouse(void) {
     remove(TOWN_LIFE_PATH);
 }
 
+static int walk_to(GameState *g, int tx, int ty) {
+    int previous[MAP_W * MAP_H];
+    int queue[MAP_W * MAP_H];
+    for (int i = 0; i < MAP_W * MAP_H; i++) {
+        previous[i] = -1;
+    }
+    int start = g->player.y * MAP_W + g->player.x;
+    int target = ty * MAP_W + tx;
+    int head = 0;
+    int tail = 0;
+    queue[tail++] = start;
+    previous[start] = start;
+    const int dx[4] = {0, 1, 0, -1};
+    const int dy[4] = {-1, 0, 1, 0};
+    while (head < tail && previous[target] < 0) {
+        int current = queue[head++];
+        for (int i = 0; i < 4; i++) {
+            int x = current % MAP_W + dx[i];
+            int y = current / MAP_W + dy[i];
+            int next = y * MAP_W + x;
+            if (x >= 0 && x < MAP_W && y >= 0 && y < MAP_H && previous[next] < 0 &&
+                (next == target || (map_is_walkable(&g->map, x, y) && g->map.tiles[y][x] != TILE_LOCAL_DOOR))) {
+                previous[next] = current;
+                queue[tail++] = next;
+            }
+        }
+    }
+    if (previous[target] < 0) {
+        return 0;
+    }
+    int count = 0;
+    for (int next = target; next != start; next = previous[next]) {
+        queue[count++] = next;
+    }
+    for (int i = count - 1; i >= 0; i--) {
+        action_resolve_player(g, (Action){ACTION_MOVE, queue[i] % MAP_W, queue[i] / MAP_W});
+    }
+    return 1;
+}
+
+static void test_goldsmith(void) {
+    const TownBuilding *b = town_life_building(LOCATION_GOLDSMITH);
+    int x = b->x + b->w / 2;
+    int y = b->y + b->h - 1;
+    for (int seed = 1; seed <= 8; seed++) {
+        srand(seed);
+        start_town(LOCATION_TOWN);
+        ASSERT("Goldsmith preserves all Oakhaven paths and gate approaches", all_walkable_connected(&game.map, 20, 12));
+        ASSERT("walking from the plaza actually enters the Goldsmith", walk_to(&game, x, y) && game.location == LOCATION_GOLDSMITH);
+        ASSERT("Goldsmith counter can be approached through real movement", walk_to(&game, RESIDENT_X, RESIDENT_Y + 1) && town_life_near_goldsmith(&game));
+        ASSERT("Goldsmith interior and inventory survive save/load", save_game(&game, TOWN_LIFE_SLOT) && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.location == LOCATION_GOLDSMITH && town_life_near_goldsmith(&loaded));
+        ASSERT("Goldsmith exit actually returns to its Oakhaven doorstep", walk_to(&loaded, 20, 22) && loaded.location == LOCATION_TOWN && loaded.player.x == x && loaded.player.y == y + 1);
+    }
+    start_town(LOCATION_TOWN);
+    for (int row = b->y; row <= y; row++) {
+        for (int col = b->x; col < b->x + b->w; col++) {
+            game.map.tiles[row][col] = TILE_TOWN_FLOOR;
+        }
+    }
+    game.player.x = b->x;
+    game.player.y = b->y;
+    game.player.hp = 37;
+    game.floor_item_count = 2;
+    for (int i = 0; i < 2; i++) {
+        game.floor_items[i] = (FloorItem){.active = 1, .x = b->x, .y = b->y, .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_ring_of_vigor()};
+    }
+    game.map.tiles[b->y][b->x] = TILE_ITEM;
+    map_mark_explored(&game.map, 20, 12);
+    ASSERT("version-225 Oakhaven saves gain a usable Goldsmith", save_game(&game, TOWN_LIFE_SLOT) && downgrade_town_save(225) && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.map.tiles[y][x] == TILE_LOCAL_DOOR);
+    ASSERT("Goldsmith migration preserves wounds, progress, exploration and stacked jewelry", loaded.player.hp == 37 && loaded.gold == 123 && loaded.elowen_quest_state == 1 && map_is_explored(&loaded.map, 20, 12) && loaded.player.x == x && loaded.player.y == y + 1 && loaded.floor_items[0].x == x && loaded.floor_items[1].y == y + 1 && loaded.floor_items[0].item.max_hp_bonus == 10);
+    ASSERT("migrated Goldsmith entrance remains an actual transition", walk_to(&loaded, x, y) && loaded.location == LOCATION_GOLDSMITH);
+    remove(TOWN_LIFE_PATH);
+}
+
 void test_town_life(void) {
+    test_goldsmith();
     test_alehouse();
     printf("Town resident building tests:\n");
     const Location towns[5] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN4, LOCATION_TOWN3, LOCATION_DAWNMERE};

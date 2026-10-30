@@ -63,7 +63,11 @@ int shop_sell_price(const Item *item) {
 int shop_accepts_item(ShopType type, const Item *item) {
     if (type == SHOP_TYPE_BLACKSMITH) {
         return item->type == ITEM_WEAPON || item->type == ITEM_ARMOR ||
-            item->type == ITEM_SHIELD || item->type == ITEM_ARROWS;
+            item->type == ITEM_SHIELD || item->type == ITEM_ARROWS ||
+            item->type == ITEM_HELMET || (item->type == ITEM_ACCESSORY && !item_is_jewelry(item));
+    }
+    if (type == SHOP_TYPE_GOLDSMITH) {
+        return item_is_jewelry(item);
     }
     if (type == SHOP_TYPE_ALCHEMIST) {
         return item->type == ITEM_POTION_HEALTH || item->type == ITEM_POTION_MANA ||
@@ -93,6 +97,12 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses, PlayerClass pl
     s->item_count = 0;
     s->mode = 0;
     s->stock_tier = 0;
+
+    if (type == SHOP_TYPE_GOLDSMITH) {
+        s->stock_tier = 1;
+        s->items[s->item_count++] = item_make_ring_of_vigor();
+        s->items[s->item_count++] = item_make_copper_amulet();
+    }
 
     if (type == SHOP_TYPE_FLETCHER) {
         s->items[s->item_count++] = item_make_arrows();
@@ -141,6 +151,9 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses, PlayerClass pl
         s->items[s->item_count++] = item_make_chain_mail();
         s->items[s->item_count++] = item_make_apprentice_robes();
         s->items[s->item_count++] = item_make_buckler();
+        s->items[s->item_count++] = item_make_leather_cap();
+        s->items[s->item_count++] = item_make_leather_gauntlets();
+        s->items[s->item_count++] = item_make_leather_bracers();
 
         if (s->stock_tier >= 2) {
             s->items[s->item_count++] = item_make_long_sword();
