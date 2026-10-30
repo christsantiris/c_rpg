@@ -117,7 +117,7 @@ static void test_quest_flow(void) {
     ASSERT("all three independent objectives mark the quest ready to return", game.glassdeep_quest_state == 2 && game.glassdeep_quest_progress == 7 &&
         !(game.defeated_bosses & (1 << LOCATION_GLASSDEEP)));
     QuestJournalEntry entry;
-    ASSERT("journal records all three stages and completed objectives", quest_journal_get_entry(&game, QUEST_TAB_ACTIVE, 0, &entry) &&
+    ASSERT("journal records all three stages and completed objectives", quest_journal_get_entry(&game, QUEST_TAB_COMPLETED, 0, &entry) &&
         strcmp(entry.title, "Reclaim the Quarry") == 0 && entry.objective_count == 3 &&
         entry.stages[0] == 2 && entry.stages[1] == 3 && entry.stages[2] == 4 && entry.objective_complete[0] &&
         entry.objective_complete[1] && entry.objective_complete[2] && entry.reward_gold == 120 && entry.reward_score == 1000);

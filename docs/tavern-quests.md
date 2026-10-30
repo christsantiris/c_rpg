@@ -9,7 +9,12 @@ message bar is reserved for concise game events such as quest assignment,
 progress, and completion. Quest offers display **Y** to accept and **N** to
 decline; **Esc** also declines. Declining leaves the quest inactive and
 available when you speak to the NPC again. Only acceptance adds it to the
-journal and starts its expedition. Other dialogue bubbles are dismissed by
+journal and starts its expedition. Up to three optional quests can be active;
+finishing their objectives moves them to the journal's Completed tab and frees
+a slot before turn-in. Pending NPC rewards are labelled in the completed entry.
+NPCs keep their offers available when the limit is reached.
+Tomas's escape and confiscated-equipment recovery do not use these slots.
+Other dialogue bubbles are dismissed by
 movement. Elowen, Mara, Ilya, and Rook wait in Oakhaven's Tavern. Alder,
 Zara, Brenna, and Bram wait in Stillbury's Inn, which uses the same doorway and
 conversation controls.

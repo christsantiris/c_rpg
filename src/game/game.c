@@ -6322,6 +6322,25 @@ int game_quest_offer_active(const GameState *g) {
     return current_quest_offer(g) != NULL;
 }
 
+int game_active_quest_count(const GameState *g) {
+    int count = 0;
+    for (size_t i = 0; i < sizeof(quest_offers) / sizeof(quest_offers[0]); i++) {
+        const QuestOffer *offer = &quest_offers[i];
+        const int *state = (const int *)((const char *)g + offer->state_offset);
+        // Tomas's escape is essential; finished objectives free the slot before reward collection.
+        if (offer->state_offset != offsetof(GameState, jail_quest_state) && *state == 1) {
+            count++;
+        }
+    }
+    return count;
+}
+
+int game_quest_offer_at_limit(const GameState *g) {
+    const QuestOffer *offer = current_quest_offer(g);
+    return offer && offer->state_offset != offsetof(GameState, jail_quest_state) &&
+        game_active_quest_count(g) >= MAX_ACTIVE_QUESTS;
+}
+
 int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
     const QuestOffer *offer = current_quest_offer(g);
     if (!offer) {
@@ -6336,6 +6355,12 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
         return 1;
     }
     if (key != SDL_SCANCODE_Y) {
+        return 1;
+    }
+    if (game_quest_offer_at_limit(g)) {
+        char message[MAX_MESSAGE_LEN];
+        snprintf(message, sizeof(message), "Active quest limit: %d. Finish active quests to free a slot before accepting another.", MAX_ACTIVE_QUESTS);
+        push_message(g, message);
         return 1;
     }
     int *state = (int *)((char *)g + offer->state_offset);

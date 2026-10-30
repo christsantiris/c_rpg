@@ -6,6 +6,7 @@
 #include "../src/screens/quest_journal.h"
 #include <string.h>
 #include "../src/game/jail.h"
+#include "../src/game/war_machine.h"
 
 static int find_tile(const Map *map, TileType type, int *found_x, int *found_y) {
     for (int y = 0; y < MAP_H; y++) {
@@ -568,6 +569,114 @@ void test_mara_quest(void) {
         find_tile(&g.map, TILE_COAST_BEACON_LIT, &beacon_x, &beacon_y));
 }
 
+static void test_quest_capacity(GameState *g, GameState *loaded) {
+    struct {
+        const char *speaker;
+        Location location;
+        int *state;
+    } offers[] = {
+        {"Elowen", LOCATION_TAVERN, &g->elowen_quest_state},
+        {"Dain", LOCATION_ALEHOUSE, &g->dain_quest_state},
+        {"Alder", LOCATION_INN, &g->alder_quest_state},
+        {"Mara", LOCATION_TAVERN, &g->mara_quest_state},
+        {"Rook", LOCATION_TAVERN, &g->rook_quest_state},
+        {"Bram", LOCATION_INN, &g->innkeeper_quest_state},
+        {"Zara", LOCATION_INN, &g->sunscar_lamp_quest_state},
+        {"Ilya", LOCATION_TAVERN, &g->dragon_treasure_quest_state},
+        {"Nahla", LOCATION_ISLAND, &g->temple_treasure_state},
+        {"Steward Hadrin", LOCATION_TOWN_HALL, &g->emberforge_quest_state},
+        {"Quartermaster Brenna", LOCATION_INN, &g->frostfell_quest_state},
+        {"Surveyor Orin", LOCATION_GUILD, &g->glassdeep_quest_state},
+        {"Brother Oswin", LOCATION_TOWN_HALL, &g->catacombs_quest_state},
+        {"Marshal Veyra", LOCATION_TOWN_HALL, &g->watchfire_quest_state},
+        {"Huntmaster Selene", LOCATION_GUILD, &g->hunt_quest_state},
+        {"Forester Tamsin", LOCATION_TOWN, &g->heartseed_quest_state},
+        {"Spice Merchant Corvin", LOCATION_DAWNMERE_MERCHANT, &g->spice_skiff_quest_state},
+        {"Watchkeeper Seren", LOCATION_DAWNMERE, &g->stormbell_quest_state},
+        {WAR_SPEAKER, LOCATION_TOWN_HALL, &g->war_machine_quest_state},
+        {"Antiquarian Edda", LOCATION_GUILD, &g->crown_quest_state}
+    };
+    size_t count = sizeof(offers) / sizeof(offers[0]);
+    for (size_t i = 0; i < count; i++) {
+        game_init(g);
+        *offers[i].state = 1;
+        ASSERT("each optional quest uses one active slot", game_active_quest_count(g) == 1);
+        *offers[i].state = 2;
+        ASSERT("each finished quest moves to Completed and releases its slot", game_active_quest_count(g) == 0 && quest_journal_count(g, QUEST_TAB_COMPLETED) == 1);
+        *offers[i].state = 3;
+        ASSERT("rewarded quests do not use active slots", game_active_quest_count(g) == 0);
+        *offers[i].state = 0;
+        for (size_t j = 1; j <= MAX_ACTIVE_QUESTS; j++) {
+            *offers[(i + j) % count].state = 1;
+        }
+        g->location = offers[i].location;
+        g->dialogue_active = 1;
+        snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "%s", offers[i].speaker);
+        g->level_cache[3].valid = 1;
+        g->max_level_reached = 4;
+        int gold = g->gold;
+        ASSERT("every optional offer enforces the three-quest limit", game_quest_offer_at_limit(g) &&
+            game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0) && !*offers[i].state &&
+            game_active_quest_count(g) == MAX_ACTIVE_QUESTS);
+        ASSERT("a rejected offer preserves the offer, expedition and rewards", game_quest_offer_active(g) &&
+            g->level_cache[3].valid && g->max_level_reached == 4 && g->gold == gold);
+        *offers[(i + 1) % count].state = 2;
+        ASSERT("the third active quest is allowed once another quest's objectives finish", !game_quest_offer_at_limit(g) &&
+            game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0) && *offers[i].state == 1 &&
+            game_active_quest_count(g) == MAX_ACTIVE_QUESTS);
+    }
+
+    game_init(g);
+    game_enter_tavern(g);
+    g->elowen_quest_state = 1;
+    g->dain_quest_state = 1;
+    g->alder_quest_state = 1;
+    g->mara_quest_state = 1;
+    g->player.x = ROOK_TAVERN_X;
+    g->player.y = ROOK_TAVERN_Y + 1;
+    game_talk_to_rook(g);
+    ASSERT("saves with more than three active quests keep all progress and the pending offer", save_game(g, 99150) &&
+        load_game(loaded, 99150) && game_active_quest_count(loaded) == 4 &&
+        quest_journal_count(loaded, QUEST_TAB_ACTIVE) == 4 && game_quest_offer_at_limit(loaded));
+    game_handle_quest_offer_key(loaded, SDL_SCANCODE_Y, 0);
+    ASSERT("loading cannot bypass the limit or discard existing quests", !loaded->rook_quest_state && game_active_quest_count(loaded) == 4);
+    game_handle_quest_offer_key(loaded, SDL_SCANCODE_ESCAPE, 0);
+    ASSERT("a full-journal offer can still be dismissed", !loaded->dialogue_active);
+    loaded->elowen_quest_state = 2;
+    loaded->elowen_seals_restored = 7;
+    loaded->player.x = ELOWEN_TAVERN_X;
+    loaded->player.y = ELOWEN_TAVERN_Y + 1;
+    int gold = loaded->gold;
+    game_talk_to_elowen(loaded);
+    ASSERT("rewards can be claimed with all three slots occupied", loaded->elowen_quest_state == 3 &&
+        loaded->gold == gold + 40 && game_active_quest_count(loaded) == 3);
+    loaded->dain_quest_state = 2;
+    loaded->dain_map_fragments = 7;
+    loaded->player.x = ROOK_TAVERN_X;
+    loaded->player.y = ROOK_TAVERN_Y + 1;
+    game_talk_to_rook(loaded);
+    game_handle_quest_offer_key(loaded, SDL_SCANCODE_Y, 0);
+    ASSERT("an old over-limit character can accept again after making room", loaded->rook_quest_state == 1 && game_active_quest_count(loaded) == 3);
+    ASSERT("completed quests with pending and collected rewards survive a save round trip", save_game(loaded, 99150) && load_game(g, 99150) &&
+        game_active_quest_count(g) == 3 && quest_journal_count(g, QUEST_TAB_COMPLETED) == 2 &&
+        g->dain_quest_state == 2 && g->elowen_quest_state == 3);
+
+    g->location = LOCATION_CASTLE;
+    map_generate_castle(&g->map, &g->player.x, &g->player.y);
+    g->player.x = INFORMANT_X;
+    g->player.y = INFORMANT_Y + 1;
+    jail_talk_nearby(g);
+    ASSERT("arrest creates equipment recovery without taking a quest slot", g->jail_gear_state == 1 && game_active_quest_count(g) == 3);
+    g->player.x = JAIL_PRISONER_X;
+    g->player.y = JAIL_PRISONER_Y + 1;
+    jail_talk_nearby(g);
+    ASSERT("Tomas can offer an escape at the limit", game_quest_offer_active(g) && !game_quest_offer_at_limit(g));
+    game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0);
+    ASSERT("escape acceptance opens the hatch and preserves all optional commitments", g->jail_quest_state == 2 &&
+        g->map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] == TILE_JAIL_HATCH && game_active_quest_count(g) == 3 &&
+        quest_journal_count(g, QUEST_TAB_ACTIVE) == 5);
+}
+
 void test_quest_offer_controls(void) {
     printf("Quest offer controls tests:\n");
     static GameState g;
@@ -641,5 +750,6 @@ void test_quest_offer_controls(void) {
         !g.portal_active && g.max_level_reached == 1);
     ASSERT("accepted quests stay active after save/load without another offer", save_game(&g, 99150) && load_game(&loaded, 99150) &&
         loaded.elowen_quest_state == 1 && !game_quest_offer_active(&loaded) && quest_journal_count(&loaded, QUEST_TAB_ACTIVE) == 1);
+    test_quest_capacity(&g, &loaded);
     remove("saves/savegame_99150.json");
 }

@@ -16,6 +16,7 @@
 #define MAX_MESSAGE_LEN 128
 #define MAX_DIALOGUE_LEN 320
 #define MAX_SPEAKER_LEN 24
+#define MAX_ACTIVE_QUESTS 3
 #define ROOK_QUEST_REWARD 40
 #define EMBERFORGE_REWARD_GOLD 100
 #define EMBERFORGE_REWARD_SCORE 800
@@ -484,6 +485,8 @@ typedef struct {
 void game_init(GameState *g);
 void game_spawn_enemy(GameState *g, Enemy *enemy, EnemyType type, int x, int y);
 int game_quest_offer_active(const GameState *g);
+int game_active_quest_count(const GameState *g);
+int game_quest_offer_at_limit(const GameState *g);
 int game_handle_quest_offer_key(GameState *g, int key, int repeat);
 void game_request_shortcut(GameState *g);
 void game_enter_shortcut_boss(GameState *g);
