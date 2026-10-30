@@ -20,7 +20,8 @@ bracers. All starter items are available at the first shop tier. The Goldsmith
 stands southeast of Oakhaven’s square; enter its door and Talk beside Iven’s
 counter to buy or sell jewelry. Save version 226 adds the building to existing
 Oakhaven maps and relocates any player or dropped loot in its footprint.
-Additional accessory items and effects are deferred to v2.
+The expanded catalog, belts, boots and specialty shops are defined in
+[Accessory expansion](accessories-v2.md).
 
 ## New characters
 

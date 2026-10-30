@@ -247,7 +247,45 @@ static void test_goldsmith(void) {
     remove(TOWN_LIFE_PATH);
 }
 
+static void test_accessory_buildings(void) {
+    const Location interiors[] = {LOCATION_COBBLER, LOCATION_BELT_MAKER};
+    for (int i = 0; i < 2; i++) {
+        const TownBuilding *b = town_life_building(interiors[i]);
+        int x = b->x + b->w / 2;
+        int y = b->y + b->h - 1;
+        for (int seed = 1; seed <= 8; seed++) {
+            srand(seed);
+            start_town(b->town);
+            ASSERT("accessory workshops preserve all town paths and gate approaches", all_walkable_connected(&game.map, game.player.x, game.player.y));
+            ASSERT("walking from town enters the intended accessory workshop", walk_to(&game, x, y) && game.location == b->interior);
+            ASSERT("the shop counter is reachable through real movement", walk_to(&game, RESIDENT_X, RESIDENT_Y + 1) && (i == 0 ? town_life_near_cobbler(&game) : town_life_near_belt_maker(&game)));
+            ASSERT("accessory workshop interiors survive save/load", save_game(&game, TOWN_LIFE_SLOT) && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.location == b->interior);
+            ASSERT("the workshop exit actually returns to the correct town doorstep", walk_to(&loaded, 20, 22) && loaded.location == b->town && loaded.player.x == x && loaded.player.y == y + 1);
+        }
+        start_town(b->town);
+        for (int row = b->y; row <= y; row++) {
+            for (int col = b->x; col < b->x + b->w; col++) {
+                game.map.tiles[row][col] = TILE_TOWN_FLOOR;
+            }
+        }
+        game.player.x = b->x;
+        game.player.y = b->y;
+        game.player.hp = 37;
+        game.floor_item_count = 2;
+        for (int item = 0; item < 2; item++) {
+            game.floor_items[item] = (FloorItem){.active = 1, .x = b->x, .y = b->y, .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_accessory(i == 0 ? ACCESSORY_FAMILY_BOOTS : ACCESSORY_FAMILY_BELT, 3)};
+        }
+        game.map.tiles[b->y][b->x] = TILE_ITEM;
+        map_mark_explored(&game.map, 20, 12);
+        ASSERT("version-227 town saves gain their specialty workshop", save_game(&game, TOWN_LIFE_SLOT) && downgrade_town_save(227) && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.map.tiles[y][x] == TILE_LOCAL_DOOR);
+        ASSERT("workshop migration preserves wounds, quests, exploration and stacked accessories", loaded.player.hp == 37 && loaded.gold == 123 && loaded.elowen_quest_state == 1 && map_is_explored(&loaded.map, 20, 12) && loaded.player.x == x && loaded.player.y == y + 1 && loaded.floor_items[0].x == x && loaded.floor_items[1].y == y + 1 && loaded.floor_items[0].item.rarity == ITEM_RARITY_RARE);
+        ASSERT("migrated workshop doors remain actual transitions", walk_to(&loaded, x, y) && loaded.location == b->interior);
+    }
+    remove(TOWN_LIFE_PATH);
+}
+
 void test_town_life(void) {
+    test_accessory_buildings();
     test_goldsmith();
     test_alehouse();
     printf("Town resident building tests:\n");
