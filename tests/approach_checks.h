@@ -154,7 +154,12 @@ static inline void walk_town_approach(GameState *g) {
     while (g->location == LOCATION_APPROACH && steps++ < APPROACH_W + 4) {
         int dx = (g->map.stairs_down_x > g->player.x) - (g->map.stairs_down_x < g->player.x);
         int dy = (g->map.stairs_down_y > g->player.y) - (g->map.stairs_down_y < g->player.y);
-        if (mountain_road && g->player.y != g->map.stairs_down_y + 1 && g->player.x == g->map.stairs_up_x) {
+        int trunk = (g->player.y - g->map.stairs_down_y - 1) * (g->map.stairs_up_y - g->map.stairs_down_y - 1) > 0;
+        if (mountain_road && trunk && g->player.x != g->map.stairs_up_x) {
+            // Scenery lines the road, so step back onto it before following it.
+            dx = (g->map.stairs_up_x > g->player.x) - (g->map.stairs_up_x < g->player.x);
+            dy = 0;
+        } else if (mountain_road && g->player.y != g->map.stairs_down_y + 1 && g->player.x == g->map.stairs_up_x) {
             dx = 0;
             dy = (g->map.stairs_down_y + 1 > g->player.y) - (g->map.stairs_down_y + 1 < g->player.y);
         } else if (mountain_road && dx) {
