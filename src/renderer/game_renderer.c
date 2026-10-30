@@ -618,6 +618,13 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     if (war_machine_dialogue(g)) {
         hint = quest_offer ? "Y: Accept   N: Decline\n1: Watchfires   2: Break the War Machine" : "1: Watchfires   2: Break the War Machine";
     }
+    char quest_limit_hint[160];
+    if (game_quest_offer_at_limit(g)) {
+        snprintf(quest_limit_hint, sizeof(quest_limit_hint), "Active quests: %d/%d. Finish quests to free a slot.\nN / Esc: Close%s",
+            game_active_quest_count(g), MAX_ACTIVE_QUESTS,
+            war_machine_dialogue(g) ? "\n1: Watchfires   2: Break the War Machine" : "");
+        hint = quest_limit_hint;
+    }
     if (stormbell_prompt) {
         hint = "Ring bell? Y: Begin defense   N / Esc: Prepare first";
     }

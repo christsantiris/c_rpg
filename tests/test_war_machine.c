@@ -237,8 +237,8 @@ void test_war_machine(void) {
     g->inventory_count = 0;
     QuestJournalEntry entry;
     int found = 0;
-    for (int n = 0; n < quest_journal_count(g, QUEST_TAB_ACTIVE); n++) {
-        if (quest_journal_get_entry(g, QUEST_TAB_ACTIVE, n, &entry) && strcmp(entry.title, "Break the War Machine") == 0) {
+    for (int n = 0; n < quest_journal_count(g, QUEST_TAB_COMPLETED); n++) {
+        if (quest_journal_get_entry(g, QUEST_TAB_COMPLETED, n, &entry) && strcmp(entry.title, "Break the War Machine") == 0) {
             found = entry.objective_count == 3 && entry.stages[0] == 2 && entry.stages[1] == 4 && entry.stages[2] == 5 &&
                 entry.objective_complete[0] && entry.objective_complete[1] && entry.objective_complete[2] && entry.reward_gold == 160 && entry.reward_score == 1000;
         }

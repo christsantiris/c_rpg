@@ -326,9 +326,9 @@ static int quest_progress(const GameState *g, int quest) {
 
 static int quest_in_tab(int state, QuestJournalTab tab) {
     if (tab == QUEST_TAB_COMPLETED) {
-        return state == 3;
+        return state == 2 || state == 3;
     }
-    return state == 1 || state == 2;
+    return tab == QUEST_TAB_ACTIVE && state == 1;
 }
 
 void quest_journal_init(QuestJournalScreen *screen) {
@@ -426,12 +426,12 @@ QuestJournalResult quest_journal_handle_key(QuestJournalScreen *screen, int scan
             }
             break;
         case SDL_SCANCODE_LEFT:
-            screen->tab = (screen->tab + 2) % 3;
+            screen->tab = (screen->tab + QUEST_TAB_COUNT - 1) % QUEST_TAB_COUNT;
             screen->selected = 0;
             break;
         case SDL_SCANCODE_RIGHT:
         case SDL_SCANCODE_TAB:
-            screen->tab = (screen->tab + 1) % 3;
+            screen->tab = (screen->tab + 1) % QUEST_TAB_COUNT;
             screen->selected = 0;
             break;
         case SDL_SCANCODE_ESCAPE:
