@@ -10,7 +10,7 @@ routes and encounters.
 
 This is one continuous outdoor road, with six occupied checkpoints and
 reconnecting woodland trails. A single tile of stone paving marks the main
-route. Barricades create firing lanes; side clearings and supply camps provide
+route; the ground, paving and trees match Crown Road East and West. Barricades create firing lanes; side clearings and supply camps provide
 alternate approaches. Both exits meet the map boundary and have destination
 signs. Ordinary patrols do not lock an exit, so retreat and bypasses remain
 possible.

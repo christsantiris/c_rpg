@@ -12,15 +12,28 @@ static void box(Renderer *r, int x, int y, int w, int h, SDL_Color color) {
     SDL_RenderFillRect(r->sdl, &rect);
 }
 
-void northroad_draw_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
+void northroad_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType tile) {
     if (tile == TILE_FOREST_WALL) {
         draw_elderwood_wall(r, sx, sy, x, y);
         return;
     }
-    if (tile == TILE_TOWN_PATH || tile == TILE_CROWN_EXIT) {
-        draw_town_path(r, sx, sy);
-    } else {
-        draw_elderwood_floor(r, sx, sy, x, y);
+    // The ground, paving and tree line match Crown Road East and West.
+    draw_crownroad_tile(r, sx, sy, x, y, tile == TILE_TOWN_PATH || tile == TILE_CROWN_EXIT ? 1 : 0);
+    unsigned int edges = 0;
+    if (y > 0 && g->map.tiles[y - 1][x] == TILE_FOREST_WALL) {
+        edges |= FOREST_EDGE_NORTH;
+    }
+    if (x < CROWN_NORTH_W - 1 && g->map.tiles[y][x + 1] == TILE_FOREST_WALL) {
+        edges |= FOREST_EDGE_EAST;
+    }
+    if (y < CROWN_NORTH_H - 1 && g->map.tiles[y + 1][x] == TILE_FOREST_WALL) {
+        edges |= FOREST_EDGE_SOUTH;
+    }
+    if (x > 0 && g->map.tiles[y][x - 1] == TILE_FOREST_WALL) {
+        edges |= FOREST_EDGE_WEST;
+    }
+    if (edges != 0) {
+        draw_forest_tree_edge(r, sx, sy, x, y, edges);
     }
     int px = sx * TILE_SIZE;
     int py = sy * TILE_SIZE;

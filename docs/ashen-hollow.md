@@ -1,7 +1,9 @@
 # Ashen Hollow
 
 A path around the western side of Castle Grounds reaches the north gate and
-the five-stage volcanic region behind the castle. Enter each stage from
+the five-stage volcanic region behind the castle. Beyond the gate the approach
+road leaves green woods for charred dead trees, then basalt split by lava pools
+around the entrance; see [road scenery](road-scenery.md). Enter each stage from
 its south edge and advance through the north exit. The south entrance backtracks;
 on stage 1 it returns to the approach back to Castle Grounds' north gate. Ordinary
 enemies do not block stage travel.

@@ -1,7 +1,8 @@
 # Stonewake Quarry
 
-Stonewake replaces Glassdeep Caverns on Stillbury's southern road. Walk into
-its limestone quarry landmark to start stage 1; the rail ramps at the northern
+Stonewake replaces Glassdeep Caverns on Stillbury's southern road, where grass
+gathers stone flecks and a few boulders near the quarry. Walk into its limestone
+quarry landmark to start stage 1; the rail ramps at the northern
 and southern boundaries use the standard area travel controls. The final exit
 returns to Stillbury's quarry approach even while the Quarry Colossus lives.
 Boss victory and quest rewards remain separate. See [boss gates](boss-gates.md).

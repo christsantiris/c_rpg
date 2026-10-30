@@ -1,6 +1,7 @@
 # Castle Dungeon
 
 Enter the five-floor dungeon from Oakhaven's east road or Dawnmere's west road.
+That road runs through light woodland; see [road scenery](road-scenery.md).
 Both entrances always start at floor 1 and proceed forward to floor 5. Its rooms and
 connecting corridors are generated for each new expedition, then cached while
 that expedition is in progress. Backtracking preserves explored rooms, enemies,

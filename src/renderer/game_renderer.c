@@ -290,10 +290,46 @@ static void draw_approach_coast_ground(Renderer *r, int sx, int sy, int x, int y
     }
 }
 
+static void draw_dusted_grass(Renderer *r, int sx, int sy, int x, int y, int amount, SDL_Color color) {
+    // Flecks of snow, sand or ash settle more thickly on the grass toward the landmark.
+    draw_town_floor(r, sx, sy);
+    SDL_SetRenderDrawColor(r->sdl, color.r, color.g, color.b, 255);
+    for (int i = 0; i < amount; i++) {
+        unsigned int seed = (unsigned int)(x * 31 + i) * 2654435761u ^ (unsigned int)(y * 17 + i * 7) * 40503u;
+        seed ^= seed >> 15;
+        SDL_Rect fleck = {sx * TILE_SIZE + 1 + (int)(seed % 18u), sy * TILE_SIZE + 1 + (int)((seed >> 8) % 19u),
+            3 + (int)((seed >> 16) % 4u), 2 + (int)((seed >> 20) % 2u)};
+        SDL_RenderFillRect(r->sdl, &fleck);
+    }
+}
+
 static void draw_approach_ground(Renderer *r, const GameState *g, int sx, int sy, int x, int y) {
+    // Grass gives way to snow, sand, ash or stone toward the Frostfell, Sunscar, Ashen, Stonewake, Giant's Peaks and Stormwatch landmarks.
     const TownApproach *route = approach_route(g);
-    if (route && approach_ground(route->area) == TILE_SWAMP_FLOOR) {
+    Location area = route ? route->area : LOCATION_FOREST;
+    int progress = route ? approach_progress(&g->map, x, y) : 0;
+    if (approach_ground(area) == TILE_SWAMP_FLOOR) {
         draw_swamp_floor(r, sx, sy, x, y);
+    } else if (area == LOCATION_FROSTFELL && progress >= 55) {
+        draw_frostfell_floor(r, sx, sy, x, y);
+    } else if (area == LOCATION_FROSTFELL && progress >= 15) {
+        draw_dusted_grass(r, sx, sy, x, y, (progress - 15) / 4, (SDL_Color){214, 228, 236, 255});
+    } else if (area == LOCATION_DESERT && progress >= 60) {
+        draw_desert_floor(r, sx, sy, x, y);
+    } else if (area == LOCATION_DESERT && progress >= 20) {
+        draw_dusted_grass(r, sx, sy, x, y, (progress - 20) / 4, (SDL_Color){176, 138, 82, 255});
+    } else if (area == LOCATION_ASHEN && progress >= 70) {
+        draw_ashen_floor(r, sx, sy, x, y);
+    } else if (area == LOCATION_ASHEN && progress >= 50) {
+        draw_forest_floor(r, sx, sy, x, y);
+    } else if (area == LOCATION_ASHEN && progress >= 15) {
+        draw_dusted_grass(r, sx, sy, x, y, (progress - 15) / 4, (SDL_Color){92, 88, 84, 255});
+    } else if ((area == LOCATION_GLASSDEEP || area == LOCATION_GIANTS_CROWN) && progress >= 60) {
+        draw_dusted_grass(r, sx, sy, x, y, (progress - 60) / 12, (SDL_Color){158, 148, 124, 255});
+    } else if (area == LOCATION_STORMWATCH && progress >= 75) {
+        draw_mountain_floor(r, sx, sy, x, y);
+    } else if (area == LOCATION_STORMWATCH && progress >= 20) {
+        draw_dusted_grass(r, sx, sy, x, y, (progress - 20) / 5, (SDL_Color){128, 132, 134, 255});
     } else {
         draw_town_floor(r, sx, sy);
     }
@@ -302,7 +338,7 @@ static void draw_approach_ground(Renderer *r, const GameState *g, int sx, int sy
 static int draw_approach_scenery(Renderer *r, const GameState *g, int sx, int sy, int x, int y) {
     // Checkpoint banks on wooded, boggy or rocky roads match the scenery around them.
     const TownApproach *route = approach_route(g);
-    TileType scenery = route ? approach_scenery(route->area) : TILE_WALL;
+    TileType scenery = route ? approach_scenery(route->area, 100) : TILE_WALL;
     if (scenery == TILE_FOREST_WALL) {
         draw_forest_wall(r, sx, sy, x, y);
     } else if (scenery == TILE_ELDERWOOD_WALL) {
@@ -445,7 +481,7 @@ void draw_catacombs_tile(Renderer *r, const Map *m, int sx, int sy, int x, int y
     }
 }
 
-static void draw_crownroad_tile(Renderer *r, int sx, int sy, int x, int y, int kind) {
+void draw_crownroad_tile(Renderer *r, int sx, int sy, int x, int y, int kind) {
     int px = sx * TILE_SIZE;
     int py = sy * TILE_SIZE;
     SDL_Rect tile = {px, py, TILE_SIZE, TILE_SIZE};
@@ -1854,6 +1890,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_TOWN_FLOOR) {
         if (game_is_crownroad(g)) {
             draw_crownroad_tile(r, screen_x, screen_y, map_x, map_y, 0);
+        } else if (g->location == LOCATION_APPROACH) {
+            draw_approach_ground(r, g, screen_x, screen_y, map_x, map_y);
         } else {
             draw_town_floor(r, screen_x, screen_y);
         }
@@ -2315,7 +2353,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             }
             if (g->location == LOCATION_CROWNROAD_NORTH) {
                 TileType tile = g->map.tiles[y][x];
-                northroad_draw_tile(r, sx, sy, x, y, tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile);
+                northroad_draw_tile(r, g, sx, sy, x, y, tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile);
                 continue;
             }
             if (g->location == LOCATION_GIANTS_CROWN) {
@@ -2399,7 +2437,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         if (approach_route(g)->area == LOCATION_COAST) {
                             draw_approach_coast_ground(r, sx, sy, x, y);
                         } else {
-                            draw_town_floor(r, sx, sy);
+                            draw_approach_ground(r, g, sx, sy, x, y);
                         }
                     } else if (g->location == LOCATION_CASTLE &&
                         x >= TOWN_MOAT_X && x < TOWN_MOAT_X + TOWN_MOAT_W &&
@@ -2463,7 +2501,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     break;
                 }
                 case TILE_FOREST_WALL:
-                    draw_forest_wall(r, sx, sy, x, y); break;
+                    // The Crown Roads pass through living woods, like Crown Road North.
+                    if (game_is_crownroad(g)) {
+                        draw_elderwood_wall(r, sx, sy, x, y);
+                    } else {
+                        draw_forest_wall(r, sx, sy, x, y);
+                    }
+                    break;
                 case TILE_FOREST_HIDDEN_TRAIL:
                     draw_forest_wall(r, sx, sy, x, y); break;
                 case TILE_ELDERWOOD_WALL:
@@ -2504,7 +2548,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_MOUNTAIN_FLOOR:
                     draw_mountain_floor(r, sx, sy, x, y); break;
                 case TILE_MOUNTAIN_WALL:
-                    draw_mountain_wall(r, sx, sy, x, y);
+                    if (g->location == LOCATION_APPROACH && approach_route(g) &&
+                        (approach_route(g)->area == LOCATION_GLASSDEEP || approach_route(g)->area == LOCATION_GIANTS_CROWN ||
+                        approach_route(g)->area == LOCATION_STORMWATCH)) {
+                        // Stonewake, Giant's Peaks and Stormwatch roads scatter boulders rather than rock walls.
+                        draw_approach_ground(r, g, sx, sy, x, y);
+                        draw_boulder(r, sx, sy);
+                    } else {
+                        draw_mountain_wall(r, sx, sy, x, y);
+                    }
                     break;
                 case TILE_MOUNTAIN_ENTRANCE:
                     draw_mountain_edge(r, sx, sy, x, y, 0); break;
@@ -2896,6 +2948,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_TOWN_FLOOR:
                     if (game_is_crownroad(g)) {
                         draw_crownroad_tile(r, sx, sy, x, y, 0);
+                    } else if (g->location == LOCATION_APPROACH) {
+                        draw_approach_ground(r, g, sx, sy, x, y);
                     } else {
                         draw_town_floor(r, sx, sy);
                     }
@@ -3255,26 +3309,35 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_swamp_bank(r, sx, sy, x, y, edges);
                 }
             }
-            if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area != LOCATION_MOUNTAINS &&
-                approach_scenery(approach_route(g)->area) != TILE_WALL && map_is_walkable(&g->map, x, y)) {
+            if (g->location == LOCATION_APPROACH && approach_route(g) && map_is_walkable(&g->map, x, y)) {
                 // Verges beside woods or bog take the soft edge of the matching adventure.
-                TileType scenery = approach_scenery(approach_route(g)->area);
                 const int ex[4] = {0, 1, 0, -1};
                 const int ey[4] = {-1, 0, 1, 0};
                 const unsigned int side[4] = {FOREST_EDGE_NORTH, FOREST_EDGE_EAST, FOREST_EDGE_SOUTH, FOREST_EDGE_WEST};
-                unsigned int edges = 0;
+                unsigned int woods = 0;
+                unsigned int bog = 0;
                 for (int i = 0; i < 4; i++) {
                     int nx = x + ex[i];
                     int ny = y + ey[i];
-                    if (nx >= 0 && nx < APPROACH_W && ny >= 0 && ny < APPROACH_H &&
-                        (g->map.tiles[ny][nx] == scenery || g->map.tiles[ny][nx] == TILE_ROAD_BANK)) {
-                        edges |= side[i];
+                    if (nx < 0 || nx >= APPROACH_W || ny < 0 || ny >= APPROACH_H) {
+                        continue;
+                    }
+                    TileType tile = g->map.tiles[ny][nx];
+                    // Banks are drawn as the road's scenery.
+                    if (tile == TILE_ROAD_BANK) {
+                        tile = approach_scenery(approach_route(g)->area, 100);
+                    }
+                    if (tile == TILE_FOREST_WALL || tile == TILE_ELDERWOOD_WALL) {
+                        woods |= side[i];
+                    } else if (tile == TILE_SWAMP_WALL) {
+                        bog |= side[i];
                     }
                 }
-                if (edges != 0 && scenery == TILE_SWAMP_WALL) {
-                    draw_swamp_bank(r, sx, sy, x, y, edges);
-                } else if (edges != 0) {
-                    draw_forest_tree_edge(r, sx, sy, x, y, edges);
+                if (bog != 0) {
+                    draw_swamp_bank(r, sx, sy, x, y, bog);
+                }
+                if (woods != 0) {
+                    draw_forest_tree_edge(r, sx, sy, x, y, woods);
                 }
             }
             if (g->location == LOCATION_FOREST &&
