@@ -346,7 +346,7 @@ void test_approaches(void) {
                         }
                     }
                 }
-                ASSERT("the themed entrance stands in town grass beside a cobblestone road", g->map.tiles[g->player.y][g->player.x] == TILE_TOWN_PATH && g->map.tiles[g->map.stairs_down_y + 1][g->map.stairs_down_x] == TILE_TOWN_PATH && g->map.tiles[g->map.stairs_down_y + 3][g->map.stairs_down_x - 5] == (route->area == LOCATION_COAST ? TILE_COAST_SEA : TILE_TOWN_FLOOR));
+                ASSERT("the themed entrance stands in a clearing beside a cobblestone road", g->map.tiles[g->player.y][g->player.x] == TILE_TOWN_PATH && g->map.tiles[g->map.stairs_down_y + 1][g->map.stairs_down_x] == TILE_TOWN_PATH && g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x - 4] == (route->area == LOCATION_COAST ? TILE_COAST_SEA : TILE_TOWN_FLOOR));
                 ASSERT("only the south-facing doorway of the entrance landmark can be entered", solid && g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] == TILE_APPROACH_AREA);
             } else if (route->area != LOCATION_MOUNTAINS && route->area != LOCATION_FOREST && route->area != LOCATION_SWAMP) {
                 ASSERT("the far entrance is recessed into the surrounding terrain", !map_is_walkable(&g->map, g->map.stairs_down_x + dx, g->map.stairs_down_y + dy) && !map_is_walkable(&g->map, g->map.stairs_down_x - dy, g->map.stairs_down_y + dx) && !map_is_walkable(&g->map, g->map.stairs_down_x + dy, g->map.stairs_down_y - dx));
@@ -756,16 +756,17 @@ void test_approaches(void) {
             g->map.tiles[py][px] = TILE_TOWN_PATH;
         }
     }
+    // The verge beside the road stays open; light woodland may grow farther out.
     g->player.x = 10;
-    g->player.y = 27;
-    map_mark_explored(&g->map, 10, 27);
+    g->player.y = 26;
+    map_mark_explored(&g->map, 10, 26);
     g->gold = 393;
     g->floor_item_count = 1;
     g->floor_items[0] = (FloorItem){.active = 1, .x = 30, .y = 25, .underlying_tile = TILE_TOWN_PATH, .item = item_make_health_potion()};
     g->map.tiles[25][30] = TILE_ITEM;
     int narrowed = save_game(g, slot) && legacy_approach_save(slot, 167) && load_game(loaded, slot);
-    ASSERT("existing wide-road saves adopt the narrow paving", narrowed && loaded->map.tiles[24][10] == TILE_TOWN_PATH && loaded->map.tiles[25][10] == TILE_TOWN_FLOOR && loaded->map.tiles[27][10] == TILE_TOWN_FLOOR);
-    ASSERT("narrowing preserves saved position, exploration, loot and gold", narrowed && loaded->player.x == 10 && loaded->player.y == 27 && map_is_explored(&loaded->map, 10, 27) && loaded->gold == 393 && loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->map.tiles[25][30] == TILE_ITEM);
+    ASSERT("existing wide-road saves adopt the narrow paving", narrowed && loaded->map.tiles[24][10] == TILE_TOWN_PATH && loaded->map.tiles[25][10] == TILE_TOWN_FLOOR && loaded->map.tiles[26][10] == TILE_TOWN_FLOOR);
+    ASSERT("narrowing preserves saved position, exploration, loot and gold", narrowed && loaded->player.x == 10 && loaded->player.y == 26 && map_is_explored(&loaded->map, 10, 26) && loaded->gold == 393 && loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->map.tiles[25][30] == TILE_ITEM);
     approach_town(g, &town_approaches[1]);
     g->defeated_bosses |= 1 << LOCATION_DUNGEON;
     approach_enter(g, TOWN_W - 1, 12);

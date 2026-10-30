@@ -13,10 +13,9 @@ the road. Transparent backgrounds preserve the underlying terrain.
 
 The bank atlas uses 16 connected-edge masks, four surface variations and six
 regional palettes. Rounded outer corners, joined canopies and rock faces frame
-the crossing. Roads that cut through scenery (Haunted Forest, Blackwater Swamp,
-Goblin Mountains and the northern road) draw their banks with that scenery's
-tiles instead, so only the Dungeon road still shows the atlas. Terrain stays
-after victory; only the beam and passage status change.
+the crossing. Every gated road now draws its banks with its own scenery tiles
+(see [road scenery](../../road-scenery.md)), so the bank atlas is currently not
+shown in play. Terrain stays after victory; only the beam and passage status change.
 
 ## Renderer inspection
 
