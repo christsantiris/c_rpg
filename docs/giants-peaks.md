@@ -2,8 +2,8 @@
 
 **Giant's Crown** is assigned by Antiquarian Edda in Rosemoor's Adventurer's Guild.
 
-Leave **Rosemoor through its west gate**, follow the single-tile road, and enter
-the ruined giant hall. This optional five-stage region rises from grassy western
+Leave **Rosemoor through its west gate**, follow the single-tile road through
+grass that grows rocky toward the peaks, and enter the ruined giant hall. This optional five-stage region rises from grassy western
 foothills into the frost-covered remains of a giant kingdom. Ashen Hollow lies
 north of Castle Grounds, reached around the castle's western perimeter.
 

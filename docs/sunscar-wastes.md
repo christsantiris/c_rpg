@@ -1,7 +1,8 @@
 # Sunscar Wastes
 
-Stillbury's west gate enters Sunscar Wastes. Its five stages run from east to
-west; backtracking uses the east edge. The first stage's east exit and the final
+Stillbury's west gate enters Sunscar Wastes. Its approach road leaves green woods
+for sandstone outcrops, then sand and mesas around the entrance; see
+[road scenery](road-scenery.md). The five stages run from east to west; backtracking uses the east edge. The first stage's east exit and the final
 stage's west exit return to Stillbury. The Desert Pharaoh does not block the final exit
 and drops the Sandstorm Staff.
 
