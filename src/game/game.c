@@ -1517,6 +1517,7 @@ void game_init(GameState *g) {
     g->message_count = 0;
     g->level_cleared = 0;
     controls_reset(g->key_bindings);
+    g->quick_potion_type = ITEM_POTION_HEALTH;
     g->max_level_reached = 1;
     g->dungeon_entry_town = LOCATION_TOWN;
     g->dungeon_portal_town = LOCATION_TOWN;
@@ -1987,6 +1988,30 @@ void game_recover_retired_items(GameState *g) {
     if (recovered) {
         push_message(g, "Items from a retired area have been returned to you.");
     }
+}
+
+int game_set_quick_potion(GameState *g, int index) {
+    if (index < 0 || index >= g->inventory_count) {
+        return 0;
+    }
+    ItemType type = g->inventory[index].type;
+    if (type != ITEM_POTION_HEALTH && type != ITEM_POTION_MANA) {
+        push_message(g, "Select a Health or Mana Potion for quick drinking.");
+        return 0;
+    }
+    g->quick_potion_type = type;
+    push_message(g, type == ITEM_POTION_MANA ? "Quick potion: Mana Potion." : "Quick potion: Health Potion.");
+    return 1;
+}
+
+int game_quick_potion_count(const GameState *g) {
+    int count = 0;
+    for (int i = 0; i < g->inventory_count; i++) {
+        if (g->inventory[i].type == g->quick_potion_type) {
+            count++;
+        }
+    }
+    return count;
 }
 
 void game_remove_inventory_item(GameState *g, int index) {

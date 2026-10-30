@@ -51,6 +51,8 @@ void help_draw(Renderer *r, const GameState *g) {
     draw_help_row(r, "Bump enemy", "Melee attack", col2, y, white);
     draw_help_row(r, bound(g, CONTROL_CAST_SPELL), "Cast spell", col2, y + lh, white);
     draw_help_row(r, bound(g, CONTROL_RANGED_ATTACK), "Fire ranged", col2, y + 2 * lh, white);
+    draw_help_row(r, bound(g, CONTROL_DRINK_POTION), "Drink quick potion", col2, y + 3 * lh, white);
+    draw_help_row(r, "Inventory Q", "Set quick potion", col2, y + 4 * lh, white);
     // One move per row so long key names such as "Keypad 8" stay readable.
     draw_help_row(r, bound(g, CONTROL_MOVE_UP), "Move up", col1, y, white);
     y += lh;

@@ -20,14 +20,14 @@ int controls_settings_load(int bindings[CONTROL_COUNT], const char *path) {
     text[length] = '\0';
     cJSON *root = cJSON_ParseWithOpts(text, NULL, 1);
     int saved[CONTROL_COUNT];
-    int valid = cJSON_IsArray(root) && cJSON_GetArraySize(root) == CONTROL_COUNT;
-    for (int i = 0; valid && i < CONTROL_COUNT; i++) {
+    int count = cJSON_IsArray(root) ? cJSON_GetArraySize(root) : 0;
+    int valid = count == CONTROL_COUNT || count == CONTROL_DRINK_POTION;
+    for (int i = 0; valid && i < count; i++) {
         cJSON *key = cJSON_GetArrayItem(root, i);
         valid = cJSON_IsNumber(key) && key->valuedouble == key->valueint;
         saved[i] = valid ? key->valueint : 0;
     }
-    if (valid && controls_valid(saved)) {
-        memcpy(bindings, saved, sizeof(saved));
+    if (valid && controls_migrate(bindings, saved, count)) {
     } else {
         valid = 0;
     }
