@@ -16,6 +16,18 @@ Necromancer is defeated.
 Five maze floors each hold a rune. All five runes open the final vault gate;
 the Minotaur must fall before the player can take the ivory rook. Return to
 **Rook in Oakhaven's Tavern** for the one-time 40 gold and 500 score reward.
+
+## Scrolling camera
+
+The maze uses the shared 1.5× camera, with square 36-pixel tiles and scrolling
+bounded to its existing 43×25 floors. Stair labels identify the next floor or
+the return to the forest road; both descents keep the same label so the false
+stair remains a puzzle. Labels stay inside the play area, and discovered stairs
+appear on the compact minimap. Existing maps and saved progress are unchanged.
+
+For playtesting, check the entrance and both descents, retreat between floors,
+and the fifth-floor gate, pillars and Minotaur warnings. Resize the window while
+moving near the maze edges and confirm the sidebar and stair labels stay clear.
 True and false stairs, runes, gate, relic and regular maze enemies keep their
 existing behavior.
 
