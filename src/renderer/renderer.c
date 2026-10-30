@@ -92,14 +92,15 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->workshop_texture = load_sprite_texture(sdl, "assets/images/workshop.bmp");
     r->town_hall_texture = load_sprite_texture(sdl, "assets/images/town-hall.bmp");
     r->royal_dungeon_texture = load_sprite_texture(sdl, "assets/images/royal-dungeon.bmp");
-    const char *local_paths[5] = {
+    const char *local_paths[LOCAL_BUILDING_TEXTURE_COUNT] = {
         "assets/images/bakery.bmp",
         "assets/images/butcher.bmp",
         "assets/images/monastery.bmp",
         "assets/images/spice-merchant.bmp",
-        "assets/images/alehouse.bmp"
+        "assets/images/alehouse.bmp",
+        "assets/images/goldsmith.bmp"
     };
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < LOCAL_BUILDING_TEXTURE_COUNT; i++) {
         r->local_building_textures[i] = load_sprite_texture(sdl, local_paths[i]);
     }
     r->alehouse_cask_texture = load_sprite_texture(sdl, "assets/images/alehouse-cask.bmp");
@@ -175,7 +176,7 @@ void renderer_free(Renderer *r) {
     r->road_bank_texture = NULL;
     SDL_DestroyTexture(r->alehouse_cask_texture);
     r->alehouse_cask_texture = NULL;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < LOCAL_BUILDING_TEXTURE_COUNT; i++) {
         if (r->local_building_textures[i]) {
             SDL_DestroyTexture(r->local_building_textures[i]);
             r->local_building_textures[i] = NULL;

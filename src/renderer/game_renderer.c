@@ -4084,6 +4084,18 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "DAIN", viewport_to_screen_x(v, DAIN_ALEHOUSE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, DAIN_ALEHOUSE_Y - 1) * TILE_SIZE, (SDL_Color){218, 164, 84, 255}, r->font_tiny);
     }
+    if (g->location == LOCATION_GOLDSMITH) {
+        char counter[64];
+        SDL_snprintf(counter, sizeof(counter), "IVEN - JEWELRY (%s)", SDL_GetScancodeName(g->key_bindings[CONTROL_TALK]));
+        renderer_draw_text(r, counter, viewport_to_screen_x(v, RESIDENT_X) * TILE_SIZE - 80,
+            viewport_to_screen_y(v, RESIDENT_Y - 1) * TILE_SIZE + 12, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+        int exit_x = viewport_to_screen_x(v, 20) * TILE_SIZE - 28;
+        int exit_y = viewport_to_screen_y(v, 22) * TILE_SIZE - 12;
+        if (exit_y > r->tiles_y * TILE_SIZE - 12) {
+            exit_y = r->tiles_y * TILE_SIZE - 12;
+        }
+        renderer_draw_text(r, "OAKHAVEN", exit_x, exit_y, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+    }
     if (g->location == LOCATION_GUILD) {
         int width = 0;
         TTF_SizeText(r->font_tiny, "HUNTMASTER SELENE", &width, NULL);

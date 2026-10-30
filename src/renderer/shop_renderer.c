@@ -83,6 +83,7 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
         : s->type == SHOP_TYPE_BLACKSMITH ? "BLACKSMITH"
         : s->type == SHOP_TYPE_HEALER ? "HEALER"
         : s->type == SHOP_TYPE_FLETCHER ? "FLETCHER"
+        : s->type == SHOP_TYPE_GOLDSMITH ? "GOLDSMITH"
         : s->type == SHOP_TYPE_APOTHECARY ? "APOTHECARY" : "WITCH";
     renderer_draw_text(r, title, cx - 60, 40, gold, r->font_large);
 
@@ -204,6 +205,15 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
             }
             draw_weapon_comparison(r, g, selected, equipped,
                 (r->tiles_y - 9) * TILE_SIZE);
+        } else if (selected->type == ITEM_HELMET || selected->type == ITEM_ACCESSORY) {
+            char bonuses[96];
+            SDL_snprintf(bonuses, sizeof(bonuses), "ATK %+d  DEF %+d  MAX HP %+d  MAX MP %+d",
+                selected->attack_bonus, selected->defense_bonus, selected->max_hp_bonus, selected->max_mp_bonus);
+            renderer_draw_text(r, bonuses, cx - 200, (r->tiles_y - 9) * TILE_SIZE, white, r->font_tiny);
+            const char *limit = selected->type == ITEM_HELMET ? "HELMET SLOT; ALL CLASSES"
+                : item_accessory_limit(selected) == 2 ? "ACCESSORY SLOT; TWO RINGS ALLOWED"
+                : "ACCESSORY SLOT; ONE PER CATEGORY";
+            renderer_draw_text(r, limit, cx - 200, (r->tiles_y - 8) * TILE_SIZE, white, r->font_tiny);
         } else if (selected->type == ITEM_ARMOR) {
             const Item *equipped = NULL;
             if (g->equipped_armor >= 0 &&

@@ -26,6 +26,7 @@ void town_life_generate(Map *map, Location interior, int *sx, int *sy);
 void town_life_enter(GameState *g, int x, int y);
 void town_life_leave(GameState *g);
 int town_life_talk(GameState *g, int greeting);
+int town_life_near_goldsmith(const GameState *g);
 void town_life_migrate(GameState *g);
 
 #endif

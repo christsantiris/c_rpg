@@ -22,7 +22,10 @@ static const TownBuilding buildings[] = {
         "SPICE MERCHANT", "Spice Merchant Corvin",
         spice_skiff_offer, NULL},
     {LOCATION_DAWNMERE, LOCATION_ALEHOUSE, 25, 5, 7, 6, 4, 0,
-        "ALEHOUSE", "Dain", NULL, NULL}
+        "ALEHOUSE", "Dain", NULL, NULL},
+    {LOCATION_TOWN, LOCATION_GOLDSMITH, 25, 17, 5, 4, 5, 0,
+        "GOLDSMITH", "Goldsmith Iven",
+        "Welcome! I buy and sell rings and amulets. Approach my counter and Talk to browse the jewelry.", NULL}
 };
 
 const TownBuilding *town_life_building(Location location) {
@@ -115,6 +118,11 @@ void town_life_generate(Map *map, Location interior, int *sx, int *sy) {
     } else {
         map->tiles[RESIDENT_Y][RESIDENT_X] = TILE_NPC_RESIDENT;
     }
+}
+
+int town_life_near_goldsmith(const GameState *g) {
+    return g->location == LOCATION_GOLDSMITH &&
+        abs(g->player.x - RESIDENT_X) <= 1 && abs(g->player.y - RESIDENT_Y) <= 1;
 }
 
 int town_life_talk(GameState *g, int greeting) {

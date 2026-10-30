@@ -61,6 +61,9 @@ def hanging_sign(layer, kind):
     elif kind == 1:
         stamp(layer, 103, 65, ["tttiiiiiiii", "tWWiIIIIIIi", "...iIIIIIWi", "....iiiiii.", "...........", "..G..G..G.."],
               {"t": WOOD[0], "W": (224, 216, 186), "i": IRON[1], "I": IRON[3], "G": BREAD["B"]})
+    elif kind == 3:
+        stamp(layer, 105, 65, ["..GGG..", ".GW..g.", "GW....g", "G.....g", ".g...g.", "..ggg.."],
+              {"G": (233, 185, 68), "W": (255, 237, 166), "g": (132, 83, 29)})
     else:
         rectangle(layer, 106, 65, 111, 66, (180, 117, 65))
         rectangle(layer, 105, 67, 112, 71, (116, 58, 38))
@@ -101,6 +104,14 @@ def stall(layer, kind):
         stamp(layer, 10, 82, [".rHRr.", "rRBBRr", ".rrrr."], meat)
         beam(layer, 22, 84, 26, 83, IRON, width=1)
         beam(layer, 27, 83, 29, 83, WOOD, width=1)
+    elif kind == 3:
+        flat_wall(layer, 8, 29, 69, 85, STONE, row_h=4, base=3, seed=85, bw=(4, 6))
+        beam(layer, 8, 85, 30, 85, WOOD, width=3)
+        for x in (11, 22):
+            stamp(layer, x, 77, [".GGG.", "GW..g", "G...g", ".ggg."],
+                  {"G": (233, 185, 68), "W": (255, 237, 166), "g": (132, 83, 29)})
+        stamp(layer, 15, 69, ["..i..", ".iBi.", "iBBBi", ".ibi.", "..i.."],
+              {"i": IRON[2], "B": (110, 198, 216), "b": (42, 105, 134)})
     else:
         for x, color in ((11, (192, 72, 35)), (20, (221, 167, 46)), (29, (102, 139, 61))):
             sack(layer, x, 77, color)
@@ -113,7 +124,7 @@ def stall(layer, kind):
 def build_shop(kind):
     size = (120, 96)
     canvas = Image.new("RGBA", size, (0, 0, 0, 0))
-    roof_pal = ROOFS[kind]
+    roof_pal = ROOFS[kind % len(ROOFS)]
     chimney = Layer(*size)
     flat_wall(chimney, 84, 94, 7, 40, STONE, row_h=4, base=3, seed=80 + kind, bw=(4, 6))
     rectangle(chimney, 83, 4, 95, 6, STONE[3])
@@ -204,6 +215,9 @@ def build_shop(kind):
         stamp(props, 114, 86, ["..I..", ".III.", "iIIWi", "iIIIi", ".iii.", ".....", ".TTT.", "TTTTT", ".ttt."], PROPS)
         stamp(props, 39, 74, [".l.", "lLl", "LLl", ".Ll", "..l"],
               {"l": (33, 62, 30), "L": (83, 123, 52)})
+    elif kind == 3:
+        stamp(props, 103, 82, CRATE, PROPS)
+        stamp(props, 38, 86, BARREL, PROPS)
     else:
         sack(props, 104, 82, (221, 167, 46))
         sack(props, 113, 83, (192, 72, 35))
@@ -386,7 +400,7 @@ def build_monastery():
 
 
 def main():
-    for kind, name in enumerate(("bakery", "butcher", "spice-merchant")):
+    for kind, name in enumerate(("bakery", "butcher", "spice-merchant", "goldsmith")):
         save_sprite(build_shop(kind), ASSETS / f"{name}.bmp")
     save_sprite(build_monastery(), ASSETS / "monastery.bmp")
 

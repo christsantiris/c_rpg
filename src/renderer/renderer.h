@@ -5,6 +5,7 @@
 #include <SDL2/SDL_ttf.h>
 
 #define TILE_SIZE 24
+#define LOCAL_BUILDING_TEXTURE_COUNT 6
 
 typedef enum {
     TOWN_EXIT_DUNGEON,
@@ -66,7 +67,7 @@ typedef struct {
     SDL_Texture *workshop_texture;
     SDL_Texture *town_hall_texture;
     SDL_Texture *royal_dungeon_texture;
-    SDL_Texture *local_building_textures[5];
+    SDL_Texture *local_building_textures[LOCAL_BUILDING_TEXTURE_COUNT];
     SDL_Texture *alehouse_cask_texture;
     SDL_Texture *island_texture;
     SDL_Texture *island_temple_texture;

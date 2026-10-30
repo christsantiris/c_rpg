@@ -70,6 +70,23 @@ void test_equipment_catalog(void) {
     ASSERT("the accessory category rule permits two rings and one of every other category", item_accessory_limit(&items[0]) == 0 && item_accessory_limit(&items[1]) == 1 && item_accessory_limit(&items[2]) == 1 && item_accessory_limit(&items[3]) == 2 && item_accessory_limit(&items[4]) == 1);
     ASSERT("new types append without changing existing serialized item IDs", ITEM_ARROWS == 12 && ITEM_HELMET == 13 && ITEM_ACCESSORY == 14);
 
+    ShopScreen smith;
+    ShopScreen jeweler;
+    int stocks_valid = 1;
+    for (int cls = CLASS_WARRIOR; cls <= CLASS_ROGUE; cls++) {
+        shop_init(&smith, SHOP_TYPE_BLACKSMITH, (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) | (1 << LOCATION_SWAMP), cls);
+        shop_init(&jeweler, SHOP_TYPE_GOLDSMITH, 0, cls);
+        stocks_valid &= smith.item_count == 39 && smith.item_count <= MAX_SHOP_ITEMS && jeweler.item_count == 2;
+        for (int i = 0; i < smith.item_count; i++) {
+            stocks_valid &= shop_accepts_item(SHOP_TYPE_BLACKSMITH, &smith.items[i]) && !item_is_jewelry(&smith.items[i]);
+        }
+        for (int i = 0; i < 5; i++) {
+            stocks_valid &= shop_accepts_item(item_is_jewelry(&items[i]) ? SHOP_TYPE_GOLDSMITH : SHOP_TYPE_BLACKSMITH, &items[i]);
+            stocks_valid &= !shop_accepts_item(item_is_jewelry(&items[i]) ? SHOP_TYPE_BLACKSMITH : SHOP_TYPE_GOLDSMITH, &items[i]);
+        }
+    }
+    ASSERT("shops stock the approved starter equipment and trade only their own categories", stocks_valid);
+
     GameState *g = calloc(1, sizeof(*g));
     GameState *loaded = calloc(1, sizeof(*loaded));
     ASSERT("catalog save fixtures allocate", g && loaded);

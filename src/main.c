@@ -952,9 +952,11 @@ int main(int argc, char **argv) {
                                 break;
                             }
                             if (!shop_accepts_item(shop_screen.type, &item)) {
-                                push_message(&game, shop_screen.type == SHOP_TYPE_ALCHEMIST
-                                    ? "Take weapons and equipment to the blacksmith."
-                                    : "Take potions, scrolls and tomes to the alchemist.");
+                                push_message(&game, item_is_jewelry(&item)
+                                    ? "Take rings and amulets to the Goldsmith in Oakhaven."
+                                    : item.type == ITEM_WEAPON || item.type == ITEM_ARMOR || item.type == ITEM_SHIELD || item.type == ITEM_HELMET || item.type == ITEM_ACCESSORY
+                                        ? "Take weapons and equipment to the blacksmith."
+                                        : "Take potions, scrolls and tomes to the alchemist.");
                                 break;
                             }
                             int sell_price = shop_sell_price(&item);
@@ -1057,6 +1059,12 @@ int main(int argc, char **argv) {
                                 screen = SCREEN_HELP;
                                 break;
                             case CONTROL_TALK: {
+                                if (town_life_near_goldsmith(&game)) {
+                                    game.dialogue_active = 0;
+                                    shop_init(&shop_screen, SHOP_TYPE_GOLDSMITH, game.defeated_bosses, game.player.player_class);
+                                    screen = SCREEN_SHOP;
+                                    break;
+                                }
                                 if (restoration_talk(&game) || town_life_talk(&game, 0)) {
                                     break;
                                 }
@@ -1420,9 +1428,11 @@ int main(int argc, char **argv) {
                                             break;
                                         }
                                         if (!shop_accepts_item(shop_screen.type, &item)) {
-                                            push_message(&game, shop_screen.type == SHOP_TYPE_ALCHEMIST
-                                                ? "Take weapons and equipment to the blacksmith."
-                                                : "Take potions, scrolls and tomes to the alchemist.");
+                                            push_message(&game, item_is_jewelry(&item)
+                                                ? "Take rings and amulets to the Goldsmith in Oakhaven."
+                                                : item.type == ITEM_WEAPON || item.type == ITEM_ARMOR || item.type == ITEM_SHIELD || item.type == ITEM_HELMET || item.type == ITEM_ACCESSORY
+                                                    ? "Take weapons and equipment to the blacksmith."
+                                                    : "Take potions, scrolls and tomes to the alchemist.");
                                             break;
                                         }
                                         int sell_price = shop_sell_price(&item);

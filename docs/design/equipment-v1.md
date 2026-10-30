@@ -16,7 +16,10 @@ existing rules: buying costs twice the base value; selling returns one quarter.
 The Goldsmith is a new building in Oakhaven with its own jewelry shop. Rings and
 amulets belong there, separate from the Blacksmith and Alchemist. The Blacksmith
 primarily trades weapons and armor, including the starter cap, gauntlets and
-bracers. All starter items are available at the first shop tier once stocked.
+bracers. All starter items are available at the first shop tier. The Goldsmith
+stands southeast of Oakhaven’s square; enter its door and Talk beside Iven’s
+counter to buy or sell jewelry. Save version 226 adds the building to existing
+Oakhaven maps and relocates any player or dropped loot in its footprint.
 Additional accessory items and effects are deferred to v2.
 
 ## New characters
