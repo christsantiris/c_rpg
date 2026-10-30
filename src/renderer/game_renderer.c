@@ -481,7 +481,7 @@ void draw_catacombs_tile(Renderer *r, const Map *m, int sx, int sy, int x, int y
     }
 }
 
-static void draw_crownroad_tile(Renderer *r, int sx, int sy, int x, int y, int kind) {
+void draw_crownroad_tile(Renderer *r, int sx, int sy, int x, int y, int kind) {
     int px = sx * TILE_SIZE;
     int py = sy * TILE_SIZE;
     SDL_Rect tile = {px, py, TILE_SIZE, TILE_SIZE};
@@ -2353,7 +2353,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             }
             if (g->location == LOCATION_CROWNROAD_NORTH) {
                 TileType tile = g->map.tiles[y][x];
-                northroad_draw_tile(r, sx, sy, x, y, tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile);
+                northroad_draw_tile(r, g, sx, sy, x, y, tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile);
                 continue;
             }
             if (g->location == LOCATION_GIANTS_CROWN) {
