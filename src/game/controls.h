@@ -18,6 +18,7 @@ typedef enum {
     CONTROL_CAST_SPELL,
     CONTROL_RANGED_ATTACK,
     CONTROL_HELP,
+    CONTROL_DRINK_POTION,
     CONTROL_COUNT
 } ControlAction;
 
@@ -26,6 +27,7 @@ int controls_key_reserved(int scancode);
 int controls_action_for_key(const int bindings[CONTROL_COUNT], int scancode);
 int controls_assign(int bindings[CONTROL_COUNT], ControlAction action, int scancode);
 int controls_valid(const int bindings[CONTROL_COUNT]);
+int controls_migrate(int bindings[CONTROL_COUNT], const int *saved, int count);
 const char *controls_label(ControlAction action);
 
 #endif

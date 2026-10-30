@@ -5,13 +5,13 @@ static const int default_bindings[CONTROL_COUNT] = {
     SDL_SCANCODE_W, SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D,
     SDL_SCANCODE_PERIOD, SDL_SCANCODE_COMMA, SDL_SCANCODE_P, SDL_SCANCODE_T,
     SDL_SCANCODE_I, SDL_SCANCODE_B, SDL_SCANCODE_Q, SDL_SCANCODE_C,
-    SDL_SCANCODE_F, SDL_SCANCODE_H
+    SDL_SCANCODE_F, SDL_SCANCODE_H, SDL_SCANCODE_V
 };
 
 static const char *labels[CONTROL_COUNT] = {
     "Move up", "Move down", "Move left / interact", "Move right",
     "Descend stairs / exit", "Ascend stairs", "Pick up", "Talk", "Inventory",
-    "Spellbook", "Quest journal", "Cast spell", "Fire ranged", "Help"
+    "Spellbook", "Quest journal", "Cast spell", "Fire ranged", "Help", "Drink potion"
 };
 
 void controls_reset(int bindings[CONTROL_COUNT]) {
@@ -70,4 +70,31 @@ const char *controls_label(ControlAction action) {
         return "";
     }
     return labels[action];
+}
+
+int controls_migrate(int bindings[CONTROL_COUNT], const int *saved, int count) {
+    if (count != CONTROL_COUNT && count != CONTROL_DRINK_POTION) {
+        return 0;
+    }
+    int candidate[CONTROL_COUNT];
+    controls_reset(candidate);
+    for (int i = 0; i < count; i++) {
+        candidate[i] = saved[i];
+    }
+    if (count == CONTROL_DRINK_POTION) {
+        // Preserve every existing assignment, even when V was already remapped.
+        for (int key = SDL_SCANCODE_A; key <= SDL_SCANCODE_Z; key++) {
+            if (controls_valid(candidate)) {
+                break;
+            }
+            candidate[CONTROL_DRINK_POTION] = key;
+        }
+    }
+    if (!controls_valid(candidate)) {
+        return 0;
+    }
+    for (int i = 0; i < CONTROL_COUNT; i++) {
+        bindings[i] = candidate[i];
+    }
+    return 1;
 }

@@ -133,6 +133,7 @@ void test_save_load(void);
 void test_save_confirmation(void);
 void test_combat_feedback(void);
 void test_controls(void);
+void test_quick_potion(void);
 void test_expeditions(void);
 
 int main(void) {
@@ -318,6 +319,7 @@ int main(void) {
     test_combat_feedback();
     printf("\n");
     test_controls();
+    test_quick_potion();
     printf("\n");
     REPORT();
     return tests_passed == tests_run ? 0 : 1;

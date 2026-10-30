@@ -888,6 +888,8 @@ int main(int argc, char **argv) {
                             screen = SCREEN_PLAYING;
                         } else if (result == INVENTORY_USE) {
                             handle_inventory_use(&game, &inventory_screen, &screen, &enemy_shots, &enemy_shots_started_at);
+                        } else if (result == INVENTORY_SET_QUICK_POTION) {
+                            game_set_quick_potion(&game, inventory_screen.selected);
                         } else if (result != INVENTORY_NONE) {
                             ActionType type = result == INVENTORY_EQUIP ? ACTION_EQUIP_ITEM : result == INVENTORY_EQUIP_OFF_HAND ? ACTION_EQUIP_OFF_HAND : result == INVENTORY_UNEQUIP ? ACTION_UNEQUIP_ITEM : ACTION_DROP_ITEM;
                             action_resolve_player(&game, (Action){type, inventory_selected_index(&inventory_screen), inventory_screen.accessory_slot});
@@ -1054,6 +1056,14 @@ int main(int argc, char **argv) {
                                 break;
                             case CONTROL_RANGED_ATTACK:
                                 a = (Action){ACTION_RANGED_ATTACK, 0, 0};
+                                break;
+                            case CONTROL_DRINK_POTION:
+                                if (action_drink_quick_potion(&game, &enemy_shots)) {
+                                    enemy_shots_started_at = SDL_GetTicks();
+                                }
+                                if (game.player.hp <= 0 && enemy_shots.count == 0) {
+                                    screen = SCREEN_GAME_OVER;
+                                }
                                 break;
                             case CONTROL_HELP:
                                 screen = SCREEN_HELP;
@@ -1359,6 +1369,8 @@ int main(int argc, char **argv) {
                             int button = (event.button.x - left) / 180 + (event.button.y - hint_y) / 16 * 3;
                             if (button == 0) {
                                 handle_inventory_use(&game, &inventory_screen, &screen, &enemy_shots, &enemy_shots_started_at);
+                            } else if (button == 3 && !inventory_screen.equipment_tab) {
+                                game_set_quick_potion(&game, inventory_screen.selected);
                             } else if (button == 5) {
                                 screen = SCREEN_PLAYING;
                             } else {

@@ -33,6 +33,22 @@ static void test_controls_settings(void) {
         !controls_settings_save(loaded, path) && controls_settings_load(loaded, path) &&
         memcmp(loaded, bindings, sizeof(bindings)) == 0);
 
+    int legacy[CONTROL_COUNT];
+    memcpy(legacy, bindings, sizeof(legacy));
+    legacy[CONTROL_INVENTORY] = SDL_SCANCODE_V;
+    FILE *old = fopen(path, "w");
+    ASSERT("legacy control preferences can be written", old != NULL);
+    if (old) {
+        fputc('[', old);
+        for (int i = 0; i < CONTROL_DRINK_POTION; i++) {
+            fprintf(old, "%s%d", i ? "," : "", legacy[i]);
+        }
+        fputc(']', old);
+        fclose(old);
+        ASSERT("global legacy preferences preserve all old commands when V is already used", controls_settings_load(loaded, path) && loaded[CONTROL_INVENTORY] == SDL_SCANCODE_V && loaded[CONTROL_TALK] == bindings[CONTROL_TALK] && loaded[CONTROL_DRINK_POTION] != SDL_SCANCODE_V && controls_valid(loaded));
+        memcpy(loaded, bindings, sizeof(bindings));
+    }
+
     const char *invalid[] = {
         "broken json", "{}", "[26,22]",
         "[22,22,4,7,55,54,19,23,12,5,20,6,9,11]",

@@ -73,7 +73,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
 
     int x  = px + 10;
     int y  = 10;
-    int lh = 16;
+    int compact = r->tiles_y * TILE_SIZE < 528;
+    int lh = compact ? 12 : 16;
     // On very short windows, keep the encounter warning above the character details.
     int boss_at_top = necromancer && r->tiles_y * TILE_SIZE < 528;
     if (boss_at_top) {
@@ -289,7 +290,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     static const char *slots[] = {"STRONG", "WEAK", "HELMET", "ARMOR", "ACC 1", "ACC 2"};
     for (int i = 0; i < EQUIPMENT_SLOT_COUNT; i++) {
         int sx = x + (i % 2) * 100;
-        int sy = y + (i / 2) * 32;
+        int sy = y + (i / 2) * (compact ? 28 : 32);
         EquipmentSlot slot = MAX_INVENTORY + i;
         const Item *item = game_equipped_item(g, slot);
         draw_icon_empty_slot(r, sx, sy);
@@ -304,7 +305,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         }
         renderer_draw_text(r, slots[i], sx + 29, sy + 6, disabled ? dimmed : value, r->font_tiny);
     }
-    y += 100;
+    y += compact ? 88 : 100;
     renderer_draw_text(r, "EQUIPPED SPELL", x, y, label, r->font_tiny);
     y += lh;
     int spell_index = g->player.equipped_spell;
@@ -318,6 +319,13 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     }
     y += ICON_SIZE + 8;
 
+    char quick[80];
+    SDL_snprintf(quick, sizeof(quick), "%s DRINK %s: %d",
+        SDL_GetScancodeName(g->key_bindings[CONTROL_DRINK_POTION]),
+        g->quick_potion_type == ITEM_POTION_MANA ? "MANA" : "HEALTH", game_quick_potion_count(g));
+    renderer_draw_text(r, quick, x, y, game_quick_potion_count(g) ? value : dimmed, r->font_tiny);
+    y += lh + 6;
+
     // Key hints
     if (necromancer) {
         if (!boss_at_top) {
@@ -328,30 +336,31 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         renderer_draw_text(r, "ENTER    CONFIRM", x, y + lh, hint, r->font_tiny);
         renderer_draw_text(r, "ESC      RETURN", x, y + lh * 2, hint, r->font_tiny);
     } else {
+        int key_lh = 14;
         renderer_draw_text(r, "WASD  MOVE", x, y, hint, r->font_tiny);
         if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
-            renderer_draw_text(r, ".     STAIRS DOWN", x, y + lh, hint, r->font_tiny);
+            renderer_draw_text(r, ".     STAIRS DOWN", x, y + key_lh, hint, r->font_tiny);
             char ascent_hint[40];
             int key = g->key_bindings[CONTROL_ASCEND];
             SDL_snprintf(ascent_hint, sizeof(ascent_hint), "%s     %s",
                 key == SDL_SCANCODE_COMMA ? "<" : SDL_GetScancodeName(key),
                 (g->defeated_bosses & (1 << LOCATION_DUNGEON)) ? "UP TO OAKHAVEN" : "STAIRS UP");
-            renderer_draw_text(r, ascent_hint, x, y + lh * 2, hint, r->font_tiny);
+            renderer_draw_text(r, ascent_hint, x, y + key_lh * 2, hint, r->font_tiny);
         } else {
-            renderer_draw_text(r, ".     STAIRS/EXIT", x, y + lh, hint, r->font_tiny);
-            renderer_draw_text(r, ",     ASCEND", x, y + lh * 2, hint, r->font_tiny);
+            renderer_draw_text(r, ".     STAIRS/EXIT", x, y + key_lh, hint, r->font_tiny);
+            renderer_draw_text(r, ",     ASCEND", x, y + key_lh * 2, hint, r->font_tiny);
         }
-        renderer_draw_text(r, "I     INV", x, y + lh * 3, hint, r->font_tiny);
-        renderer_draw_text(r, "Q     QUESTS/BOSSES", x, y + lh * 4, hint, r->font_tiny);
-        renderer_draw_text(r, "P     PICK UP", x, y + lh * 5, hint, r->font_tiny);
-        renderer_draw_text(r, "A     ACTION", x, y + lh * 6, hint, r->font_tiny);
-        renderer_draw_text(r, "B     SPELLS", x, y + lh * 7, hint, r->font_tiny);
-        renderer_draw_text(r, "C     CAST", x, y + lh * 8, hint, r->font_tiny);
-        renderer_draw_text(r, "F     FIRE", x, y + lh * 9, hint, r->font_tiny);
-        renderer_draw_text(r, "T     TALK", x, y + lh * 10, hint, r->font_tiny);
-        renderer_draw_text(r, "ESC   MENU", x, y + lh * 11, hint, r->font_tiny);
+        renderer_draw_text(r, "I     INV", x, y + key_lh * 3, hint, r->font_tiny);
+        renderer_draw_text(r, "Q     QUESTS/BOSSES", x, y + key_lh * 4, hint, r->font_tiny);
+        renderer_draw_text(r, "P     PICK UP", x, y + key_lh * 5, hint, r->font_tiny);
+        renderer_draw_text(r, "A     ACTION", x, y + key_lh * 6, hint, r->font_tiny);
+        renderer_draw_text(r, "B     SPELLS", x, y + key_lh * 7, hint, r->font_tiny);
+        renderer_draw_text(r, "C     CAST", x, y + key_lh * 8, hint, r->font_tiny);
+        renderer_draw_text(r, "F     FIRE", x, y + key_lh * 9, hint, r->font_tiny);
+        renderer_draw_text(r, "T     TALK", x, y + key_lh * 10, hint, r->font_tiny);
+        renderer_draw_text(r, "ESC   MENU", x, y + key_lh * 11, hint, r->font_tiny);
         if (g->location == LOCATION_ESCAPE_TUNNEL && controls_action_for_key(g->key_bindings, SDL_SCANCODE_SPACE) < 0) {
-            renderer_draw_text(r, "SPACE WAIT FOR TOMAS", x, y + lh * 12, hint, r->font_tiny);
+            renderer_draw_text(r, "SPACE WAIT FOR TOMAS", x, y + key_lh * 12, hint, r->font_tiny);
         }
     }
 

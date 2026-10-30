@@ -54,7 +54,12 @@ screen. Only Health and Mana potions qualify. The player designates a default
 potion type in inventory. Drinking uses the normal potion effects and turn cost;
 using another potion through inventory's U remains available. Keep the selected
 type when depleted and report that none remain, without switching types.
-Persist the preference and key binding through save/load.
+Persist the preference and key binding through save/load. Health is the initial
+selection. In the Bag, Q (or its footer button) designates the highlighted Health
+or Mana potion without consuming it; U still drinks any selected potion.
+Save version 227 stores the preference. Legacy fourteen-command bindings retain
+all assignments; Drink uses V if free or an unused letter when V was already
+assigned. Global Controls preferences migrate by the same rule.
 
 ## Change-set sequence
 

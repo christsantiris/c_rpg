@@ -392,7 +392,8 @@ typedef struct {
     int catacombs_mantle_unclaimed;
     int max_temple_level_reached;
     Item inventory[MAX_CARRIED_ITEMS];
-    int       inventory_count;
+    int inventory_count;
+    ItemType quick_potion_type;
     int       equipped_main_hand;
     int       equipped_off_hand;
     int       equipped_armor;
@@ -588,6 +589,9 @@ int game_interact_island(GameState *g);
 
 void action_resolve_player(GameState *g, Action a);
 int action_use_inventory_item(GameState *g, int index, EnemyProjectiles *shots);
+int action_drink_quick_potion(GameState *g, EnemyProjectiles *shots);
+int game_set_quick_potion(GameState *g, int index);
+int game_quick_potion_count(const GameState *g);
 void action_resolve_enemies(GameState *g);
 void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots);
 int kraken_tile_threatened(const GameState *g, const Enemy *e, int x, int y);
