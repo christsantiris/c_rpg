@@ -244,7 +244,7 @@ void test_crown_quest(void) {
     giants_interact(g);
     ASSERT("the crown is recoverable with a full inventory", g->crown_quest_state == 2 && g->crown_quest_progress == 15 && g->inventory_count == MAX_INVENTORY);
     QuestJournalEntry entry;
-    ASSERT("the journal shows all four approved objectives and rewards", quest_journal_get_entry(g, QUEST_TAB_ACTIVE, 0, &entry) &&
+    ASSERT("the journal shows all four approved objectives and rewards", quest_journal_get_entry(g, QUEST_TAB_COMPLETED, 0, &entry) &&
         strcmp(entry.title, "Giant's Crown") == 0 && entry.objective_count == 4 && entry.objective_complete[0] && entry.objective_complete[1] &&
         entry.objective_complete[2] && entry.objective_complete[3] && entry.reward_gold == 220 && entry.reward_score == 1600 && strcmp(entry.reward_item, "Stoneguard Shield") == 0);
     game_open_town_portal(g);

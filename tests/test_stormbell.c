@@ -219,7 +219,7 @@ void test_stormbell(void) {
     stormbell_interact(g);
     ASSERT("a restored bell cannot create repeated enemies", g->enemy_count == count && g->stormbell_phase == 3);
     QuestJournalEntry entry;
-    ASSERT("the journal records all three quest objectives and reward", quest_journal_get_entry(g, QUEST_TAB_ACTIVE, 0, &entry) &&
+    ASSERT("the journal records all three quest objectives and reward", quest_journal_get_entry(g, QUEST_TAB_COMPLETED, 0, &entry) &&
         entry.objective_count == 3 && entry.objective_complete[0] && entry.objective_complete[1] && entry.objective_complete[2] && entry.reward_gold == 180);
     game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
     g->player.x = SEREN_X;
