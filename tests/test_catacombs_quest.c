@@ -161,7 +161,7 @@ static void test_quest(void) {
         game.catacombs_quest_progress == 15 && !game_has_regional_interaction(&game));
     ASSERT("ready quest and all four completed journal objectives survive saving", save_game(&game, OSWIN_SLOT) && load_game(&loaded, OSWIN_SLOT) &&
         loaded.catacombs_quest_state == 2 && loaded.catacombs_quest_progress == 15 &&
-        quest_journal_get_entry(&loaded, QUEST_TAB_ACTIVE, 0, &entry) && entry.objective_complete[0] && entry.objective_complete[1] &&
+        quest_journal_get_entry(&loaded, QUEST_TAB_COMPLETED, 0, &entry) && entry.objective_complete[0] && entry.objective_complete[1] &&
         entry.objective_complete[2] && entry.objective_complete[3]);
     game_open_town_portal(&game);
     ASSERT("Catacombs return spell leads to the last town visited with a working portal", game.location == LOCATION_TOWN4 && !game.portal_active);

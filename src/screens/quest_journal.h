@@ -8,7 +8,8 @@
 typedef enum {
     QUEST_TAB_ACTIVE = 0,
     QUEST_TAB_COMPLETED,
-    QUEST_TAB_BOSSES
+    QUEST_TAB_BOSSES,
+    QUEST_TAB_COUNT
 } QuestJournalTab;
 
 #define JOURNAL_BOSS_COUNT 21
