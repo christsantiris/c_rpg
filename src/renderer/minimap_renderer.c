@@ -87,6 +87,10 @@ void minimap_draw(Renderer *r, const GameState *g) {
         map_w = CASTLE_W;
         map_h = CASTLE_H;
     }
+    if (g->location == LOCATION_LABYRINTH) {
+        map_w = LABYRINTH_W;
+        map_h = LABYRINTH_H;
+    }
 
     // Dark semi-transparent background
     SDL_SetRenderDrawBlendMode(r->sdl, SDL_BLENDMODE_BLEND);
@@ -174,6 +178,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_TEMPLE_ALTAR ||
                         tile == TILE_TEMPLE_TREASURE ||
                         tile == TILE_LABYRINTH_EXIT ||
+                        tile == TILE_LABYRINTH_STAIRS ||
                         tile == TILE_LABYRINTH_SWITCH_OFF ||
                         tile == TILE_LABYRINTH_SWITCH_ON ||
                         tile == TILE_LABYRINTH_RELIC) {

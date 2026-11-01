@@ -752,7 +752,7 @@ static void test_desert_lamp_quest(void) {
     ASSERT("Pick Up recovers the lamp with a full pack and marks the quest ready to return",
         g->sunscar_lamp_quest_state == 2 && g->map.tiles[y][x] == TILE_DESERT_FLOOR &&
         g->inventory_count == MAX_INVENTORY &&
-        quest_journal_get_entry(g, QUEST_TAB_ACTIVE, 0, &entry) && entry.state == 2 && entry.objective_complete[0]);
+        quest_journal_get_entry(g, QUEST_TAB_COMPLETED, 0, &entry) && entry.state == 2 && entry.objective_complete[0]);
     game_open_town_portal(g);
     saved = save_game(g, slot) && load_game(&desert_loaded, slot);
     if (saved) {

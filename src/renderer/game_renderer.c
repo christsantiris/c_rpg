@@ -527,8 +527,8 @@ static void draw_castle_front(Renderer *r, int sx, int sy) {
     SDL_RenderCopy(r->sdl, r->castle_texture, NULL, &destination);
 }
 
-// Measure and draw with the same wrapping so every conversation fits its panel.
-static int dialogue_text(Renderer *r, const char *text, int x, int y, int max_chars, TTF_Font *font, SDL_Color color, int draw) {
+// Measure and draw with the same wrapping so conversations and journal entries fit their panels.
+int draw_wrapped_text(Renderer *r, const char *text, int x, int y, int max_chars, TTF_Font *font, SDL_Color color, int draw) {
     int lines = 0;
     int line_h = TTF_FontHeight(font) + 8;
     while (*text) {
@@ -618,6 +618,13 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     if (war_machine_dialogue(g)) {
         hint = quest_offer ? "Y: Accept   N: Decline\n1: Watchfires   2: Break the War Machine" : "1: Watchfires   2: Break the War Machine";
     }
+    char quest_limit_hint[160];
+    if (game_quest_offer_at_limit(g)) {
+        snprintf(quest_limit_hint, sizeof(quest_limit_hint), "Active quests: %d/%d. Finish quests to free a slot.\nN / Esc: Close%s",
+            game_active_quest_count(g), MAX_ACTIVE_QUESTS,
+            war_machine_dialogue(g) ? "\n1: Watchfires   2: Break the War Machine" : "");
+        hint = quest_limit_hint;
+    }
     if (stormbell_prompt) {
         hint = "Ring bell? Y: Begin defense   N / Esc: Prepare first";
     }
@@ -640,9 +647,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
             max_chars = 1;
         }
         line_h = TTF_FontHeight(font) + 8;
-        speaker_lines = dialogue_text(r, g->dialogue_speaker, 0, 0, max_chars, font, accent, 0);
-        body_lines = dialogue_text(r, g->dialogue_text, 0, 0, max_chars, font, ink, 0);
-        hint_lines = dialogue_text(r, hint, 0, 0, max_chars, font, accent, 0);
+        speaker_lines = draw_wrapped_text(r, g->dialogue_speaker, 0, 0, max_chars, font, accent, 0);
+        body_lines = draw_wrapped_text(r, g->dialogue_text, 0, 0, max_chars, font, ink, 0);
+        hint_lines = draw_wrapped_text(r, hint, 0, 0, max_chars, font, accent, 0);
         bubble_h = 28 + (speaker_lines + body_lines + hint_lines) * line_h + 8 + (hint_lines > 0 ? 8 : 0);
         if (bubble_h <= viewport_h - 16) {
             break;
@@ -702,11 +709,11 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     }
 
     int text_y = bubble_y + 14;
-    dialogue_text(r, g->dialogue_speaker, bubble_x + 14, text_y, max_chars, font, accent, 1);
+    draw_wrapped_text(r, g->dialogue_speaker, bubble_x + 14, text_y, max_chars, font, accent, 1);
     text_y += speaker_lines * line_h + 8;
-    dialogue_text(r, g->dialogue_text, bubble_x + 14, text_y, max_chars, font, ink, 1);
+    draw_wrapped_text(r, g->dialogue_text, bubble_x + 14, text_y, max_chars, font, ink, 1);
     text_y += body_lines * line_h + 8;
-    dialogue_text(r, hint, bubble_x + 14, text_y, max_chars, font, accent, 1);
+    draw_wrapped_text(r, hint, bubble_x + 14, text_y, max_chars, font, accent, 1);
 
     SDL_RenderSetViewport(r->sdl, &world_view);
     SDL_RenderSetScale(r->sdl, scale_x, scale_y);
@@ -784,6 +791,7 @@ float game_camera_zoom(const GameState *g) {
         case LOCATION_FOREST:
         case LOCATION_MOUNTAINS:
         case LOCATION_TEMPLE:
+        case LOCATION_LABYRINTH:
         case LOCATION_TOWN:
         case LOCATION_TOWN2:
         case LOCATION_TOWN3:
@@ -856,6 +864,7 @@ static int regional_camera(const GameState *g, const Viewport *base, Viewport *o
         case LOCATION_STORMWATCH: w = STORM_W; h = STORM_H; break;
         case LOCATION_CATACOMBS: w = CATACOMBS_W; h = CATACOMBS_H; break;
         case LOCATION_TEMPLE: w = TEMPLE_W; h = TEMPLE_H; break;
+        case LOCATION_LABYRINTH: w = LABYRINTH_W; h = LABYRINTH_H; break;
         case LOCATION_TOWN:
         case LOCATION_TOWN2:
         case LOCATION_TOWN3:
@@ -2270,6 +2279,54 @@ static void draw_npc_ground(Renderer *r, const GameState *g, int sx, int sy, int
     }
 }
 
+static void draw_labyrinth_exits(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_LABYRINTH || !r->font_tiny) {
+        return;
+    }
+    float zoom = game_camera_zoom(g);
+    for (int y = v->cam_y; y < v->cam_y + v->tiles_y && y < LABYRINTH_H; y++) {
+        for (int x = v->cam_x; x < v->cam_x + v->tiles_x && x < LABYRINTH_W; x++) {
+            TileType tile = g->map.tiles[y][x];
+            if (tile == TILE_ITEM) {
+                tile = floor_item_underlay(g, x, y);
+            }
+            if (tile != TILE_LABYRINTH_EXIT && tile != TILE_LABYRINTH_STAIRS) {
+                continue;
+            }
+            char label[32];
+            if (tile == TILE_LABYRINTH_STAIRS) {
+                snprintf(label, sizeof(label), "DOWN: FLOOR %d", g->level + 1);
+            } else if (g->level == 1) {
+                snprintf(label, sizeof(label), "FOREST ROAD");
+            } else {
+                snprintf(label, sizeof(label), "UP: FLOOR %d", g->level - 1);
+            }
+            int width = 0;
+            TTF_SizeText(r->font_tiny, label, &width, NULL);
+            int lx = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
+            int ly = viewport_to_screen_y(v, y) * TILE_SIZE - 15;
+            int max_x = (int)((r->screen_w - INFO_PANEL_W) / zoom) - width - 4;
+            int max_y = (int)(r->tiles_y * TILE_SIZE / zoom) - 12;
+            if (lx > max_x) {
+                lx = max_x;
+            }
+            if (lx < 4) {
+                lx = 4;
+            }
+            if (ly > max_y) {
+                ly = max_y;
+            }
+            if (ly < 64) {
+                ly = 64;
+            }
+            SDL_Rect backing = {lx - 3, ly - 3, width + 6, 14};
+            SDL_SetRenderDrawColor(r->sdl, 15, 25, 19, 255);
+            SDL_RenderFillRect(r->sdl, &backing);
+            renderer_draw_text(r, label, lx, ly, (SDL_Color){235, 217, 155, 255}, r->font_tiny);
+        }
+    }
+}
+
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_MANGROVES) {
         SDL_SetRenderDrawColor(r->sdl, 9, 42, 52, 255);
@@ -2280,16 +2337,15 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     int temple_remaining = game_temple_remaining_enemies(g);
     int kraken_warning = kraken_tentacles_raised(g);
     int island_scaled = g->location == LOCATION_ISLAND;
-    int labyrinth_scaled = g->location == LOCATION_LABYRINTH;
     int road_scaled = g->location == LOCATION_MANGROVE_PATH || g->location == LOCATION_FOREST_ROAD ||
         g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD ||
         g->location == LOCATION_HIGH_PASS ||
         game_is_crownroad(g) || g->location == LOCATION_SWAMP_ROAD;
     int jail_scaled = g->location == LOCATION_JAIL || g->location == LOCATION_JAIL_ARMORY;
-    if (island_scaled || labyrinth_scaled || jail_scaled) {
+    if (island_scaled || jail_scaled) {
         // Keep the entire fixed map inside the play area.
-        int map_w = jail_scaled ? JAIL_ROOM_W : island_scaled ? ISLAND_W : LABYRINTH_W;
-        int map_h = jail_scaled ? JAIL_ROOM_H : island_scaled ? ISLAND_H : LABYRINTH_H;
+        int map_w = jail_scaled ? JAIL_ROOM_W : ISLAND_W;
+        int map_h = jail_scaled ? JAIL_ROOM_H : ISLAND_H;
         viewport_init(&town_view, map_w, map_h, map_w, map_h);
         v = &town_view;
         int play_w = r->screen_w - INFO_PANEL_W;
@@ -4371,12 +4427,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
+    draw_labyrinth_exits(r, g, v);
     draw_combat_feedback(r, g, v);
 
     float world_sx;
     float world_sy;
     SDL_RenderGetScale(r->sdl, &world_sx, &world_sy);
-    if (island_scaled || labyrinth_scaled || jail_scaled || game_camera_zoom(g) != 1.0f) {
+    if (island_scaled || jail_scaled || game_camera_zoom(g) != 1.0f) {
         SDL_RenderSetScale(r->sdl, 1.0f, 1.0f);
     }
 
