@@ -3,14 +3,13 @@
 
 Two poses per creature in padded 48px cells. Ordinary visible artwork stays
 within 24x24; the Matriarch's spread wings deliberately occupy a wider frame.
-Run directly to rebuild runtime BMPs and the review atlas under docs/art-sources.
+Run directly to rebuild the runtime BMPs.
 """
 from pathlib import Path
 from PIL import Image
 from pixelkit import Layer, composite, poly_mask, line_points, stamp, save_sprite, flat_wall
 
 ROOT = Path(__file__).resolve().parents[2]
-OUTPUT = ROOT / 'docs/art-sources/stormwatch'
 OUT = (19, 26, 32)
 FEATHERS = [(43, 49, 56), (65, 75, 82), (91, 107, 113), (130, 148, 148), (186, 199, 186)]
 PALE = [(67, 86, 99), (99, 123, 137), (139, 164, 172), (182, 201, 196), (222, 229, 205)]
@@ -183,7 +182,6 @@ def entrance():
 
 
 def build():
-    OUTPUT.mkdir(parents=True, exist_ok=True)
     atlas = Image.new('RGBA', (240, 96))
     names = ['Harpy Raider', 'Cliff Gargoyle', 'Harpy Stormcaller', 'Storm Elemental', 'Tempest Matriarch']
     for pose in range(2):
@@ -195,10 +193,8 @@ def build():
             assert i == 4 or (width <= 24 and height <= 24), (names[i], bounds)
             atlas.alpha_composite(frame, (i * 48, pose * 48))
             print(f'{names[i]}, pose {pose}: {width}x{height}, feet at 47')
-    save_sprite(atlas, OUTPUT / 'enemies.bmp')
     save_sprite(atlas, ROOT / 'assets/images/stormwatch-enemies.bmp')
     save_sprite(entrance(), ROOT / 'assets/images/stormwatch-entrance.bmp')
-    atlas.save(OUTPUT / 'enemies.png')
 
 
 if __name__ == '__main__':

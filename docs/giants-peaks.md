@@ -75,8 +75,7 @@ by talking to her after making room. Gold, score, and equipment are awarded once
 
 Use the configured Interact key for every quest object. All four discoveries
 appear in the journal, count before acceptance, and require no inventory slots.
-An existing Jarl victory counts. See the [quest reference](../quests.md) and
-[native renderer review](art-sources/crown-quest/README.md).
+An existing Jarl victory counts.
 
 ## Expeditions and saves
 

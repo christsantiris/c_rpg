@@ -114,8 +114,6 @@ the cache's original snow, ash or hoard ground. Once claimed, selling or
 dropping a mantle cannot generate a replacement. The summit exit still opens
 on the dragon's defeat even if ordinary enemies survive.
 
-See the [native renderer gallery and play-test guide](art-sources/red-dragon-encounter/README.md).
-
 ## The Dragon's Hoard
 
 In V2, Ilya has left Oakhaven and no one offers this quest until a later act

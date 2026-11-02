@@ -35,13 +35,12 @@ bosses. Both bosses can also be reached without accepting their quests.
 
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/images/world-map-final.png?v=c580d77004be)](docs/images/world-map-final.png?v=c580d77004be)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=c580d77004be)](docs/world-map.png?v=c580d77004be)
 
 The current V2 focus is Act 1: Oakhaven, Goblin Mountains to its west, Haunted
 Forest to its east, and Oakhaven's dungeon to its south. Impassable rapids block
 the northern route. The rest of the world is shown as provisional context and
 will be redesigned in later steps; later connections remain undecided.
-See the [Chapter 1 plan](docs/design/chapter-1-oakhaven.md) for scope.
 
 ## Controls
 
@@ -78,7 +77,6 @@ inventory actions.
 
 ## Game Documentation
 
-- [V2 Chapter 1: Oakhaven layout and approved regional map](docs/design/chapter-1-oakhaven.md)
 - [Regional difficulty and progression](docs/difficulty-scaling.md)
 - [Weapons, armor, and shields](docs/weapons.md)
 - [Spells](docs/spells.md) and [Mage progression](docs/mage-progression.md)

@@ -7,7 +7,7 @@ from PIL import Image
 from pixelkit import save_sprite
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCES = ROOT / 'docs/art-sources/enemy-batch-16'
+SOURCES = ROOT / 'tools/sprites/sources'
 REGULAR_CROPS = (
     (30, 45, 480, 525),  # Oathbound Soldier
     (480, 45, 1050, 525),  # Iron Warden
@@ -47,8 +47,8 @@ def import_sheet(source, crops, frame_size, cell, destination):
 
 
 def main():
-    regular = Image.open(SOURCES / 'regular-source.png').convert('RGBA')
-    bosses = Image.open(SOURCES / 'boss-source.png').convert('RGBA')
+    regular = Image.open(SOURCES / 'castle-enemies-regular.png').convert('RGBA')
+    bosses = Image.open(SOURCES / 'castle-enemies-boss.png').convert('RGBA')
     import_sheet(regular, REGULAR_CROPS, (24, 26), 32, ROOT / 'assets/images/castle-enemies.bmp')
     import_sheet(bosses, BOSS_CROPS, (36, 36), 40, ROOT / 'assets/images/castle-bosses.bmp')
 

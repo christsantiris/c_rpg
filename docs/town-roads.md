@@ -58,7 +58,7 @@ default to normal locks; loading them through the launcher enables the override.
 Artwork uses the established pixelkit textures, timber framing, tiled roofs,
 stonework and doorway details at native resolution. A rounded curtain wall,
 projecting towers and clustered houses follow the user's medieval hill-town
-reference. See the [five-town sprite comparison and renderer previews](art-sources/town-exteriors/README.md).
+reference.
 
 The northern Oakhaven road has two independent boss gates: Elderthorn and the Grave Marshal. Both apply equally from the castle side; see [boss gates](boss-gates.md).
 See [Elderwood](elderwood-forest.md) for travel and save migration details.
@@ -94,8 +94,6 @@ Dropped items keep their correct ground beneath them, including items on the
 new path, and exploration, quests and return portals survive. Saves inside the
 shop retain the interior, player position and dialogue. Regression tests walk
 through all five resident buildings and cover version 192's broken merchant.
-See the [renderer captures](art-sources/saltwind/README.md) and
-[atlas acceptance checks](art-sources/world-map/README.md).
 
 Save version 192 restores Glassdeep Caverns south of Stillbury and
 [Saltwind Marsh](saltwind-marsh.md) south of Dawnmere. The marsh retains all five

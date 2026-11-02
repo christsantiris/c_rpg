@@ -5,8 +5,7 @@ entrance: a crenellated gatehouse in the castle's dark stone whose portcullis
 opens on stairs down to the cells. Barred cell grates at the foot of its walls,
 a hanging gibbet cage, shackles and the royal crest mark it as a prison.
 `tools/sprites/royal_dungeon.py` generates its 7 x 5 tile sprite,
-`assets/images/royal-dungeon.bmp`
-([renderer capture](art-sources/royal-dungeon/renderer-preview.png)).
+`assets/images/royal-dungeon.bmp`.
 A brown-coated townsman east of the crossroads appears to be an ordinary NPC.
 Talking to him with **T** triggers a one-time betrayal: he reports the player
 to the Royal Guards, who imprison them. The arrest dialogue explains exactly
@@ -130,6 +129,3 @@ For play testing:
     once, and arrows never exceed the quiver limit. Recover any remainder, check
     the completed journal, and confirm neither arrest nor rewards can repeat.
 
-SDL renderer checks: [hidden hatch](art-sources/jail-recovery/jail-hidden.png),
-[revealed hatch](art-sources/jail-recovery/jail-revealed.png), and
-[guarded evidence room](art-sources/jail-recovery/jail-evidence-room.png).

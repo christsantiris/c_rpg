@@ -186,11 +186,8 @@ def boss():
 
 
 def build():
-    output = ROOT / 'docs/art-sources/ironfang'
-    output.mkdir(parents=True,exist_ok=True)
     for name, sprite in [('ironfang-entrance',entrance()),('ironfang-boss',boss())]:
         save_sprite(sprite,ROOT/'assets/images'/f'{name}.bmp')
-        sprite.save(output/f'{name}.png')
 
 
 if __name__ == '__main__':
