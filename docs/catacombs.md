@@ -160,8 +160,6 @@ visible new warnings, preserving health, deaths, cold braziers, exploration,
 portals, traps, gear and memorial/ledger progress. Known old unclaimed flags
 remain recoverable; previous victories stay completed without fabricating gear.
 
-See the [renderer captures and play-testing guide](art-sources/grave-marshal-encounter/README.md).
-
 Save format **83** stores all catacomb progression, pending attacks, revival
 state, trap mechanisms, and the unclaimed reward. Older saves receive a fresh
 catacomb cache and the castle south exit without losing existing character,

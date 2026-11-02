@@ -1,8 +1,8 @@
 # Castle Dungeon
 
 Enter the five-floor dungeon from Oakhaven's south road. The lightly wooded
-approach is a local cul-de-sac, with no onward connection to Dawnmere. See
-[the approved V2 layout](design/chapter-1-oakhaven.md). Entry always starts at
+approach is a local cul-de-sac, with no onward connection to Dawnmere.
+Entry always starts at
 floor 1 and proceeds forward to floor 5. Its rooms and
 connecting corridors are generated for each new expedition, then cached while
 that expedition is in progress. Backtracking preserves explored rooms, enemies,
@@ -117,7 +117,7 @@ lost to a floor refresh is restored there on revisiting, even with the Lich
 already defeated. Interact beside the reliquary or press `P` while standing on
 it; a full inventory leaves it available. After the first claim, dropping or
 selling the ring does not create another. Its bonuses and claimed status persist
-through saving and loading. [Reward review](art-sources/crypt-ring/README.md).
+through saving and loading.
 
 The following save-version notes describe historical V1 behavior. The V2
 geography uses fresh saves, with no migration to the new routes.
@@ -135,8 +135,6 @@ living encounters gain seals and safe cover in place, preserving boss health,
 existing enemies, exploration, player position, quests and loot. Old unmarked
 bolt timing restarts with a visible warning. Previous victories remain defeated;
 only a known, currently dropped legacy Cryptblade is treated as unclaimed.
-
-[Renderer review and play-test checklist](art-sources/lich-encounter/README.md).
 
 Save version 109 converts old boss-room return doors and downward stair markers
 into the special staircase, including cached floors, loot underlays, and portal

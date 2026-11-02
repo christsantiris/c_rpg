@@ -272,8 +272,7 @@ different silhouette from the Town Hall.
 ## Source art that is not generated
 
 The island sprite sheets (`island-sprites.bmp` and `island-ship.bmp`) are not
-drawn by these scripts. Their original high-resolution images, which the
-BMPs were converted from, are in `docs/art-sources/`.
+drawn by these scripts; the BMPs in `assets/images/` are their only source.
 
 The Temple enemy sheet is imported from its refined source with:
 
@@ -286,8 +285,7 @@ display resolution. It packs nine 28×28 enemy frames and two 40×40 Guardian
 poses into a 192×144 atlas. Each pose has at most 32 opaque colors and a clear
 transparent edge. Keep the atlas and the source rectangles in `draw_enemy()`
 and `draw_fallen_sun_guardian_broken()` in `src/renderer/sprites.c` together.
-The source, exact imagegen prompts, and review images are documented in
-[`docs/art-sources/enemy-batch-15/README.md`](../../docs/art-sources/enemy-batch-15/README.md).
+Its source image is `tools/sprites/sources/temple-enemies.png`.
 
 The Castle enemy and boss sheets are imported with:
 
@@ -300,9 +298,8 @@ The importer uses `pixelkit.save_sprite()` to write two native atlases: five
 sheet. Boss poses include the Castellan, Royal Arcanist, and all three Veyr
 forms. Frames have at most 32 opaque colors and clear transparent borders.
 Keep both BMPs and the source rectangles in `castle_draw_enemy()` in
-`src/renderer/castle_renderer.c` together. Sources, exact imagegen prompts,
-and renderer previews are in
-[`docs/art-sources/enemy-batch-16/README.md`](../../docs/art-sources/enemy-batch-16/README.md).
+`src/renderer/castle_renderer.c` together. Their source images are
+`tools/sprites/sources/castle-enemies-regular.png` and `castle-enemies-boss.png`.
 
 The fortified Goblin Mountains entrance is generated with
 `python3 tools/sprites/mountain.py`. It uses pixelkit layers, red sandstone
@@ -313,8 +310,6 @@ anchors the approach collision footprint.
 The Haunted Forest entrance uses `python3 tools/sprites/forest.py` and the same
 pixelkit pipeline. Its 7×6 tile sprite frames a south-facing woodland passage
 with ancient trunks, clustered foliage, hanging moss and warning charms.
-Comparison and actual-renderer previews are in
-[`docs/art-sources/forest-entrance/README.md`](../../docs/art-sources/forest-entrance/README.md).
 
 
 ### Regional pathway entrances
@@ -333,9 +328,7 @@ The generators are `coast.py`, `desert.py`, `frostfell.py`,
 `src/game/approach.c` specifies each footprint's height; the renderer loads
 textures in `src/renderer/renderer.c` and anchors them in `draw_area_entrance()`.
 
-Each `docs/art-sources/<name>-entrance/` folder includes a native-scale comparison
-with the forest entrance and Inn, and a preview captured through the actual SDL
-renderer. Save version 175 converts old corridor approaches without resetting
+Save version 175 converts old corridor approaches without resetting
 combat maps, quest progress, character state or loot. Castle, secret tunnel and Crown Roads retain their existing layouts. The
 existing sealed/open labyrinth sprite now stands beside the forest entrance;
 its maze floors are unchanged.
@@ -353,16 +346,14 @@ trigger; exterior artwork has no target gate. Interior gates remain exits.
 
 `src/game/town_road.c` defines the footprint, directional sprite entrances and bypass
 roads; `src/renderer/town_road_renderer.c` anchors the sprite and direction labels.
-See [art review and SDL previews](../../docs/art-sources/town-exteriors/README.md).
 
 ### Elderwood
 
 `elderwood.py` creates the living forest entrance and five creature sprites using
-pixelkit. See [native comparisons and SDL previews](../../docs/art-sources/elderwood/README.md).
+pixelkit.
 
 Saltwind entrance trees, root props and the four-direction skiff atlas use
-`python3 tools/sprites/mangrove.py`. See the native comparison and SDL captures
-in [Saltwind art sources](../../docs/art-sources/saltwind/README.md).
+`python3 tools/sprites/mangrove.py`.
 
 ### Stonewake Quarry
 
@@ -385,4 +376,4 @@ stages, mechanics and the native/SDL visual checks.
 240×96 enemy atlas. Ordinary figures stay within 24×24 visible pixels in padded
 48px cells; the Matriarch has wider wings at the same pixel density. Both poses
 share the player foot line. The entrance uses pixelkit masonry and a 13px arched
-doorway. See [renderer comparisons](../../docs/art-sources/stormwatch/README.md).
+doorway.

@@ -91,7 +91,7 @@ Save version **204** preserves the orders, each severed binding, recovered seed,
 guardian outcome, encounter placement, and paid reward. Existing saves gain the
 NPC and quest locations while retaining their forest maps, cut paths, wounds,
 loot, exploration, portals, and earned victories. Cached quest stages gain their
-sites when next entered. See the [quest reference](../quests.md).
+sites when next entered.
 
 ## Escaping and saves
 
@@ -113,4 +113,3 @@ regional entrance town where available, and otherwise starts with Oakhaven.
 `./tools/debug_shortcuts.sh` bypasses both road locks and brambles for new and
 loaded characters, without granting either boss victory.
 
-See the [sprite comparison and SDL captures](art-sources/elderwood/README.md).

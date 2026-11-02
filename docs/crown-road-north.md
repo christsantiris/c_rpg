@@ -63,5 +63,3 @@ entry side. Older saves gain the route without resetting regional victories,
 quests or equipment. Debug passage unlocks bypass the Elderwood and Catacombs
 requirements without granting their victory credit.
 
-[SDL renderer captures](art-sources/crown-road-north/README.md) show the patrols,
-archer warning, boundary exit and renamed Dawnmere shop.

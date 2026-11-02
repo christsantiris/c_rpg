@@ -60,8 +60,6 @@ alongside existing stage and boat records. Town portals preserve the same
 encounter; fresh physical expeditions respawn ordinary guards while recovered
 cargo stays empty. Older saves gain the quest without regenerating their maps
 or resetting boats, loot, exploration, wounds, and previous quest progress.
-See the [quest reference](../quests.md) and
-[native renderer review](art-sources/spice-skiff/README.md).
 
 ## Physical skiff controls
 
@@ -126,8 +124,7 @@ The skiff implementation stays separate from the stage layouts and shore
 combat. Its use in Sunken Coast or another coastal region is a future change;
 those areas retain their current movement rules.
 
-See [town connections](town-roads.md), [coastal docks](harbor-and-ruined-isle.md)
-and [native sprites and renderer captures](art-sources/saltwind/README.md).
+See [town connections](town-roads.md) and [coastal docks](harbor-and-ruined-isle.md).
 
 Version 192 restores the original regional connections: Glassdeep south of
 Stillbury, Saltwind south of Dawnmere. Version-191 saves keep their stage records,

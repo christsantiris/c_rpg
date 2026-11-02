@@ -162,4 +162,3 @@ health, deaths, player position, exploration, loot, portal anchors and quests.
 Previous victories remain defeated; only a known current legacy floor shield
 establishes an unclaimed reward.
 
-See the [encounter screenshots and play-testing guide](art-sources/goblin-king-encounter/README.md).

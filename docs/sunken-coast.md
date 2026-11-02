@@ -173,4 +173,3 @@ attack timing with a visible warning, preserving health, enemy deaths, position,
 exploration, inventory, loot, portals and quests. Existing victories remain
 completed; only a known current legacy floor reward establishes unclaimed robes.
 
-See the [encounter screenshots and play-testing guide](art-sources/drowned-queen-encounter/README.md).

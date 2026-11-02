@@ -120,11 +120,10 @@ Codex will review your output once you are done.
 ## 10. Keep the illustrated world map current
 
 - When towns, adventure areas, landmarks, terrain, or travel connections are
-  added, removed, renamed, or changed, update `docs/images/world-map.png` in the
+  added, removed, renamed, or changed, update `docs/world-map.png` in the
   same change set so the README map reflects the game.
 - Check place names, relative positions, routes, coastlines, islands, and biome
   features against the implementation. Preserve geography unaffected by the change.
-- Update the map's README description and the generation/edit prompts in
-  `docs/art-sources/world-map/prompt.md` as needed.
+- Update the map's README description as needed.
 - Inspect the finished illustration for accurate geography and readable labels
   before reporting the change complete.

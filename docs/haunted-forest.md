@@ -147,8 +147,6 @@ restarts with a visible warning. Previous victories stay defeated; only a known,
 currently dropped legacy cloak is treated as unclaimed. New saves store cloak
 claim state and both finite-wave flags, including when the player is elsewhere.
 
-Renderer captures and focused play-testing notes are in
-[the Necromancer encounter gallery](art-sources/necromancer-encounter/README.md).
 
 
 ## Labyrinth on the entrance road

@@ -92,8 +92,6 @@ beside the cache or press **`P`** on it; full inventory leaves it available.
 Claiming is permanent, so selling or deliberately dropping it grants no copy.
 Victory opens the safe town road; the entrance remains available from either town.
 
-See the [encounter screenshots and play-testing guide](art-sources/swamp-demon-encounter/README.md).
-
 ## Demonic Sword
 
 The Demonic Sword is a one-handed weapon usable by Warriors, Mages, and Rogues.
