@@ -3330,6 +3330,9 @@ static void clear_floor_loot(GameState *g) {
 static void repair_outdoor_entry(GameState *g, Map *map, int level, int mountains, int active) {
     int old_x = map->stairs_up_x;
     int old_y = map->stairs_up_y;
+    if (old_x < 1 || old_x >= MAP_W - 1 || old_y < 1 || old_y >= MAP_H - 1) {
+        return;
+    }
     int edge_x = old_x == 1 ? 0 : old_x == MAP_W - 2 ? MAP_W - 1 : old_x;
     int edge_y = old_y == 1 ? 0 : old_y == MAP_H - 2 ? MAP_H - 1 : old_y;
     Location area = mountains ? LOCATION_MOUNTAINS : LOCATION_FOREST;
