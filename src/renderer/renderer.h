@@ -29,7 +29,8 @@ typedef enum {
     TOWN_EXIT_CATACOMBS,
     TOWN_EXIT_STORMWATCH,
     TOWN_EXIT_IRONFANG,
-    TOWN_EXIT_GIANTS
+    TOWN_EXIT_GIANTS,
+    TOWN_EXIT_RAPIDS // Transition only; no regional entrance texture.
 } TownExitStyle;
 
 typedef struct {

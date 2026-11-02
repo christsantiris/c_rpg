@@ -26,6 +26,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/jail.h"
 #include "game/heartseed.h"
 #include "game/town_life.h"
+#include "game/town_road.h"
 #include "game/restoration.h"
 #include "game/approach.h"
 #include "game/map.h"
@@ -121,6 +122,20 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         action.target_y < 0 || action.target_y >= MAP_H ||
         g->map.tiles[action.target_y][action.target_x] != TILE_TOWN_EXIT) {
         return 0;
+    }
+    if (g->location == LOCATION_TOWN) {
+        TownApproach route;
+        if (!town_road_connection(g->location, town_road_side(action.target_x, action.target_y), &route)) {
+            return 0;
+        }
+        // Follow Oakhaven's playable connections rather than the former compass layout.
+        switch (route.area) {
+            case LOCATION_TOWN: *style = TOWN_EXIT_RAPIDS; return 1;
+            case LOCATION_FOREST: *style = TOWN_EXIT_FOREST; return 1;
+            case LOCATION_MOUNTAINS: *style = TOWN_EXIT_MOUNTAINS; return 1;
+            case LOCATION_DUNGEON: *style = TOWN_EXIT_DUNGEON; return 1;
+            default: return 0;
+        }
     }
     if (g->location == LOCATION_DAWNMERE) {
         *style = action.target_y == 0 ? TOWN_EXIT_MOUNTAINS :
