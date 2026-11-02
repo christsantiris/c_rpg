@@ -40,8 +40,11 @@ verify that keys can be reached before opening their doors.
 
 ## Boss Chamber
 
-On floor 5, collect the golden key in the penultimate room with `P`, then walk
-into the Lich King's locked door to open it. Corridors around the outside of
+On floor 5, collect the golden key in the penultimate room with `P`, then face
+the Lich King's locked door and press `A` (or the remapped Interact key) to
+unlock it. Walking into the door shows the current key prompt without opening
+it or spending the key. Unlocking leaves you in place; step through afterward.
+Corridors around the outside of
 the sealed chamber keep earlier rooms and the door accessible. Its entrance
 is placed away from corners so unlocking it leads into the chamber.
 
@@ -61,8 +64,10 @@ in save version 106. Doors already opened remain open.
 ## Crypts and Traps
 
 On floors 2, 3, and 4, generation can add an optional crypt where space allows.
-Stand on its key and press `P`, then walk into the locked crypt door to spend
-the key. Stand on the cache inside and press `P` to collect its gold. Each
+Stand on its key and press `P`, then press `A` beside the locked crypt door to
+spend the key and open it. A stopped movement faces the door if several are
+nearby. The arrow keys remain movement controls; the remapped Interact key
+opens the door. Stand on the cache inside and press `P` to collect its gold. Each
 generated crypt cache holds `10 + 2 × floor` gold.
 
 Hidden traps may become spikes, fire, or poison when stepped on; the starting
@@ -71,8 +76,9 @@ room is excluded from trap placement.
 ## The Lich King's Chamber
 
 The final floor places a golden key in the room before the Lich King's sealed
-chamber. Stand on the key and press `P`, then walk into the chamber door to
-unlock it. The Lich stays dormant until you enter; damaging him from outside
+chamber. Stand on the key and press `P`, then use the Interact key (`A` by
+default) beside the chamber door to unlock it. The Lich stays dormant until
+you enter; damaging him from outside
 also starts his warned attacks. He remains inside the chamber.
 
 - **Crypt Sovereign, above half health:** a necrotic lance marks a fixed lane

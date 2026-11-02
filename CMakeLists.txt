@@ -77,6 +77,7 @@ if(NOT EMSCRIPTEN)
 add_executable(test_runner ${TEST_SOURCES})
 target_include_directories(test_runner PRIVATE src ${CMAKE_SOURCE_DIR}/external)
 target_compile_definitions(test_runner PRIVATE TEST_BUILD)
+target_link_libraries(test_runner PRIVATE ${SDL2_LIBRARIES})
 
 add_custom_target(run
     COMMAND ./conr
