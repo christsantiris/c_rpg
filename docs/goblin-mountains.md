@@ -24,7 +24,7 @@ its newly raised rows onto the road.
 | 4 | Siege Camp | Split routes and fortified positions | The stage-3 roster |
 | 5 | Crown Peak | Summit fortress | The stage-3 roster and the Goblin King |
 
-The mountains use Act 1's [outward difficulty band](difficulty-scaling.md#act-1-outward-band),
+The mountains use the post-dungeon [outward difficulty band](difficulty-scaling.md#act-2-outward-band),
 which does not change with the order in which bosses are defeated.
 
 Intermediate levels do not require a full clear. The living Goblin King blocks
@@ -45,6 +45,14 @@ to the cave approach for the town used to enter.
 - **Goblin Shaman:** periodically heals a nearby wounded ally.
 - **Goblin King:** a stationary two-phase encounter with fixed axe lanes,
   marked bombardment pockets and finite powder kegs at Crown Peak.
+
+Nearby goblins form a warband when the ground has room. Scouts, Warchiefs and
+Hobgoblin Guards take the front shoulders, keeping a center firing lane open
+for Archers. Shamans stay behind the line and retain their healing cadence.
+The formation follows a moving player. Narrow passes, occupied positions and
+unreachable slots fall back to ordinary movement; goblins never move through
+each other or gain extra movement. Splitting the group or holding a narrow
+bridge can disrupt its formation. Lone goblins retain their existing roles.
 
 The route geometry and ground treatment vary by level. Foothill and ascent
 stages use exposed basalt switchbacks. Raider Pass contains
