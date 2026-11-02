@@ -1890,7 +1890,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 231);
+    cJSON_AddNumberToObject(root, "save_version", 232);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -3909,6 +3909,28 @@ static void migrate_quest_giver_locations(GameState *g) {
             }
             g->map.tiles[y][x] = moves[i].tile;
         }
+    }
+}
+
+// V2 retires Rook, Mara and Ilya from Oakhaven's Inn and Tamsin from its square.
+static void retire_oakhaven_cast(GameState *g) {
+    const char *speakers[] = {"Rook", "Mara", "Ilya", "Forester Tamsin"};
+    for (int i = 0; i < 4; i++) {
+        if (strcmp(g->dialogue_speaker, speakers[i]) == 0) {
+            g->dialogue_active = 0;
+        }
+    }
+    if (g->location == LOCATION_TAVERN) {
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                TileType tile = g->map.tiles[y][x];
+                if (tile == TILE_NPC_ROOK || tile == TILE_NPC_MARA || tile == TILE_NPC_DRAGON_SEEKER) {
+                    g->map.tiles[y][x] = TILE_TAVERN_FLOOR;
+                }
+            }
+        }
+    } else if (g->location == LOCATION_TOWN && g->map.tiles[TAMSIN_Y][TAMSIN_X] == TILE_NPC_TAMSIN) {
+        g->map.tiles[TAMSIN_Y][TAMSIN_X] = TILE_TOWN_FLOOR;
     }
 }
 
@@ -6947,6 +6969,9 @@ int load_game(GameState *g, int slot) {
     // Saves from before recruitment still show Aldric in Oakhaven's square after the Lich.
     if (save_version < 231) {
         aldric_place(g);
+    }
+    if (save_version < 232) {
+        retire_oakhaven_cast(g);
     }
     game_recover_retired_items(g);
     cJSON_Delete(root);

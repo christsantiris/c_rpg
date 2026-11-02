@@ -108,13 +108,15 @@ void test_tavern_interior(void) {
     ASSERT("Bram now occupies the Inn's former Alder counter position",
         g.map.tiles[BRAM_INN_Y][BRAM_INN_X] == TILE_NPC_BRAM &&
         map_is_walkable(&g.map, BRAM_INN_X, BRAM_INN_Y + 1));
-    int mara_x = 0;
-    int mara_y = 0;
-    ASSERT("Mara occupies her original Oakhaven Inn position",
-        find_tile(&g.map, TILE_NPC_MARA, &mara_x, &mara_y) &&
-        mara_x == MARA_TAVERN_X && mara_y == MARA_TAVERN_Y);
-    ASSERT("Mara can be approached beside her Tavern position",
-        map_is_walkable(&g.map, MARA_TAVERN_X, MARA_TAVERN_Y + 1));
+    int retired_x = 0;
+    int retired_y = 0;
+    ASSERT("Rook, Mara and Ilya no longer stand in Oakhaven's Inn",
+        !find_tile(&g.map, TILE_NPC_ROOK, &retired_x, &retired_y) &&
+        !find_tile(&g.map, TILE_NPC_MARA, &retired_x, &retired_y) &&
+        !find_tile(&g.map, TILE_NPC_DRAGON_SEEKER, &retired_x, &retired_y));
+    ASSERT("their former Inn positions are open floor",
+        map_is_walkable(&g.map, ROOK_TAVERN_X, ROOK_TAVERN_Y) && map_is_walkable(&g.map, MARA_TAVERN_X, MARA_TAVERN_Y) &&
+        map_is_walkable(&g.map, ILYA_TAVERN_X, ILYA_TAVERN_Y));
     game_leave_tavern(&g);
     game_enter_inn(&g);
     g.player.x = BRENNA_INN_X;

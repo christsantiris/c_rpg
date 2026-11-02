@@ -1,5 +1,8 @@
 # Rook's Labyrinth — Minotaur encounter
 
+In V2, Rook has left Oakhaven and no one offers this quest until a later act
+places him. Existing quest progress is kept.
+
 Rook, in **Oakhaven's Inn**, assigns The Ivory Rook quest. Accept with `Y`
 to open the labyrinth gate beside the **Haunted Forest entrance on the road
 between Oakhaven and Stillbury**. It is outside both towns, just west of the

@@ -19,9 +19,10 @@ Tomas's escape and confiscated-equipment recovery do not use these slots.
 Other dialogue bubbles are dismissed by
 movement. Bram runs Oakhaven's Inn, offering the Lich King warning and supply
 advice and the Save Elowen quest at its counter. Elowen lives there only after
-her rescue and reunion. Mara, Ilya, and Rook retain their current content; their
-Chapter 1 story changes are pending. After the Lich King's defeat, Alder and
-Dain arrive at Oakhaven's Inn with the eastward and westward adventure choices.
+her rescue and reunion. Mara, Ilya, and Rook have left Oakhaven in V2; their
+quests keep their progress but have no giver until a later act places them.
+After the Lich King's defeat, Alder and Dain arrive at Oakhaven's Inn with the
+eastward and westward adventure choices, and Aldric moves in from the square.
 Zara and Brenna remain in Stillbury's Tavern. Dawnmere's Alehouse has a generic
 host and no longer offers Dain's quest.
 Stillbury's duplicate Bram and the Bring Mira Home swamp quest are retired.
@@ -123,6 +124,9 @@ through save/load. This V2 rewrite uses fresh saves without a new migration.
 
 ## Mara: Relight the Drowned Beacons
 
+In V2, Mara has left Oakhaven and no one offers this quest until a later act
+places her. Existing quest progress is kept.
+
 Mara waits in **Oakhaven's Inn**. Press `T`
 beside her to speak. She is a retired tidekeeper who carries a sheltered ember
 from the old coast lights. She asks the player to relight drowned beacons on
@@ -177,6 +181,9 @@ adventure area.
 
 ## Ilya: The Dragon's Hoard
 
+In V2, Ilya has left Oakhaven and no one offers this quest until a later act
+places her. Existing quest progress is kept.
+
 Ilya waits alongside Elowen and Mara in **Oakhaven's Inn**. Press
 `T` beside her, then `Y` to accept the quest. Travel north through the mountains
 to Ridgeshire, then take its north gate to Dragonspine. Recover the golden goblet
@@ -222,6 +229,9 @@ expeditions. In a replayed dungeon finale, the return passage remains available
 without requiring the absent Lich King to be defeated again.
 
 ## Rook: The Ivory Rook
+
+In V2, Rook has left Oakhaven and no one offers this quest until a later act
+places him. Existing quest progress is kept.
 
 Speak with Rook in Oakhaven's Inn and press `Y` to accept his one-time
 retrieval quest. This opens the labyrinth gate beside the Haunted Forest
