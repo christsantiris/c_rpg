@@ -35,12 +35,13 @@ bosses. Both bosses can also be reached without accepting their quests.
 
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/world-map.png?v=c580d77004be)](docs/world-map.png?v=c580d77004be)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=11cedbc263f8)](docs/world-map.png?v=11cedbc263f8)
 
 The current V2 focus is Act 1: Oakhaven, Goblin Mountains to its west, Haunted
-Forest to its east, and Oakhaven's dungeon to its south. Impassable rapids block
-the northern route. The rest of the world is shown as provisional context and
-will be redesigned in later steps; later connections remain undecided.
+Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
+to a broken ferry landing at Northern Rapids; the river cannot be crossed.
+The rest of the world is shown as provisional context and will be redesigned
+in later steps; later connections remain undecided.
 
 ## Controls
 

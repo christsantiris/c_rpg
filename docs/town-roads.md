@@ -1,5 +1,14 @@
 # Towns beside the regional roads
 
+Oakhaven has a safe riverbank visit through its north gate as well as its three Act 1 adventure roads.
+The north gate leads to the **south bank of Northern Rapids**, where a broken
+ferry landing, snapped rope and damaged boat mark an impassable river. Walk
+south along the short path to return through Oakhaven's north gate. Boss
+victories never open this crossing. The actual river tiles remain blocked
+across the entire northern boundary. The README's [final atlas](world-map.png)
+shows this local dead end. Other towns and later connections below are legacy,
+provisional context pending later V2 design.
+
 All five towns have dense medieval settlement sprites and safe, signed roads leading to them.
 Players arriving from a regional approach or Crown Road can enter town or walk
 around it across open grass to another connection; there is no paved ring road. Bypassing town does not visit shops, accept
@@ -16,7 +25,7 @@ continuations, without a second gate. Streets and services inside all five towns
 
 | Town | North | East | South | West |
 | --- | --- | --- | --- | --- |
-| Oakhaven | Elderwood / Catacombs / Castle road | Dungeon / Dawnmere road | Sunken Coast | Haunted Forest / Stillbury road |
+| Oakhaven | Northern Rapids / broken ferry (dead end) | Haunted Forest | Oakhaven Dungeon | Goblin Mountains |
 | Stillbury | Swamp / Rosemoor road | Haunted Forest / Oakhaven road | Stonewake Quarry | Sunscar Wastes |
 | Rosemoor | Frostfell Wastes | Crown Road East / Castle | Swamp / Stillbury road | Ashen Hollow |
 | Ridgeshire | Dragonspine | Ironfang Mines | Mountains / Dawnmere road | Crown Road West / Castle |
@@ -60,7 +69,9 @@ stonework and doorway details at native resolution. A rounded curtain wall,
 projecting towers and clustered houses follow the user's medieval hill-town
 reference.
 
-The northern Oakhaven road has two independent boss gates: Elderthorn and the Grave Marshal. Both apply equally from the castle side; see [boss gates](boss-gates.md).
+The former northern through road from Oakhaven is disconnected in V2. Its
+legacy Elderthorn and Grave Marshal gates remain part of later-region code;
+see [boss gates](boss-gates.md). They do not create a crossing at the rapids.
 See [Elderwood](elderwood-forest.md) for travel and save migration details.
 
 Save version 189 retires Pirate Coast and Corvin's treasure quest. Saves from

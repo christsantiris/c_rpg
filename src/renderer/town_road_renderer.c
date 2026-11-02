@@ -4,15 +4,7 @@
 #include "sprites.h"
 #include <stdio.h>
 
-static void boundary_label(Renderer *r, const Viewport *v, TownSide side, const char *area) {
-    int x;
-    int y;
-    town_road_exit(side, &x, &y);
-    if (!viewport_is_visible(v, x, y)) {
-        return;
-    }
-    char text[64];
-    snprintf(text, sizeof(text), "%c: %s", "NESW"[side], area);
+static void route_label(Renderer *r, const Viewport *v, int x, int y, const char *text) {
     int width;
     TTF_SizeText(r->font_tiny, text, &width, NULL);
     int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
@@ -49,16 +41,22 @@ void draw_town_road(Renderer *r, const GameState *g, const Viewport *v) {
     }
     if (g->road_town == LOCATION_TOWN) {
         // White water runs east through the northern rapids.
-        for (int y = v->cam_y; y <= 10 && y < v->cam_y + v->tiles_y; y++) {
+        for (int y = v->cam_y; y <= OAKHAVEN_RIVER_EDGE && y < v->cam_y + v->tiles_y; y++) {
             for (int x = v->cam_x; x < TOWN_ROAD_W && x < v->cam_x + v->tiles_x; x++) {
                 unsigned int seed = (unsigned int)x * 73u + (unsigned int)y * 151u;
+                int drift = (int)((SDL_GetTicks() / 90u + seed) % 12u);
                 int px = viewport_to_screen_x(v, x) * TILE_SIZE;
                 int py = viewport_to_screen_y(v, y) * TILE_SIZE;
                 SDL_SetRenderDrawColor(r->sdl, 139, 202, 215, 255);
-                SDL_RenderDrawLine(r->sdl, px + 2, py + 5 + seed % 11u, px + 13, py + 5 + seed % 11u);
+                SDL_RenderDrawLine(r->sdl, px + drift, py + 5 + seed % 11u, px + drift + 8, py + 5 + seed % 11u);
                 SDL_SetRenderDrawColor(r->sdl, 204, 231, 227, 255);
                 SDL_RenderDrawLine(r->sdl, px + 9, py + 8 + seed % 11u, px + 19, py + 8 + seed % 11u);
             }
+        }
+        if (r->broken_ferry_texture) {
+            SDL_Rect ferry = {viewport_to_screen_x(v, OAKHAVEN_FERRY_ART_X) * TILE_SIZE,
+                viewport_to_screen_y(v, OAKHAVEN_FERRY_ART_Y) * TILE_SIZE, 7 * TILE_SIZE, 6 * TILE_SIZE};
+            SDL_RenderCopy(r->sdl, r->broken_ferry_texture, NULL, &ferry);
         }
     }
     SDL_Rect destination = {viewport_to_screen_x(v, TOWN_SPRITE_X) * TILE_SIZE,
@@ -72,11 +70,19 @@ void draw_town_road(Renderer *r, const GameState *g, const Viewport *v) {
     TTF_SizeText(r->font_small, name, &width, NULL);
     renderer_draw_text(r, name, destination.x + (destination.w - width) / 2, destination.y - 28, label, r->font_small);
     if (g->road_town == LOCATION_TOWN) {
-        draw_town_road_sign(r, viewport_to_screen_x(v, TOWN_ROAD_W / 2 - 5), viewport_to_screen_y(v, 12), "NORTHERN RAPIDS\nNO CROSSING");
+        if (OAKHAVEN_FERRY_X >= v->cam_x && OAKHAVEN_FERRY_X < v->cam_x + v->tiles_x && g->player.y < TOWN_SPRITE_Y) {
+            route_label(r, v, OAKHAVEN_FERRY_X, OAKHAVEN_FERRY_ART_Y - 1, "N: BROKEN FERRY / NO CROSSING");
+        }
+        if (viewport_is_visible(v, OAKHAVEN_FERRY_X, TOWN_SPRITE_Y + 1)) {
+            route_label(r, v, OAKHAVEN_FERRY_X, TOWN_SPRITE_Y + 1, "S: OAKHAVEN");
+        }
     }
     for (int side = 0; side < 4; side++) {
         TownApproach connection;
         if (!town_road_connection(g->road_town, side, &connection)) {
+            continue;
+        }
+        if (g->road_town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
             continue;
         }
         const char *area = approach_area_name(connection.area);
@@ -90,6 +96,9 @@ void draw_town_road(Renderer *r, const GameState *g, const Viewport *v) {
         int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
         int py = viewport_to_screen_y(v, y) * TILE_SIZE;
         renderer_draw_text(r, sign, px, py, (SDL_Color){140, 203, 143, 255}, r->font_tiny);
-        boundary_label(r, v, side, area);
+        town_road_exit(side, &x, &y);
+        if (viewport_is_visible(v, x, y)) {
+            route_label(r, v, x, y, sign);
+        }
     }
 }

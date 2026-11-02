@@ -8,6 +8,7 @@
 #include "../game/landscapes.h"
 #include "../game/castle.h"
 #include "../game/approach.h"
+#include "../game/town_road.h"
 #include "sprites.h"
 #include "world_props.h"
 #include "info_panel.h"
@@ -142,6 +143,11 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         title = floor_name;
         line1 = "WALK INTO THE TOWN TO VISIT";
         line2 = "FOLLOW THE ROAD TO CONTINUE";
+        if (g->road_town == LOCATION_TOWN && g->player.y < TOWN_SPRITE_Y) {
+            title = "NORTHERN RAPIDS";
+            line1 = "BROKEN FERRY - NO CROSSING";
+            line2 = "FOLLOW SOUTH PATH TO OAKHAVEN";
+        }
     } else if (g->location == LOCATION_APPROACH) {
         const TownApproach *route = approach_route(g);
         snprintf(floor_name, sizeof(floor_name), "%s APPROACH", route ? approach_area_name(route->area) : "AREA");

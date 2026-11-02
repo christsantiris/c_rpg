@@ -43,6 +43,7 @@ test:
 	./build/test_runner
 
 sprites:
+	python3 tools/sprites/broken_ferry.py
 	python3 tools/sprites/castle.py
 	python3 tools/sprites/tavern.py
 	python3 tools/sprites/alehouse.py

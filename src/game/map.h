@@ -731,7 +731,8 @@ typedef enum {
     TILE_NPC_EDDA,
     TILE_ROAD_GATE_CLOSED,
     TILE_ROAD_GATE_OPEN,
-    TILE_ROAD_BANK
+    TILE_ROAD_BANK,
+    TILE_BROKEN_FERRY
 } TileType;
 
 typedef struct {
