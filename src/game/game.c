@@ -47,7 +47,23 @@
 
 static void spawn_temple_enemies(GameState *g);
 
+// Haunted Forest and Goblin Mountains share Act 1's outward band: tougher than
+// the dungeon from their first stage, and unchanged by which boss falls first.
+// Regular enemies gain 10% HP, 4 attack and 1 defense and use the roster two
+// steps deeper; their bosses keep base stats.
+#define OUTWARD_HP_PERCENT 110
+#define OUTWARD_ATTACK 4
+#define OUTWARD_DEFENSE 1
+#define OUTWARD_ROSTER 2
+
+static int outward_band(Location location) {
+    return location == LOCATION_FOREST || location == LOCATION_MOUNTAINS;
+}
+
 static int region_order_tier(const GameState *g) {
+    if (outward_band(g->location)) {
+        return 0;
+    }
     const Location regions[4] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST
     };
@@ -68,6 +84,7 @@ static void scale_spawned_enemy(const GameState *g, Enemy *e) {
     static const int boss_attack[4] = {0, 6, 10, 13};
     // Temple base stats remain a late-game challenge after the harbor opens.
     int tier = g->location == LOCATION_TEMPLE ? 0 : region_order_tier(g);
+    int band = outward_band(g->location) && !e->is_boss;
     int level_progress = g->player.level - 1;
     if (level_progress < 0) {
         level_progress = 0;
@@ -76,15 +93,15 @@ static void scale_spawned_enemy(const GameState *g, Enemy *e) {
         level_progress = 16;
     }
     // Later victories add smaller increments; leveling never adds a two-point attack jump.
-    int hp_percent = (e->is_boss ? boss_hp[tier] : regular_hp[tier]) +
+    int hp_percent = (band ? OUTWARD_HP_PERCENT : e->is_boss ? boss_hp[tier] : regular_hp[tier]) +
         20 * level_progress / 16;
     if (e->type != ENEMY_ILLUSION) {
         e->max_hp = (e->max_hp * hp_percent + 50) / 100;
         e->hp = e->max_hp;
     }
-    e->attack += (e->is_boss ? boss_attack[tier] : regular_attack[tier]) +
+    e->attack += (band ? OUTWARD_ATTACK : e->is_boss ? boss_attack[tier] : regular_attack[tier]) +
         level_progress / 4;
-    e->defense += tier;
+    e->defense += band ? OUTWARD_DEFENSE : tier;
     e->experience = (e->experience * (100 + 10 * tier) + 50) / 100;
 }
 
@@ -1227,7 +1244,7 @@ void enemies_spawn(GameState *g) {
         EnemyType type;
         int roll = rand() % 100;
         // Completed regions advance enemy roles without skipping map stages.
-        int level = difficulty + 3 * order_tier;
+        int level = difficulty + (outward_band(g->location) ? OUTWARD_ROSTER : 3 * order_tier);
 
         if (g->location == LOCATION_DRAGONSPINE) {
             if (g->level == 1) {

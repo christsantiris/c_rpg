@@ -18,11 +18,14 @@ its newly raised rows onto the road.
 
 | Level | Region | Layout identity | Enemy roster |
 | --- | --- | --- | --- |
-| 1 | Blackrock Foothills | Open switchbacks and scout camps | Goblin Scouts |
-| 2 | Raider Pass | Timber bridges and overlapping firing lanes | Scouts and Archers |
-| 3 | Cinder Mines | Braided underground routes | Scouts, Archers, Warchiefs and Giant Spiders |
-| 4 | Siege Camp | Split routes and fortified positions | Goblin warbands |
-| 5 | Crown Peak | Summit fortress | Full roster and the Goblin King |
+| 1 | Blackrock Foothills | Open switchbacks and scout camps | Scouts, Archers, Warchiefs and Giant Spiders |
+| 2 | Raider Pass | Timber bridges and overlapping firing lanes | Archers, Warchiefs, Giant Spiders, Cave Trolls and Hobgoblin Guards |
+| 3 | Cinder Mines | Braided underground routes | Archers, Warchiefs, Giant Spiders, Cave Trolls, Hobgoblin Guards and Shamans |
+| 4 | Siege Camp | Split routes and fortified positions | The stage-3 roster |
+| 5 | Crown Peak | Summit fortress | The stage-3 roster and the Goblin King |
+
+The mountains use Act 1's [outward difficulty band](difficulty-scaling.md#act-1-outward-band),
+which does not change with the order in which bosses are defeated.
 
 Intermediate levels do not require a full clear. The living Goblin King blocks
 the level-5 summit exit. Defeat him, collect the loot, and use that exit to
@@ -107,7 +110,7 @@ for that saved visit, so moving its future anchor cannot strand the player.
 ## Crown Peak Boss Encounter
 
 The Goblin King keeps his original baseline 180 HP, 20 attack, 8 defense and
-500 experience, with existing regional scaling. He remains dormant until the
+500 experience; the outward band leaves boss stats unchanged. He remains dormant until the
 player enters the fortress or damages him from range. He stays in the arena;
 retreat beyond his range pauses a pending warning without healing him.
 

@@ -8,6 +8,13 @@
 #define LOCAL_BUILDING_TEXTURE_COUNT 8
 
 typedef enum {
+    OAKHAVEN_BAKERY,
+    OAKHAVEN_GOLDSMITH,
+    OAKHAVEN_BLACKSMITH,
+    OAKHAVEN_SHOP_TEXTURE_COUNT
+} OakhavenShopTexture;
+
+typedef enum {
     TOWN_EXIT_DUNGEON,
     TOWN_EXIT_FOREST,
     TOWN_EXIT_MOUNTAINS,
@@ -68,6 +75,7 @@ typedef struct {
     SDL_Texture *town_hall_texture;
     SDL_Texture *royal_dungeon_texture;
     SDL_Texture *local_building_textures[LOCAL_BUILDING_TEXTURE_COUNT];
+    SDL_Texture *oakhaven_shop_textures[OAKHAVEN_SHOP_TEXTURE_COUNT];
     SDL_Texture *alehouse_cask_texture;
     SDL_Texture *island_texture;
     SDL_Texture *island_temple_texture;

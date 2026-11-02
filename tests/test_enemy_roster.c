@@ -228,7 +228,7 @@ static void test_opening_rosters(GameState *g) {
                             }
                         }
                         valid &= found;
-                        if (!area && !order && stage < 3 && enemy->type == ENEMY_DARK_ELF_GUARD) {
+                        if (!area && stage == 1 && enemy->type == ENEMY_DARK_ELF_GUARD) {
                             gentle_opening = 0;
                         }
                     }
@@ -238,7 +238,7 @@ static void test_opening_rosters(GameState *g) {
     }
     ASSERT("all five forest and mountain stages use only the approved rosters across seeds and boss progress", valid);
     ASSERT("every approved regular enemy appears in its intended area", seen[0] == 127 && seen[1] == 127);
-    ASSERT("unscaled forest opening stages introduce lighter enemies before Dark Elf Guards", gentle_opening);
+    ASSERT("the forest's first stage keeps Dark Elf Guards back in every boss order", gentle_opening);
 }
 
 static void test_dark_elf_guard(GameState *g, GameState *loaded) {
