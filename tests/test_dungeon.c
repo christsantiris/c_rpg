@@ -12,9 +12,67 @@
 
 static void test_dungeon_entry_maps(void);
 
+static void test_manual_dungeon_doors(void) {
+    static GameState g;
+    static GameState loaded;
+    const int dx[] = {0, 1, 0, -1};
+    const int dy[] = {-1, 0, 1, 0};
+    for (int kind = 0; kind < 2; kind++) {
+        for (int side = 0; side < 4; side++) {
+            game_init(&g);
+            g.location = LOCATION_DUNGEON;
+            g.enemy_count = 0;
+            memset(&g.map, 0, sizeof(g.map));
+            g.player.x = 10 - dx[side];
+            g.player.y = 10 - dy[side];
+            g.map.tiles[g.player.y][g.player.x] = TILE_FLOOR;
+            TileType door = kind ? TILE_CRYPT_DOOR : TILE_LOCKED_DOOR;
+            g.map.tiles[10][10] = door;
+            g.dungeon_key_found = kind;
+            g.dungeon_crypt_keys = kind ? 0 : 1;
+            action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
+            ASSERT("a door accepts only its matching key", g.map.tiles[10][10] == door && g.dungeon_key_found == kind && g.dungeon_crypt_keys == (kind ? 0 : 1));
+            g.dungeon_key_found = 1;
+            g.dungeon_crypt_keys = 2;
+            controls_assign(g.key_bindings, CONTROL_MOVE_LEFT, SDL_SCANCODE_K);
+            action_resolve_player(&g, (Action){ACTION_MOVE, 10, 10});
+            ASSERT("bumping a keyed door stops without opening it or consuming keys", g.map.tiles[10][10] == door && g.player.x == 10 - dx[side] && g.player.y == 10 - dy[side] && g.dungeon_key_found == 1 && g.dungeon_crypt_keys == 2);
+            ASSERT("the stopped movement faces the door and names the remapped unlock key", g.player.last_dx == dx[side] && g.player.last_dy == dy[side] && strstr(g.messages[g.message_count - 1], "Press K to unlock"));
+            ASSERT("adjacent locked doors provide the contextual Interact action", game_has_regional_interaction(&g));
+            g.player.frozen_turns = 1;
+            action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
+            ASSERT("being frozen cannot unlock a door or spend its key", g.map.tiles[10][10] == door && g.dungeon_key_found == 1 && g.dungeon_crypt_keys == 2);
+            action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
+            ASSERT("Interact opens from every side and consumes exactly one matching key", g.map.tiles[10][10] == TILE_FLOOR && g.dungeon_key_found == kind && g.dungeon_crypt_keys == (kind ? 1 : 2));
+            ASSERT("unlocking leaves the player outside the door", g.player.x == 10 - dx[side] && g.player.y == 10 - dy[side]);
+            action_resolve_player(&g, (Action){ACTION_MOVE, 10, 10});
+            ASSERT("a separate movement steps through the open door", g.player.x == 10 && g.player.y == 10 && g.dungeon_key_found == kind && g.dungeon_crypt_keys == (kind ? 1 : 2));
+        }
+    }
+    game_init(&g);
+    g.location = LOCATION_DUNGEON;
+    g.enemy_count = 0;
+    memset(&g.map, 0, sizeof(g.map));
+    g.player.x = 10;
+    g.player.y = 10;
+    g.map.tiles[10][10] = TILE_FLOOR;
+    g.map.tiles[10][11] = TILE_LOCKED_DOOR;
+    g.map.tiles[9][10] = TILE_CRYPT_DOOR;
+    g.dungeon_key_found = 1;
+    g.dungeon_crypt_keys = 2;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 11, 10});
+    ASSERT("manual door test save slot is unused", !save_exists(99240));
+    ASSERT("saving before unlocking retains the faced door and both kinds of key", save_game(&g, 99240) && load_game(&loaded, 99240) && loaded.map.tiles[10][11] == TILE_LOCKED_DOOR && loaded.player.last_dx == 1 && loaded.dungeon_key_found == 1 && loaded.dungeon_crypt_keys == 2);
+    action_resolve_player(&loaded, (Action){ACTION_INTERACT, 0, 0});
+    ASSERT("when two doors are adjacent Interact opens the faced one", loaded.map.tiles[10][11] == TILE_FLOOR && loaded.map.tiles[9][10] == TILE_CRYPT_DOOR && loaded.dungeon_key_found == 0 && loaded.dungeon_crypt_keys == 2);
+    ASSERT("opened doors and consumed keys survive save/load", save_game(&loaded, 99240) && load_game(&g, 99240) && g.map.tiles[10][11] == TILE_FLOOR && g.map.tiles[9][10] == TILE_CRYPT_DOOR && g.dungeon_key_found == 0 && g.dungeon_crypt_keys == 2 && g.player.x == 10 && g.player.y == 10);
+    remove("saves/savegame_99240.json");
+}
+
 void test_dungeon(void) {
     printf("Dungeon generation tests:\n");
     test_dungeon_entry_maps();
+    test_manual_dungeon_doors();
 
     srand((unsigned)time(NULL));
 
@@ -134,6 +192,8 @@ void test_dungeon(void) {
     g.player.y = door_y + 1;
     Action unlock = {ACTION_MOVE, door_x, door_y};
     action_resolve_player(&g, unlock);
+    ASSERT("the boss door waits for an explicit unlock action", g.map.tiles[door_y][door_x] == TILE_LOCKED_DOOR && g.dungeon_key_found);
+    action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("dungeon key unlocks boss door",
         g.map.tiles[door_y][door_x] == TILE_FLOOR);
     ASSERT("dungeon key is consumed", g.dungeon_key_found == 0);
@@ -268,6 +328,10 @@ static int dungeon_walk_to(GameState *g, int tx, int ty) {
     }
     while (steps > 0) {
         int cell = queue[--steps];
+        if (g->map.tiles[cell / MAP_W][cell % MAP_W] == TILE_LOCKED_DOOR) {
+            action_resolve_player(g, (Action){ACTION_MOVE, cell % MAP_W, cell / MAP_W});
+            action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+        }
         action_resolve_player(g, (Action){ACTION_MOVE, cell % MAP_W, cell / MAP_W});
         if (g->player.x != cell % MAP_W || g->player.y != cell / MAP_W) {
             return 0;
@@ -914,6 +978,8 @@ void test_stairs_locked(void) {
     g.player.x = door_x - 1;
     g.player.y = door_y;
     action_resolve_player(&g, enter_crypt);
+    ASSERT("carrying a crypt key no longer opens the door on movement", g.map.tiles[door_y][door_x] == TILE_CRYPT_DOOR && g.dungeon_crypt_keys == 1);
+    action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("crypt key opens and is consumed by the door",
         g.map.tiles[door_y][door_x] == TILE_FLOOR &&
         g.dungeon_crypt_keys == 0);

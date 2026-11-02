@@ -72,6 +72,10 @@ static int walk_to(int tx, int ty) {
     for (int i = count - 1; i >= 0; i--) {
         int x = queue[i] % MAP_W;
         int y = queue[i] / MAP_W;
+        if (game.map.tiles[y][x] == TILE_LOCKED_DOOR) {
+            action_resolve_player(&game, (Action){ACTION_MOVE, x, y});
+            action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
+        }
         for (int tries = 0; tries < 40 && (game.player.x != x || game.player.y != y); tries++) {
             action_resolve_player(&game, (Action){ACTION_MOVE, x, y});
         }

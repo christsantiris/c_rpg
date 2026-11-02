@@ -4376,7 +4376,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int sx = viewport_to_screen_x(v, g->aldric_x);
         int sy = viewport_to_screen_y(v, g->aldric_y);
         int width = 0;
-        npc_draw(r, sx, sy, NPC_ART_ALDRIC, 0);
+        npc_draw(r, sx, sy, NPC_ART_ALDRIC_ARMED, 0);
         TTF_SizeText(r->font_tiny, "ALDRIC", &width, NULL);
         int label_x = sx * TILE_SIZE + (TILE_SIZE - width) / 2;
         renderer_draw_text(r, "ALDRIC", label_x < 2 ? 2 : label_x, (sy - 1) * TILE_SIZE,
