@@ -192,12 +192,132 @@ static void test_retired_actor_migration(GameState *g, GameState *loaded) {
     ASSERT("named quest actors keep their identity after consolidation", save_game(g, ROSTER_SLOT) && load_game(loaded, ROSTER_SLOT) && loaded->enemies[3].type == ENEMY_GIANT_SPIDER && strcmp(loaded->enemies[3].name, "Map Bearer") == 0 && loaded->enemies[3].dain_fragment == DAIN_FRAGMENT_WARCHIEF);
 }
 
+static void test_opening_rosters(GameState *g) {
+    const EnemyType forest[] = {ENEMY_PIXIE, ENEMY_BLIGHTED_WOLF, ENEMY_GIANT_SPIDER, ENEMY_DARK_ELF_ARCHER, ENEMY_DARK_ELF_RANGER, ENEMY_FOREST_TROLL, ENEMY_DARK_ELF_GUARD};
+    const EnemyType mountains[] = {ENEMY_GOBLIN_SCOUT, ENEMY_GOBLIN_ARCHER, ENEMY_GIANT_SPIDER, ENEMY_GOBLIN_WARCHIEF, ENEMY_GOBLIN_SHAMAN, ENEMY_CAVE_TROLL, ENEMY_HOBGOBLIN_GUARD};
+    unsigned int seen[2] = {0};
+    int valid = 1;
+    int gentle_opening = 1;
+    for (int area = 0; area < 2; area++) {
+        const EnemyType *roster = area ? mountains : forest;
+        for (int order = 0; order < 2; order++) {
+            for (int seed = 1; seed <= 8; seed++) {
+                game_init(g);
+                srand((unsigned int)(5300 + seed));
+                g->location = area ? LOCATION_MOUNTAINS : LOCATION_FOREST;
+                g->defeated_bosses = order ? 1 << LOCATION_DUNGEON : 0;
+                for (int stage = 1; stage <= 5; stage++) {
+                    g->level = stage;
+                    if (area) {
+                        map_generate_mountains(&g->map, stage);
+                    } else {
+                        map_generate_forest(&g->map, stage);
+                    }
+                    enemies_spawn(g);
+                    for (int i = 0; i < g->enemy_count; i++) {
+                        const Enemy *enemy = &g->enemies[i];
+                        if (enemy->is_boss) {
+                            valid &= enemy->type == (area ? ENEMY_MOUNTAIN_GOBLIN_KING : ENEMY_FOREST_NECROMANCER);
+                            continue;
+                        }
+                        int found = 0;
+                        for (int type = 0; type < 7; type++) {
+                            if (enemy->type == roster[type]) {
+                                found = 1;
+                                seen[area] |= 1u << type;
+                            }
+                        }
+                        valid &= found;
+                        if (!area && !order && stage < 3 && enemy->type == ENEMY_DARK_ELF_GUARD) {
+                            gentle_opening = 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    ASSERT("all five forest and mountain stages use only the approved rosters across seeds and boss progress", valid);
+    ASSERT("every approved regular enemy appears in its intended area", seen[0] == 127 && seen[1] == 127);
+    ASSERT("unscaled forest opening stages introduce lighter enemies before Dark Elf Guards", gentle_opening);
+}
+
+static void test_dark_elf_guard(GameState *g, GameState *loaded) {
+    game_init(g);
+    game_enter_forest(g);
+    Enemy hobgoblin;
+    Room *room = &g->map.rooms[0];
+    game_spawn_enemy(g, &g->enemies[0], ENEMY_DARK_ELF_GUARD, room->x + room->w / 2, room->y + room->h / 2);
+    game_spawn_enemy(g, &hobgoblin, ENEMY_HOBGOBLIN_GUARD, 0, 0);
+    Enemy *guard = &g->enemies[0];
+    ASSERT("Dark Elf Guard matches Hobgoblin Guard combat strength and experience", guard->max_hp == hobgoblin.max_hp && guard->attack == hobgoblin.attack && guard->defense == hobgoblin.defense && guard->experience == hobgoblin.experience && !guard->is_boss);
+    ASSERT("Dark Elf Guard has its own identity", guard->type == ENEMY_DARK_ELF_GUARD && strcmp(guard->name, "Dark Elf Guard") == 0);
+    g->enemy_count = 1;
+    guard->hp = 11;
+    guard->poison_turns = 2;
+    guard->frozen_turns = 1;
+    g->forest_cache[0].valid = 1;
+    g->forest_cache[0].map = g->map;
+    g->forest_cache[0].enemy_count = 1;
+    g->forest_cache[0].enemies[0] = *guard;
+    int saved = save_game(g, ROSTER_SLOT) && load_game(loaded, ROSTER_SLOT);
+    ASSERT("Dark Elf Guard saves in active and cached forest stages", saved && loaded->enemies[0].type == ENEMY_DARK_ELF_GUARD && loaded->forest_cache[0].enemies[0].type == ENEMY_DARK_ELF_GUARD);
+    ASSERT("guard wounds and status effects survive active and cached save/load", saved && loaded->enemies[0].hp == 11 && loaded->enemies[0].poison_turns == 2 && loaded->enemies[0].frozen_turns == 1 && loaded->forest_cache[0].enemies[0].hp == 11 && loaded->forest_cache[0].enemies[0].poison_turns == 2 && loaded->forest_cache[0].enemies[0].frozen_turns == 1);
+
+    game_init(g);
+    g->location = LOCATION_FOREST;
+    g->level = 1;
+    for (int y = 10; y < 30; y++) {
+        for (int x = 10; x < 30; x++) {
+            g->map.tiles[y][x] = TILE_FOREST_FLOOR;
+        }
+    }
+    g->player.x = 20;
+    g->player.y = 20;
+    g->player.hp = 1000;
+    g->player.max_hp = 1000;
+    g->player.defense = 0;
+    g->equipped_armor = -1;
+    g->equipped_off_hand = -1;
+    g->enemy_count = 4;
+    game_spawn_enemy(g, &g->enemies[0], ENEMY_DARK_ELF_GUARD, 15, 20);
+    game_spawn_enemy(g, &g->enemies[1], ENEMY_DARK_ELF_ARCHER, 14, 20);
+    game_spawn_enemy(g, &g->enemies[2], ENEMY_PIXIE, 18, 20);
+    game_spawn_enemy(g, &g->enemies[3], ENEMY_BLIGHTED_WOLF, 17, 21);
+    EnemyProjectiles shots = {0};
+    action_resolve_enemies_with_projectiles(g, &shots);
+    guard = &g->enemies[0];
+    ASSERT("Dark Elf Guard advances to protect an archer ahead of nearer skirmishers", abs(guard->x - g->player.x) + abs(guard->y - g->player.y) < 5);
+    g->enemy_count = 1;
+    guard->x = 19;
+    guard->y = 20;
+    int hp = g->player.hp;
+    action_resolve_enemies_with_projectiles(g, &shots);
+    ASSERT("Dark Elf Guard attacks in melee without firing arrows", g->player.hp < hp && shots.count == 0);
+
+    guard->hp = 1;
+    g->player.player_class = CLASS_MAGE;
+    g->player.known_spells[0] = spell_make_magic_arrow();
+    g->player.known_spell_count = 1;
+    g->player.equipped_spell = 0;
+    g->player.mp = 100;
+    g->player.last_dx = -1;
+    g->player.last_dy = 0;
+    int score = g->score;
+    int experience = g->player.experience;
+    action_resolve_player(g, (Action){ACTION_CAST_SPELL, 0, 0});
+    ASSERT("defeating a Dark Elf Guard awards normal guard score and experience", !guard->active && g->score == score + 70 && g->player.experience == experience + 44);
+    Enemy *revenant = game_raise_grove_servant(g, 19, 19, 0);
+    ASSERT("the Necromancer can raise a fallen Dark Elf Guard without creating another reward", revenant == guard && revenant->type == ENEMY_DARK_ELF_GUARD && revenant->hp == revenant->max_hp / 2 && revenant->revived && revenant->experience == 0);
+}
+
 void test_enemy_roster(void) {
     printf("Approved enemy roster and alignment lifetimes\n");
     GameState *g = calloc(1, sizeof(*g));
     GameState *loaded = calloc(1, sizeof(*loaded));
     ASSERT("roster fixtures allocate without large static states", g && loaded);
     if (g && loaded) {
+        test_opening_rosters(g);
+        test_dark_elf_guard(g, loaded);
         test_alignment_lifetimes(g, loaded);
         test_retired_actor_migration(g, loaded);
         test_location_migrations(g, loaded);

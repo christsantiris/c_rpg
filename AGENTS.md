@@ -159,3 +159,25 @@ This is a permanent dungeon and area creation requirement.
   save version. Repair in place, preserving exploration, enemies and wounds,
   loot, equipment, quests and boss victories. Back up local saves before bulk
   migration. Verify an existing affected save in the actual renderer.
+
+## 12. README contains the main world map
+
+`docs/images/world-map-final.png` is the permanent final world map asset.
+README's embedded map and click-through link must always use this file.
+Publish each finished map revision by replacing its contents; do not switch
+README to a regional preview, draft or revision-specific image filename.
+Update the image URL's `v` query value to the first 12 characters of the final
+file's SHA-256 checksum after replacement so previews request the new image.
+
+The world map displayed in `README.md` is the game's main world map. Every
+geography change must update that displayed map in the same change set,
+including region and town placement, terrain barriers, entrances, roads and
+travel connections. A separate regional preview or design document does not
+satisfy this requirement.
+
+Inspect the actual image linked and embedded in README against the approved
+geography and playable routes before reporting completion. Remove retired
+connections, preserve unrelated geography, and leave undecided connections
+undrawn. Update the atlas source notes and acceptance checks with the image.
+When later acts are deferred, mark their geography as provisional rather than
+treating their existing depiction as approved V2 design.

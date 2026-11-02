@@ -172,6 +172,7 @@ Item item_make_accessory(AccessoryFamily family, int tier);
 Item item_make_leather_gauntlets(void);
 Item item_make_leather_bracers(void);
 Item item_make_ring_of_vigor(void);
+Item item_make_crypt_ring(void);
 Item item_make_copper_amulet(void);
 int item_accessory_limit(const Item *item);
 int item_is_jewelry(const Item *item);

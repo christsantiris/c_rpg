@@ -31,6 +31,7 @@
 #include "../game/elderwood.h"
 #include "../game/catacombs.h"
 #include "../game/heartseed.h"
+#include "../game/aldric.h"
 #include "../game/spice_skiff.h"
 #include "../game/mangrove.h"
 #include "../game/stormwatch.h"
@@ -1889,7 +1890,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 228);
+    cJSON_AddNumberToObject(root, "save_version", 231);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -2109,8 +2110,13 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "defeated_bosses", g->defeated_bosses);
     cJSON_AddNumberToObject(root, "elowen_quest_state",
         g->elowen_quest_state);
+    cJSON_AddNumberToObject(root, "elowen_x", g->elowen_x);
+    cJSON_AddNumberToObject(root, "elowen_y", g->elowen_y);
     cJSON_AddNumberToObject(root, "elowen_seals_restored",
         g->elowen_seals_restored);
+    cJSON_AddNumberToObject(root, "aldric_party_state", g->aldric_party_state);
+    cJSON_AddNumberToObject(root, "aldric_x", g->aldric_x);
+    cJSON_AddNumberToObject(root, "aldric_y", g->aldric_y);
     cJSON_AddNumberToObject(root, "dain_quest_state", g->dain_quest_state);
     cJSON_AddNumberToObject(root, "dain_map_fragments",
         g->dain_map_fragments);
@@ -4305,12 +4311,12 @@ int load_game(GameState *g, int slot) {
     g->swamp_portal_town = swamp_portal->valueint;
     g->mountain_entry_town = mountain_entry->valueint;
     g->mountain_portal_town = mountain_portal->valueint;
-    if ((g->forest_entry_town != LOCATION_TOWN && g->forest_entry_town != LOCATION_TOWN2) ||
-        (g->forest_portal_town != LOCATION_TOWN && g->forest_portal_town != LOCATION_TOWN2) ||
+    if ((g->forest_entry_town != LOCATION_TOWN && g->forest_entry_town != LOCATION_DAWNMERE && g->forest_entry_town != LOCATION_TOWN2) ||
+        (g->forest_portal_town != LOCATION_TOWN && g->forest_portal_town != LOCATION_DAWNMERE && g->forest_portal_town != LOCATION_TOWN2) ||
         (g->swamp_entry_town != LOCATION_TOWN2 && g->swamp_entry_town != LOCATION_TOWN3) ||
         (g->swamp_portal_town != LOCATION_TOWN2 && g->swamp_portal_town != LOCATION_TOWN3) ||
-        (g->mountain_entry_town != LOCATION_DAWNMERE && g->mountain_entry_town != LOCATION_TOWN4 && (save_version >= 171 || g->mountain_entry_town != LOCATION_TOWN)) ||
-        (g->mountain_portal_town != LOCATION_DAWNMERE && g->mountain_portal_town != LOCATION_TOWN4 && (save_version >= 171 || g->mountain_portal_town != LOCATION_TOWN))) {
+        (g->mountain_entry_town != LOCATION_TOWN && g->mountain_entry_town != LOCATION_TOWN2 && g->mountain_entry_town != LOCATION_DAWNMERE && g->mountain_entry_town != LOCATION_TOWN4) ||
+        (g->mountain_portal_town != LOCATION_TOWN && g->mountain_portal_town != LOCATION_TOWN2 && g->mountain_portal_town != LOCATION_DAWNMERE && g->mountain_portal_town != LOCATION_TOWN4)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -4395,7 +4401,7 @@ int load_game(GameState *g, int slot) {
     g->labyrinth_entry_town = labyrinth_town ? labyrinth_town->valueint : LOCATION_TOWN2;
     if ((save_version >= 176 && !cJSON_IsNumber(labyrinth_town)) ||
         (labyrinth_town && (!cJSON_IsNumber(labyrinth_town) || labyrinth_town->valuedouble != labyrinth_town->valueint)) ||
-        (g->labyrinth_entry_town != LOCATION_TOWN && g->labyrinth_entry_town != LOCATION_TOWN2)) {
+        (g->labyrinth_entry_town != LOCATION_TOWN && g->labyrinth_entry_town != LOCATION_DAWNMERE && g->labyrinth_entry_town != LOCATION_TOWN2)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -4590,8 +4596,18 @@ int load_game(GameState *g, int slot) {
         ? portal_origin_tile->valueint : TILE_FLOOR;
     g->defeated_bosses = defeated_bosses ? defeated_bosses->valueint : 0;
     g->elowen_quest_state = elowen_quest ? elowen_quest->valueint : 0;
+    cJSON *elowen_x = cJSON_GetObjectItem(root, "elowen_x");
+    cJSON *elowen_y = cJSON_GetObjectItem(root, "elowen_y");
+    g->elowen_x = elowen_x ? elowen_x->valueint : -1;
+    g->elowen_y = elowen_y ? elowen_y->valueint : -1;
     g->elowen_seals_restored = elowen_seals ? elowen_seals->valueint :
         (legacy_altars ? legacy_altars->valueint : 0);
+    cJSON *aldric_state = cJSON_GetObjectItem(root, "aldric_party_state");
+    cJSON *aldric_x = cJSON_GetObjectItem(root, "aldric_x");
+    cJSON *aldric_y = cJSON_GetObjectItem(root, "aldric_y");
+    g->aldric_party_state = aldric_state ? aldric_state->valueint : ALDRIC_WAITING;
+    g->aldric_x = aldric_x ? aldric_x->valueint : -1;
+    g->aldric_y = aldric_y ? aldric_y->valueint : -1;
     g->dain_quest_state = dain_quest ? dain_quest->valueint : 0;
     g->dain_map_fragments = dain_fragments ? dain_fragments->valueint :
         (legacy_dain_targets ? legacy_dain_targets->valueint : 0);
@@ -6253,20 +6269,6 @@ int load_game(GameState *g, int slot) {
             g->dialogue_active = 0;
         }
     }
-    if (save_version < 104 && g->location == LOCATION_TAVERN) {
-        if (g->player.x == ELOWEN_TAVERN_X && g->player.y == ELOWEN_TAVERN_Y) {
-            g->player.y++;
-        }
-        for (int i = 0; i < g->floor_item_count; i++) {
-            FloorItem *item = &g->floor_items[i];
-            if (item->active && item->x == ELOWEN_TAVERN_X && item->y == ELOWEN_TAVERN_Y) {
-                item->y++;
-                item->underlying_tile = TILE_TAVERN_FLOOR;
-                g->map.tiles[item->y][item->x] = TILE_ITEM;
-            }
-        }
-        map_place_tavern_elowen(&g->map);
-    }
     // Version 105 moves Mara to Oakhaven and Liora to Stillbury without resetting quests.
     if (save_version < 105 && (g->location == LOCATION_TAVERN || g->location == LOCATION_TOWN_HALL)) {
         TileType removed = g->location == LOCATION_TAVERN ? 206 : TILE_NPC_MARA;
@@ -6316,20 +6318,6 @@ int load_game(GameState *g, int slot) {
         }
     }
     if (save_version < 108) {
-        if (g->location == LOCATION_TOWN) {
-            if (g->player.x == TOWN_BRAM_X && g->player.y == TOWN_BRAM_Y) {
-                g->player.y++;
-            }
-            for (int i = 0; i < g->floor_item_count; i++) {
-                FloorItem *item = &g->floor_items[i];
-                if (item->active && item->x == TOWN_BRAM_X && item->y == TOWN_BRAM_Y) {
-                    item->y++;
-                    item->underlying_tile = TILE_TOWN_PATH;
-                    g->map.tiles[item->y][item->x] = TILE_ITEM;
-                }
-            }
-            g->map.tiles[TOWN_BRAM_Y][TOWN_BRAM_X] = TILE_NPC_BRAM;
-        }
         migrate_lich_minions(g);
     }
     if (save_version < 109) {
@@ -6952,6 +6940,10 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 228 && (g->location == LOCATION_TOWN2 || g->location == LOCATION_DAWNMERE)) {
         town_life_migrate(g);
+    }
+    // Saves from before recruitment still show Aldric in Oakhaven's square after the Lich.
+    if (save_version < 231) {
+        aldric_place(g);
     }
     game_recover_retired_items(g);
     cJSON_Delete(root);

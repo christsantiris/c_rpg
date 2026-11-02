@@ -76,11 +76,11 @@ void test_mara_relocation(void) {
     game_talk_to_mara(&game);
     game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("Mara assigns the same coast quest from the Tavern", game.mara_quest_state == 1 &&
-        game.dialogue_x == MARA_TAVERN_X && game.dialogue_y == MARA_TAVERN_Y && strstr(game.dialogue_text, "south of Oakhaven") &&
-        strstr(game.dialogue_text, "Oakhaven's Tavern") && !game.emberforge_quest_state);
+        game.dialogue_x == MARA_TAVERN_X && game.dialogue_y == MARA_TAVERN_Y && strstr(game.dialogue_text, "On Sunken Coast") &&
+        strstr(game.dialogue_text, "Oakhaven's Inn") && !game.emberforge_quest_state);
     QuestJournalEntry entry;
     ASSERT("Mara's journal retains stages 2, 3, and 4 and directs players to the Tavern", quest_journal_get_entry(&game, QUEST_TAB_ACTIVE, 0, &entry) &&
-        entry.stages[0] == 2 && entry.stages[1] == 3 && entry.stages[2] == 4 && strstr(entry.summary_line_2, "Oakhaven's Tavern"));
+        entry.stages[0] == 2 && entry.stages[1] == 3 && entry.stages[2] == 4 && strstr(entry.summary_line_2, "Oakhaven's Inn"));
     ASSERT("current saves retain Mara's Tavern placement and accepted quest", save_game(&game, MARA_SLOT) && load_game(&loaded, MARA_SLOT) &&
         loaded.location == LOCATION_TAVERN && loaded.mara_quest_state == 1 && loaded.map.tiles[MARA_TAVERN_Y][MARA_TAVERN_X] == TILE_NPC_MARA);
 

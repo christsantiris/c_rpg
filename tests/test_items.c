@@ -689,9 +689,14 @@ void test_items(void) {
     Item mountain_reward = boss_equipment_reward(
         ENEMY_MOUNTAIN_GOBLIN_KING);
     Item coast_reward = boss_equipment_reward(ENEMY_DROWNED_QUEEN);
-    ASSERT("Lich King guarantees the Cryptblade",
-        strcmp(lich_reward.name, "Cryptblade") == 0 &&
-        lich_reward.attack_bonus == 2 && lich_reward.critical_chance_bonus == 10);
+    ASSERT("Lich King guarantees an all-class Crypt Ring with only five HP and MP",
+        strcmp(lich_reward.name, "Crypt Ring") == 0 &&
+        lich_reward.type == ITEM_ACCESSORY && lich_reward.accessory_family == ACCESSORY_FAMILY_RING &&
+        lich_reward.class_mask == ITEM_CLASS_ALL && lich_reward.max_hp_bonus == 5 && lich_reward.max_mp_bonus == 5 &&
+        !lich_reward.attack_bonus && !lich_reward.defense_bonus && !lich_reward.critical_chance_bonus);
+    ASSERT("the Crypt Ring follows existing ring and jewelry trading rules",
+        item_accessory_limit(&lich_reward) == 2 && item_is_jewelry(&lich_reward) &&
+        shop_accepts_item(SHOP_TYPE_GOLDSMITH, &lich_reward) && !shop_accepts_item(SHOP_TYPE_BLACKSMITH, &lich_reward));
     ASSERT("forest Necromancer guarantees its cloak",
         strcmp(forest_reward.name, "Necromancer's Cloak") == 0);
     ASSERT("Goblin King guarantees a shield between Buckler and Kite",
@@ -730,7 +735,7 @@ void test_items(void) {
     ASSERT("defeated boss leaves gold and its guaranteed equipment reward",
         g.floor_item_count == 2 &&
         g.floor_items[0].item.type == ITEM_GOLD &&
-        strcmp(g.floor_items[1].item.name, "Cryptblade") == 0);
+        strcmp(g.floor_items[1].item.name, "Crypt Ring") == 0);
 
     game_init(&g);
     g.player.hp = 5;

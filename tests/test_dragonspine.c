@@ -74,10 +74,10 @@ void test_dragonspine(void) {
     g.defeated_bosses |= 1 << LOCATION_MOUNTAINS;
     game_enter_mountains(&g);
     game_enter_town4(&g);
-    ASSERT("Ridgeshire has a north Dragonspine gate and a shared south gate",
+    ASSERT("Ridgeshire has a north Dragonspine gate and no southern mountain connection",
         g.location == LOCATION_TOWN4 && g.enemy_count == 0 &&
         g.map.tiles[0][RIDGESHIRE_DRAGON_GATE_X] == TILE_TOWN_EXIT &&
-        g.map.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT && g.map.tiles[TOWN_H - 1][RIDGESHIRE_MOUNTAIN_ROAD_X] == TILE_WALL);
+        g.map.tiles[TOWN_H - 1][20] == TILE_WALL && g.map.tiles[TOWN_H - 1][RIDGESHIRE_MOUNTAIN_ROAD_X] == TILE_WALL);
     int empty_crossroads = 1;
     int ilya_count = 0;
     int royal_guard_count = 0;
@@ -99,22 +99,8 @@ void test_dragonspine(void) {
         g.map.tiles[12][20] == TILE_TOWN_PATH && g.map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] == TILE_TOWN_FLOOR &&
         g.map.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT && g.map.tiles[12][0] == TILE_TOWN_EXIT);
 
-    action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
-    walk_mountain_road(&g);
-    ASSERT("Ridgeshire road reaches Dawnmere", g.location == LOCATION_DAWNMERE && g.player.x == 20 && g.player.y == 1);
-    int saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
-    int restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);
-    ASSERT("shortcut victory and destination survive save/load", restored && loaded.location == LOCATION_DAWNMERE && (loaded.defeated_bosses & (1 << LOCATION_MOUNTAINS)));
-    if (restored) {
-        g = loaded;
-    }
-    remove("saves/savegame_9984.json");
-    ASSERT("OakHaven has no old Dragonspine gate or Ilya",
-        g.map.tiles[4][TOWN_W - 1] == TILE_WALL &&
-        g.map.tiles[6][39] == TILE_TOWN_FLOOR);
-    action_resolve_player(&g, (Action){ACTION_MOVE, 20, 0});
-    walk_mountain_road(&g);
-    ASSERT("Dawnmere road reaches Ridgeshire", g.location == LOCATION_TOWN4 && g.player.x == 20 && g.player.y == TOWN_H - 2);
+    int saved;
+    int restored;
     g.player.x = RIDGESHIRE_DRAGON_GATE_X;
     g.player.y = 1;
     Action north = {ACTION_MOVE, RIDGESHIRE_DRAGON_GATE_X, 0};
@@ -210,35 +196,13 @@ void test_dragonspine(void) {
     ASSERT("Dragonspine archived floor reloads beside Ridgeshire north gate",
         g.location == LOCATION_TOWN4 && !g.portal_active &&
         g.map.tiles[RIDGESHIRE_DRAGON_PORTAL_Y][RIDGESHIRE_DRAGON_PORTAL_X] != TILE_PORTAL);
-    g.player.x = 20;
-    g.player.y = TOWN_H - 2;
-    action_resolve_player(&g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
-    walk_mountain_road(&g);
-    ASSERT("visiting OakHaven preserves the Dragonspine portal destination",
-        g.location == LOCATION_DAWNMERE && !g.portal_active &&
-        !g.level_cache[saved_level - 1].valid &&
-        g.dragonspine_cache[saved_level - 1].valid);
+    // Relocating the mountain road does not discard a remote Dragonspine expedition.
+    game_enter_town_gate(&g, LOCATION_TOWN, TOWN_W - 1, 12);
+    ASSERT("visiting Oakhaven preserves the archived Dragonspine floor", g.location == LOCATION_TOWN && g.dragonspine_cache[saved_level - 1].valid);
     saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
     restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);
-    ASSERT("OakHaven saves keep the unlocked shortcut and remote portal",
-        restored && loaded.location == LOCATION_DAWNMERE && !loaded.portal_active &&
-        loaded.map.tiles[0][20] == TILE_TOWN_EXIT && loaded.map.tiles[0][TOWN4_ROAD_X] == TILE_WALL);
-    if (restored) {
-        g = loaded;
-    }
-    action_resolve_player(&g, (Action){ACTION_MOVE, 20, 0});
-    walk_mountain_road(&g);
-    ASSERT("returning to Ridgeshire restores the Dragonspine portal beside its gate",
-        g.location == LOCATION_TOWN4 && !g.portal_active &&
-        g.map.tiles[RIDGESHIRE_DRAGON_PORTAL_Y][RIDGESHIRE_DRAGON_PORTAL_X] != TILE_PORTAL);
-    saved = save_game(&g, DRAGONSPINE_TEST_SLOT);
-    restored = saved && load_game(&loaded, DRAGONSPINE_TEST_SLOT);
-    ASSERT("Dragonspine expedition and escape records survive save/load",
-        restored && loaded.location == LOCATION_TOWN4 && !loaded.portal_active &&
-        loaded.portal_location == LOCATION_DRAGONSPINE &&
-        loaded.map.tiles[0][RIDGESHIRE_DRAGON_GATE_X] == TILE_TOWN_EXIT &&
-        loaded.max_dragonspine_level_reached == DRAGONSPINE_DEPTH &&
-        loaded.dragonspine_cache[saved_level - 1].valid);
+    ASSERT("the remote expedition survives saving in Oakhaven", restored && loaded.location == LOCATION_TOWN && loaded.dragonspine_cache[saved_level - 1].valid);
+    g = loaded;
     if (restored) {
         test_restore_cached_floor(&loaded);
         ASSERT("archived floor fixture resumes the saved Dragonspine stage",
@@ -267,7 +231,7 @@ void test_dragonspine(void) {
         g.dragon_treasure_quest_state == 1 && !g.portal_active &&
         g.map.tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] == TILE_NPC_DRAGON_SEEKER &&
         g.dialogue_x == ILYA_TAVERN_X && g.dialogue_y == ILYA_TAVERN_Y &&
-        strstr(g.dialogue_text, "Ridgeshire") && strstr(g.dialogue_text, "Oakhaven's Tavern"));
+        strstr(g.dialogue_text, "Ridgeshire") && strstr(g.dialogue_text, "Oakhaven's Inn"));
     game_enter_dragonspine(&g);
     for (int level = 2; level <= DRAGONSPINE_DEPTH; level++) {
         game_descend(&g);

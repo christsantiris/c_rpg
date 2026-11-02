@@ -1,5 +1,6 @@
-> Roster update: the [approved area rosters](enemy-roster.md) now define 94 active types.
+> Roster update: the [approved area rosters](enemy-roster.md) now define 95 active types.
 > The completed batches below retain their historical artwork review records.
+> The new [Dark Elf Guard](art-sources/dark-elf-guard/README.md) uses the forest's native sprite templates.
 
 > Batch 12's historical Glassdeep creatures were replaced by the
 > [Stonewake Quarry roster](stonewake-quarry.md#enemies). Quarry constructs,

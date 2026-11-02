@@ -50,7 +50,7 @@ static int legacy_save(void) {
 }
 
 void test_ilya_relocation(void) {
-    printf("Ilya in Oakhaven's Tavern tests:\n");
+    printf("Ilya in Oakhaven's Inn tests:\n");
     ASSERT("Ilya test slot is unused", !save_exists(ILYA_SLOT));
     memset(&game, 0, sizeof(game));
     game.player.player_class = CLASS_WARRIOR;
@@ -68,7 +68,7 @@ void test_ilya_relocation(void) {
     game_talk_to_dragon_seeker(&game);
     game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
     ASSERT("Ilya gives directions to Ridgeshire and the Tavern return", game.dragon_treasure_quest_state == 1 &&
-        strstr(game.dialogue_text, "mountains to Ridgeshire") && strstr(game.dialogue_text, "Oakhaven's Tavern"));
+        strstr(game.dialogue_text, "castle roads to Ridgeshire") && strstr(game.dialogue_text, "Oakhaven's Inn"));
     ASSERT("current saves retain Ilya and the active quest", save_game(&game, ILYA_SLOT) && load_game(&loaded, ILYA_SLOT) &&
         loaded.dragon_treasure_quest_state == 1 && loaded.map.tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] == TILE_NPC_DRAGON_SEEKER);
 

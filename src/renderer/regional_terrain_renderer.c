@@ -159,11 +159,11 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             line2 = "SWAMP ENTRANCE: ALWAYS LEVEL 1";
         }
         if (approach_forest_town_exit(g, &x, &y)) {
-            line1 = "WEST: STILLBURY / EAST: OAKHAVEN";
+            line1 = "WEST: OAKHAVEN / EAST: DAWNMERE";
             line2 = "FOREST ENTRANCE: ALWAYS LEVEL 1";
         }
         if (approach_mountain_town_exit(g, &x, &y)) {
-            line1 = "NORTH: RIDGESHIRE / SOUTH: DAWNMERE";
+            line1 = "WEST: STILLBURY / EAST: OAKHAVEN";
             line2 = "MOUNTAIN ENTRANCE: ALWAYS LEVEL 1";
         }
         if (approach_shortcut_exit(g, &x, &y)) {
@@ -177,7 +177,7 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         }
         if (northern_approach(g)) {
             title = "NORTHERN ROAD";
-            line1 = "NORTH: CASTLE / SOUTH: OAKHAVEN";
+            line1 = "NORTH: CASTLE / SOUTH: RAPIDS";
             snprintf(status, sizeof(status), "ELDERWOOD: %s / CATACOMBS: %s",
                 boss_gate_open(g, LOCATION_ELDERWOOD) ? "OPEN" : "CLOSED",
                 boss_gate_open(g, LOCATION_CATACOMBS) ? "OPEN" : "CLOSED");

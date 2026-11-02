@@ -7,7 +7,7 @@
 
 // Travel policy is static. Victories use the existing serialized boss records.
 static const BossGateRule rules[] = {
-    {LOCATION_DUNGEON, BOSS_GATE_ROAD, "Lich King"},
+    {LOCATION_DUNGEON, BOSS_GATE_NONE, "Lich King"},
     {LOCATION_FOREST, BOSS_GATE_ROAD, "Necromancer"},
     {LOCATION_MOUNTAINS, BOSS_GATE_ROAD, "Goblin King"},
     {LOCATION_SWAMP, BOSS_GATE_ROAD, "Swamp Demon"},
@@ -93,7 +93,7 @@ int boss_gate_checkpoints(const GameState *g, RoadCheckpoint *points) {
     if (!rule || rule->policy != BOSS_GATE_ROAD) {
         return 0;
     }
-    int vertical = route->area == LOCATION_SWAMP || route->area == LOCATION_MOUNTAINS;
+    int vertical = route->gate_y == 0 || route->gate_y == TOWN_H - 1;
     int far = vertical ? g->map.stairs_up_y == 0 : g->map.stairs_up_x == 0;
     points[0] = (RoadCheckpoint){route->area, vertical ? APPROACH_W / 2 : far ? APPROACH_W - 4 : 3,
         vertical ? far ? APPROACH_H - 4 : 3 : APPROACH_H / 2, vertical};
@@ -121,7 +121,9 @@ static void replace_tile(GameState *g, int x, int y, TileType tile) {
                 continue;
             }
             item->underlying_tile = tile;
-            g->map.tiles[y][x] = TILE_ITEM;
+            if (!map_is_travel_tile(tile)) {
+                g->map.tiles[y][x] = TILE_ITEM;
+            }
         }
     }
 }
@@ -165,7 +167,7 @@ void boss_gate_refresh(GameState *g) {
     }
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *item = &g->floor_items[i];
-        if (item->active) {
+        if (item->active && !map_is_travel_tile(g->map.tiles[item->y][item->x])) {
             g->map.tiles[item->y][item->x] = TILE_ITEM;
         }
     }

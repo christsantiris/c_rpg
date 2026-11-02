@@ -22,7 +22,8 @@ static const TownBuilding buildings[] = {
         "SPICE MERCHANT", "Spice Merchant Corvin",
         spice_skiff_offer, NULL},
     {LOCATION_DAWNMERE, LOCATION_ALEHOUSE, 25, 5, 7, 6, 4, 0,
-        "ALEHOUSE", "Dain", NULL, NULL},
+        "ALEHOUSE", "Alehouse Host",
+        "Welcome to Dawnmere's Alehouse. Rest your feet and share a tale from the road.", NULL},
     {LOCATION_TOWN, LOCATION_GOLDSMITH, 25, 17, 5, 4, 5, 0,
         "GOLDSMITH", "Goldsmith Iven",
         "Welcome! I buy and sell rings and amulets. Approach my counter and Talk to browse the jewelry.", NULL},
@@ -120,10 +121,8 @@ void town_life_generate(Map *map, Location interior, int *sx, int *sy) {
             map->tiles[12][x] = TILE_TAVERN_TABLE;
             map->tiles[12][x + 16] = TILE_TAVERN_TABLE;
         }
-        map->tiles[DAIN_ALEHOUSE_Y][DAIN_ALEHOUSE_X] = TILE_NPC_DAIN;
-    } else {
-        map->tiles[RESIDENT_Y][RESIDENT_X] = TILE_NPC_RESIDENT;
     }
+    map->tiles[RESIDENT_Y][RESIDENT_X] = TILE_NPC_RESIDENT;
 }
 
 int town_life_near_goldsmith(const GameState *g) {
@@ -142,12 +141,8 @@ int town_life_near_belt_maker(const GameState *g) {
 }
 
 int town_life_talk(GameState *g, int greeting) {
-    if (g->location == LOCATION_ALEHOUSE) {
-        if (greeting || abs(g->player.x - DAIN_ALEHOUSE_X) > 1 || abs(g->player.y - DAIN_ALEHOUSE_Y) > 1) {
-            return 0;
-        }
-        game_talk_to_dain(g);
-        return 1;
+    if (g->location == LOCATION_ALEHOUSE && greeting) {
+        return 0;
     }
     const TownBuilding *b = town_life_building(g->location);
     if (!b || b->interior != g->location ||

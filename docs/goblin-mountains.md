@@ -1,11 +1,11 @@
 # Goblin Mountains
 
 The Goblin Mountains stand beside a straight, single-tile cobblestone road
-between **Dawnmere's north gate** and **Ridgeshire's south gate**. The road
+between **Stillbury's east gate** and **Oakhaven's west gate**. The road
 climbs a grassy pass between rock walls that open into a meadow at its town end. Enter the
 large fortified mountain cave from either town to start at **level 1** and
 fight upward through five levels. Mountain levels never play in reverse from
-Ridgeshire. Ordinary backtracking within a climb remains available.
+either town. Ordinary backtracking within a climb remains available.
 
 The mountains are drawn at the Crown Roads' 1.5× zoom: the camera shows about 30
 × 18 tiles around the player. The Goblin King acts within twelve tiles; the camera leans toward him to keep him on screen as his warned attacks begin.
@@ -26,7 +26,7 @@ its newly raised rows onto the road.
 
 Intermediate levels do not require a full clear. The living Goblin King blocks
 the level-5 summit exit. Defeat him, collect the loot, and use that exit to
-emerge onto the road. Walk **north to Ridgeshire** or **south to Dawnmere**.
+emerge onto the road. Walk **west to Stillbury** or **east to Oakhaven**.
 The through road opens permanently on victory. There is no mountain shortcut,
 boss branch, travel menu, or direct teleport to town. Retreat at level 1 returns
 to the cave approach for the town used to enter.
@@ -66,10 +66,21 @@ save/load.
 
 ## Mountain Quests
 
-Dain assigns **Recover the Treasure Map** in Dawnmere's Alehouse. The
-Archer, Warchief and Shaman Map Bearers occupy **levels 2, 3 and 4**, respectively,
-with themed guards. Collected fragments do not use inventory space. Return all
-three to Dain for **60 gold and 400 score**.
+Dain arrives in **Oakhaven's Inn after the Lich King's defeat** and offers
+**Recover the Treasure Map**. An Archer Map Bearer on **Mountains 1** holds one
+half; a Warchief Map Bearer on **Mountains 2** holds the other. Their themed
+guards remain. Halves are collected automatically on the marked bearers'
+defeat and use no inventory space. Bring both halves to Dain for **60 gold and
+400 score once**, without needing to travel farther than stage 2.
+
+He then offers **Defeat the Goblin King**, explaining that ending his rule
+opens the road west to Stillbury and continues the investigation into the evil
+creatures' arrival. Accept or decline the hunt; it uses an active slot only
+while unfinished and does not reset retrieval progress or the expedition.
+The boss remains on **Mountains 5**, reachable without either quest or NPC
+dialogue. Victory completes the follow-up immediately; earlier victories are
+credited at the short quest's turn-in. No extra Inn return or NPC payment is
+required. Existing Goblin King loot remains available.
 
 Marshal Veyra's **Watchfires of Ridgeshire** still spans three regions:
 **Goblin Mountains 5**, **Ashen Hollow 3** and **Dragonspine 3**. Clear each
@@ -80,6 +91,8 @@ Return to Town is a one-way escape to the last town visited, independently of
 the mountain entrance used. It leaves no return portal.
 
 ## Save Compatibility
+
+The V2 geography uses fresh saves; the notes below describe earlier V1 migrations.
 
 Save version **171** moves Oakhaven mountain entrance and portal anchors to
 Dawnmere. Saved mountain approaches become the new road. Legacy peak level 4

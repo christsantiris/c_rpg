@@ -7,7 +7,6 @@ void test_quest_journal(void) {
     static GameState g;
     memset(&g, 0, sizeof(g));
     g.elowen_quest_state = 1;
-    g.elowen_seals_restored = 5;
     g.dain_quest_state = 2;
     g.dain_map_fragments = 7;
     g.alder_quest_state = 3;
@@ -23,26 +22,25 @@ void test_quest_journal(void) {
     QuestJournalEntry entry;
     ASSERT("journal exposes Elowen quest details",
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 0, &entry) &&
-        strcmp(entry.title, "The Broken Seals") == 0 &&
-        strcmp(entry.giver, "Elowen") == 0 &&
-        entry.reward_gold == 40 && entry.reward_score == 300);
-    ASSERT("journal translates objective progress bits",
-        entry.objective_complete[0] && !entry.objective_complete[1] &&
-        entry.objective_complete[2]);
+        strcmp(entry.title, "Save Elowen") == 0 &&
+        strcmp(entry.giver, "Bram") == 0 &&
+        entry.reward_gold == 80 && entry.reward_score == 0 && entry.objective_count == 1 && entry.stages[0] == DUNGEON_DEPTH);
+    ASSERT("the rescue objective stays unfinished until the Lich falls",
+        !entry.objective_complete[0]);
     ASSERT("completed quests retain pending reward details",
         quest_journal_get_entry(&g, QUEST_TAB_COMPLETED, 0, &entry) &&
         entry.state == 2 && strcmp(entry.giver, "Dain") == 0);
     ASSERT("completed tab retains turned-in quests",
         quest_journal_get_entry(&g, QUEST_TAB_COMPLETED, 1, &entry) &&
         entry.state == 3 && strcmp(entry.giver, "Alder") == 0);
-    ASSERT("Alder's journal places all objectives before the grove from Stillbury", entry.stages[0] == 2 && entry.stages[1] == 3 && entry.stages[2] == 4);
+    ASSERT("Alder's journal places both rangers on the first two stages", entry.stages[0] == 1 && entry.stages[1] == 2 && entry.objective_count == 2);
     g.rook_quest_state = 1;
     ASSERT("Rook's labyrinth retrieval appears as an active quest",
         quest_journal_count(&g, QUEST_TAB_ACTIVE) == 2 &&
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 1, &entry) &&
         strcmp(entry.title, "The Ivory Rook") == 0 &&
         entry.objective_count == 1 && entry.reward_gold == ROOK_QUEST_REWARD &&
-        strstr(entry.summary_line_1, "Stillbury") && strstr(entry.summary_line_2, "Oakhaven's Tavern"));
+        strstr(entry.summary_line_1, "Dawnmere") && strstr(entry.summary_line_2, "Oakhaven's Inn"));
     g.rook_quest_state = 2;
     ASSERT("recovering the ivory rook completes the quest before claiming its reward",
         quest_journal_get_entry(&g, QUEST_TAB_COMPLETED, 2, &entry) &&
@@ -59,19 +57,13 @@ void test_quest_journal(void) {
         entry.stages[1] == 3 && entry.stages[2] == 4 &&
         entry.objective_complete[0] && !entry.objective_complete[1] && entry.objective_complete[2]);
     g.mara_quest_state = 0;
-    g.innkeeper_quest_state = 1;
-    ASSERT("Bram's rescue appears as a swamp quest",
-        quest_journal_count(&g, QUEST_TAB_ACTIVE) == 2 &&
-        quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 1, &entry) &&
-        strcmp(entry.title, "Bring Mira Home") == 0 &&
-        entry.stages[0] == SWAMP_RESCUE_LEVEL);
-    g.innkeeper_quest_state = 2;
-    ASSERT("rescuing Mira moves Bram's quest to Completed",
-        quest_journal_get_entry(&g, QUEST_TAB_COMPLETED, 3, &entry) &&
-        entry.objective_complete[0] && entry.state == 2);
-    g.innkeeper_quest_state = 3;
-    ASSERT("Bram's reward collection keeps the quest in Completed",
-        quest_journal_count(&g, QUEST_TAB_COMPLETED) == 4);
+    for (int state = 1; state <= 3; state++) {
+        g.innkeeper_quest_state = state;
+        ASSERT("the retired Mira quest never appears in either journal tab",
+            quest_journal_count(&g, QUEST_TAB_ACTIVE) == 1 &&
+            quest_journal_count(&g, QUEST_TAB_COMPLETED) == 3 &&
+            game_active_quest_count(&g) == 1);
+    }
     g.elowen_quest_state = 0;
     g.dain_quest_state = 0;
     g.dragon_treasure_quest_state = 1;
@@ -79,14 +71,14 @@ void test_quest_journal(void) {
         quest_journal_count(&g, QUEST_TAB_ACTIVE) == 1 &&
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 0, &entry) &&
         strcmp(entry.title, "The Dragon's Hoard") == 0 &&
-        strcmp(entry.reward_item, "Potion of Strength") == 0 && strstr(entry.summary_line_2, "Oakhaven's Tavern"));
+        strcmp(entry.reward_item, "Potion of Strength") == 0 && strstr(entry.summary_line_2, "Oakhaven's Inn"));
     g.dragon_treasure_quest_state = 2;
     ASSERT("recovered dragon treasure completes the quest with its reward pending",
-        quest_journal_get_entry(&g, QUEST_TAB_COMPLETED, 3, &entry) &&
+        quest_journal_get_entry(&g, QUEST_TAB_COMPLETED, 2, &entry) &&
         entry.objective_complete[0] && entry.state == 2);
     g.dragon_treasure_quest_state = 3;
     ASSERT("Ilya's quest stays in the completed journal",
-        quest_journal_count(&g, QUEST_TAB_COMPLETED) == 4);
+        quest_journal_count(&g, QUEST_TAB_COMPLETED) == 3);
 
     QuestJournalScreen screen;
     quest_journal_init(&screen);

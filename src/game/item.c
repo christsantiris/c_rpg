@@ -91,6 +91,14 @@ Item item_make_ring_of_vigor(void) {
     return item_make_accessory(ACCESSORY_FAMILY_RING, 1);
 }
 
+Item item_make_crypt_ring(void) {
+    Item item = make_accessory("Crypt Ring", ACCESSORY_FAMILY_RING, 80);
+    item.rarity = ITEM_RARITY_UNCOMMON;
+    item.max_hp_bonus = 5;
+    item.max_mp_bonus = 5;
+    return item;
+}
+
 Item item_make_copper_amulet(void) {
     return item_make_accessory(ACCESSORY_FAMILY_AMULET, 1);
 }

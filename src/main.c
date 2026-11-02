@@ -12,6 +12,8 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 });
 #endif
 #include "renderer/renderer.h"
+#include "game/elowen.h"
+#include "game/aldric.h"
 #include "renderer/viewport.h"
 #include "renderer/landing_renderer.h"
 #include "renderer/game_over_renderer.h"
@@ -770,6 +772,9 @@ int main(int argc, char **argv) {
                     if (screen == SCREEN_PLAYING && game_handle_quest_offer_key(&game, sc, event.key.repeat)) {
                         break;
                     }
+                    if (screen == SCREEN_PLAYING && aldric_handle_key(&game, sc, event.key.repeat)) {
+                        break;
+                    }
                     if (screen == SCREEN_PLAYING && game_handle_glassdeep_prompt_key(&game, sc, event.key.repeat)) {
                         break;
                     }
@@ -1127,10 +1132,6 @@ int main(int argc, char **argv) {
                                             game_talk_to_rook(&game);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
-                                            TILE_NPC_INNKEEPER) {
-                                            game_talk_to_innkeeper(&game);
-                                            found = 1;
-                                        } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_CAIN) {
                                             game_talk_to_cain(&game);
                                             found = 1;
@@ -1138,7 +1139,7 @@ int main(int argc, char **argv) {
                                             game_talk_to_bram(&game);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] == TILE_NPC_ALDRIC) {
-                                            game_talk_to_aldric(&game);
+                                            aldric_talk(&game, tx, ty);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ROWAN) {
@@ -1193,13 +1194,18 @@ int main(int argc, char **argv) {
                                             game_rescue_forest_warden(&game,
                                                 tx, ty);
                                             found = 1;
-                                        } else if (game.map.tiles[ty][tx] ==
-                                            TILE_SWAMP_DAUGHTER) {
-                                            game_rescue_innkeeper_daughter(&game,
-                                                tx, ty);
-                                            found = 1;
                                         }
                                     }
+                                }
+                                if (!found && game.elowen_quest_state == ELOWEN_RESCUED &&
+                                    abs(game.elowen_x - px) <= 1 && abs(game.elowen_y - py) <= 1) {
+                                    game_talk_to_elowen(&game);
+                                    found = 1;
+                                }
+                                if (!found && game.aldric_party_state == ALDRIC_FOLLOWING &&
+                                    abs(game.aldric_x - px) <= 1 && abs(game.aldric_y - py) <= 1) {
+                                    aldric_talk(&game, game.aldric_x, game.aldric_y);
+                                    found = 1;
                                 }
                                 if (!found) {
                                     push_message(&game,
@@ -1311,7 +1317,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || restoration_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game))) {
                         break;
                     }
 
@@ -1571,7 +1577,7 @@ int main(int argc, char **argv) {
         int wind_paused = screen != SCREEN_PLAYING || player_projectile_animating || player_slide_animating ||
             entry_gate.active || enemy_shots.count > 0 || !(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) ||
             game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) ||
-            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || restoration_prompt_active(&game);
+            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game);
         if (update_stormwatch_clock(&game, &wind_clock, SDL_GetTicks(), wind_paused)) {
             viewport_center_on(&viewport, game.player.x, game.player.y);
             needs_redraw = 1;
