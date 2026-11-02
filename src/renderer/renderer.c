@@ -105,6 +105,14 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     for (int i = 0; i < LOCAL_BUILDING_TEXTURE_COUNT; i++) {
         r->local_building_textures[i] = load_sprite_texture(sdl, local_paths[i]);
     }
+    const char *oakhaven_paths[OAKHAVEN_SHOP_TEXTURE_COUNT] = {
+        "assets/images/oakhaven-bakery.bmp",
+        "assets/images/oakhaven-goldsmith.bmp",
+        "assets/images/oakhaven-blacksmith.bmp"
+    };
+    for (int i = 0; i < OAKHAVEN_SHOP_TEXTURE_COUNT; i++) {
+        r->oakhaven_shop_textures[i] = load_sprite_texture(sdl, oakhaven_paths[i]);
+    }
     r->alehouse_cask_texture = load_sprite_texture(sdl, "assets/images/alehouse-cask.bmp");
     r->island_texture = load_sprite_texture(sdl, "assets/images/island-sprites.bmp");
     r->island_temple_texture = load_sprite_texture(sdl, "assets/images/temple-entrance.bmp");
@@ -183,6 +191,10 @@ void renderer_free(Renderer *r) {
             SDL_DestroyTexture(r->local_building_textures[i]);
             r->local_building_textures[i] = NULL;
         }
+    }
+    for (int i = 0; i < OAKHAVEN_SHOP_TEXTURE_COUNT; i++) {
+        SDL_DestroyTexture(r->oakhaven_shop_textures[i]);
+        r->oakhaven_shop_textures[i] = NULL;
     }
     if (r->castle_enemy_texture) {
         SDL_DestroyTexture(r->castle_enemy_texture);

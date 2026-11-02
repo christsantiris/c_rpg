@@ -39,6 +39,13 @@ void town_life_draw_building(Renderer *r, const Viewport *v, const TownBuilding 
     int w = b->w * TILE_SIZE;
     int h = b->h * TILE_SIZE;
     SDL_Texture *texture = r->local_building_textures[b->style];
+    if (b->town == LOCATION_TOWN) {
+        if (b->interior == LOCATION_BAKERY && r->oakhaven_shop_textures[OAKHAVEN_BAKERY]) {
+            texture = r->oakhaven_shop_textures[OAKHAVEN_BAKERY];
+        } else if (b->interior == LOCATION_GOLDSMITH && r->oakhaven_shop_textures[OAKHAVEN_GOLDSMITH]) {
+            texture = r->oakhaven_shop_textures[OAKHAVEN_GOLDSMITH];
+        }
+    }
     if (texture) {
         SDL_Rect dest = {x, y, w, h};
         SDL_RenderCopy(r->sdl, texture, NULL, &dest);

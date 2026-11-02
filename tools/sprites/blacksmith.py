@@ -88,19 +88,21 @@ def forge(L):
         L.put(x, 70, STONE[2])
 
 
-def build():
+def build(oakhaven=False):
     canvas = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 
     # chimney behind the roof
     ch = Layer(W, H)
-    flat_wall(ch, 86, 95, 14, 46, STONE, row_h=4, base=3, seed=3, bw=(4, 6),
-              shade=lambda x, y: -1 if x > 92 else 0)
-    for x in range(85, 97):
-        ch.put(x, 11, STONE[4])
-        ch.put(x, 12, STONE[3])
-        ch.put(x, 13, STONE[1])
-    for x in range(88, 94):
-        ch.put(x, 11, OUT)
+    left, right, top, bottom = (10, 25, 9, 68) if oakhaven else (86, 95, 14, 46)
+    flat_wall(ch, left, right, top, bottom, STONE, row_h=4, base=3, seed=3, bw=(4, 6),
+              shade=lambda x, y: -1 if x > right - 3 else 0)
+    cap_y = 6 if oakhaven else 11
+    for x in range(left - 1, right + 2):
+        ch.put(x, cap_y, STONE[4])
+        ch.put(x, cap_y + 1, STONE[3])
+        ch.put(x, cap_y + 2, STONE[1])
+    for x in range(left + 2, right - 1):
+        ch.put(x, cap_y, OUT)
     composite(canvas, ch, OUT)
 
     # lean-to over the forge
@@ -147,7 +149,14 @@ def build():
     composite(canvas, rf, OUT)
     gf = Layer(W, H)
     face = {(x, y) for (x, y) in inner if y <= 66}
-    plaster(gf, face, PLASTER, 13)
+    if oakhaven:
+        flat_wall(gf, CX - 28, CX + 29, 29, 66, STONE, row_h=4, base=2, seed=13, bw=(5, 8))
+        for y in range(29, 67):
+            for x in range(CX - 28, CX + 30):
+                if (x, y) not in face:
+                    gf.erase(x, y)
+    else:
+        plaster(gf, face, PLASTER, 13)
     edge = {(x, y) for (x, y) in face if (x - 1, y) not in face or (x + 1, y) not in face
             or (x, y - 1) not in face}
     for (x, y) in edge:
@@ -161,8 +170,17 @@ def build():
         beam(gf, px, 47, px, 66, TIMBER)
     beam(gf, CX - 15, 52, CX - 24, 63, TIMBER)
     beam(gf, CX + 16, 52, CX + 25, 63, TIMBER)
-    shadow_under(gf, face, PLASTER, TIMBER, PLASTER[1])
-    lit_window(gf, CX - 5, 44, 11, 10, GLOW, TIMBER)
+    if oakhaven:
+        shadow_under(gf, face, STONE, TIMBER, STONE[1])
+        # Iron louvers vent the soot-dark forge rather than lighting a house window.
+        for y in range(44, 55):
+            for x in range(CX - 5, CX + 6):
+                gf.put(x, y, IRON[1] if y % 3 == 0 else SOOT[0])
+        beam(gf, CX - 6, 43, CX + 6, 43, IRON, width=1)
+        beam(gf, CX - 6, 55, CX + 6, 55, IRON, width=1)
+    else:
+        shadow_under(gf, face, PLASTER, TIMBER, PLASTER[1])
+        lit_window(gf, CX - 5, 44, 11, 10, GLOW, TIMBER)
     composite(canvas, gf, OUT)
 
     # jetty beam and stone ground floor
@@ -217,6 +235,11 @@ def build():
     stamp(pr, 24, 83, ANVIL, {"i": IRON[1], "I": IRON[2], "W": IRON[3]})
     stamp(pr, 44, 83, BARREL, wood)
     stamp(pr, 81, 85, CRATE, wood)
+    if oakhaven:
+        # Blades on the stone wall identify the trade even at native resolution.
+        for x in (85, 92):
+            stamp(pr, x, 73, [".W.", ".I.", ".I.", ".I.", ".I.", "III", ".t.", ".t."],
+                  {"W": IRON[3], "I": IRON[2], "t": TIMBER[3]})
     logs = {"o": LOG[0], "R": LOG[2], "W": LOG[3]}
     for (y, xs) in ((91, (96, 100, 104, 108, 112)), (88, (98, 102, 106, 110)),
                     (85, (100, 104, 108))):
@@ -229,6 +252,7 @@ def build():
 
 def main():
     save_sprite(build(), ASSETS / "blacksmith.bmp")
+    save_sprite(build(oakhaven=True), ASSETS / "oakhaven-blacksmith.bmp")
 
 
 if __name__ == "__main__":
