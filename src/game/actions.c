@@ -14,6 +14,8 @@
 #include "heartseed.h"
 #include "castle.h"
 #include "lich.h"
+#include "elowen.h"
+#include "aldric.h"
 #include "necromancer.h"
 #include "goblin_king.h"
 #include "drowned_queen.h"
@@ -47,10 +49,6 @@
 
 static int abs_int(int n) { return n < 0 ? -n : n; }
 
-static int enemy_is_vampire_captor(const Enemy *e) {
-    return e->type == ENEMY_VAMPIRE && strcmp(e->name, "Vampire Captor") == 0;
-}
-
 static Action make_move_or_attack(int tx, int ty) {
     Action a;
     a.target_x = tx;
@@ -82,6 +80,9 @@ void push_message_kind(GameState *g, const char *msg, MessageKind kind) {
 
 static void mark_item_tile(GameState *g, int x, int y) {
     TileType tile = g->map.tiles[y][x];
+    if (map_is_travel_tile(tile)) {
+        return;
+    }
     if (tile == TILE_CROWN_EXIT || (tile >= TILE_IRON_FLOOR && tile <= TILE_IRON_EXIT) || tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_EXIT || tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN) {
         return;
     }
@@ -136,7 +137,7 @@ static void finish_floor_pickup(GameState *g, FloorItem *picked) {
         red_dragon_restore_reward(g);
     }
     minotaur_record_pickup(g, &picked->item);
-    if (strcmp(picked->item.name, "Cryptblade") == 0 && g->lich_reward_state == 1) {
+    if ((strcmp(picked->item.name, "Crypt Ring") == 0 || strcmp(picked->item.name, "Cryptblade") == 0) && g->lich_reward_state == 1) {
         g->lich_reward_state = 2;
         lich_restore_reward(g);
     }
@@ -190,7 +191,7 @@ Item boss_equipment_reward(EnemyType type) {
         case ENEMY_DESERT_PHARAOH:
             return item_make_sandstorm_staff();
         case ENEMY_LICH_KING:
-            return item_make_cryptblade();
+            return item_make_crypt_ring();
         case ENEMY_FOREST_NECROMANCER:
             return item_make_necromancer_cloak();
         case ENEMY_MOUNTAIN_GOBLIN_KING:
@@ -240,6 +241,7 @@ static int enemy_score(EnemyType type) {
         case ENEMY_ELDERTHORN: return 0; // Awarded once by elderwood_defeat.
         case ENEMY_DARK_ELF_ARCHER: return 48;
         case ENEMY_DARK_ELF_RANGER: return 70;
+        case ENEMY_DARK_ELF_GUARD: return 70;
         case ENEMY_FOREST_TROLL: return 80;
         case ENEMY_FOREST_NECROMANCER: return 1100;
         case ENEMY_GOBLIN_SCOUT: return 18;
@@ -385,6 +387,9 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             g->defeated_bosses |= 1 << g->location;
         }
         game_record_temple_enemy_defeated(g, type);
+        if (type == ENEMY_LICH_KING) {
+            elowen_rescue(g);
+        }
 
         if (type == ENEMY_CINDER_LORD) {
             push_message(g, "The Cinder Lord falls. The path to Rosemoor opens!");
@@ -434,6 +439,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_GIANT_SPIDER: gold = 4 + rand() % 6; break;
         case ENEMY_DARK_ELF_ARCHER: gold = 7 + rand() % 8; break;
         case ENEMY_DARK_ELF_RANGER: gold = 10 + rand() % 10; break;
+        case ENEMY_DARK_ELF_GUARD: gold = 10 + rand() % 10; break;
         case ENEMY_FOREST_TROLL: gold = 12 + rand() % 12; break;
         case ENEMY_FOREST_NECROMANCER: gold = 50; break;
         case ENEMY_GOBLIN_SCOUT: gold = 3 + rand() % 5; break;
@@ -1230,7 +1236,7 @@ static void tick_player_poison(GameState *g) {
     }
 }
 
-void action_resolve_player(GameState *g, Action a) {
+static void resolve_player_action(GameState *g, Action a) {
     if (g->location == LOCATION_CROWNROAD_NORTH && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
         push_message(g, "Follow the road north to Castle Grounds or south to the Catacombs approach.");
         return;
@@ -1377,7 +1383,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_DUNGEON))) {
                 g->score += g->level * 100;
                 game_return_to_approach(g);
-                push_message(g, "The road leads west to Oakhaven and east to Dawnmere.");
+                push_message(g, "The stairs lead to the path north to Oakhaven.");
             } else {
                 push_message(g, "The Lich King seals these stairs.");
             }
@@ -1504,25 +1510,6 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         TileType tile = g->map.tiles[g->player.y][g->player.x];
-        if (tile == TILE_BROKEN_BURIAL_SEAL) {
-            if (g->elowen_quest_state != 1) {
-                push_message(g, "A shattered burial seal lies here.");
-                return;
-            }
-            int seal_index = g->level - 2;
-            if (seal_index < 0 || seal_index >= 3) {
-                return;
-            }
-            g->elowen_seals_restored |= 1 << seal_index;
-            g->map.tiles[g->player.y][g->player.x] =
-                TILE_RESTORED_BURIAL_SEAL;
-            push_message(g, "Burial seal restored.");
-            if ((g->elowen_seals_restored & 7) == 7) {
-                g->elowen_quest_state = 2;
-                push_message(g, "All seals restored. Return to Elowen in Oakhaven's Tavern.");
-            }
-            return;
-        }
         if (tile == TILE_COAST_BEACON_UNLIT) {
             game_light_coast_beacon(g, g->player.x, g->player.y);
             return;
@@ -1973,7 +1960,7 @@ void action_resolve_player(GameState *g, Action a) {
                             snprintf(msg, sizeof(msg), "%s killed %s!",
                                 sp->name, e->name);
                         } else if (sp->id == SPELL_FROST_BOLT &&
-                            (enemy_is_vampire_captor(e) || e->type == ENEMY_ICE_GOLEM ||
+                            (e->type == ENEMY_ICE_GOLEM ||
                             e->type == ENEMY_FALLEN_SUN_GUARDIAN ||
                             e->type == ENEMY_FROST_KRAKEN)) {
                             e->frozen_turns = 0;
@@ -2947,6 +2934,28 @@ void action_resolve_player(GameState *g, Action a) {
     }
 }
 
+// Keep the noncombat escort with the player across every action and transition.
+void action_resolve_player(GameState *g, Action a) {
+    int old_x = g->player.x;
+    int old_y = g->player.y;
+    Location location = g->location;
+    int level = g->level;
+    resolve_player_action(g, a);
+    if (location != g->location || level != g->level) {
+        g->elowen_x = -1;
+        g->elowen_y = -1;
+        g->aldric_x = -1;
+        g->aldric_y = -1;
+        old_x = -1;
+        old_y = -1;
+    }
+    int escort = g->elowen_quest_state == ELOWEN_RESCUED;
+    int lead_old_x = escort ? g->elowen_x : old_x;
+    int lead_old_y = escort ? g->elowen_y : old_y;
+    elowen_follow(g, old_x, old_y);
+    aldric_follow(g, lead_old_x, lead_old_y);
+}
+
 int action_use_inventory_item(GameState *g, int index, EnemyProjectiles *shots) {
     if (index < 0 || index >= g->inventory_count) {
         return 0;
@@ -3035,7 +3044,6 @@ static void build_enemy_distance_map(const GameState *g) {
 
 static int enemy_is_major_boss(const Enemy *e) {
     return e->is_boss ||
-        (enemy_is_vampire_captor(e) && e->hp < e->max_hp) ||
         e->type == ENEMY_LICH_KING ||
         e->type == ENEMY_FOREST_NECROMANCER ||
         e->type == ENEMY_MOUNTAIN_GOBLIN_KING ||
@@ -3055,6 +3063,7 @@ static int enemy_is_support(const Enemy *e) {
 
 static int enemy_is_protector(const Enemy *e) {
     return e->type == ENEMY_BONE_SENTINEL || e->type == ENEMY_HOBGOBLIN_GUARD ||
+        e->type == ENEMY_DARK_ELF_GUARD ||
         e->type == ENEMY_HORSEMAN ||
         e->type == ENEMY_ANIMATED_STATUE ||
         e->type == ENEMY_VINEBOUND_GUARDIAN ||
@@ -3552,7 +3561,7 @@ static void grave_marshal_turn(GameState *g, int index) {
     }
 }
 
-void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots) {
+static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
     if (shots) {
         shots->count = 0;
     }
@@ -3912,7 +3921,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         e->move_timer++;
 
         if ((e->type == ENEMY_FIRE_ELEMENTAL || e->type == ENEMY_DJINN ||
-            e->type == ENEMY_CINDER_IMP || enemy_is_vampire_captor(e)) &&
+            e->type == ENEMY_CINDER_IMP) &&
             e->move_timer % 2 == 0 &&
             clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
@@ -3922,8 +3931,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
             if (dmg > 0) {
                 char msg[MAX_MESSAGE_LEN];
-                const char *attack = enemy_is_vampire_captor(e) ? "Vampire blood bolt" :
-                    e->type == ENEMY_CINDER_IMP ? "Imp firebolt" :
+                const char *attack = e->type == ENEMY_CINDER_IMP ? "Imp firebolt" :
                     (e->type == ENEMY_DJINN ? "Djinn magic bolt" : "Elemental flame");
                 snprintf(msg, sizeof(msg), "%s: %d dmg", attack, dmg);
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
@@ -4115,4 +4123,10 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         }
     }
     stormbell_turn(g);
+}
+
+void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots) {
+    resolve_enemy_actions(g, shots);
+    elowen_follow(g, -1, -1);
+    aldric_follow(g, -1, -1);
 }

@@ -118,7 +118,8 @@ is `attack - defense`, with a minimum of 1.
 The Lich King is spawned before regular enemies, reserving its place under the
 enemy cap. Once engaged, it holds position in the chamber and launches a
 necrotic bolt every other turn, with a visible warning on its recovery turn.
-It guarantees the Warrior-only Cryptblade. Rewards for other regional bosses
+It guarantees the all-class Crypt Ring (+5 maximum HP and +5 maximum MP).
+Rewards for other regional bosses
 are listed in [Weapons, Armor, and Shields](weapons.md).
 
 ## Traps and Maps

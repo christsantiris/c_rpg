@@ -31,6 +31,14 @@ int map_is_explored(const Map *m, int x, int y) {
     return (m->explored[index / 8] & (1u << (index % 8))) != 0;
 }
 
+int map_is_travel_tile(TileType tile) {
+    return (tile >= TILE_TOWN_ROAD_ENTRY_NORTH && tile <= TILE_TOWN_ROAD_EXIT_WEST) ||
+        tile == TILE_APPROACH_TOWN || tile == TILE_APPROACH_AREA || tile == TILE_APPROACH_DUNGEON_TOWN ||
+        tile == TILE_LABYRINTH_ENTRANCE || tile == TILE_ROAD_GATE_OPEN || tile == TILE_ROAD_GATE_CLOSED ||
+        tile == TILE_FOREST_ENTRANCE || tile == TILE_FOREST_EXIT ||
+        tile == TILE_MOUNTAIN_ENTRANCE || tile == TILE_MOUNTAIN_EXIT;
+}
+
 void map_mirror_horizontal(Map *m) {
     unsigned char explored[MAP_EXPLORED_BYTES];
     memcpy(explored, m->explored, sizeof(explored));
@@ -866,10 +874,6 @@ void map_generate_forest(Map *m, int level) {
     index = templates[index];
     map_generate_outdoor(m, map_forest_difficulty(level), entrances[index], exits[index], 1,
         &forest_templates[index]);
-    if (level == 1) {
-        // OakHaven lies east of the forest: enter from the east and head west.
-        map_mirror_horizontal(m);
-    }
     int hidden_start_x;
     int hidden_start_y;
     int hidden_end_x;
@@ -1541,23 +1545,20 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 1; x < TOWN_W - 1; x++)
         m->tiles[12][x] = TILE_TOWN_PATH;
 
-    // Elderwood and the northern castle road begin beyond the north gate.
-    for (int x = 18; x <= 22; x++) {
-        m->tiles[0][x] = TILE_TOWN_EXIT;
-    }
-
-    // Forest travel and the unlocked Stillbury shortcut share the main gate.
+    // Northern rapids close the north side. The western road reaches the mountains.
     for (int y = 10; y <= 12; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
 
-    // Dungeon exit at the east end of the crossroad.
-    for (int y = 10; y <= 14; y++)
+    // Haunted Forest lies east, with Dawnmere beyond it.
+    for (int y = 10; y <= 14; y++) {
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
+    }
 
-    // Sunken Coast exit at the south end of the crossroad.
-    for (int x = 18; x <= 22; x++)
+    // The dungeon is a local adventure south of town.
+    for (int x = 18; x <= 22; x++) {
         m->tiles[TOWN_H - 1][x] = TILE_TOWN_EXIT;
+    }
 
     // Blacksmith faces the east-west road.
     for (int dy = 0; dy < 4; dy++) {
@@ -1588,18 +1589,16 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
         }
     }
 
-    // The Tavern stands east of the Blacksmith, its door opening onto the square.
+    // Oakhaven's Inn stands east of the Blacksmith, opening onto the square.
     map_place_town_tavern(m);
 
     map_clear_town_harbor(m);
     m->tiles[TOWN_CAIN_Y][TOWN_CAIN_X] = TILE_NPC_CAIN;
-    m->tiles[TOWN_BRAM_Y][TOWN_BRAM_X] = TILE_NPC_BRAM;
     m->tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] = TILE_NPC_ALDRIC;
     m->tiles[TAMSIN_Y][TAMSIN_X] = TILE_NPC_TAMSIN;
     town_life_place(m, LOCATION_TOWN);
 
-    // Spawn at the central crossroads so the south road remains unobstructed
-    // for a future region.
+    // Spawn at the central crossroads.
     *spawn_x = 20;
     *spawn_y = 12;
 }
@@ -1701,7 +1700,8 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 1; x < TOWN_W - 1; x++) {
         m->tiles[12][x] = TILE_TOWN_PATH;
     }
-    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
+    // The former mountain road no longer connects to Ridgeshire.
+    m->tiles[TOWN_H - 1][20] = TILE_WALL;
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
@@ -1776,7 +1776,7 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[11][x] = TILE_TOWN_PATH;
     }
     map_place_town2_center(m);
-    // The Inn stands east of the Healer, its door opening onto the square.
+    // Stillbury's Tavern stands east of the Healer, opening onto the square.
     map_place_town_inn(m);
     town_life_place(m, LOCATION_TOWN2);
     *spawn_x = TOWN_W - 2;
@@ -1826,9 +1826,7 @@ void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
-    for (int x = 18; x <= 22; x++) {
-        m->tiles[0][x] = TILE_TOWN_EXIT;
-    }
+    // Northern connections will be designed in the next world-map step.
     m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
     town_life_place(m, LOCATION_DAWNMERE);
     m->tiles[SEREN_Y][SEREN_X] = TILE_NPC_SEREN;
@@ -2431,7 +2429,7 @@ void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *
     *spawn_y = entry_y;
 }
 
-static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn) {
+static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y) {
     map_clear_exploration(m);
     m->burial_trap_count = 0;
     memset(m->burial_traps, 0, sizeof(m->burial_traps));
@@ -2468,11 +2466,7 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn
         }
     }
 
-    if (inn) {
-        m->tiles[7][28] = TILE_NPC_INNKEEPER;
-    } else {
-        m->tiles[7][28] = TILE_TAVERN_FLOOR;
-    }
+    m->tiles[7][28] = TILE_TAVERN_FLOOR;
     m->tiles[22][20] = TILE_TAVERN_EXIT;
     *spawn_x = 20;
     *spawn_y = 21;
@@ -2483,8 +2477,8 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn
 }
 
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
-    map_generate_tavern_room(m, spawn_x, spawn_y, 0);
-    map_place_tavern_elowen(m);
+    map_generate_tavern_room(m, spawn_x, spawn_y);
+    m->tiles[BRAM_INN_Y][BRAM_INN_X] = TILE_NPC_BRAM;
     m->tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] = TILE_NPC_ROOK;
     m->tiles[MARA_TAVERN_Y][MARA_TAVERN_X] = TILE_NPC_MARA;
     m->tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] = TILE_NPC_DRAGON_SEEKER;
@@ -2495,10 +2489,9 @@ void map_place_tavern_brenna(Map *m) {
 }
 
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y) {
-    map_generate_tavern_room(m, spawn_x, spawn_y, 1);
+    map_generate_tavern_room(m, spawn_x, spawn_y);
     m->tiles[ZARA_INN_Y][ZARA_INN_X] = TILE_NPC_GUILD_SEEKER;
     m->tiles[BRENNA_INN_Y][BRENNA_INN_X] = TILE_NPC_BRENNA;
-    m->tiles[ALDER_INN_Y][ALDER_INN_X] = TILE_NPC_ALDER;
 }
 
 void map_place_tavern_elowen(Map *m) {
@@ -2506,7 +2499,7 @@ void map_place_tavern_elowen(Map *m) {
 }
 
 void map_generate_guild(Map *m, int *sx, int *sy) {
-    map_generate_tavern_room(m, sx, sy, 1);
+    map_generate_tavern_room(m, sx, sy);
     m->tiles[EDDA_Y][EDDA_X] = TILE_NPC_EDDA;
     m->tiles[GUILD_ORIN_Y][GUILD_ORIN_X] = TILE_NPC_ORIN;
     m->tiles[GUILD_SELENE_Y][GUILD_SELENE_X] = TILE_NPC_SELENE;
@@ -2514,7 +2507,7 @@ void map_generate_guild(Map *m, int *sx, int *sy) {
 }
 
 void map_generate_workshop(Map *m, int *sx, int *sy) {
-    map_generate_tavern_room(m, sx, sy, 0);
+    map_generate_tavern_room(m, sx, sy);
     for (int y = TAVERN_Y + 1; y < TAVERN_Y + TAVERN_H - 1; y++) {
         for (int x = TAVERN_X + 1; x < TAVERN_X + TAVERN_W - 1; x++) {
             m->tiles[y][x] = TILE_TAVERN_FLOOR;

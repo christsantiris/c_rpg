@@ -227,7 +227,7 @@ static int pending(const GameState *g, int kind) {
 
 Item containers_reward(const LootContainer *c, int bit) {
     switch (c->kind) {
-        case TILE_LICH_RELIQUARY: return item_make_cryptblade();
+        case TILE_LICH_RELIQUARY: return item_make_crypt_ring();
         case TILE_NECRO_RELIQUARY: return item_make_necromancer_cloak();
         case TILE_GOBLIN_KING_RELIQUARY: return item_make_goblin_king_shield();
         case TILE_QUEEN_RELIQUARY: return item_make_tidecaller_robes();

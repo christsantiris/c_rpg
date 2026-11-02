@@ -29,43 +29,10 @@ static int swamp_boss(GameState *g) {
     return -1;
 }
 
-static int swamp_mira(GameState *g, int rescue) {
-    int x = -1;
-    int y = -1;
-    for (int row = 0; row < MAP_H; row++) {
-        for (int column = 0; column < MAP_W; column++) {
-            if (g->map.tiles[row][column] == TILE_SWAMP_DAUGHTER) {
-                x = column;
-                y = row;
-            }
-        }
-    }
-    if (rescue && x >= 0) {
-        game_rescue_innkeeper_daughter(g, x, y);
-        ASSERT("Mira waits for the vampire captor's defeat", g->innkeeper_quest_state == 1);
-        int captor = -1;
-        for (int i = 0; i < g->enemy_count; i++) {
-            if (g->enemies[i].active && strcmp(g->enemies[i].name, "Vampire Captor") == 0) {
-                captor = i;
-                g->enemies[i].active = 0;
-            }
-        }
-        ASSERT("Mira's level has its vampire captor", captor >= 0);
-        game_rescue_innkeeper_daughter(g, x, y);
-        ASSERT("Mira can be rescued from either direction", g->innkeeper_quest_state == 2 && g->map.tiles[y][x] == TILE_SWAMP_FLOOR);
-    }
-    return x >= 0;
-}
-
 static void test_swamp_crossing(int rosemoor, int home) {
     game_init(&swamp);
     srand(1037 + rosemoor + home * 2);
     game_enter_town2(&swamp);
-    game_enter_inn(&swamp);
-    game_talk_to_innkeeper(&swamp);
-    game_handle_quest_offer_key(&swamp, SDL_SCANCODE_Y, 0);
-    ASSERT("Bram sends the player to Mira on level three", strstr(swamp.dialogue_text, "level 3") != NULL);
-    game_leave_inn(&swamp);
     if (rosemoor) {
         game_enter_town3(&swamp);
     }
@@ -83,14 +50,13 @@ static void test_swamp_crossing(int rosemoor, int home) {
     game_enter_swamp(&swamp);
     for (int level = 1; level < SWAMP_DEPTH; level++) {
         ASSERT("the swamp progresses forward with no early boss", swamp.level == level && swamp_boss(&swamp) < 0);
-        ASSERT("Mira and her captor are on swamp three", swamp_mira(&swamp, 1) == (level == SWAMP_RESCUE_LEVEL));
         swamp.dialogue_active = 0;
         int score = swamp.score;
         swamp_step(&swamp, 0);
         ASSERT("first visits reward increasing swamp difficulty", swamp.level == level + 1 && swamp.score == score + map_swamp_difficulty(swamp.level) * 100);
     }
     int boss = swamp_boss(&swamp);
-    ASSERT("Mira is rescued before the fifth-level Demon", swamp.innkeeper_quest_state == 2 && swamp.level == 5 && boss >= 0);
+    ASSERT("the fifth swamp level holds the Demon", swamp.level == 5 && boss >= 0);
     if (boss < 0) {
         return;
     }
@@ -122,7 +88,7 @@ static void test_swamp_crossing(int rosemoor, int home) {
     ASSERT("victory creates no swamp shortcut", markers == 0);
     swamp_step(&swamp, 0);
     ASSERT("the final exit returns onto the main road", swamp.location == LOCATION_APPROACH && swamp.player.x == APPROACH_W / 2 && swamp.player.y == APPROACH_H / 2 && swamp.enemy_count == 0);
-    ASSERT("road access and Mira's rescue survive saving", save_game(&swamp, 99122) && load_game(&restored, 99122) && approach_swamp_town_exit(&restored, &x, &y) && restored.innkeeper_quest_state == 2);
+    ASSERT("the unlocked swamp road survives saving", save_game(&swamp, 99122) && load_game(&restored, 99122) && approach_swamp_town_exit(&restored, &x, &y));
     swamp = restored;
     if (home) {
         walk_return_approach(&swamp);

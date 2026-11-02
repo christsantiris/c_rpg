@@ -18,6 +18,7 @@ typedef struct {
     Location area;
     int gate_x;
     int gate_y;
+    int unplaced; // Kept for isolated content/debug travel until its V2 connection is designed.
 } TownApproach;
 
 extern const TownApproach town_approaches[];

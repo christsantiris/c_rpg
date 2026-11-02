@@ -460,19 +460,19 @@ void test_rook_labyrinth(void) {
         !game_labyrinth_is_open(&g));
 
     game_enter_inn(&g);
-    ASSERT("Rook has left Stillbury's Inn",
+    ASSERT("Rook has left Stillbury's Tavern",
         g.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_TAVERN_FLOOR);
     game_talk_to_rook(&g);
     ASSERT("Rook cannot offer his quest from the Inn", !g.dialogue_active && !g.rook_quest_state);
     game_enter_tavern(&g);
-    ASSERT("Rook lives in Oakhaven's Tavern beside an accessible floor tile",
+    ASSERT("Rook lives in Oakhaven's Inn beside an accessible floor tile",
         g.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_NPC_ROOK &&
         map_is_walkable(&g.map, ROOK_TAVERN_X, ROOK_TAVERN_Y + 1));
     g.player.x = ROOK_TAVERN_X;
     g.player.y = ROOK_TAVERN_Y + 1;
     game_talk_to_rook(&g);
-    ASSERT("Rook directs the player west to Stillbury and back to Oakhaven's Tavern",
-        strstr(g.dialogue_text, "road to Stillbury") && strstr(g.dialogue_text, "Haunted Forest entrance") && strstr(g.dialogue_text, "Oakhaven's Tavern"));
+    ASSERT("Rook directs the player east to Dawnmere and back to Oakhaven's Inn",
+        strstr(g.dialogue_text, "road to Dawnmere") && strstr(g.dialogue_text, "east gate") && strstr(g.dialogue_text, "Haunted Forest entrance") && strstr(g.dialogue_text, "Oakhaven's Inn"));
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Rook assigns the retrieval quest on first conversation",
         g.rook_quest_state == 1 && g.rook_labyrinth_switches == 0 &&
@@ -482,16 +482,16 @@ void test_rook_labyrinth(void) {
         g.dialogue_x == ROOK_TAVERN_X && g.dialogue_y == ROOK_TAVERN_Y &&
         strstr(g.dialogue_text, "ivory rook") != NULL &&
         strcmp(g.messages[g.message_count - 2], "Assigned: The Ivory Rook.") == 0 &&
-        strstr(g.messages[g.message_count - 1], "road to Stillbury"));
+        strstr(g.messages[g.message_count - 1], "road to Dawnmere"));
     game_talk_to_rook(&g);
     ASSERT("Rook's reminder stays in the bubble while the bar shows a status",
-        g.dialogue_active && strstr(g.dialogue_text, "One rune per floor") != NULL && strstr(g.dialogue_text, "Stillbury") &&
-        strstr(g.dialogue_text, "Oakhaven's Tavern.") &&
+        g.dialogue_active && strstr(g.dialogue_text, "One rune per floor") != NULL && strstr(g.dialogue_text, "Dawnmere") &&
+        strstr(g.dialogue_text, "Oakhaven's Inn.") &&
         strcmp(g.messages[g.message_count - 1],
             "Rook is waiting for the ivory rook.") == 0);
     game_leave_tavern(&g);
-    game_enter_town2(&g);
-    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    game_enter_town_gate(&g, LOCATION_DAWNMERE, 0, 12);
+    action_resolve_player(&g, (Action){ACTION_MOVE, 0, 12});
     walk_to_labyrinth(&g);
     action_resolve_player(&g, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
     ASSERT("labyrinth entrance starts a five-level combat expedition",
@@ -658,10 +658,10 @@ void test_rook_labyrinth(void) {
         strcmp(g.messages[g.message_count - 1],
             "Rook's quest is already complete.") == 0);
     game_leave_tavern(&g);
-    game_enter_town2(&g);
+    game_enter_town_gate(&g, LOCATION_DAWNMERE, 0, 12);
     ASSERT("labyrinth remains visibly open after Rook rewards the quest",
         game_labyrinth_is_open(&g));
-    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    action_resolve_player(&g, (Action){ACTION_MOVE, 0, 12});
     walk_to_labyrinth(&g);
     action_resolve_player(&g, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
     ASSERT("completed Rook quest still permits a new labyrinth expedition",
@@ -669,15 +669,15 @@ void test_rook_labyrinth(void) {
     step_into_labyrinth_tile(&g, 1, g.map.stairs_up_y);
     int saved = save_game(&g, slot);
     int restored = saved && load_game(&loaded, slot);
-    ASSERT("Rook quest progress and the forest-road labyrinth survive saving", restored && loaded.rook_quest_state == 3 && loaded.rook_labyrinth_switches == 31 && loaded.rook_quest_completions == 1 && game_labyrinth_is_open(&loaded) && loaded.location == LOCATION_APPROACH && loaded.map.tiles[APPROACH_LABYRINTH_Y][APPROACH_LABYRINTH_X] == TILE_LABYRINTH_ENTRANCE && loaded.labyrinth_entry_town == LOCATION_TOWN2);
+    ASSERT("Rook quest progress and the forest-road labyrinth survive saving", restored && loaded.rook_quest_state == 3 && loaded.rook_labyrinth_switches == 31 && loaded.rook_quest_completions == 1 && game_labyrinth_is_open(&loaded) && loaded.location == LOCATION_APPROACH && loaded.map.tiles[APPROACH_LABYRINTH_Y][APPROACH_LABYRINTH_X] == TILE_LABYRINTH_ENTRANCE && loaded.labyrinth_entry_town == LOCATION_DAWNMERE);
     walk_return_approach(&loaded);
     remove("saves/savegame_99014.json");
 
     loaded.defeated_bosses |= 1 << LOCATION_FOREST;
-    loaded.player.x = TOWN_W - 2;
+    loaded.player.x = 1;
     loaded.player.y = 12;
     map_set_stillbury_forest_road(&loaded.map, 1);
-    action_resolve_player(&loaded, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+    action_resolve_player(&loaded, (Action){ACTION_MOVE, 0, 12});
     finish_town_departure(&loaded);
     ASSERT("the shared gate enters the crossroads", loaded.location == LOCATION_APPROACH && loaded.enemy_count == 0);
     saved = save_game(&loaded, slot);
@@ -685,7 +685,7 @@ void test_rook_labyrinth(void) {
     ASSERT("crossroads position survives save and load", restored && g.location == LOCATION_APPROACH && g.approach_route == loaded.approach_route && g.player.x == loaded.player.x && g.player.y == loaded.player.y);
     remove("saves/savegame_99014.json");
     walk_forest_road(&g);
-    ASSERT("the forest road reaches Town 1's west gate directly", g.location == LOCATION_TOWN && g.player.x == 1 && g.player.y == 12);
+    ASSERT("the forest road reaches Oakhaven's east gate directly", g.location == LOCATION_TOWN && g.player.x == TOWN_W - 2 && g.player.y == 12);
     g.map.tiles[19][0] = TILE_TOWN_EXIT;
     g.map.tiles[19][1] = TILE_TOWN_PATH;
     saved = save_game(&g, slot);
@@ -698,12 +698,10 @@ void test_rook_labyrinth(void) {
         loaded.map.tiles[19][0] == TILE_WALL &&
         loaded.map.tiles[19][1] == TILE_TOWN_FLOOR);
     remove("saves/savegame_99014.json");
-    action_resolve_player(&g, (Action){ACTION_MOVE, 0, 12});
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 1, 12});
     walk_forest_road(&g);
-    ASSERT("the forest road reaches Town 2's east gate directly", g.location == LOCATION_TOWN2 && g.player.x == TOWN_W - 2 && g.player.y == 12);
-    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_W - 3, 12});
-    ASSERT("continuing west enters Town 2 rather than returning to the road",
-        g.location == LOCATION_TOWN2 && g.player.x == TOWN_W - 3);
+    ASSERT("the forest road reaches Dawnmere's west gate directly", g.location == LOCATION_DAWNMERE && g.player.x == 1 && g.player.y == 12);
+    game_enter_town2(&g);
     ASSERT("Inn stands east of the Healer with its door on the square",
         TOWN_INN_X >= TOWN_HEALER_X + TOWN_HEALER_W &&
         TOWN_INN_X + TOWN_INN_W <= 20 &&
@@ -716,7 +714,7 @@ void test_rook_labyrinth(void) {
     g.player.x = TOWN_INN_DOOR_X;
     g.player.y = TOWN_INN_DOOR_Y + 1;
     action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_INN_DOOR_X, TOWN_INN_DOOR_Y});
-    ASSERT("walking through the Inn door enters Stillbury's Inn without Rook",
+    ASSERT("walking through the Inn door enters Stillbury's Tavern without Rook",
         g.location == LOCATION_INN &&
         g.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_TAVERN_FLOOR);
     g.player.x = 20;
@@ -854,9 +852,9 @@ void test_town_map(void) {
         spawn_x == 20 && spawn_y == 12);
 
     // Exit tiles at north edge
-    ASSERT("north gate opens onto the Elderwood road",
-        m.tiles[0][20] == TILE_TOWN_EXIT);
-    ASSERT("forest exit at west crossroad",
+    ASSERT("north side has no exit across the rapids",
+        m.tiles[0][20] == TILE_WALL);
+    ASSERT("mountain exit at west crossroad",
         m.tiles[12][0] == TILE_TOWN_EXIT);
     ASSERT("the old Tavern loop is gone before Town 2 is discovered",
         m.tiles[TOWN_ROAD_EXIT_Y][0] == TILE_WALL &&
@@ -894,10 +892,10 @@ void test_town_map(void) {
         m.tiles[TOWN_ROAD_EXIT_Y][4] == TILE_TOWN_FLOOR &&
         m.tiles[21][4] == TILE_TOWN_FLOOR);
     map_set_town2_road(&m, 1);
-    ASSERT("dungeon exit at east crossroad",
+    ASSERT("forest exit at east crossroad",
         m.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT);
-    ASSERT("Elderwood uses the northern exit",
-        m.tiles[0][20] == TILE_TOWN_EXIT);
+    ASSERT("no northern crossing opens with other road unlocks",
+        m.tiles[0][20] == TILE_WALL);
 
     // Shop tiles in correct positions
     ASSERT("blacksmith remains in the starting town",
@@ -954,7 +952,7 @@ void test_town_map(void) {
     ASSERT("horizontal path at mid row",
         m.tiles[12][10] == TILE_TOWN_PATH);
 
-    ASSERT("coast exit at south crossroad",
+    ASSERT("dungeon exit at south crossroad",
         m.tiles[TOWN_H - 1][20] == TILE_TOWN_EXIT);
 }
 
@@ -1097,16 +1095,16 @@ void test_forest(void) {
 
     g.player.x = 1;
     g.player.y = 12;
-    Action west = {ACTION_MOVE, 0, 12};
-    action_resolve_player(&g, west);
+    Action east = {ACTION_MOVE, TOWN_W - 1, 12};
+    action_resolve_player(&g, east);
     walk_town_approach(&g);
-    ASSERT("west town exit enters forest", g.location == LOCATION_FOREST);
+    ASSERT("east town exit enters forest", g.location == LOCATION_FOREST);
     ASSERT("forest begins on level one", g.level == 1);
-    ASSERT("leaving OakHaven west enters the forest at its east edge", g.player.x == MAP_W - 2);
-    ASSERT("forest has an east entrance facing OakHaven",
-        g.map.tiles[g.map.stairs_up_y][MAP_W - 1] == TILE_FOREST_ENTRANCE);
+    ASSERT("leaving Oakhaven east enters the forest at its west edge", g.player.x == 1);
+    ASSERT("forest has a west entrance facing Oakhaven",
+        g.map.tiles[g.map.stairs_up_y][0] == TILE_FOREST_ENTRANCE);
     ASSERT("forest exit begins hidden",
-        g.map.tiles[g.map.stairs_down_y][0] == TILE_FOREST_WALL);
+        g.map.tiles[g.map.stairs_down_y][MAP_W - 1] == TILE_FOREST_WALL);
     ASSERT("forest generation includes branching clearings",
         g.map.room_count == 7);
     ASSERT("lower route reaches exit when upper route is blocked",
@@ -1137,8 +1135,8 @@ void test_forest(void) {
     ASSERT("concealed shortcut initially behaves like dense woods",
         hidden_x >= 0 && !map_is_walkable(&g.map, hidden_x, hidden_y));
     reveal_forest_exit(&g);
-    ASSERT("forest landmark reveals the onward west stage exit",
-        g.map.tiles[g.map.stairs_down_y][0] == TILE_FOREST_EXIT);
+    ASSERT("forest landmark reveals the onward east stage exit",
+        g.map.tiles[g.map.stairs_down_y][MAP_W - 1] == TILE_FOREST_EXIT);
     int concealed_after_landmark = 0;
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -1166,9 +1164,9 @@ void test_forest(void) {
     ASSERT("forest pickup restores forest floor",
         g.map.tiles[pickup_y][pickup_x] == TILE_FOREST_FLOOR);
 
-    g.player.x = 1;
+    g.player.x = MAP_W - 2;
     g.player.y = g.map.stairs_down_y;
-    Action onward = {ACTION_MOVE, 0, g.player.y};
+    Action onward = {ACTION_MOVE, MAP_W - 1, g.player.y};
     action_resolve_player(&g, onward);
     ASSERT("forest exit advances without clearing enemies", g.level == 2);
     ASSERT("next forest stage starts at south edge",
@@ -1176,7 +1174,7 @@ void test_forest(void) {
     Action back = outdoor_entrance_action(&g.map);
     action_resolve_player(&g, back);
     ASSERT("forest entrance returns to previous stage", g.level == 1);
-    ASSERT("backtracking arrives inside the first stage's west exit", g.player.x == 1);
+    ASSERT("backtracking arrives inside the first stage's east exit", g.player.x == MAP_W - 2);
 
     for (int level = 1; level <= FOREST_DEPTH; level++) {
         g.location = LOCATION_FOREST;
@@ -1188,7 +1186,8 @@ void test_forest(void) {
         for (int i = 0; i < g.enemy_count; i++) {
             EnemyType type = g.enemies[i].type;
             if (g.enemies[i].is_boss) bosses++;
-            if ((type < ENEMY_PIXIE || type > ENEMY_FOREST_NECROMANCER) && type != ENEMY_DARK_ELF_RANGER) {
+            if ((type < ENEMY_PIXIE || type > ENEMY_FOREST_NECROMANCER) &&
+                type != ENEMY_DARK_ELF_RANGER && type != ENEMY_DARK_ELF_GUARD) {
                 invalid_enemy = 1;
             }
         }
@@ -1202,8 +1201,8 @@ void test_forest(void) {
     }
 
     static const int expected_rooms[FOREST_DEPTH] = {7, 9, 9, 10, 10};
-    static const int expected_entrances[FOREST_DEPTH] = {3, 2, 1, 0, 0};
-    static const int expected_exits[FOREST_DEPTH] = {3, 1, 2, 0, 0};
+    static const int expected_entrances[FOREST_DEPTH] = {0, 2, 1, 0, 0};
+    static const int expected_exits[FOREST_DEPTH] = {0, 1, 2, 0, 0};
     g.enemy_count = 0;
     for (int level = 1; level <= FOREST_DEPTH; level++) {
         g.level = level;
@@ -1321,44 +1320,80 @@ void test_forest(void) {
         action_resolve_player(&g, (Action){ACTION_MOVE, g.player.x - 1, g.player.y});
     }
     walk_into_arrived_town(&g);
-    ASSERT("walking west after forest victory reaches Stillbury", g.location == LOCATION_TOWN2);
-    ASSERT("forest completion arrives beside Stillbury's east forest gate", g.player.x == TOWN_W - 2 && g.player.y == 12);
+    ASSERT("walking west after forest victory reaches Oakhaven", g.location == LOCATION_TOWN);
+    ASSERT("forest completion arrives beside Oakhaven's east forest gate", g.player.x == TOWN_W - 2 && g.player.y == 12);
 }
 
 void test_bram_guidance(void) {
-    printf("Bram town guidance tests:\n");
+    printf("Bram innkeeper guidance tests:\n");
     static GameState g;
+    static GameState loaded;
     game_init(&g);
-    ASSERT("Bram stands near Cain in Oakhaven's central square",
-        g.map.tiles[TOWN_BRAM_Y][TOWN_BRAM_X] == TILE_NPC_BRAM &&
-        abs(TOWN_BRAM_X - TOWN_CAIN_X) == 2 && TOWN_BRAM_Y == TOWN_CAIN_Y);
-    ASSERT("Bram is solid and leaves the main crossroads and tavern approach open",
-        !map_is_walkable(&g.map, TOWN_BRAM_X, TOWN_BRAM_Y) &&
-        map_is_walkable(&g.map, TOWN_BRAM_X, TOWN_BRAM_Y + 1) &&
-        map_is_walkable(&g.map, 20, 12) &&
-        map_is_walkable(&g.map, TOWN_TAVERN_DOOR_X, TOWN_TAVERN_DOOR_Y + 1));
+    ASSERT("Bram leaves Oakhaven's square while Cain and Aldric remain",
+        map_is_walkable(&g.map, TOWN_BRAM_X, TOWN_BRAM_Y) &&
+        g.map.tiles[TOWN_CAIN_Y][TOWN_CAIN_X] == TILE_NPC_CAIN &&
+        g.map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] == TILE_NPC_ALDRIC);
+    game_talk_to_bram(&g);
+    ASSERT("Bram cannot be spoken to from the town square", !g.dialogue_active);
+    g.player.x = TOWN_TAVERN_DOOR_X;
+    g.player.y = TOWN_TAVERN_DOOR_Y + 1;
+    action_resolve_player(&g, (Action){ACTION_MOVE, TOWN_TAVERN_DOOR_X, TOWN_TAVERN_DOOR_Y});
+    ASSERT("walking into Oakhaven's Inn finds Bram at its counter",
+        g.location == LOCATION_TAVERN && g.map.tiles[BRAM_INN_Y][BRAM_INN_X] == TILE_NPC_BRAM &&
+        !map_is_walkable(&g.map, BRAM_INN_X, BRAM_INN_Y) &&
+        map_is_walkable(&g.map, BRAM_INN_X, BRAM_INN_Y + 1));
+    game_talk_to_bram(&g);
+    ASSERT("Bram requires the player to approach his counter", !g.dialogue_active);
+    g.player.x = BRAM_INN_X;
+    g.player.y = BRAM_INN_Y + 1;
     int count = g.inventory_count;
     game_talk_to_bram(&g);
     ASSERT("Bram identifies the Lich King, dungeon direction, and danger to Oakhaven",
         g.dialogue_active && strcmp(g.dialogue_speaker, "Bram") == 0 &&
-        g.dialogue_x == TOWN_BRAM_X && g.dialogue_y == TOWN_BRAM_Y &&
+        g.dialogue_x == BRAM_INN_X && g.dialogue_y == BRAM_INN_Y &&
+        strstr(g.dialogue_text, "Oakhaven's Inn") &&
         strstr(g.dialogue_text, "Lich King") &&
-        strstr(g.dialogue_text, "dungeon east of Oakhaven") &&
+        strstr(g.dialogue_text, "dungeon south of Oakhaven") &&
         strstr(g.dialogue_text, "endangers our town"));
-    ASSERT("Bram explains both shops and their supplies without giving items or a quest",
+    ASSERT("Bram explains supplies and offers the rescue without giving items",
         strstr(g.dialogue_text, "blacksmith sells weapons and armor") &&
         strstr(g.dialogue_text, "alchemist sells potions and scrolls") &&
         strstr(g.dialogue_text, "journey.") && g.inventory_count == count &&
-        !game_quest_offer_active(&g));
+        game_quest_offer_active(&g));
+    ASSERT("Bram's inn placement and dialogue survive saving", !save_exists(99237) &&
+        save_game(&g, 99237) && load_game(&loaded, 99237) &&
+        loaded.location == LOCATION_TAVERN &&
+        loaded.map.tiles[BRAM_INN_Y][BRAM_INN_X] == TILE_NPC_BRAM &&
+        loaded.player.x == BRAM_INN_X && loaded.player.y == BRAM_INN_Y + 1 &&
+        loaded.dialogue_active && strcmp(loaded.dialogue_speaker, "Bram") == 0 &&
+        strstr(loaded.dialogue_text, "Lich King"));
+    remove("saves/savegame_99237.json");
     g.defeated_bosses |= 1 << LOCATION_DUNGEON;
+    g.elowen_quest_state = 2;
     game_talk_to_bram(&g);
-    ASSERT("Bram acknowledges the defeated Lich King and still recommends supplies",
-        strstr(g.dialogue_text, "Lich King is defeated") &&
-        strstr(g.dialogue_text, "blacksmith") && strstr(g.dialogue_text, "alchemist"));
+    ASSERT("Bram welcomes his rescued daughter home", g.elowen_quest_state == 3 &&
+        strstr(g.dialogue_text, "daughter home") && !game_quest_offer_active(&g));
+    g.dialogue_active = 0;
+    g.player.x = g.map.stairs_down_x;
+    g.player.y = g.map.stairs_down_y - 1;
+    action_resolve_player(&g, (Action){ACTION_MOVE, g.map.stairs_down_x, g.map.stairs_down_y});
+    ASSERT("the Inn's exit returns to Oakhaven without a duplicate Bram",
+        g.location == LOCATION_TOWN &&
+        g.map.tiles[TOWN_BRAM_Y][TOWN_BRAM_X] != TILE_NPC_BRAM);
     game_enter_tavern(&g);
+    ASSERT("Bram remains at the counter on returning to the Inn",
+        g.map.tiles[BRAM_INN_Y][BRAM_INN_X] == TILE_NPC_BRAM);
     game_leave_tavern(&g);
-    ASSERT("Bram returns when Oakhaven is regenerated after visiting the tavern",
-        g.map.tiles[TOWN_BRAM_Y][TOWN_BRAM_X] == TILE_NPC_BRAM);
+    game_enter_town2(&g);
+    game_enter_inn(&g);
+    g.player.x = BRAM_INN_X;
+    g.player.y = BRAM_INN_Y + 1;
+    game_talk_to_bram(&g);
+    ASSERT("Stillbury's Tavern has no duplicate Bram or remote dialogue",
+        g.map.tiles[BRAM_INN_Y][BRAM_INN_X] == TILE_TAVERN_FLOOR && !g.dialogue_active);
+    map_generate_guild(&loaded.map, &loaded.player.x, &loaded.player.y);
+    ASSERT("the shared guild room has no duplicate innkeeper",
+        loaded.map.tiles[BRAM_INN_Y][BRAM_INN_X] == TILE_TAVERN_FLOOR);
 }
 
 void test_cain_gift(void) {
@@ -1380,8 +1415,8 @@ void test_cain_gift(void) {
     game_talk_to_cain(&g);
     ASSERT("Cain warns about dangers outside town in his dialogue bubble",
         g.dialogue_active && strcmp(g.dialogue_speaker, "Cain") == 0 &&
-        strstr(g.dialogue_text, "Ancient woods lie north") &&
-        strstr(g.dialogue_text, "undead east") &&
+        strstr(g.dialogue_text, "Rapids block the north") &&
+        strstr(g.dialogue_text, "Haunted Forest east") &&
         g.dialogue_x == TOWN_CAIN_X && g.dialogue_y == TOWN_CAIN_Y);
     ASSERT("Cain gives one Return to Town scroll",
         g.cain_scroll_given && g.inventory_count == count + 1 &&
@@ -1680,14 +1715,11 @@ void test_mountains(void) {
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
-    game_enter_town_gate(&g, LOCATION_DAWNMERE, 20, 0);
-    map_generate_dawnmere(&g.map, &g.player.x, &g.player.y);
-    g.player.x = 20;
-    g.player.y = 1;
-    Action enter = {ACTION_MOVE, 20, 0};
+    game_enter_town_gate(&g, LOCATION_TOWN, 0, 12);
+    Action enter = {ACTION_MOVE, 0, 12};
     action_resolve_player(&g, enter);
     walk_town_approach(&g);
-    ASSERT("north Dawnmere exit enters mountains", g.location == LOCATION_MOUNTAINS);
+    ASSERT("west Oakhaven exit enters mountains", g.location == LOCATION_MOUNTAINS);
     ASSERT("mountains begin on level one", g.level == 1);
     ASSERT("mountains use red-black terrain",
         g.map.tiles[g.player.y][g.player.x] == TILE_MOUNTAIN_FLOOR);
@@ -1695,12 +1727,12 @@ void test_mountains(void) {
     int origin_x = g.player.x;
     int origin_y = g.player.y;
     game_open_town_portal(&g);
-    ASSERT("mountain escape reaches Dawnmere without a return portal",
-        g.location == LOCATION_DAWNMERE && !g.portal_active &&
+    ASSERT("mountain escape reaches Oakhaven without a return portal",
+        g.location == LOCATION_TOWN && !g.portal_active &&
         g.map.tiles[2][21] != TILE_PORTAL &&
-        g.player.x == 20 && g.player.y == 1);
+        g.player.x == 1 && g.player.y == 12);
     action_resolve_player(&g, (Action){ACTION_MOVE, 21, 2});
-    ASSERT("walking the former mountain portal tile stays in Dawnmere", g.location == LOCATION_DAWNMERE && !g.portal_active);
+    ASSERT("walking the former mountain portal tile stays in Oakhaven", g.location == LOCATION_TOWN && !g.portal_active);
     ASSERT("the escaped mountain floor remains archived", g.mountain_cache[0].valid && map_is_walkable(&g.mountain_cache[0].map, origin_x, origin_y));
     game_enter_mountains(&g);
 
@@ -1786,7 +1818,7 @@ void test_mountains(void) {
     action_resolve_player(&g, exit);
     ASSERT("defeating the King permits leaving the summit onto the road", g.location == LOCATION_APPROACH);
     walk_return_approach(&g);
-    ASSERT("the mountain road returns to Dawnmere", g.location == LOCATION_DAWNMERE && g.player.x == 20 && g.player.y == 1);
+    ASSERT("the mountain road returns to Oakhaven", g.location == LOCATION_TOWN && g.player.x == 1 && g.player.y == 12);
 }
 
 void test_return_to_town(void) {

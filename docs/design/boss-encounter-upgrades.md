@@ -70,8 +70,9 @@ phase messages to communicate escalation.
   against the soul burst. Interact to silence each; silencing both also creates
   a two-turn recovery opening. Existing stone cover blocks the lance. Ignoring
   the seals remains viable and never creates complete damage immunity.
-- **Guaranteed reward:** preserve **Cryptblade**, its current stats and class
-  restriction, plus existing gold/progression. Add persistent unclaimed recovery.
+- **Guaranteed reward:** Chapter 1 V2 replaces Cryptblade with the all-class
+  **Crypt Ring** (+5 maximum HP and +5 maximum MP). Preserve gold/progression
+  and persistent unclaimed recovery.
 - **Purpose:** establish fixed targeting, cover, an optional interaction and a
   clear punish window in the first dungeon boss encounter.
 

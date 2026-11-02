@@ -17,6 +17,8 @@
 #include "crown_quest.h"
 #include "castle.h"
 #include "lich.h"
+#include "elowen.h"
+#include "aldric.h"
 #include "necromancer.h"
 #include "goblin_king.h"
 #include "drowned_queen.h"
@@ -356,6 +358,14 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
             snprintf(e->name, sizeof(e->name), "Dark Elf Ranger");
             e->max_hp = 38; e->hp = 38; e->attack = 12; e->defense = 3;
             e->experience = 42;
+            break;
+        case ENEMY_DARK_ELF_GUARD:
+            snprintf(e->name, sizeof(e->name), "Dark Elf Guard");
+            e->max_hp = 36;
+            e->hp = 36;
+            e->attack = 11;
+            e->defense = 7;
+            e->experience = 44;
             break;
         case ENEMY_ROYAL_GUARD:
             snprintf(e->name, sizeof(e->name), "Royal Guard");
@@ -869,7 +879,7 @@ static Enemy *spawn_quest_enemy_open(GameState *g, EnemyType type, int room_limi
     return spawn_quest_enemy_at(g, type, x, y);
 }
 
-static void spawn_quest_enemy_near(GameState *g, EnemyType type, int center_x, int center_y) {
+static Enemy *spawn_quest_enemy_near(GameState *g, EnemyType type, int center_x, int center_y) {
     for (int radius = 1; radius <= 4; radius++) {
         for (int y = center_y - radius; y <= center_y + radius; y++) {
             for (int x = center_x - radius; x <= center_x + radius; x++) {
@@ -878,11 +888,11 @@ static void spawn_quest_enemy_near(GameState *g, EnemyType type, int center_x, i
                     !enemy_tile_open(g, x, y)) {
                     continue;
                 }
-                spawn_quest_enemy_at(g, type, x, y);
-                return;
+                return spawn_quest_enemy_at(g, type, x, y);
             }
         }
     }
+    return NULL;
 }
 
 static int place_dain_map_bearer(GameState *g) {
@@ -891,15 +901,12 @@ static int place_dain_map_bearer(GameState *g) {
     }
     EnemyType target_type;
     int target_bit;
-    if (g->level == 2) {
+    if (g->level == 1) {
         target_type = ENEMY_GOBLIN_ARCHER;
         target_bit = DAIN_FRAGMENT_ARCHER;
-    } else if (g->level == 3) {
+    } else if (g->level == 2) {
         target_type = ENEMY_GOBLIN_WARCHIEF;
         target_bit = DAIN_FRAGMENT_WARCHIEF;
-    } else if (g->level == 4) {
-        target_type = ENEMY_GOBLIN_SHAMAN;
-        target_bit = DAIN_FRAGMENT_SHAMAN;
     } else {
         return 0;
     }
@@ -924,26 +931,16 @@ static int place_dain_map_bearer(GameState *g) {
     target->attack += 2;
     strncpy(target->name, "Map Bearer", sizeof(target->name) - 1);
     target->name[sizeof(target->name) - 1] = '\0';
-    EnemyType guard = g->level == 2 ? ENEMY_GOBLIN_SCOUT :
-        (g->level == 3 ? ENEMY_GIANT_SPIDER : ENEMY_HOBGOBLIN_GUARD);
+    EnemyType guard = g->level == 1 ? ENEMY_GOBLIN_SCOUT : ENEMY_GIANT_SPIDER;
     spawn_quest_enemy_near(g, guard, target->x, target->y);
     spawn_quest_enemy_near(g, guard, target->x, target->y);
     return 1;
 }
 
 static int quest_group_pending(const GameState *g) {
-    if (g->location == LOCATION_DUNGEON && g->elowen_quest_state == 1) {
-        int bit = g->level == 2 ? 1 : (g->level == 3 ? 2 :
-            (g->level == 4 ? 4 : 0));
-        if (!bit) {
-            return 0;
-        }
-        return !(g->elowen_seals_restored & bit);
-    }
     if (g->location == LOCATION_FOREST && g->alder_quest_state == 1) {
-        int bit = g->level == 2 ? ALDER_WARDEN_STAGE_2 :
-            (g->level == 3 ? ALDER_WARDEN_STAGE_3 :
-            (g->level == 4 ? ALDER_WARDEN_STAGE_4 : 0));
+        int bit = g->level == 1 ? ALDER_RANGER_STAGE_1 :
+            (g->level == 2 ? ALDER_RANGER_STAGE_2 : 0);
         if (!bit) {
             return 0;
         }
@@ -974,7 +971,8 @@ Enemy *game_raise_grove_servant(GameState *g, int x, int y, int boss_index) {
     for (int i = 0; i < g->enemy_count; i++) {
         Enemy *dead = &g->enemies[i];
         if (!dead->active && !dead->is_boss && !dead->revived &&
-            ((dead->type >= ENEMY_PIXIE && dead->type <= ENEMY_FOREST_TROLL) || dead->type == ENEMY_DARK_ELF_RANGER)) {
+            ((dead->type >= ENEMY_PIXIE && dead->type <= ENEMY_FOREST_TROLL) ||
+            dead->type == ENEMY_DARK_ELF_RANGER || dead->type == ENEMY_DARK_ELF_GUARD)) {
             servant = dead;
             break;
         }
@@ -1131,10 +1129,6 @@ void enemies_spawn(GameState *g) {
         difficulty = g->level <= 2 ? g->level : 2 * (g->level - 1);
     }
     int num_enemies = g->location == LOCATION_DESERT ? sunscar_population(g->level) : 10 + difficulty;
-    if (g->location == LOCATION_SWAMP && g->level == SWAMP_RESCUE_LEVEL &&
-        g->innkeeper_quest_state == 1) {
-        num_enemies--;
-    }
     if (quest_group_pending(g)) {
         num_enemies -= 3;
     }
@@ -1201,6 +1195,7 @@ void enemies_spawn(GameState *g) {
     }
     if (g->location == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH) {
         lich_prepare_map(&g->map, g->enemies, g->enemy_count, g->player.x, g->player.y);
+        elowen_prepare(g);
     }
 
     int boss_level = g->location == LOCATION_FOREST ? FOREST_BOSS_LEVEL :
@@ -1362,25 +1357,28 @@ void enemies_spawn(GameState *g) {
                     (roll < 62 ? ENEMY_CAVE_TROLL :
                     (roll < 82 ? ENEMY_HOBGOBLIN_GUARD : ENEMY_GOBLIN_SHAMAN))));
         } else if (g->location == LOCATION_FOREST) {
-            if (level == 1)
+            if (level == 1) {
                 type = roll < 55 ? ENEMY_PIXIE : ENEMY_BLIGHTED_WOLF;
-            else if (level == 2)
+            } else if (level == 2) {
                 type = roll < 30 ? ENEMY_PIXIE :
                     (roll < 65 ? ENEMY_BLIGHTED_WOLF : ENEMY_GIANT_SPIDER);
-            else if (level == 3)
+            } else if (level == 3) {
                 type = roll < 20 ? ENEMY_PIXIE :
                     (roll < 45 ? ENEMY_BLIGHTED_WOLF :
                     (roll < 70 ? ENEMY_GIANT_SPIDER : ENEMY_DARK_ELF_ARCHER));
-            else if (level == 4)
+            } else if (level == 4) {
                 type = roll < 20 ? ENEMY_GIANT_SPIDER :
                     (roll < 45 ? ENEMY_DARK_ELF_ARCHER :
-                    (roll < 70 ? ENEMY_DARK_ELF_RANGER : ENEMY_FOREST_TROLL));
-            else
+                    (roll < 70 ? ENEMY_DARK_ELF_RANGER :
+                    (roll < 85 ? ENEMY_DARK_ELF_GUARD : ENEMY_FOREST_TROLL)));
+            } else {
                 type = roll < 15 ? ENEMY_PIXIE :
                     (roll < 30 ? ENEMY_BLIGHTED_WOLF :
                     (roll < 45 ? ENEMY_GIANT_SPIDER :
                     (roll < 65 ? ENEMY_DARK_ELF_ARCHER :
-                    (roll < 82 ? ENEMY_DARK_ELF_RANGER : ENEMY_FOREST_TROLL))));
+                    (roll < 82 ? ENEMY_DARK_ELF_RANGER :
+                    (roll < 91 ? ENEMY_DARK_ELF_GUARD : ENEMY_FOREST_TROLL)))));
+            }
         } else if (level == 1) {
             type = ENEMY_SKELETON;
         } else if (level == 2) {
@@ -1525,8 +1523,8 @@ void game_init(GameState *g) {
     g->forest_entry_town = LOCATION_TOWN;
     g->forest_portal_town = LOCATION_TOWN;
     g->max_mountain_level_reached = 1;
-    g->mountain_entry_town = LOCATION_DAWNMERE;
-    g->mountain_portal_town = LOCATION_DAWNMERE;
+    g->mountain_entry_town = LOCATION_TOWN;
+    g->mountain_portal_town = LOCATION_TOWN;
     g->max_coast_level_reached = 1;
     g->max_swamp_level_reached = 1;
     g->swamp_entry_town = LOCATION_TOWN2;
@@ -1553,7 +1551,7 @@ void game_init(GameState *g) {
     g->equipped_off_hand = -1;
     g->equipped_armor = -1;
     g->gold = 0;
-    g->labyrinth_entry_town = LOCATION_TOWN2;
+    g->labyrinth_entry_town = LOCATION_TOWN;
     g->rook_quest_state = 0;
     g->innkeeper_quest_state = 0;
     g->rook_labyrinth_switches = 0;
@@ -1582,8 +1580,13 @@ void game_init(GameState *g) {
     g->prism_sovereign_reward_pending = 0;
     g->sun_guardian_reward_state = 0;
     g->red_dragon_reward_state = 0;
-    g->elowen_quest_state = 0;
+    g->elowen_quest_state = ELOWEN_MISSING;
+    g->elowen_x = -1;
+    g->elowen_y = -1;
     g->elowen_seals_restored = 0;
+    g->aldric_party_state = ALDRIC_WAITING;
+    g->aldric_x = -1;
+    g->aldric_y = -1;
     g->dain_quest_state = 0;
     g->dain_map_fragments = 0;
     g->alder_quest_state = 0;
@@ -1604,7 +1607,7 @@ void game_init(GameState *g) {
     g->spice_skiff_quest_state = 0;
     g->spice_skiff_progress = 0;
     g->retired_coast_item_count = 0;
-    g->elderwood_entry_town = LOCATION_TOWN;
+    g->elderwood_entry_town = LOCATION_CASTLE;
     g->catacombs_entry_town = LOCATION_CASTLE;
     g->northern_portal_town = LOCATION_CASTLE;
     g->last_town_visited = LOCATION_TOWN;
@@ -2181,71 +2184,11 @@ static void set_temple_tile(GameState *g, int x, int y, TileType tile) {
     }
 }
 
-static int place_elowen_seal(GameState *g) {
-    if (g->location != LOCATION_DUNGEON || g->elowen_quest_state != 1) {
-        return 0;
-    }
-    int seal_index = -1;
-    if (g->level == 2) {
-        seal_index = 0;
-    } else if (g->level == 3) {
-        seal_index = 1;
-    } else if (g->level == 4) {
-        seal_index = 2;
-    }
-    if (seal_index < 0 || g->map.room_count < 2) {
-        return 0;
-    }
-    for (int y = 0; y < MAP_H; y++) {
-        for (int x = 0; x < MAP_W; x++) {
-            TileType tile = quest_tile(g, x, y);
-            if (tile == TILE_BROKEN_BURIAL_SEAL || tile == TILE_RESTORED_BURIAL_SEAL) {
-                return 0;
-            }
-        }
-    }
-    Room *room = &g->map.rooms[g->map.room_count / 2];
-    int x;
-    int y;
-    map_room_center(room, &x, &y);
-    TileType seal = (g->elowen_seals_restored & (1 << seal_index))
-        ? TILE_RESTORED_BURIAL_SEAL : TILE_BROKEN_BURIAL_SEAL;
-    for (int i = 0; i < g->floor_item_count; i++) {
-        FloorItem *item = &g->floor_items[i];
-        if (item->active && item->x == x && item->y == y) {
-            item->underlying_tile = seal;
-            return !(g->elowen_seals_restored & (1 << seal_index));
-        }
-    }
-    g->map.tiles[y][x] = seal;
-    return !(g->elowen_seals_restored & (1 << seal_index));
-}
-
-static void spawn_elowen_guardians(GameState *g) {
-    EnemyType primary = g->level == 2 ? ENEMY_SKELETON :
-        (g->level == 3 ? ENEMY_WRAITH : ENEMY_CRYPT_CONJURER);
-    EnemyType support = g->level == 2 ? ENEMY_CRYPT_BAT :
-        (g->level == 3 ? ENEMY_SKELETON : ENEMY_WRAITH);
-    for (int y = 0; y < MAP_H; y++) {
-        for (int x = 0; x < MAP_W; x++) {
-            if (quest_tile(g, x, y) != TILE_BROKEN_BURIAL_SEAL) {
-                continue;
-            }
-            spawn_quest_enemy_near(g, primary, x, y);
-            spawn_quest_enemy_near(g, support, x, y);
-            spawn_quest_enemy_near(g, support, x, y);
-            return;
-        }
-    }
-}
-
 static int alder_warden_bit(int level) {
-    if (level == 2) {
-        return ALDER_WARDEN_STAGE_2;
-    } else if (level == 3) {
-        return ALDER_WARDEN_STAGE_3;
-    } else if (level == 4) {
-        return ALDER_WARDEN_STAGE_4;
+    if (level == 1) {
+        return ALDER_RANGER_STAGE_1;
+    } else if (level == 2) {
+        return ALDER_RANGER_STAGE_2;
     }
     return 0;
 }
@@ -2296,21 +2239,7 @@ static int place_alder_warden(GameState *g) {
 }
 
 static void spawn_alder_guardian(GameState *g) {
-    if (g->location != LOCATION_FOREST) {
-        return;
-    }
-    EnemyType primary;
-    EnemyType support;
-    if (g->level == 2) {
-        primary = ENEMY_GIANT_SPIDER;
-        support = ENEMY_BLIGHTED_WOLF;
-    } else if (g->level == 3) {
-        primary = ENEMY_DARK_ELF_ARCHER;
-        support = ENEMY_PIXIE;
-    } else if (g->level == 4) {
-        primary = ENEMY_FOREST_TROLL;
-        support = ENEMY_BLIGHTED_WOLF;
-    } else {
+    if (g->location != LOCATION_FOREST || !alder_warden_bit(g->level)) {
         return;
     }
     for (int y = 0; y < MAP_H; y++) {
@@ -2318,9 +2247,12 @@ static void spawn_alder_guardian(GameState *g) {
             if (g->map.tiles[y][x] != TILE_FOREST_WARDEN) {
                 continue;
             }
-            spawn_quest_enemy_near(g, primary, x, y);
-            spawn_quest_enemy_near(g, support, x, y);
-            spawn_quest_enemy_near(g, support, x, y);
+            for (int i = 0; i < 3; i++) {
+                Enemy *captor = spawn_quest_enemy_near(g, ENEMY_GIANT_SPIDER, x, y);
+                if (captor) {
+                    snprintf(captor->name, sizeof(captor->name), "%s", ALDER_CAPTOR_NAME);
+                }
+            }
             return;
         }
     }
@@ -3138,6 +3070,7 @@ static void place_hunt_encounter(GameState *g) {
 }
 
 void game_refresh_quest_encounters(GameState *g) {
+    elowen_prepare(g);
     if (g->location == LOCATION_DUNGEON) {
         map_ensure_dungeon_connectivity(&g->map, g->level);
     }
@@ -3158,7 +3091,6 @@ void game_refresh_quest_encounters(GameState *g) {
     sun_guardian_restore_reward(g);
     red_dragon_restore_reward(g);
     catacombs_restore_reward(g);
-    int seal_placed = place_elowen_seal(g);
     place_desert_lamp(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
@@ -3172,9 +3104,6 @@ void game_refresh_quest_encounters(GameState *g) {
     place_watchfire_encounter(g);
     place_hunt_encounter(g);
     refresh_hunt_progress(g);
-    if (seal_placed) {
-        spawn_elowen_guardians(g);
-    }
     if (warden_placed) {
         spawn_alder_guardian(g);
     }
@@ -3223,46 +3152,11 @@ static void generate_active_level(GameState *g) {
         game_update_level_progress(g);
         return;
     }
-    int seal_placed = place_elowen_seal(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
     place_dragon_treasure(g);
-    int daughter_x = 0;
     place_desert_lamp(g);
-    int daughter_y = 0;
-    int daughter_placed = g->location == LOCATION_SWAMP && g->level == SWAMP_RESCUE_LEVEL &&
-        g->innkeeper_quest_state == 1;
-    if (daughter_placed) {
-        map_room_center(&g->map.rooms[7], &daughter_x, &daughter_y);
-        g->map.tiles[daughter_y][daughter_x] = TILE_SWAMP_DAUGHTER;
-    }
     enemies_spawn(g);
-    if (daughter_placed) {
-        for (int radius = 1; radius <= 4; radius++) {
-            int found = 0;
-            for (int y = daughter_y - radius; y <= daughter_y + radius && !found; y++) {
-                for (int x = daughter_x - radius; x <= daughter_x + radius; x++) {
-                    if (!enemy_tile_open(g, x, y)) {
-                        continue;
-                    }
-                    Enemy *captor = spawn_quest_enemy_at(g, ENEMY_VAMPIRE, x, y);
-                    if (captor) {
-                        snprintf(captor->name, sizeof(captor->name), "Vampire Captor");
-                        captor->max_hp += 20;
-                        captor->hp = captor->max_hp;
-                    }
-                    found = 1;
-                    break;
-                }
-            }
-            if (found) {
-                break;
-            }
-        }
-    }
-    if (seal_placed) {
-        spawn_elowen_guardians(g);
-    }
     if (warden_placed) {
         spawn_alder_guardian(g);
     }
@@ -3713,15 +3607,15 @@ static void enter_adventure(GameState *g, Location location) {
 }
 
 void game_enter_dungeon(GameState *g) {
-    g->dungeon_entry_town = g->location == LOCATION_DAWNMERE ? LOCATION_DAWNMERE : LOCATION_TOWN;
+    g->dungeon_entry_town = LOCATION_TOWN;
     game_repair_dungeon_maps(g);
     enter_adventure(g, LOCATION_DUNGEON);
 }
 
 void game_enter_forest(GameState *g) {
-    int from_stillbury = g->location == LOCATION_TOWN2;
+    int from_dawnmere = g->location == LOCATION_DAWNMERE;
     clear_floor_loot(g);
-    g->forest_entry_town = from_stillbury ? LOCATION_TOWN2 : LOCATION_TOWN;
+    g->forest_entry_town = from_dawnmere ? LOCATION_DAWNMERE : LOCATION_TOWN;
     g->location = LOCATION_FOREST;
     start_expedition(g, g->forest_cache, FOREST_DEPTH);
     g->level = 1;
@@ -3746,9 +3640,9 @@ void game_enter_forest(GameState *g) {
 }
 
 void game_enter_mountains(GameState *g) {
-    int from_ridgeshire = g->location == LOCATION_TOWN4;
+    int from_stillbury = g->location == LOCATION_TOWN2;
     clear_floor_loot(g);
-    g->mountain_entry_town = from_ridgeshire ? LOCATION_TOWN4 : LOCATION_DAWNMERE;
+    g->mountain_entry_town = from_stillbury ? LOCATION_TOWN2 : LOCATION_TOWN;
     g->location = LOCATION_MOUNTAINS;
     start_expedition(g, g->mountain_cache, MOUNTAIN_DEPTH);
     g->level = 1;
@@ -3918,8 +3812,8 @@ int game_harbor_unlocked(const GameState *g) {
 
 static void offer_rook_quest(GameState *g) {
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-        "Take the road to Stillbury through Oakhaven's west gate. The labyrinth is beside the Haunted Forest entrance. "
-        "Recover my ivory rook from the Minotaur, then return to Oakhaven's Tavern.");
+        "Take the road to Dawnmere through Oakhaven's east gate. The labyrinth is beside the Haunted Forest entrance. "
+        "Recover my ivory rook from the Minotaur, then return to Oakhaven's Inn.");
 }
 
 void game_refresh_debug_passages(GameState *g) {
@@ -3989,12 +3883,20 @@ void game_enter_tavern(GameState *g) {
     int spawn_y;
     g->location = LOCATION_TAVERN;
     map_generate_tavern(&g->map, &spawn_x, &spawn_y);
+    if (g->defeated_bosses & (1 << LOCATION_DUNGEON)) {
+        g->map.tiles[ALDER_OAKHAVEN_Y][ALDER_OAKHAVEN_X] = TILE_NPC_ALDER;
+        g->map.tiles[DAIN_OAKHAVEN_Y][DAIN_OAKHAVEN_X] = TILE_NPC_DAIN;
+    }
+    if (g->elowen_quest_state == ELOWEN_HOME) {
+        map_place_tavern_elowen(&g->map);
+    }
     g->player.x = spawn_x;
     g->player.y = spawn_y;
+    aldric_place(g);
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
-    push_message(g, "You enter the Lantern & Cask.");
+    push_message(g, "You enter Oakhaven's Inn.");
 }
 
 void game_leave_tavern(GameState *g) {
@@ -4006,6 +3908,7 @@ void game_leave_tavern(GameState *g) {
         g->defeated_bosses & (1 << LOCATION_FOREST));
     map_set_town4_road(&g->map,
         g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
+    aldric_place(g);
     g->player.x = TOWN_TAVERN_DOOR_X;
     g->player.y = TOWN_TAVERN_DOOR_Y + 1;
     g->enemy_count = 0;
@@ -4076,6 +3979,7 @@ void game_leave_forest_road(GameState *g, Location destination) {
             g->defeated_bosses & (1 << LOCATION_FOREST));
         map_set_town4_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
+        aldric_place(g);
             g->player.x = 1;
         g->player.y = 12;
     }
@@ -4272,7 +4176,7 @@ void game_enter_inn(GameState *g) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
-    push_message(g, "You enter the inn.");
+    push_message(g, "You enter Stillbury's Tavern.");
 }
 
 void game_enter_guild(GameState *g) {
@@ -4747,8 +4651,8 @@ void game_talk_to_frost_survivor(GameState *g, int x, int y) {
         g->frostfell_quest_state = 2;
         set_quest_object_tile(g, x, y, TILE_FROST_FLOOR);
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "The journal shows the route! I can make my own way home now. Tell Brenna in Stillbury's Inn that the expedition's work is safe.");
-        push_message(g, "Surveyor Fen heads home. Return to Quartermaster Brenna in Stillbury's Inn.");
+            "The journal shows the route! I can make my own way home now. Tell Brenna in Stillbury's Tavern that the expedition's work is safe.");
+        push_message(g, "Surveyor Fen heads home. Return to Quartermaster Brenna in Stillbury's Tavern.");
     }
 }
 
@@ -4861,7 +4765,7 @@ void game_leave_inn(GameState *g) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
-    push_message(g, "You step out of the inn.");
+    push_message(g, "You step out of the tavern.");
 }
 
 static void spawn_labyrinth_enemies(GameState *g) {
@@ -4946,7 +4850,7 @@ int game_labyrinth_is_open(const GameState *g) {
 
 void game_enter_labyrinth(GameState *g) {
     const TownApproach *route = approach_route(g);
-    g->labyrinth_entry_town = route && route->area == LOCATION_FOREST ? route->town : LOCATION_TOWN2;
+    g->labyrinth_entry_town = route && route->area == LOCATION_FOREST ? route->town : LOCATION_TOWN;
     g->approach_route = -1;
     g->location = LOCATION_LABYRINTH;
     start_expedition(g, g->labyrinth_cache, LABYRINTH_DEPTH);
@@ -5083,7 +4987,7 @@ int game_interact_labyrinth(GameState *g) {
             g->rook_quest_state = 2;
             g->map.tiles[y][x] = TILE_LABYRINTH_FLOOR;
             push_message(g, "You recover Rook's stolen ivory rook.");
-            push_message(g, "Return it to Rook in Oakhaven's Tavern.");
+            push_message(g, "Return it to Rook in Oakhaven's Inn.");
             return 1;
         }
     }
@@ -5483,10 +5387,11 @@ static void return_to_town(GameState *g, Location destination) {
             g->defeated_bosses & (1 << LOCATION_FOREST));
         map_set_town4_road(&g->map,
             g->defeated_bosses & (1 << LOCATION_MOUNTAINS));
+        aldric_place(g);
     }
     if (destination == LOCATION_DAWNMERE) {
-        g->player.x = returning_from == LOCATION_MOUNTAINS ? 20 : 1;
-        g->player.y = returning_from == LOCATION_MOUNTAINS ? 1 : 12;
+        g->player.x = 1;
+        g->player.y = 12;
     } else if (destination == LOCATION_CASTLE) {
         g->player.x = CROWNROAD_X;
         g->player.y = TOWN_H - 2;
@@ -5522,11 +5427,14 @@ static void return_to_town(GameState *g, Location destination) {
         g->player.x = 1;
         g->player.y = 12;
     } else if (returning_from == LOCATION_FOREST) {
+        g->player.x = TOWN_W - 2;
+        g->player.y = 12;
+    } else if (returning_from == LOCATION_MOUNTAINS) {
         g->player.x = destination == LOCATION_TOWN2 ? TOWN_W - 2 : 1;
         g->player.y = 12;
     } else if (returning_from == LOCATION_DUNGEON) {
-        g->player.x = TOWN_W - 2;
-        g->player.y = 12;
+        g->player.x = 20;
+        g->player.y = TOWN_H - 2;
     } else if (returning_from == LOCATION_COAST) {
         g->player.x = 20; g->player.y = TOWN_H - 2;
     } else if (returning_from == LOCATION_TEMPLE) {
@@ -5550,7 +5458,7 @@ static void enter_return_approach(GameState *g, Location area) {
         if (route->area != area || route->town != g->location) {
             continue;
         }
-        if (approach_enter(g, route->gate_x, route->gate_y)) {
+        if (approach_enter_region(g, i)) {
             int dx = g->player.last_dx;
             int dy = g->player.last_dy;
             g->player.x = g->map.stairs_down_x - dx;
@@ -5635,21 +5543,21 @@ void game_return_to_approach(GameState *g) {
         g->player.y = g->map.stairs_up_y;
         g->player.last_dx = 0;
         g->player.last_dy = 1;
-        push_message(g, "The road is open: west to Stillbury, east to Oakhaven.");
+        push_message(g, "The road is open: west to Oakhaven, east to Dawnmere.");
     }
     if (mountain_exit && g->location == LOCATION_APPROACH) {
-        g->player.x = g->map.stairs_up_x;
-        g->player.y = g->map.stairs_down_y + 1;
-        g->player.last_dx = -1;
-        g->player.last_dy = 0;
-        push_message(g, "The road is open: north to Ridgeshire, south to Dawnmere.");
+        g->player.x = g->map.stairs_down_x;
+        g->player.y = g->map.stairs_up_y;
+        g->player.last_dx = 0;
+        g->player.last_dy = 1;
+        push_message(g, "The road is open: west to Stillbury, east to Oakhaven.");
     }
     if (lich_exit && g->location == LOCATION_APPROACH) {
         g->player.x = g->map.stairs_down_x;
         g->player.y = g->map.stairs_down_y + 2;
         g->player.last_dx = 0;
         g->player.last_dy = 1;
-        push_message(g, "The road is open: west to Oakhaven, east to Dawnmere.");
+        push_message(g, "The dungeon path returns north to Oakhaven.");
     }
 }
 
@@ -5746,9 +5654,9 @@ void game_leave_forest(GameState *g, Location town, int shortcut) {
     (void)shortcut;
     int from_forest = g->location == LOCATION_FOREST;
     return_to_town(g, town);
-    g->player.x = town == LOCATION_TOWN2 ? TOWN_W - 2 : 1;
+    g->player.x = town == LOCATION_DAWNMERE ? 1 : TOWN_W - 2;
     g->player.y = 12;
-    push_message(g, town == LOCATION_TOWN2 ? "You arrive in Stillbury." : "You arrive in OakHaven.");
+    push_message(g, town == LOCATION_DAWNMERE ? "You arrive in Dawnmere." : "You arrive in Oakhaven.");
     if (from_forest) {
         enter_return_approach(g, LOCATION_FOREST);
     }
@@ -5758,9 +5666,9 @@ void game_leave_mountains(GameState *g, Location town, int shortcut) {
     (void)shortcut;
     int from_mountains = g->location == LOCATION_MOUNTAINS;
     return_to_town(g, town);
-    g->player.x = 20;
-    g->player.y = town == LOCATION_TOWN4 ? TOWN_H - 2 : 1;
-    push_message(g, town == LOCATION_TOWN4 ? "You arrive in Ridgeshire." : "You arrive in OakHaven.");
+    g->player.x = town == LOCATION_TOWN2 ? TOWN_W - 2 : 1;
+    g->player.y = 12;
+    push_message(g, town == LOCATION_TOWN2 ? "You arrive in Stillbury." : "You arrive in Oakhaven.");
     if (from_mountains) {
         enter_return_approach(g, LOCATION_MOUNTAINS);
     }
@@ -6020,24 +5928,25 @@ void game_close_town_portal(GameState *g) {
 
 
 void game_talk_to_bram(GameState *g) {
+    if (g->location != LOCATION_TAVERN ||
+        abs(g->player.x - BRAM_INN_X) > 1 || abs(g->player.y - BRAM_INN_Y) > 1) {
+        return;
+    }
     g->dialogue_active = 1;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Bram");
-    g->dialogue_x = TOWN_BRAM_X;
-    g->dialogue_y = TOWN_BRAM_Y;
-    const char *warning = (g->defeated_bosses & (1 << LOCATION_DUNGEON))
-        ? "Oakhaven is safer now that the Lich King is defeated."
-        : "The Lich King in the dungeon east of Oakhaven raises undead and endangers our town.";
-    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-        "%s The blacksmith sells weapons and armor; the alchemist sells potions and scrolls for your journey.", warning);
-}
-
-void game_talk_to_aldric(GameState *g) {
-    g->dialogue_active = 1;
-    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Veteran Aldric");
-    g->dialogue_x = TOWN_ALDRIC_X;
-    g->dialogue_y = TOWN_ALDRIC_Y;
-    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-        "Clear the dungeon and Sunken Coast before harder regions. Revisit cleared areas to train. Rowan's docks are outside Oakhaven's south gate beside the Sunken Coast entrance.");
+    g->dialogue_x = BRAM_INN_X;
+    g->dialogue_y = BRAM_INN_Y;
+    if (g->elowen_quest_state == ELOWEN_RESCUED) {
+        elowen_home(g);
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Elowen! You brought my daughter home. Please take 80 gold with my thanks. She will stay here at the Inn; speak to her about what she overheard in the dungeon.");
+    } else if (g->elowen_quest_state == ELOWEN_HOME) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Thank you for saving Elowen. She is safe here in Oakhaven's Inn. Speak to her about what she heard the Lich King say.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Welcome to Oakhaven's Inn. The Lich King in the dungeon south of Oakhaven raises undead and endangers our town. He holds my daughter Elowen. Please defeat him and bring her home. The blacksmith sells weapons and armor; the alchemist sells potions and scrolls for your journey.");
+    }
 }
 
 void game_talk_to_cain(GameState *g) {
@@ -6045,8 +5954,8 @@ void game_talk_to_cain(GameState *g) {
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Cain");
     g->dialogue_x = TOWN_CAIN_X;
     g->dialogue_y = TOWN_CAIN_Y;
-    const char *warning = "Ancient woods lie north, beasts west, undead east, and sea horrors south.";
-    const char *recommendation = "Ask Elowen in Oakhaven's Tavern about The Broken Seals.";
+    const char *warning = "Rapids block the north. Goblin Mountains lie west, Haunted Forest east, and the Lich King's dungeon south.";
+    const char *recommendation = "Ask Bram at Oakhaven's Inn about his missing daughter.";
     if (g->cain_scroll_given) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "%s Read your scroll to learn Return to Town. Use it when danger grows!", warning);
@@ -6261,6 +6170,19 @@ static void prepare_quest_expedition(GameState *g, Location location) {
     }
 }
 
+static void update_oakhaven_boss_quests(GameState *g) {
+    if (g->alder_quest_state >= REGIONAL_CHAIN_BOSS_OFFERED &&
+        g->alder_quest_state < REGIONAL_CHAIN_COMPLETE && (g->defeated_bosses & (1 << LOCATION_FOREST))) {
+        g->alder_quest_state = REGIONAL_CHAIN_COMPLETE;
+        push_message(g, "Completed: Defeat the Necromancer. Continue east to Dawnmere to investigate the evil's source.");
+    }
+    if (g->dain_quest_state >= REGIONAL_CHAIN_BOSS_OFFERED &&
+        g->dain_quest_state < REGIONAL_CHAIN_COMPLETE && (g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
+        g->dain_quest_state = REGIONAL_CHAIN_COMPLETE;
+        push_message(g, "Completed: Defeat the Goblin King. Continue west to Stillbury to investigate the evil's source.");
+    }
+}
+
 typedef struct {
     const char *speaker;
     Location location;
@@ -6282,12 +6204,13 @@ static const QuestOffer quest_offers[] = {
         "Assigned: The Stolen Heartseed. Find Dark Elf orders in Elderwood 2 and the bound grove in Elderwood 4."},
     {"Huntmaster Selene", LOCATION_GUILD, offsetof(GameState, hunt_quest_state), 0, "Assigned: The Three Great Hunts. See your quest journal."},
     {"Marshal Veyra", LOCATION_TOWN_HALL, offsetof(GameState, watchfire_quest_state), 0, "Assigned: Watchfires of Ridgeshire. See your quest journal."},
-    {"Elowen", LOCATION_TAVERN, offsetof(GameState, elowen_quest_state), 0, "Quest assigned: The Broken Seals."},
-    {"Dain", LOCATION_ALEHOUSE, offsetof(GameState, dain_quest_state), 0, "Assigned: Recover the Treasure Map."},
-    {"Alder", LOCATION_INN, offsetof(GameState, alder_quest_state), 0, "Assigned: The Lost Wardens."},
+    {"Bram", LOCATION_TAVERN, offsetof(GameState, elowen_quest_state), ELOWEN_MISSING, "Assigned: Save Elowen. Defeat the Lich King in Oakhaven's dungeon."},
+    {"Dain", LOCATION_TAVERN, offsetof(GameState, dain_quest_state), 0, "Assigned: Recover the Treasure Map."},
+    {"Alder", LOCATION_TAVERN, offsetof(GameState, alder_quest_state), 0, "Assigned: The Lost Rangers."},
+    {"Dain", LOCATION_TAVERN, offsetof(GameState, dain_quest_state), REGIONAL_CHAIN_BOSS_OFFERED, "Assigned: Defeat the Goblin King."},
+    {"Alder", LOCATION_TAVERN, offsetof(GameState, alder_quest_state), REGIONAL_CHAIN_BOSS_OFFERED, "Assigned: Defeat the Necromancer."},
     {"Mara", LOCATION_TAVERN, offsetof(GameState, mara_quest_state), 0, "Assigned: Relight the Drowned Beacons."},
     {"Rook", LOCATION_TAVERN, offsetof(GameState, rook_quest_state), 0, "Assigned: The Ivory Rook."},
-    {"Bram", LOCATION_INN, offsetof(GameState, innkeeper_quest_state), 0, "Assigned: Bring Mira Home."},
     {"Zara", LOCATION_INN, offsetof(GameState, sunscar_lamp_quest_state), 0, "Assigned: The Lost Magic Lamp."},
     {"Ilya", LOCATION_TAVERN, offsetof(GameState, dragon_treasure_quest_state), 0, "Assigned: The Dragon's Hoard."},
     {"Nahla", LOCATION_ISLAND, offsetof(GameState, temple_treasure_state), 0, "Quest assigned: The Buried Sun."},
@@ -6310,6 +6233,11 @@ static const QuestOffer *current_quest_offer(const GameState *g) {
     for (size_t i = 0; i < sizeof(quest_offers) / sizeof(quest_offers[0]); i++) {
         const QuestOffer *offer = &quest_offers[i];
         const int *state = (const int *)((const char *)g + offer->state_offset);
+        if ((offer->state_offset == offsetof(GameState, dain_quest_state) ||
+            offer->state_offset == offsetof(GameState, alder_quest_state)) &&
+            !(g->defeated_bosses & (1 << LOCATION_DUNGEON))) {
+            continue;
+        }
         if (g->location == offer->location && *state == offer->offered_state &&
             strcmp(g->dialogue_speaker, offer->speaker) == 0) {
             return offer;
@@ -6328,7 +6256,7 @@ int game_active_quest_count(const GameState *g) {
         const QuestOffer *offer = &quest_offers[i];
         const int *state = (const int *)((const char *)g + offer->state_offset);
         // Tomas's escape is essential; finished objectives free the slot before reward collection.
-        if (offer->state_offset != offsetof(GameState, jail_quest_state) && *state == 1) {
+        if (offer->state_offset != offsetof(GameState, jail_quest_state) && *state == offer->offered_state + 1) {
             count++;
         }
     }
@@ -6375,20 +6303,13 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
         spice_skiff_accept(g);
     } else if (state == &g->heartseed_quest_state) {
         heartseed_accept(g);
-    } else if (state == &g->elowen_quest_state) {
-        g->elowen_seals_restored = 0;
-        prepare_quest_expedition(g, LOCATION_DUNGEON);
-    } else if (state == &g->dain_quest_state) {
+    } else if (state == &g->dain_quest_state && offer->offered_state == 0) {
         g->dain_map_fragments = 0;
-        prepare_quest_expedition(g, LOCATION_MOUNTAINS);
-    } else if (state == &g->alder_quest_state) {
+    } else if (state == &g->alder_quest_state && offer->offered_state == 0) {
         g->alder_wardens_rescued = 0;
-        prepare_quest_expedition(g, LOCATION_FOREST);
     } else if (state == &g->mara_quest_state) {
         g->mara_beacons_lit = 0;
         prepare_quest_expedition(g, LOCATION_COAST);
-    } else if (state == &g->innkeeper_quest_state) {
-        prepare_quest_expedition(g, LOCATION_SWAMP);
     } else if (state == &g->dragon_treasure_quest_state) {
         prepare_quest_expedition(g, LOCATION_DRAGONSPINE);
     } else if (state == &g->rook_quest_state) {
@@ -6399,8 +6320,9 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
         g->map.tiles[JAIL_HATCH_Y][JAIL_HATCH_X] = TILE_JAIL_HATCH;
     }
     push_message(g, offer->message);
+    update_oakhaven_boss_quests(g);
     if (state == &g->rook_quest_state) {
-        push_message(g, "The labyrinth on the road to Stillbury is now open.");
+        push_message(g, "The labyrinth on the road to Dawnmere is now open.");
     }
     return 1;
 }
@@ -6451,7 +6373,7 @@ void game_talk_to_guild_seeker(GameState *g) {
     } else if (g->sunscar_lamp_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "The magic lamp lies in the last clearing of Sunscar Wastes level 4. "
-            "Stand on it and press P, then return it to me at the Inn in Stillbury.");
+            "Stand on it and press P, then return it to me at the Tavern in Stillbury.");
     } else if (g->sunscar_lamp_quest_state == 2) {
         g->sunscar_lamp_quest_state = 3;
         g->gold += 80;
@@ -6473,7 +6395,7 @@ void game_collect_desert_lamp(GameState *g) {
     }
     g->map.tiles[g->player.y][g->player.x] = TILE_DESERT_FLOOR;
     g->sunscar_lamp_quest_state = 2;
-    push_message(g, "Magic lamp recovered. Return to Zara in Stillbury's Inn.");
+    push_message(g, "Magic lamp recovered. Return to Zara in Stillbury's Tavern.");
 }
 
 void game_talk_to_dragon_seeker(GameState *g) {
@@ -6486,12 +6408,12 @@ void game_talk_to_dragon_seeker(GameState *g) {
     g->dialogue_y = ILYA_TAVERN_Y;
     if (g->dragon_treasure_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Travel east through the dungeon road to Dawnmere, then north through the mountains to Ridgeshire and Dragonspine. "
-            "Bring its fifth-stage golden goblet back here to Oakhaven's Tavern for a Potion of Strength.");
+            "Travel west through the Goblin Mountains to Stillbury. The northern roads beyond lead through Rosemoor and the castle roads to Ridgeshire and Dragonspine. "
+            "Bring its fifth-stage golden goblet back here to Oakhaven's Inn for a Potion of Strength.");
     } else if (g->dragon_treasure_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Find the golden goblet in the dragon's hoard on Dragonspine's "
-            "fifth stage. Stand on it and press A, then return to me in Oakhaven's Tavern.");
+            "fifth stage. Stand on it and press A, then return to me in Oakhaven's Inn.");
     } else if (g->dragon_treasure_quest_state == 2) {
         if (g->inventory_count >= MAX_INVENTORY) {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
@@ -6520,106 +6442,41 @@ void game_collect_dragon_treasure(GameState *g) {
     }
     g->map.tiles[g->player.y][g->player.x] = TILE_DRAGON_HOARD;
     g->dragon_treasure_quest_state = 2;
-    push_message(g, "Golden goblet recovered. Return to Ilya in Oakhaven's Tavern.");
-}
-
-void game_talk_to_elowen(GameState *g) {
-    if (g->location != LOCATION_TAVERN || abs(g->player.x - ELOWEN_TAVERN_X) > 1 || abs(g->player.y - ELOWEN_TAVERN_Y) > 1) {
-        return;
-    }
-    g->dialogue_active = 1;
-    strncpy(g->dialogue_speaker, "Elowen", MAX_SPEAKER_LEN - 1);
-    g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
-    g->dialogue_x = ELOWEN_TAVERN_X;
-    g->dialogue_y = ELOWEN_TAVERN_Y;
-    if (g->elowen_quest_state == 0) {
-        strncpy(g->dialogue_text,
-            "The dead gather around shattered burial seals on floors 2, 3, and 4 of Oakhaven's dungeon. Restore each seal, then return to me here in Oakhaven's Tavern.",
-            MAX_DIALOGUE_LEN - 1);
-        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-        return;
-    }
-    if (g->elowen_quest_state == 1) {
-        int restored = 0;
-        for (int i = 0; i < 3; i++) {
-            if (g->elowen_seals_restored & (1 << i)) {
-                restored++;
-            }
-        }
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have restored %d of 3 burial seals in Oakhaven's dungeon. Return to me in Oakhaven's Tavern when all three are whole.",
-            restored);
-        char status[MAX_MESSAGE_LEN];
-        snprintf(status, sizeof(status), "Quest progress: %d/3 seals.",
-            restored);
-        push_message(g, status);
-        return;
-    }
-    if (g->elowen_quest_state == 2) {
-        g->elowen_quest_state = 3;
-        g->gold += 40;
-        g->score += 300;
-        strncpy(g->dialogue_text,
-            "The crypt is bound once more. Its dead may finally sleep. Take this gold with my gratitude.",
-            MAX_DIALOGUE_LEN - 1);
-        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-        push_message(g, "Quest complete: The Broken Seals.");
-        return;
-    }
-    strncpy(g->dialogue_text, "You have my gratitude, adventurer.",
-        MAX_DIALOGUE_LEN - 1);
-    g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-    push_message(g, "Elowen's quest is already complete.");
+    push_message(g, "Golden goblet recovered. Return to Ilya in Oakhaven's Inn.");
 }
 
 void game_talk_to_dain(GameState *g) {
-    if (g->location != LOCATION_ALEHOUSE || abs(g->player.x - DAIN_ALEHOUSE_X) > 1 || abs(g->player.y - DAIN_ALEHOUSE_Y) > 1) {
+    if (g->location != LOCATION_TAVERN || !(g->defeated_bosses & (1 << LOCATION_DUNGEON)) ||
+        abs(g->player.x - DAIN_OAKHAVEN_X) > 1 || abs(g->player.y - DAIN_OAKHAVEN_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
-    strncpy(g->dialogue_speaker, "Dain", MAX_SPEAKER_LEN - 1);
-    g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
-    g->dialogue_x = DAIN_ALEHOUSE_X;
-    g->dialogue_y = DAIN_ALEHOUSE_Y;
-    if (g->dain_quest_state == 0) {
-        strncpy(g->dialogue_text,
-            "Take Dawnmere's north gate into the Goblin Mountains. Map Bearers hold fragments on stages 2, 3, and 4 before the Goblin King. Return to Dawnmere's Alehouse.",
-            MAX_DIALOGUE_LEN - 1);
-        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-        return;
-    }
-    if (g->dain_quest_state == 1) {
-        int defeated = 0;
-        for (int bit = 0; bit < 3; bit++) {
-            if (g->dain_map_fragments & (1 << bit)) {
-                defeated++;
-            }
-        }
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have %d of 3 map fragments. Find Map Bearers on mountain stages 2, 3, and 4. The road leads north to Ridgeshire and south here. Return the fragments to Dawnmere's Alehouse.",
-            defeated);
-        char status[MAX_MESSAGE_LEN];
-        snprintf(status, sizeof(status),
-            "Quest progress: %d/3 map fragments.", defeated);
-        push_message(g, status);
-        return;
-    }
-    if (g->dain_quest_state == 2) {
-        g->dain_quest_state = 3;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Dain");
+    g->dialogue_x = DAIN_OAKHAVEN_X;
+    g->dialogue_y = DAIN_OAKHAVEN_Y;
+    int turned_in = g->dain_quest_state == 2;
+    if (turned_in) {
+        g->dain_quest_state = REGIONAL_CHAIN_BOSS_OFFERED;
         g->gold += 60;
         g->score += 400;
-        strncpy(g->dialogue_text,
-            "The treasure map is whole again. It reveals a dwarven hoard the goblins never learned how to find.",
-            MAX_DIALOGUE_LEN - 1);
-        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-        push_message(g, "Completed: Recover the Treasure Map.");
-        return;
+        push_message(g, "Completed: Recover the Treasure Map. 60 gold awarded.");
     }
-    strncpy(g->dialogue_text,
-        "The restored map still points toward riches hidden beneath the mountains.",
-        MAX_DIALOGUE_LEN - 1);
-    g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-    push_message(g, "Dain's quest is already complete.");
+    update_oakhaven_boss_quests(g);
+    if (g->dain_quest_state == 0) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "You defeated the Lich King, but goblin raids still threaten the western road. Map Bearers in Goblin Mountains 1 and 2 each carry half of a treasure map. Recover both halves and bring them to me here at Oakhaven's Inn.");
+    } else if (g->dain_quest_state == 1) {
+        int halves = !!(g->dain_map_fragments & DAIN_FRAGMENT_ARCHER) + !!(g->dain_map_fragments & DAIN_FRAGMENT_WARCHIEF);
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "You have %d of 2 map halves. Find the Archer Map Bearer in Mountains 1 and the Warchief Map Bearer in Mountains 2. Bring both halves back to me at Oakhaven's Inn.", halves);
+    } else if (g->dain_quest_state == REGIONAL_CHAIN_COMPLETE) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The map is whole and the Goblin King is defeated. Follow the mountain road west to Stillbury. Continue your adventure there to uncover why these evil creatures descended on the kingdom.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "%sDefeat the Goblin King to rid the mountains of his rule. His fall opens the road west to Stillbury, where you can continue investigating why these evil creatures descended on the kingdom.",
+            turned_in ? "The map is whole! Take 60 gold with my thanks. " : "The map is whole, but the Goblin King still rules. ");
+    }
 }
 
 void game_record_dain_kill(GameState *g, EnemyType type) {
@@ -6628,75 +6485,56 @@ void game_record_dain_kill(GameState *g, EnemyType type) {
     }
     int target = 0;
     const char *status = NULL;
-    if (type == ENEMY_GOBLIN_ARCHER) {
+    if (type == ENEMY_GOBLIN_ARCHER && g->level == 1) {
         target = DAIN_FRAGMENT_ARCHER;
-        status = "Map fragment recovered from Archer.";
-    } else if (type == ENEMY_GOBLIN_WARCHIEF) {
+        status = "First map half recovered from Archer.";
+    } else if (type == ENEMY_GOBLIN_WARCHIEF && g->level == 2) {
         target = DAIN_FRAGMENT_WARCHIEF;
-        status = "Map fragment recovered from Warchief.";
-    } else if (type == ENEMY_GOBLIN_SHAMAN) {
-        target = DAIN_FRAGMENT_SHAMAN;
-        status = "Map fragment recovered from Shaman.";
+        status = "Second map half recovered from Warchief.";
     }
     if (!target || (g->dain_map_fragments & target)) {
         return;
     }
     g->dain_map_fragments |= target;
     push_message(g, status);
-    if ((g->dain_map_fragments & 7) == 7) {
+    if ((g->dain_map_fragments & DAIN_MAP_COMPLETE) == DAIN_MAP_COMPLETE) {
         g->dain_quest_state = 2;
-        push_message(g, "Treasure map complete. Return to Dain in Dawnmere's Alehouse.");
+        push_message(g, "Treasure map complete. Return to Dain in Oakhaven's Inn.");
     }
 }
 
 void game_talk_to_alder(GameState *g) {
-    if (g->location != LOCATION_INN || abs(g->player.x - ALDER_INN_X) > 1 || abs(g->player.y - ALDER_INN_Y) > 1) {
+    if (g->location != LOCATION_TAVERN || !(g->defeated_bosses & (1 << LOCATION_DUNGEON)) ||
+        abs(g->player.x - ALDER_OAKHAVEN_X) > 1 || abs(g->player.y - ALDER_OAKHAVEN_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
-    strncpy(g->dialogue_speaker, "Alder", MAX_SPEAKER_LEN - 1);
-    g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
-    g->dialogue_x = ALDER_INN_X;
-    g->dialogue_y = ALDER_INN_Y;
-    if (g->alder_quest_state == 0) {
-        strncpy(g->dialogue_text,
-            "Enter the forest through Stillbury's east gate. Three wardens are trapped on levels 2, 3, and 4 before the Necromancer's grove. Rescue them, then return here to Stillbury's Inn.",
-            MAX_DIALOGUE_LEN - 1);
-        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-        return;
-    }
-    if (g->alder_quest_state == 1) {
-        int rescued = 0;
-        for (int bit = 0; bit < 3; bit++) {
-            if (g->alder_wardens_rescued & (1 << bit)) {
-                rescued++;
-            }
-        }
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have rescued %d of my 3 wardens. Search forest levels 2, 3, and 4 from Stillbury. After the Necromancer, exit onto the road west to Stillbury or east to Oakhaven.",
-            rescued);
-        char status[MAX_MESSAGE_LEN];
-        snprintf(status, sizeof(status), "Quest progress: %d/3 wardens.",
-            rescued);
-        push_message(g, status);
-        return;
-    }
-    if (g->alder_quest_state == 2) {
-        g->alder_quest_state = 3;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Alder");
+    g->dialogue_x = ALDER_OAKHAVEN_X;
+    g->dialogue_y = ALDER_OAKHAVEN_Y;
+    int turned_in = g->alder_quest_state == 2;
+    if (turned_in) {
+        g->alder_quest_state = REGIONAL_CHAIN_BOSS_OFFERED;
         g->gold += 70;
         g->score += 500;
-        strncpy(g->dialogue_text,
-            "All three returned safely. The forest has taken enough from us. Accept this reward with an old ranger's gratitude.",
-            MAX_DIALOGUE_LEN - 1);
-        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-        push_message(g, "Completed: The Lost Wardens.");
-        return;
+        push_message(g, "Completed: The Lost Rangers. 70 gold awarded.");
     }
-    strncpy(g->dialogue_text,
-        "My wardens are home, and the paths feel less lonely for it.",
-        MAX_DIALOGUE_LEN - 1);
-    g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-    push_message(g, "Alder's quest is already complete.");
+    update_oakhaven_boss_quests(g);
+    if (g->alder_quest_state == 0) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The Lich King has fallen, but two of my rangers are trapped by spiders in the Haunted Forest east of Oakhaven. Free one ranger on Forest 1 and the other on Forest 2, then return to me here at Oakhaven's Inn.");
+    } else if (g->alder_quest_state == 1) {
+        int rescued = !!(g->alder_wardens_rescued & ALDER_RANGER_STAGE_1) + !!(g->alder_wardens_rescued & ALDER_RANGER_STAGE_2);
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "You have rescued %d of my 2 rangers. Defeat the spider captors in Forest 1 and 2, then speak to each ranger. Return to me at Oakhaven's Inn when both are safe.", rescued);
+    } else if (g->alder_quest_state == REGIONAL_CHAIN_COMPLETE) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "My rangers are safe and the Necromancer is defeated. Follow the forest road east to Dawnmere. Continue your adventure there to uncover why these evil creatures descended on the kingdom.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "%sRid the Haunted Forest of the Necromancer. His fall opens the road east to Dawnmere, where you can continue investigating why these evil creatures descended on the kingdom.",
+            turned_in ? "Both rangers are home! Take 70 gold with my thanks. " : "My rangers are safe, but the Necromancer still blights the forest. ");
+    }
 }
 
 void game_rescue_forest_warden(GameState *g, int x, int y) {
@@ -6709,39 +6547,34 @@ void game_rescue_forest_warden(GameState *g, int x, int y) {
     if (!bit || (g->alder_wardens_rescued & bit)) {
         return;
     }
+    for (int i = 0; i < g->enemy_count; i++) {
+        if (g->enemies[i].active && g->enemies[i].type == ENEMY_GIANT_SPIDER &&
+            strcmp(g->enemies[i].name, ALDER_CAPTOR_NAME) == 0) {
+            push_message(g, "Defeat this ranger's spider captors first.");
+            return;
+        }
+    }
     g->alder_wardens_rescued |= bit;
     g->map.tiles[y][x] = TILE_FOREST_FLOOR;
     g->dialogue_active = 1;
-    strncpy(g->dialogue_speaker, "Forest Warden", MAX_SPEAKER_LEN - 1);
+    strncpy(g->dialogue_speaker, "Forest Ranger", MAX_SPEAKER_LEN - 1);
     g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
     g->dialogue_x = x;
     g->dialogue_y = y;
-    if (g->level == 2) {
-        strncpy(g->dialogue_text,
-            "You cut through the spider web binding me. I can follow your trail home from here.",
-            MAX_DIALOGUE_LEN - 1);
-    } else if (g->level == 3) {
-        strncpy(g->dialogue_text,
-            "The Dark Elves thought this grove would be my prison. I will make my way back to Alder.",
-            MAX_DIALOGUE_LEN - 1);
-    } else {
-        strncpy(g->dialogue_text,
-            "Those cursed roots were pulling me beneath the earth. You reached me just in time.",
-            MAX_DIALOGUE_LEN - 1);
-    }
-    g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
+    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+        "You freed me from the spiders' web. I can make my own way back to Alder at Oakhaven's Inn. Thank you!");
     int rescued = 0;
-    for (int index = 0; index < 3; index++) {
+    for (int index = 0; index < 2; index++) {
         if (g->alder_wardens_rescued & (1 << index)) {
             rescued++;
         }
     }
     char status[MAX_MESSAGE_LEN];
-    snprintf(status, sizeof(status), "Warden rescued: %d/3.", rescued);
+    snprintf(status, sizeof(status), "Ranger rescued: %d/2.", rescued);
     push_message(g, status);
-    if ((g->alder_wardens_rescued & 7) == 7) {
+    if ((g->alder_wardens_rescued & ALDER_RESCUE_COMPLETE) == ALDER_RESCUE_COMPLETE) {
         g->alder_quest_state = 2;
-        push_message(g, "All wardens rescued. Return to Alder in Stillbury's Inn.");
+        push_message(g, "Both rangers rescued. Return to Alder in Oakhaven's Inn.");
     }
 }
 
@@ -6757,7 +6590,7 @@ void game_talk_to_mara(GameState *g) {
     g->dialogue_y = MARA_TAVERN_Y;
     if (g->mara_quest_state == 0) {
         strncpy(g->dialogue_text,
-            "Sunken Coast is south of Oakhaven. Relight beacons on stages 2, 3, and 4; lower tides and defeat their guardians. Rowan's docks stand beside the entrance. Return to Oakhaven's Tavern.",
+            "On Sunken Coast, relight beacons on stages 2, 3, and 4; lower tides and defeat their guardians. Rowan's docks stand beside the entrance. Return to Oakhaven's Inn.",
             MAX_DIALOGUE_LEN - 1);
         g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
         return;
@@ -6807,8 +6640,8 @@ void game_talk_to_rook(GameState *g) {
         offer_rook_quest(g);
     } else if (g->rook_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Find the labyrinth on the west road to Stillbury by the Haunted Forest entrance. One rune per floor opens the "
-            "Minotaur's vault. Return my ivory rook to Oakhaven's Tavern.");
+            "Find the labyrinth on the east road to Dawnmere by the Haunted Forest entrance. One rune per floor opens the "
+            "Minotaur's vault. Return my ivory rook to Oakhaven's Inn.");
         push_message(g, "Rook is waiting for the ivory rook.");
     } else if (g->rook_quest_state == 2) {
         g->gold += ROOK_QUEST_REWARD;
@@ -6827,60 +6660,6 @@ void game_talk_to_rook(GameState *g) {
             "Thank you for recovering my ivory rook.");
         push_message(g, "Rook's quest is already complete.");
     }
-}
-
-void game_talk_to_innkeeper(GameState *g) {
-    g->dialogue_active = 1;
-    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Bram");
-    g->dialogue_x = 28;
-    g->dialogue_y = 7;
-    if (g->innkeeper_quest_state == 0) {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "A vampire holds Mira on swamp level 3, between Stillbury and the Demon. "
-            "Defeat her captor, then speak to her and bring her home. You can retreat and return if needed.");
-    } else if (g->innkeeper_quest_state == 1) {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Mira is on swamp level 3, on the Stillbury side of the Demon. Defeat the vampire holding her, "
-            "then speak to her before returning to the inn.");
-        push_message(g, "Bram is waiting for Mira.");
-    } else if (g->innkeeper_quest_state == 2) {
-        g->innkeeper_quest_state = 3;
-        g->gold += 80;
-        g->score += 600;
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Mira made it home. I cannot thank you enough. Please take this "
-            "reward for bringing my daughter back to me.");
-        push_message(g, "Completed: Bring Mira Home. 80 gold awarded.");
-    } else {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Mira is safe upstairs. There is always a room for you here.");
-        push_message(g, "Bram thanks you for rescuing Mira.");
-    }
-}
-
-void game_rescue_innkeeper_daughter(GameState *g, int x, int y) {
-    if (g->location != LOCATION_SWAMP || g->level != SWAMP_RESCUE_LEVEL ||
-        g->innkeeper_quest_state != 1 || x < 0 || x >= MAP_W ||
-        y < 0 || y >= MAP_H || g->map.tiles[y][x] != TILE_SWAMP_DAUGHTER) {
-        return;
-    }
-    for (int i = 0; i < g->enemy_count; i++) {
-        if (g->enemies[i].active &&
-            strcmp(g->enemies[i].name, "Vampire Captor") == 0) {
-            push_message(g, "Mira cannot escape while the vampire lives.");
-            return;
-        }
-    }
-    g->innkeeper_quest_state = 2;
-    g->map.tiles[y][x] = TILE_SWAMP_FLOOR;
-    g->dialogue_active = 1;
-    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Mira");
-    g->dialogue_x = x;
-    g->dialogue_y = y;
-    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-        "You broke the vampire's hold. I know the way back to the inn. "
-        "Please tell my father I am safe.");
-    push_message(g, "Mira rescued. Return to Bram at the inn.");
 }
 
 void game_light_coast_beacon(GameState *g, int x, int y) {
@@ -6917,7 +6696,7 @@ void game_light_coast_beacon(GameState *g, int x, int y) {
     push_message(g, status);
     if ((g->mara_beacons_lit & 7) == 7) {
         g->mara_quest_state = 2;
-        push_message(g, "All beacons lit. Return to Mara in Oakhaven's Tavern.");
+        push_message(g, "All beacons lit. Return to Mara in Oakhaven's Inn.");
     }
 }
 
@@ -6964,6 +6743,7 @@ void game_migrate_boss_shortcuts(GameState *g) {
 }
 
 void game_update_level_progress(GameState *g) {
+    update_oakhaven_boss_quests(g);
     refresh_hunt_progress(g);
     if (g->location < LOCATION_JAIL && (g->defeated_bosses & (1 << g->location))) {
         if (g->location == LOCATION_FOREST && g->level == FOREST_BOSS_LEVEL) {

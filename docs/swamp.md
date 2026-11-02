@@ -1,7 +1,6 @@
 # Blackwater Swamp
 
-Blackwater Swamp has five forward levels, with Mira on level 3 and the Swamp
-Demon on level 5. Stillbury's north gate and Rosemoor's south gate each lead
+Blackwater Swamp has five forward levels, with the Swamp Demon on level 5. Stillbury's north gate and Rosemoor's south gate each lead
 onto a safe cobblestone causeway through bog, reeds and dead trees, with narrow
 mud verges and a clearing at its town end. A mossy crypt framed by mangroves
 stands in a clearing beside the road; its south-facing doorway always starts Swamp 1.
@@ -42,16 +41,9 @@ Victory opens the road without creating a shortcut or discovery prompt.
 Return to Town is a one-way escape to the last town actually visited. It leaves
 no return portal. Physical re-entry starts through the normal swamp entrance.
 
-## Bring Mira Home
-
-At the Stillbury Inn, Bram asks the player to rescue his daughter Mira. She is
-held by a named Vampire Captor in a clearing on level 3. Both towns start at
-level 1, so Mira is always encountered before the final boss.
-
-Defeat the captor, then speak to Mira to send her home. Return to Bram for a
-one-time reward of 80 gold and 600 score. Accepting the quest starts a fresh
-swamp expedition while retaining any boss victory and open town road.
-Quest and rescue progress persist across backtracking and saves.
+The former **Bring Mira Home** quest and its named Vampire Captor encounter
+are retired. Bram now runs Oakhaven's Inn; no rescue NPC or special captor
+spawns in fresh swamp expeditions. Ordinary Vampires remain in the roster.
 
 ## Swamp Demon Encounter
 
@@ -91,7 +83,7 @@ two, cancels the current signature and exposes the Demon for **two complete
 counterattack actions**. It grants no healing, mana or signature immunity.
 The vent then displays **4, 3, 2, 1** as it recovers; interacting while it cools
 does not extend the opening. All classes can use it without gear or consumables.
-Vents and pools preserve native paths and the Mira/Bram rescue quest.
+Vents and pools preserve native paths and other props.
 
 The **Demonic Sword** remains guaranteed with its original stats and skill.
 A full floor-loot list reserves it in a named root cache without deleting other
@@ -111,6 +103,9 @@ first enemy or wall, and the sword keeps its full +6 bonus in ordinary melee.
 It costs no mana.
 
 ## Save Compatibility
+
+The following conversions describe historical V1 saves. Chapter 1 V2 uses fresh
+saves; the reserved Mira quest field and tile IDs no longer enable a quest.
 
 Save version **173** migrates the former seven-level route into five levels.
 Old floors 1–7 map to 1, 2, 3, 5, 4, 2, 1. Mira's level-3 map and the former

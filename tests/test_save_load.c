@@ -5,6 +5,7 @@
 #include "town_road_checks.h"
 #include "game/approach.h"
 #include "../src/game/game.h"
+#include "../src/game/aldric.h"
 #include "../src/systems/save_load.h"
 #include "../src/screens/slot_select.h"
 #include "../external/cJSON.h"
@@ -629,7 +630,7 @@ static void test_brenna_inn_migration(void) {
             ASSERT("legacy Inn moves the player clear and keeps existing residents", ok &&
                 loaded.player.x == x && loaded.player.y == y + 1 && loaded.map.tiles[y][x] == TILE_NPC_BRENNA &&
                 loaded.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_TAVERN_FLOOR && loaded.map.tiles[ZARA_INN_Y][ZARA_INN_X] == TILE_NPC_GUILD_SEEKER &&
-                loaded.map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_NPC_ALDER && loaded.map.tiles[7][28] == TILE_NPC_INNKEEPER);
+                loaded.map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_TAVERN_FLOOR && loaded.map.tiles[BRAM_INN_Y][BRAM_INN_X] == TILE_TAVERN_FLOOR);
         } else {
             ASSERT("legacy Tavern dismisses Brenna's old dialogue and never restores her under loot", ok &&
                 !loaded.dialogue_active && loaded.player.y == y + 1 &&
@@ -2356,8 +2357,7 @@ static void test_forest_entry_migration(void) {
         memset(original, 0, sizeof(*original));
         game_init(original);
         game_enter_forest(original);
-        // Recreate the old west-side entry with known actor and loot positions.
-        map_mirror_horizontal(&original->map);
+        // V2 generation already supplies the historic west-side entry for this fixture.
         int x;
         int y;
         map_room_center(&original->map.rooms[0], &x, &y);
@@ -2509,7 +2509,7 @@ static void test_shared_town_gate_migration(void) {
 static void test_shortcut_fork_migration(void) {
     static GameState original;
     static GameState loaded;
-    for (int road = 0; road < 3; road++) {
+    for (int road = 0; road < 2; road++) {
         memset(&original, 0, sizeof(original));
         game_init(&original);
         if (road == 0) {
@@ -2554,7 +2554,7 @@ static void test_shortcut_fork_migration(void) {
 static void test_narrow_shortcut_migration(void) {
     static GameState original;
     static GameState loaded;
-    for (int road = 0; road < 2; road++) {
+    for (int road = 0; road < 1; road++) {
         memset(&original, 0, sizeof(original));
         game_init(&original);
         int x = road ? HIGH_PASS_X : SWAMP_ROAD_X;
@@ -2794,7 +2794,7 @@ static void test_aldric_town_migration(void) {
         memset(&original, 0, sizeof(original));
         game_init(&original);
         original.gold = 321;
-        original.defeated_bosses = 1 << LOCATION_DUNGEON;
+        original.defeated_bosses = 1 << LOCATION_FOREST;
         original.map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] = TILE_TOWN_PATH;
         if (occupied) {
             original.player.x = TOWN_ALDRIC_X;
@@ -2824,7 +2824,7 @@ static void test_aldric_town_migration(void) {
                 loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH &&
                 loaded.map.tiles[TOWN_ALDRIC_Y + 1][TOWN_ALDRIC_X] == TILE_ITEM);
         }
-        game_talk_to_aldric(&loaded);
+        aldric_talk(&loaded, TOWN_ALDRIC_X, TOWN_ALDRIC_Y);
         ok = save_game(&loaded, LEGACY_SLOT) && load_game(&original, LEGACY_SLOT);
         ASSERT("Aldric and his dialogue survive saving without repeating the migration", ok &&
             original.map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] == TILE_NPC_ALDRIC &&
@@ -2836,6 +2836,38 @@ static void test_aldric_town_migration(void) {
         ASSERT("Aldric returns when Oakhaven is regenerated", original.map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] == TILE_NPC_ALDRIC);
     }
     remove_test_save(LEGACY_SLOT);
+}
+
+static void test_aldric_inn_migration(void) {
+    GameState *original = calloc(1, sizeof(*original));
+    GameState *loaded = calloc(1, sizeof(*loaded));
+    if (save_exists(LEGACY_SLOT)) {
+        ASSERT("Aldric Inn migration test slot must be unused", 0);
+        free(original);
+        free(loaded);
+        return;
+    }
+    game_init(original);
+    original->gold = 456;
+    original->defeated_bosses = 1 << LOCATION_DUNGEON;
+    int ok = save_game(original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 230) && load_game(loaded, LEGACY_SLOT);
+    ASSERT("a pre-recruitment save after the Lich no longer shows Aldric in the square", ok &&
+        loaded->map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] == TILE_TOWN_PATH && loaded->gold == original->gold &&
+        loaded->aldric_party_state == ALDRIC_WAITING && loaded->aldric_x == -1 && loaded->aldric_y == -1);
+    game_enter_tavern(original);
+    original->map.tiles[ALDRIC_INN_Y][ALDRIC_INN_X] = TILE_TAVERN_FLOOR;
+    ok = save_game(original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 230) && load_game(loaded, LEGACY_SLOT);
+    ASSERT("a pre-recruitment save inside the Inn gains Aldric at his seat", ok &&
+        loaded->location == LOCATION_TAVERN && loaded->map.tiles[ALDRIC_INN_Y][ALDRIC_INN_X] == TILE_NPC_ALDRIC);
+    original->player.x = ALDRIC_INN_X;
+    original->player.y = ALDRIC_INN_Y;
+    ok = save_game(original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 230) && load_game(loaded, LEGACY_SLOT);
+    ASSERT("migration never places Aldric under a player standing at his seat", ok &&
+        loaded->player.x == ALDRIC_INN_X && loaded->player.y == ALDRIC_INN_Y &&
+        loaded->map.tiles[ALDRIC_INN_Y][ALDRIC_INN_X] == TILE_TAVERN_FLOOR);
+    remove_test_save(LEGACY_SLOT);
+    free(original);
+    free(loaded);
 }
 
 static void test_rook_tavern_migration(void) {
@@ -2893,7 +2925,7 @@ static void test_rook_tavern_migration(void) {
             loaded.player.y = ROOK_TAVERN_Y + 1;
             game_talk_to_rook(&loaded);
             if (state == 0) {
-                ASSERT("a migrated unaccepted quest can be accepted in Oakhaven's Tavern", game_quest_offer_active(&loaded) &&
+                ASSERT("a migrated unaccepted quest can be accepted in Oakhaven's Inn", game_quest_offer_active(&loaded) &&
                     game_handle_quest_offer_key(&loaded, SDL_SCANCODE_Y, 0) && loaded.rook_quest_state == 1);
             } else if (state >= 2) {
                 game_talk_to_rook(&loaded);
@@ -2912,7 +2944,7 @@ static void test_rook_tavern_migration(void) {
     ASSERT("legacy Inn removes Rook's uncovered tile and preserves the remaining residents", save_game(&original, LEGACY_SLOT) &&
         rewrite_save_version(LEGACY_SLOT, 151) && load_game(&loaded, LEGACY_SLOT) &&
         loaded.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_TAVERN_FLOOR &&
-        loaded.map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_NPC_ALDER && loaded.map.tiles[7][28] == TILE_NPC_INNKEEPER);
+        loaded.map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_TAVERN_FLOOR && loaded.map.tiles[BRAM_INN_Y][BRAM_INN_X] == TILE_TAVERN_FLOOR);
     remove_test_save(LEGACY_SLOT);
 }
 
@@ -3059,6 +3091,7 @@ void test_save_load(void) {
     test_retired_enemy_migration();
     test_rook_tavern_migration();
     test_aldric_town_migration();
+    test_aldric_inn_migration();
     test_narrow_shortcut_migration();
     test_shared_town_gate_migration();
     test_shortcut_square_repairs();

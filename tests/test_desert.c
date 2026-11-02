@@ -676,10 +676,10 @@ static void test_desert_lamp_quest(void) {
     g->player.x = TOWN_INN_DOOR_X;
     g->player.y = TOWN_INN_DOOR_Y + 1;
     action_resolve_player(g, (Action){ACTION_MOVE, TOWN_INN_DOOR_X, TOWN_INN_DOOR_Y});
-    ASSERT("Stillbury's Inn houses Zara in an accessible position", g->location == LOCATION_INN && g->enemy_count == 0 &&
+    ASSERT("Stillbury's Tavern houses Zara in an accessible position", g->location == LOCATION_INN && g->enemy_count == 0 &&
         g->map.tiles[ZARA_INN_Y][ZARA_INN_X] == TILE_NPC_GUILD_SEEKER &&
         !map_is_walkable(&g->map, ZARA_INN_X, ZARA_INN_Y) && map_is_walkable(&g->map, ZARA_INN_X, ZARA_INN_Y + 1) &&
-        g->map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_NPC_ALDER);
+        g->map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_TAVERN_FLOOR);
     g->player.x = ZARA_INN_X;
     g->player.y = ZARA_INN_Y + 1;
     game_talk_to_guild_seeker(g);

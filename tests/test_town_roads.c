@@ -7,6 +7,40 @@
 
 #define TOWN_ROAD_TEST_SLOT 99231
 
+static void chapter_one_connections(GameState *g, GameState *loaded) {
+    TownApproach route;
+    ASSERT("Oakhaven's west road reaches Goblin Mountains", town_road_connection(LOCATION_TOWN, TOWN_SIDE_WEST, &route) && route.area == LOCATION_MOUNTAINS);
+    ASSERT("Stillbury faces the other end of Goblin Mountains", town_road_connection(LOCATION_TOWN2, TOWN_SIDE_EAST, &route) && route.area == LOCATION_MOUNTAINS);
+    ASSERT("Oakhaven's east road reaches Haunted Forest", town_road_connection(LOCATION_TOWN, TOWN_SIDE_EAST, &route) && route.area == LOCATION_FOREST);
+    ASSERT("Dawnmere faces the other end of Haunted Forest", town_road_connection(LOCATION_DAWNMERE, TOWN_SIDE_WEST, &route) && route.area == LOCATION_FOREST);
+    ASSERT("Oakhaven's south road reaches its local dungeon", town_road_connection(LOCATION_TOWN, TOWN_SIDE_SOUTH, &route) && route.area == LOCATION_DUNGEON);
+    ASSERT("later connections add no provisional northern routes", !town_road_connection(LOCATION_TOWN, TOWN_SIDE_NORTH, &route) && !town_road_connection(LOCATION_DAWNMERE, TOWN_SIDE_NORTH, &route) && !town_road_connection(LOCATION_TOWN4, TOWN_SIDE_SOUTH, &route));
+    game_init(g);
+    town_road_enter(g, LOCATION_TOWN, TOWN_SIDE_EAST, 1);
+    int blocked = 1;
+    for (int x = 0; x < TOWN_ROAD_W; x++) {
+        for (int y = 0; y <= 10; y++) {
+            blocked &= !map_is_walkable(&g->map, x, y);
+        }
+    }
+    g->player.x = TOWN_ROAD_W / 2;
+    g->player.y = 11;
+    action_resolve_player(g, (Action){ACTION_MOVE, g->player.x, 10});
+    ASSERT("a continuous river blocks the whole northern boundary and rejects a real crossing attempt", blocked && g->location == LOCATION_TOWN_ROAD && g->player.y == 11);
+    town_road_exit(TOWN_SIDE_EAST, &g->player.x, &g->player.y);
+    int x = g->player.x;
+    int y = g->player.y;
+    int item = g->inventory_count;
+    g->inventory[g->inventory_count++] = item_make_health_potion();
+    action_resolve_player(g, (Action){ACTION_DROP_ITEM, item, 0});
+    ASSERT("loot does not hide a town exterior's regional exit", g->map.tiles[y][x] == TILE_TOWN_ROAD_EXIT_EAST && g->floor_items[0].active);
+    ASSERT("fresh V2 saves keep a loot-covered exterior exit usable", save_game(g, TOWN_ROAD_TEST_SLOT) && load_game(loaded, TOWN_ROAD_TEST_SLOT) && loaded->map.tiles[y][x] == TILE_TOWN_ROAD_EXIT_EAST);
+    loaded->player.x = x - 1;
+    action_resolve_player(loaded, (Action){ACTION_MOVE, x, y});
+    ASSERT("the saved loot-covered east road actually enters Haunted Forest's approach", loaded->location == LOCATION_APPROACH && approach_route(loaded)->area == LOCATION_FOREST);
+
+}
+
 static int rewrite_road_save(GameState *g, int version, int town) {
     if (!save_game(g, TOWN_ROAD_TEST_SLOT)) {
         return 0;
@@ -60,6 +94,7 @@ void test_town_roads(void) {
         free(loaded);
         return;
     }
+    chapter_one_connections(g, loaded);
     const Location towns[TOWN_ROAD_COUNT] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN3, LOCATION_TOWN4, LOCATION_DAWNMERE};
     for (int town = 0; town < TOWN_ROAD_COUNT; town++) {
         for (int side = 0; side < 4; side++) {
@@ -132,7 +167,7 @@ void test_town_roads(void) {
     town_road_exit(TOWN_SIDE_EAST, &x, &y);
     walk_town_road_to(g, x, y);
     ASSERT("bypassing Oakhaven does not unlock the Lich road", g->location == LOCATION_APPROACH && !approach_dungeon_town_exit(g, &x, &y));
-    for (int town = 0; town < TOWN_ROAD_COUNT; town++) {
+    for (int town = 1; town < TOWN_ROAD_COUNT; town++) {
         game_init(g);
         game_enter_town_gate(g, towns[town], 0, 12);
         g->gold = 393;

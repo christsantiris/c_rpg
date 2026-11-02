@@ -2,12 +2,12 @@
 #define FOREST_ENEMY_ART_H
 
 // Rendering indices only; persistent EnemyType values are unchanged.
-enum { FOREST_ART_PIXIE, FOREST_ART_BLIGHTED_WOLF, FOREST_ART_GIANT_SPIDER, FOREST_ART_DARK_ELF_ARCHER, FOREST_ART_DARK_ELF_RANGER, FOREST_ART_FOREST_TROLL, FOREST_ART_FOREST_NECROMANCER, FOREST_ART_COUNT };
+enum { FOREST_ART_PIXIE, FOREST_ART_BLIGHTED_WOLF, FOREST_ART_GIANT_SPIDER, FOREST_ART_DARK_ELF_ARCHER, FOREST_ART_DARK_ELF_RANGER, FOREST_ART_DARK_ELF_GUARD, FOREST_ART_FOREST_TROLL, FOREST_ART_FOREST_NECROMANCER, FOREST_ART_COUNT };
 
 // Native 24-pixel silhouettes; dots leave the terrain visible.
 // s/S/H skin or shell, c/C/v cloth or plates, e/y eyes, f bone/teeth,
 // b/B/t wing membranes, p/P blight or magic, w/W wood, l/L/K leather;
-// k boots, u/U moss, G buckles, N arrow feathers.
+// k boots, u/U moss, G buckles, N arrow feathers or steel highlights, m/M steel.
 static const char forest_enemy_art[FOREST_ART_COUNT][24][25] = {
     { // PIXIE
         "........................",
@@ -138,6 +138,32 @@ static const char forest_enemy_art[FOREST_ART_COUNT][24][25] = {
         ".........oLlo.oLlo......",
         "........okLKoolLkko.....",
         "........ooooo.ooooo.....",
+    },
+    { // DARK_ELF_GUARD
+        "..........ovCo........N.",
+        ".........ovCCCco......M.",
+        "........ovCCNMMco....NMM",
+        ".......ovCCMMMMco.....M.",
+        ".......oCMmmmmMCo.....M.",
+        ".......oCoSSSSoCo.....Lo",
+        ".....oHSoHSSSSoSHo....lo",
+        "......oSoSySSySoSo....Lo",
+        "........oHSSSSSo......lo",
+        ".........oSSSSo.......Lo",
+        ".......oNMooMooMmo....lo",
+        "...ooooMMmoCCCcoMMmo..Lo",
+        "..oNMMmoCoCvCcoMMmo...lo",
+        "..oNMmmmooCvGCCcoMmo..Lo",
+        "..oMMGmmooCvGCCcoSSo..lo",
+        "..oMMGmmooClllGllcoSo.Lo",
+        "..oMmmmmooCvCCcCCcoSo.lo",
+        "..oMmmmmoCCCcoCCcco...Lo",
+        "...ommmmoMmo..oMmo....lo",
+        "....ommooNMmo.oMmo....Lo",
+        ".....oo.oMmo..oMmo....lo",
+        "........oLlo..oLlo....oo",
+        ".......okLKlo.olLkko....",
+        ".......oooooo.oooooo....",
     },
     { // FOREST_TROLL
         "........................",

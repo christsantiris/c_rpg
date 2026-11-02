@@ -19,6 +19,13 @@ twice base value; selling returns base value divided by four, rounded down.
 | Belts | Belt Maker, Dawnmere | Leather Belt / +5 max HP / 100g | Studded Belt / +15 max HP / 300g | Guardian Belt / +25 max HP, +1 DEF / 600g |
 | Boots | Cobbler, Stillbury | Leather Boots / +1 DEF / 100g | Reinforced Boots / +2 DEF / 280g | Warden Boots / +3 DEF, +5 max HP / 600g |
 
+The Lich King's guaranteed **Crypt Ring** is a boss reward rather than shop
+stock. It is an Uncommon ring usable by every class, with **+5 maximum HP and
++5 maximum MP**, no attack or defense bonus, and base value 80g (20g resale at
+the Goldsmith). It follows the normal two-ring allowance and does not heal HP
+or restore MP when equipped. Unclaimed recovery uses the Lich's reliquary;
+see the [reward review](../art-sources/crypt-ring/README.md).
+
 The Cobbler stands southeast of Stillbury's square. The Belt Maker stands
 southwest of Dawnmere's square. Enter the building and Talk beside its resident
 to buy or sell. Each specialist only buys its own categories; boots and belts

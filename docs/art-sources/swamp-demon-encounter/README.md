@@ -7,8 +7,9 @@ Bog Tyrant alternates a one-action frontal cleave and two-action aimed rot pool.
 Unshackled Demon adds a second pocket and a two-action miasma fan. Pools persist
 for two further actions, with a strict ten-tile limit. Three reusable root vents
 drain nearby rot, cancel a signature and grant two counterattack actions, then
-cool for four actions. Original stats, regional scaling, Demonic Sword, central
-shortcut, town road and Mira/Bram rescue progression remain in effect.
+cool for four actions. Original stats, regional scaling, Demonic Sword and
+town-road progression remain in effect. The former Mira/Bram rescue and its
+named Vampire Captor encounter have since been retired for Chapter 1 V2.
 See [Blackwater Swamp](../../swamp.md) for exact timing and save behavior.
 
 ## Renderer review
