@@ -20,6 +20,11 @@ TownSide town_road_side(int x, int y) {
 }
 
 int town_road_connection(Location town, TownSide side, TownApproach *connection) {
+    if (town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
+        // A local riverbank visit, with no connection across the river.
+        *connection = (TownApproach){town, LOCATION_TOWN, 20, 0};
+        return 1;
+    }
     if (town == LOCATION_DAWNMERE && side == TOWN_SIDE_SOUTH) {
         *connection = (TownApproach){town, LOCATION_MANGROVES, 20, TOWN_H - 1};
         return 1;
@@ -68,7 +73,7 @@ static void generate_town_road(GameState *g) {
     }
     if (g->road_town == LOCATION_TOWN) {
         // The river spans the whole northern boundary; no bridge or ford exists here.
-        for (int y = 0; y <= 10; y++) {
+        for (int y = 0; y <= OAKHAVEN_RIVER_EDGE; y++) {
             for (int x = 0; x < TOWN_ROAD_W; x++) {
                 g->map.tiles[y][x] = TILE_COAST_DEEP_WATER;
             }
@@ -83,6 +88,13 @@ static void generate_town_road(GameState *g) {
         int y;
         town_road_entrance(side, &x, &y);
         g->map.tiles[y][x] = TILE_TOWN_ROAD_ENTRY_NORTH + side;
+        if (g->road_town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
+            for (int bank_y = y - 1; bank_y >= OAKHAVEN_FERRY_Y; bank_y--) {
+                g->map.tiles[bank_y][x] = TILE_TOWN_PATH;
+            }
+            g->map.tiles[OAKHAVEN_FERRY_Y][x] = TILE_BROKEN_FERRY;
+            continue;
+        }
         int ex;
         int ey;
         town_road_exit(side, &ex, &ey);
@@ -114,6 +126,10 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
         town_road_entrance(side, &g->player.x, &g->player.y);
         g->player.x += dx[side];
         g->player.y += dy[side];
+    } else if (town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
+        // A local return lands on dry bank, never in the boundary's white water.
+        g->player.x = OAKHAVEN_FERRY_X;
+        g->player.y = OAKHAVEN_FERRY_Y;
     } else {
         town_road_exit(side, &g->player.x, &g->player.y);
         g->player.x -= dx[side];
@@ -122,8 +138,18 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
     g->player.last_dx = departing ? dx[side] : -dx[side];
     g->player.last_dy = departing ? dy[side] : -dy[side];
     map_mark_explored(&g->map, g->player.x, g->player.y);
+    if (town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
+        int x;
+        int y;
+        town_road_entrance(side, &x, &y);
+        map_mark_explored(&g->map, x, y);
+    }
     char message[MAX_MESSAGE_LEN];
-    snprintf(message, sizeof(message), "%s: approach the town to enter, or walk around it to another road.", approach_town_name(town));
+    if (town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
+        snprintf(message, sizeof(message), "Northern Rapids: the broken ferry cannot cross. Follow the path south to Oakhaven.");
+    } else {
+        snprintf(message, sizeof(message), "%s: approach the town to enter, or walk around it to another road.", approach_town_name(town));
+    }
     push_message(g, message);
     return 1;
 }
@@ -159,6 +185,16 @@ int town_road_travel(GameState *g, int x, int y) {
         return 0;
     }
     TileType tile = g->map.tiles[y][x];
+    if (g->road_town == LOCATION_TOWN) {
+        if (tile == TILE_COAST_DEEP_WATER && y <= OAKHAVEN_RIVER_EDGE) {
+            push_message(g, "The rapids are impassable. The ferry is broken; there is no crossing here.");
+            return 1;
+        }
+        if (tile == TILE_BROKEN_FERRY) {
+            map_mark_explored(&g->map, x, y);
+            push_message(g, "Broken Ferry: snapped rope, shattered hull. Return south to Oakhaven.");
+        }
+    }
     int entry = tile >= TILE_TOWN_ROAD_ENTRY_NORTH && tile <= TILE_TOWN_ROAD_ENTRY_WEST;
     int exit = tile >= TILE_TOWN_ROAD_EXIT_NORTH && tile <= TILE_TOWN_ROAD_EXIT_WEST;
     // Touching a connected side enters the sprite. Center markers retain
@@ -197,4 +233,34 @@ int town_road_travel(GameState *g, int x, int y) {
         }
     }
     return 1;
+}
+
+static void preserve_marker(GameState *g, int x, int y, TileType tile) {
+    g->map.tiles[y][x] = tile;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->underlying_tile = tile;
+            if (!map_is_travel_tile(tile) && tile != TILE_TOWN_EXIT) {
+                g->map.tiles[y][x] = TILE_ITEM;
+            }
+        }
+    }
+}
+
+// Refresh just the new local route in saved Oakhaven maps, retaining other tiles and exploration.
+void town_road_refresh_oakhaven(GameState *g) {
+    if (g->location == LOCATION_TOWN) {
+        for (int x = 18; x <= 22; x++) {
+            preserve_marker(g, x, 0, TILE_TOWN_EXIT);
+        }
+    } else if (g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_TOWN) {
+        int x;
+        int y;
+        town_road_entrance(TOWN_SIDE_NORTH, &x, &y);
+        preserve_marker(g, x, y, TILE_TOWN_ROAD_ENTRY_NORTH);
+        for (int bank_y = y - 1; bank_y >= OAKHAVEN_FERRY_Y; bank_y--) {
+            preserve_marker(g, x, bank_y, bank_y == OAKHAVEN_FERRY_Y ? TILE_BROKEN_FERRY : TILE_TOWN_PATH);
+        }
+    }
 }

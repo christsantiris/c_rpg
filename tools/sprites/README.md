@@ -395,3 +395,13 @@ stages, mechanics and the native/SDL visual checks.
 48px cells; the Matriarch has wider wings at the same pixel density. Both poses
 share the player foot line. The entrance uses pixelkit masonry and a 13px arched
 doorway.
+
+### Oakhaven broken ferry
+
+`python3 tools/sprites/broken_ferry.py` reproduces
+`assets/images/broken-ferry.bmp`, a transparent 168×144 landmark at native
+24px tile scale. It uses pixelkit outlined layers, grained timber beams and
+planks, shore stones, wrapped posts, a snapped rope and a split ferry hull.
+The landing ends on the south bank of Northern Rapids; it has no crossing
+mechanic. `town_road_renderer.c` anchors it at
+`OAKHAVEN_FERRY_ART_X/Y`, above the walkable inspection tile.
