@@ -31,8 +31,8 @@ either direction. Defeating every regular enemy is never required.
 | 5 | Necromancer's Grove | Trails narrowing into the final boss grove | 8 |
 
 Difficulty controls the regular enemy roster, enemy count, and trap count.
-Clearing dimensions vary when a stage is first generated. The forest uses Act
-1's [outward difficulty band](difficulty-scaling.md#act-1-outward-band): its
+Clearing dimensions vary when a stage is first generated. The forest uses the
+post-dungeon [outward difficulty band](difficulty-scaling.md#act-2-outward-band): its
 enemies are tougher than the dungeon's from stage 1 and do not change with the
 order in which bosses are defeated.
 Travel score is awarded on first visits to stages from either direction.
@@ -49,6 +49,13 @@ Travel score is awarded on first visits to stages from either direction.
   base 36 HP, 11 attack, 7 defense and 44 experience as a Hobgoblin Guard.
   Guards join the encounters from stage 2 and remain in the deeper forest
   roster.
+
+Nearby Dark Elves coordinate in groups. A Guard presses the front while
+Archers and Rangers seek separate firing lanes around the player, routing
+around trees and allies. Bow units keep their distance and existing shot
+cadences; Rangers retain their movement after shooting. If a flank cannot be
+reached, ordinary pursuit and ranged behavior take over. Lone elves keep
+their existing behavior. Trees and chokepoints can deny a crossfire.
 
 ## Central Encounter and Shortcuts
 

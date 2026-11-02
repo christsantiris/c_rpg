@@ -13,6 +13,7 @@ void test_road_scenery(void);
 void test_town_roads(void);
 void test_arrows(void);
 void test_enemy_projectiles(void);
+void test_act2_tactics(void);
 void test_map(void);
 void test_map_tiles(void);
 void test_viewport(void);
@@ -197,6 +198,7 @@ int main(void) {
     test_lich();
     test_necromancer();
     test_goblin_king();
+    test_act2_tactics();
     printf("\n");
     test_combat_feedback();
     printf("\n");
