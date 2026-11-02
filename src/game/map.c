@@ -1566,7 +1566,8 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
             m->tiles[TOWN_BLACKSMITH_Y + dy][TOWN_BLACKSMITH_X + dx] = TILE_SHOP_BLACKSMITH;
         }
     }
-    m->tiles[TOWN_BLACKSMITH_Y + 3][TOWN_BLACKSMITH_X + 2] = TILE_BLACKSMITH_DOOR;
+    // Both shops open into walk-in interiors.
+    m->tiles[TOWN_BLACKSMITH_Y + 3][TOWN_BLACKSMITH_X + 2] = TILE_LOCAL_DOOR;
     m->tiles[TOWN_BLACKSMITH_Y + 4][TOWN_BLACKSMITH_X + 2] = TILE_TOWN_PATH;
 
     // The alchemist faces the east-west road.
@@ -1576,8 +1577,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
                 TILE_SHOP_ALCHEMIST;
         }
     }
-    m->tiles[TOWN_ALCHEMIST_Y + 3][TOWN_ALCHEMIST_X + 2] =
-        TILE_ALCHEMIST_DOOR;
+    m->tiles[TOWN_ALCHEMIST_Y + 3][TOWN_ALCHEMIST_X + 2] = TILE_LOCAL_DOOR;
     m->tiles[TOWN_ALCHEMIST_Y + 4][TOWN_ALCHEMIST_X + 2] =
         TILE_TOWN_PATH;
 

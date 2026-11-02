@@ -32,7 +32,13 @@ static const TownBuilding buildings[] = {
         "Welcome! I buy and sell boots. Approach my counter and Talk to browse my stock.", NULL},
     {LOCATION_DAWNMERE, LOCATION_BELT_MAKER, 7, 17, 5, 4, 7, 0,
         "BELT MAKER", "Belt Maker Torren",
-        "Welcome! I buy and sell belts. Approach my counter and Talk to browse my stock.", NULL}
+        "Welcome! I buy and sell belts. Approach my counter and Talk to browse my stock.", NULL},
+    {LOCATION_TOWN, LOCATION_BLACKSMITH, TOWN_BLACKSMITH_X, TOWN_BLACKSMITH_Y, 5, 4, 8, 0,
+        "BLACKSMITH", "Blacksmith Joran",
+        "Welcome to the forge! I buy and sell weapons and armor. Approach my counter and Talk to browse my stock.", NULL, 1},
+    {LOCATION_TOWN, LOCATION_ALCHEMIST, TOWN_ALCHEMIST_X, TOWN_ALCHEMIST_Y, 5, 4, 9, 0,
+        "ALCHEMIST", "Alchemist Wren",
+        "Welcome! I sell potions and scrolls for the road. Approach my counter and Talk to browse my shelves.", NULL, 1}
 };
 
 const TownBuilding *town_life_building(Location location) {
@@ -89,7 +95,9 @@ static void place_building(Map *map, Location town, const TownBuilding *b) {
 
 void town_life_place(Map *map, Location town) {
     for (const TownBuilding *b = town_life_building(town); b && b->town == town; b = town_life_next_building(town, b)) {
-        place_building(map, town, b);
+        if (!b->own_exterior) {
+            place_building(map, town, b);
+        }
     }
 }
 
@@ -125,18 +133,13 @@ void town_life_generate(Map *map, Location interior, int *sx, int *sy) {
     map->tiles[RESIDENT_Y][RESIDENT_X] = TILE_NPC_RESIDENT;
 }
 
-int town_life_near_goldsmith(const GameState *g) {
-    return g->location == LOCATION_GOLDSMITH &&
-        abs(g->player.x - RESIDENT_X) <= 1 && abs(g->player.y - RESIDENT_Y) <= 1;
+int town_life_is_shop(Location location) {
+    return location == LOCATION_GOLDSMITH || location == LOCATION_COBBLER || location == LOCATION_BELT_MAKER ||
+        location == LOCATION_BLACKSMITH || location == LOCATION_ALCHEMIST;
 }
 
-int town_life_near_cobbler(const GameState *g) {
-    return g->location == LOCATION_COBBLER &&
-        abs(g->player.x - RESIDENT_X) <= 1 && abs(g->player.y - RESIDENT_Y) <= 1;
-}
-
-int town_life_near_belt_maker(const GameState *g) {
-    return g->location == LOCATION_BELT_MAKER &&
+int town_life_near_shopkeeper(const GameState *g) {
+    return town_life_is_shop(g->location) &&
         abs(g->player.x - RESIDENT_X) <= 1 && abs(g->player.y - RESIDENT_Y) <= 1;
 }
 
@@ -195,6 +198,8 @@ static void migrate_building(GameState *g, const TownBuilding *b) {
 
 void town_life_migrate(GameState *g) {
     for (const TownBuilding *b = town_life_building(g->location); b && b->town == g->location; b = town_life_next_building(g->location, b)) {
-        migrate_building(g, b);
+        if (!b->own_exterior) {
+            migrate_building(g, b);
+        }
     }
 }

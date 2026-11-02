@@ -1890,7 +1890,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 232);
+    cJSON_AddNumberToObject(root, "save_version", 233);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -6972,6 +6972,17 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 232) {
         retire_oakhaven_cast(g);
+    }
+    // Oakhaven's Blacksmith and Alchemist doors now lead into walk-in interiors.
+    if (save_version < 233 && g->location == LOCATION_TOWN) {
+        TileType *smithy = &g->map.tiles[TOWN_BLACKSMITH_Y + 3][TOWN_BLACKSMITH_X + 2];
+        TileType *alchemist = &g->map.tiles[TOWN_ALCHEMIST_Y + 3][TOWN_ALCHEMIST_X + 2];
+        if (*smithy == TILE_BLACKSMITH_DOOR) {
+            *smithy = TILE_LOCAL_DOOR;
+        }
+        if (*alchemist == TILE_ALCHEMIST_DOOR) {
+            *alchemist = TILE_LOCAL_DOOR;
+        }
     }
     game_recover_retired_items(g);
     cJSON_Delete(root);

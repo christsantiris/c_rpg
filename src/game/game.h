@@ -204,7 +204,9 @@ typedef enum {
     LOCATION_ALEHOUSE,
     LOCATION_GOLDSMITH,
     LOCATION_COBBLER,
-    LOCATION_BELT_MAKER
+    LOCATION_BELT_MAKER,
+    LOCATION_BLACKSMITH,
+    LOCATION_ALCHEMIST
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the
