@@ -326,7 +326,12 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         g->quick_potion_type == ITEM_POTION_MANA ? "MANA" : "HEALTH", game_quick_potion_count(g));
     renderer_draw_text(r, quick, x, y, game_quick_potion_count(g) ? value : dimmed, r->font_tiny);
     y += lh + 6;
-    if (g->aldric_party_state == ALDRIC_FOLLOWING) {
+    if (g->aldric_party_state == ALDRIC_DEAD) {
+        renderer_draw_text(r, "ALDRIC: DEAD", x, y, health_warning, r->font_tiny);
+        y += lh;
+        renderer_draw_text(r, "SOULSTONE SHRINE", x, y, dimmed, r->font_tiny);
+        y += lh + 6;
+    } else if (g->aldric_party_state == ALDRIC_FOLLOWING) {
         char ally[32];
         SDL_snprintf(ally, sizeof(ally), "ALDRIC HP: %d / %d", g->aldric_hp, ALDRIC_MAX_HP);
         renderer_draw_text(r, ally, x, y, g->aldric_hp * 4 <= ALDRIC_MAX_HP ? health_warning : value, r->font_tiny);

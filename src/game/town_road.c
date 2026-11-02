@@ -1,5 +1,7 @@
 #include "town_road.h"
 #include "mangrove.h"
+#include "resurrection.h"
+#include <SDL2/SDL.h>
 #include <string.h>
 
 static const int dx[4] = {0, 1, 0, -1};
@@ -105,6 +107,7 @@ static void generate_town_road(GameState *g) {
         }
         g->map.tiles[ey][ex] = TILE_TOWN_ROAD_EXIT_NORTH + side;
     }
+    resurrection_place(g);
 }
 
 int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
@@ -146,7 +149,7 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
     }
     char message[MAX_MESSAGE_LEN];
     if (town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
-        snprintf(message, sizeof(message), "Northern Rapids: the broken ferry cannot cross. Follow the path south to Oakhaven.");
+        snprintf(message, sizeof(message), "Soulstone Shrine lies west of the path. North: broken ferry, no crossing. South: Oakhaven.");
     } else {
         snprintf(message, sizeof(message), "%s: approach the town to enter, or walk around it to another road.", approach_town_name(town));
     }
@@ -193,6 +196,12 @@ int town_road_travel(GameState *g, int x, int y) {
         if (tile == TILE_BROKEN_FERRY) {
             map_mark_explored(&g->map, x, y);
             push_message(g, "Broken Ferry: snapped rope, shattered hull. Return south to Oakhaven.");
+        }
+        if (tile == TILE_SOULSTONE_RITUAL) {
+            char message[MAX_MESSAGE_LEN];
+            snprintf(message, sizeof(message), "Ritual circle: equip Resurrection and press %s. Talk to the warlock for paid resurrection.",
+                SDL_GetScancodeName(g->key_bindings[CONTROL_CAST_SPELL]));
+            push_message(g, message);
         }
     }
     int entry = tile >= TILE_TOWN_ROAD_ENTRY_NORTH && tile <= TILE_TOWN_ROAD_ENTRY_WEST;
@@ -262,5 +271,6 @@ void town_road_refresh_oakhaven(GameState *g) {
         for (int bank_y = y - 1; bank_y >= OAKHAVEN_FERRY_Y; bank_y--) {
             preserve_marker(g, x, bank_y, bank_y == OAKHAVEN_FERRY_Y ? TILE_BROKEN_FERRY : TILE_TOWN_PATH);
         }
+        resurrection_place(g);
     }
 }

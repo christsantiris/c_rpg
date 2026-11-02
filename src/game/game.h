@@ -456,10 +456,12 @@ typedef struct {
     int elowen_x;
     int elowen_y;
     int elowen_seals_restored; // Reserved historical Broken Seals progress.
-    int aldric_party_state; // 0 waiting in Oakhaven, 1 following, 2 recovering at the Inn.
+    int aldric_party_state; // 0 waiting in Oakhaven, 1 following, 2 dead until resurrected.
     int aldric_x;
     int aldric_y;
     int aldric_hp;
+    int aldric_recruited;
+    int resurrection_prompt;
     int dain_quest_state; // 0 offer, 1 halves, 2 turn-in, 3 boss offer, 4 boss active, 5 complete.
     int dain_map_fragments;
     int alder_quest_state; // 0 offer, 1 rangers, 2 turn-in, 3 boss offer, 4 boss active, 5 complete.
@@ -502,6 +504,7 @@ typedef struct {
 } GameState;
 
 void game_init(GameState *g);
+int action_spell_mp_cost(const GameState *g, const Spell *spell);
 void game_spawn_enemy(GameState *g, Enemy *enemy, EnemyType type, int x, int y);
 int game_quest_offer_active(const GameState *g);
 int game_active_quest_count(const GameState *g);

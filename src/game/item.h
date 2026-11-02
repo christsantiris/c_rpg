@@ -189,6 +189,7 @@ Item item_make_fireball_tome(void);
 Item item_make_heal_tome(void);
 Item item_make_scroll_frost_bolt(void);
 Item item_make_scroll_teleport(void);
+Item item_make_scroll_resurrection(void);
 
 Item item_make_rusty_sword(void);
 Item item_make_short_sword(void);

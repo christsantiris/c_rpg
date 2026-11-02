@@ -28,6 +28,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/town_life.h"
 #include "game/town_road.h"
 #include "game/restoration.h"
+#include "game/resurrection.h"
 #include "game/approach.h"
 #include "game/map.h"
 #include "screens/landing.h"
@@ -772,6 +773,20 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (screen == SCREEN_PLAYING) {
+                        int was_dead = game.aldric_party_state == ALDRIC_DEAD;
+                        int ritual = resurrection_handle_key(&game, sc, event.key.repeat);
+                        if (ritual) {
+                            if (was_dead && game.aldric_party_state == ALDRIC_FOLLOWING) {
+                                sfx_play_heal();
+                            }
+                            if (ritual == 2) {
+                                action_resolve_enemies_with_projectiles(&game, &enemy_shots);
+                                enemy_shots_started_at = SDL_GetTicks();
+                            }
+                            break;
+                        }
+                    }
+                    if (screen == SCREEN_PLAYING) {
                         int hp_before = game.player.hp;
                         int mp_before = game.player.mp;
                         if (restoration_handle_key(&game, sc, event.key.repeat)) {
@@ -1104,7 +1119,7 @@ int main(int argc, char **argv) {
                                     screen = SCREEN_SHOP;
                                     break;
                                 }
-                                if (restoration_talk(&game) || town_life_talk(&game, 0)) {
+                                if (resurrection_talk(&game) || restoration_talk(&game) || town_life_talk(&game, 0)) {
                                     break;
                                 }
                                 if (crown_quest_talk(&game) || stormbell_talk(&game) || heartseed_talk(&game) || jail_talk_nearby(&game)) {
@@ -1279,6 +1294,9 @@ int main(int argc, char **argv) {
                                 game.trail_count = 0;
                                 game.trail_frames = 0;
                             }
+                            int shrine_cast = a.type == ACTION_CAST_SPELL && game.player.frozen_turns == 0 && game.player.equipped_spell >= 0 &&
+                                game.player.equipped_spell < game.player.known_spell_count &&
+                                game.player.known_spells[game.player.equipped_spell].id == SPELL_RESURRECTION;
                             action_resolve_player(&game, a);
                             if (a.type == ACTION_MOVE &&
                                 !was_at_harbor_entrance &&
@@ -1312,7 +1330,7 @@ int main(int argc, char **argv) {
                             } else if (slide_started) {
                                 // Creatures act once the glide has played out.
                                 player_slide_animating = 1;
-                            } else {
+                            } else if (!shrine_cast) {
                                 action_resolve_enemies_with_projectiles(&game, &enemy_shots);
                                 enemy_shots_started_at = SDL_GetTicks();
                             }
@@ -1337,7 +1355,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
                         break;
                     }
 
@@ -1597,7 +1615,7 @@ int main(int argc, char **argv) {
         int wind_paused = screen != SCREEN_PLAYING || player_projectile_animating || player_slide_animating ||
             entry_gate.active || enemy_shots.count > 0 || !(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) ||
             game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) ||
-            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game);
+            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game);
         if (update_stormwatch_clock(&game, &wind_clock, SDL_GetTicks(), wind_paused)) {
             viewport_center_on(&viewport, game.player.x, game.player.y);
             needs_redraw = 1;

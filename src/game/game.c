@@ -1605,6 +1605,8 @@ void game_init(GameState *g) {
     g->aldric_x = -1;
     g->aldric_y = -1;
     g->aldric_hp = ALDRIC_MAX_HP;
+    g->aldric_recruited = 0;
+    g->resurrection_prompt = 0;
     g->dain_quest_state = 0;
     g->dain_map_fragments = 0;
     g->alder_quest_state = 0;
