@@ -6,6 +6,7 @@
 #include "../game/approach.h"
 #include "../game/town_road.h"
 #include "../game/necromancer.h"
+#include "../game/aldric.h"
 #include <stdio.h>
 
 static const Enemy *visible_necromancer(const GameState *g, const Viewport *v) {
@@ -325,6 +326,12 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         g->quick_potion_type == ITEM_POTION_MANA ? "MANA" : "HEALTH", game_quick_potion_count(g));
     renderer_draw_text(r, quick, x, y, game_quick_potion_count(g) ? value : dimmed, r->font_tiny);
     y += lh + 6;
+    if (g->aldric_party_state == ALDRIC_FOLLOWING) {
+        char ally[32];
+        SDL_snprintf(ally, sizeof(ally), "ALDRIC HP: %d / %d", g->aldric_hp, ALDRIC_MAX_HP);
+        renderer_draw_text(r, ally, x, y, g->aldric_hp * 4 <= ALDRIC_MAX_HP ? health_warning : value, r->font_tiny);
+        y += lh + 6;
+    }
 
     // Key hints
     if (necromancer) {

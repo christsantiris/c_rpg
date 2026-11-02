@@ -1,5 +1,7 @@
 #include "aldric.h"
+#include "combat_feedback.h"
 #include "elowen.h"
+#include "town_road.h"
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +13,16 @@ static int lich_defeated(const GameState *g) {
 
 int aldric_at(const GameState *g, int x, int y) {
     return g->aldric_party_state == ALDRIC_FOLLOWING && x == g->aldric_x && y == g->aldric_y;
+}
+
+int aldric_beside(const GameState *g, int x, int y) {
+    int dx = abs(g->aldric_x - x);
+    int dy = abs(g->aldric_y - y);
+    return g->aldric_party_state == ALDRIC_FOLLOWING && dx <= 1 && dy <= 1 && dx + dy > 0;
+}
+
+static int near_player(const GameState *g, int x, int y) {
+    return abs(x - g->player.x) <= 2 && abs(y - g->player.y) <= 2;
 }
 
 static int follow_space(const GameState *g, int x, int y) {
@@ -37,16 +49,20 @@ void aldric_place(GameState *g) {
     }
     if (g->location == LOCATION_TOWN && g->map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] == TILE_NPC_ALDRIC) {
         g->map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] = TILE_TOWN_PATH;
-    } else if (g->location == LOCATION_TAVERN && g->aldric_party_state == ALDRIC_WAITING &&
+    } else if (g->location == LOCATION_TAVERN && g->aldric_party_state != ALDRIC_FOLLOWING &&
         seat_free(g, ALDRIC_INN_X, ALDRIC_INN_Y)) {
         g->map.tiles[ALDRIC_INN_Y][ALDRIC_INN_X] = TILE_NPC_ALDRIC;
     }
 }
 
 // Aldric walks behind Elowen while she is escorted, otherwise behind the player.
+// He may stand two squares from the player while fighting.
 void aldric_follow(GameState *g, int lead_old_x, int lead_old_y) {
     if (g->aldric_party_state != ALDRIC_FOLLOWING) {
         return;
+    }
+    if (town_road_index(g->location) >= 0) {
+        g->aldric_hp = ALDRIC_MAX_HP;
     }
     int escort = g->elowen_quest_state == ELOWEN_RESCUED &&
         (g->elowen_x != g->player.x || g->elowen_y != g->player.y);
@@ -55,8 +71,7 @@ void aldric_follow(GameState *g, int lead_old_x, int lead_old_y) {
     if (abs(lead_old_x - lead_x) + abs(lead_old_y - lead_y) == 1 && follow_space(g, lead_old_x, lead_old_y)) {
         g->aldric_x = lead_old_x;
         g->aldric_y = lead_old_y;
-    } else if (abs(g->aldric_x - lead_x) + abs(g->aldric_y - lead_y) != 1 ||
-        !follow_space(g, g->aldric_x, g->aldric_y)) {
+    } else if (!near_player(g, g->aldric_x, g->aldric_y) || !follow_space(g, g->aldric_x, g->aldric_y)) {
         const int dx[] = {0, -1, 1, 0};
         const int dy[] = {1, 0, 0, -1};
         const int around[2][2] = {{lead_x, lead_y}, {g->player.x, g->player.y}};
@@ -79,12 +94,78 @@ void aldric_follow(GameState *g, int lead_old_x, int lead_old_y) {
     }
 }
 
+// He strikes a foe beside him, or closes on one threatening the player.
+void aldric_turn(GameState *g) {
+    if (g->aldric_party_state != ALDRIC_FOLLOWING || g->player.hp <= 0 || g->aldric_x < 0) {
+        return;
+    }
+    Enemy *target = NULL;
+    Enemy *threat = NULL;
+    int threat_distance = 0;
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *e = &g->enemies[i];
+        if (!e->active) {
+            continue;
+        }
+        int distance = abs(e->x - g->aldric_x) + abs(e->y - g->aldric_y);
+        if (distance == 1 && (!target || e->hp < target->hp)) {
+            target = e;
+        }
+        if (abs(e->x - g->player.x) <= 3 && abs(e->y - g->player.y) <= 3 && (!threat || distance < threat_distance)) {
+            threat = e;
+            threat_distance = distance;
+        }
+    }
+    if (target) {
+        action_aldric_strike(g, target);
+        return;
+    }
+    if (!threat) {
+        return;
+    }
+    const int dx[] = {0, 1, 0, -1};
+    const int dy[] = {-1, 0, 1, 0};
+    for (int i = 0; i < 4; i++) {
+        int x = g->aldric_x + dx[i];
+        int y = g->aldric_y + dy[i];
+        if (abs(threat->x - x) + abs(threat->y - y) < threat_distance && near_player(g, x, y) && follow_space(g, x, y)) {
+            g->aldric_x = x;
+            g->aldric_y = y;
+            return;
+        }
+    }
+}
+
+void aldric_take_hit(GameState *g, const Enemy *e) {
+    int damage = e->attack - ALDRIC_DEFENSE;
+    if (damage < 1) {
+        damage = 1;
+    }
+    g->aldric_hp -= damage;
+    combat_feedback_add(g, FEEDBACK_ALLY_DAMAGE, FEEDBACK_NOW, g->aldric_x, g->aldric_y, damage);
+    char msg[MAX_MESSAGE_LEN];
+    if (g->aldric_hp > 0) {
+        snprintf(msg, sizeof(msg), "%s hits Aldric: %d dmg", e->name, damage);
+        push_message(g, msg);
+        return;
+    }
+    // Resurrection will replace this stand-in recovery at the Inn.
+    g->aldric_party_state = ALDRIC_RECOVERING;
+    g->aldric_hp = ALDRIC_MAX_HP;
+    g->aldric_x = -1;
+    g->aldric_y = -1;
+    snprintf(msg, sizeof(msg), "%s knocks Aldric out! He is carried to Oakhaven's Inn to recover.", e->name);
+    push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
+}
+
 void aldric_talk(GameState *g, int x, int y) {
     const char *text = "Clear the dungeon before venturing farther afield. Revisit cleared areas to train, and prepare supplies before a long journey.";
     if (g->aldric_party_state == ALDRIC_FOLLOWING) {
         text = g->location == LOCATION_TAVERN ?
             "Shall I wait here at the Inn? You can find me here whenever you need my sword again." :
             "I'm with you. If you would rather travel alone, tell me at Oakhaven's Inn and I will wait there.";
+    } else if (g->aldric_party_state == ALDRIC_RECOVERING) {
+        text = "That blow laid me flat, but a night at the Inn has me on my feet again. Shall I come with you?";
     } else if (lich_defeated(g)) {
         text = "The Lich King is gone and Elowen is free, but evil still stalks the roads beyond Oakhaven. Alder and Dain have work for a fighter, and my short sword is still sharp. Let me join you.";
     }
@@ -107,6 +188,7 @@ static void join(GameState *g) {
         g->map.tiles[y][x] = TILE_TAVERN_FLOOR;
     }
     g->aldric_party_state = ALDRIC_FOLLOWING;
+    g->aldric_hp = ALDRIC_MAX_HP;
     g->aldric_x = x;
     g->aldric_y = y;
     aldric_follow(g, -1, -1);

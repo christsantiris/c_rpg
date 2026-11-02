@@ -221,14 +221,27 @@ Inn, and incapacitation with recovery there rather than permanent death.
 Resurrection later replaces Inn recovery. He returns to full HP whenever the
 player enters a town.
 
-Recruitment is implemented; combat is the next step. After the Lich, Aldric
+Recruitment and combat are implemented. After the Lich, Aldric
 leaves the square and waits at his Inn seat between Dain and Ilya. Talking to
 him there offers to join (**Y**/**N**). He then follows the player through
 every map transition, walking behind Elowen while she is escorted. Walking into
 him swaps places. Talking to him in the Inn offers to dismiss him to his seat;
-elsewhere he explains that he can be dismissed at the Inn. Party state and his
-position persist through save/load (save version 231). Older saves lose his
-square tile after the Lich and gain his Inn seat on load.
+elsewhere he explains that he can be dismissed at the Inn. Party state, position
+and HP persist through save/load (save version 231). Older saves lose his square
+tile after the Lich and gain his Inn seat on load.
+
+In combat Aldric has 120 HP, 17 attack (a Warrior's 14 plus the Short Sword's 3)
+and 6 defense, and does not level. Each turn, before the enemies act, he strikes
+the weakest enemy directly beside him, or steps toward one within three squares of
+the player while staying within two squares of the player. His damage follows
+the player's melee rule, and his kills give the player experience, loot, quest
+credit and boss victories. Enemies cannot walk through him. A regular enemy
+beside him but not beside the player attacks him instead; bosses keep
+targeting the player. At 0 HP he is knocked out, carried to his Inn seat, and
+offers to rejoin at full HP. He is fully healed whenever the player enters a
+town. A green bar above him and an **ALDRIC HP** line in the side panel show his
+health. The fixed stats are provisional until the forest and mountain balance
+pass.
 
 ## Decisions still needed
 

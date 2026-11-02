@@ -1315,7 +1315,7 @@ static void draw_combat_feedback(Renderer *r, const GameState *g, const Viewport
         if (melee_hit && age < SLASH_MS) {
             draw_melee_slash(r, left, top, age);
         }
-        if (e->kind == FEEDBACK_PLAYER_DAMAGE && age < HIT_FLASH_MS) {
+        if ((e->kind == FEEDBACK_PLAYER_DAMAGE || e->kind == FEEDBACK_ALLY_DAMAGE) && age < HIT_FLASH_MS) {
             draw_tile_flash(r, left, top, (SDL_Color){230, 40, 30, 120}, age);
         }
         if (e->kind == FEEDBACK_ENEMY_CRITICAL && age < CRITICAL_BURST_MS) {
@@ -1341,6 +1341,9 @@ static void draw_combat_feedback(Renderer *r, const GameState *g, const Viewport
         } else if (e->kind == FEEDBACK_PLAYER_DAMAGE) {
             SDL_snprintf(text, sizeof(text), "-%d", e->amount);
             color = (SDL_Color){240, 72, 60, 255};
+        } else if (e->kind == FEEDBACK_ALLY_DAMAGE) {
+            SDL_snprintf(text, sizeof(text), "-%d", e->amount);
+            color = (SDL_Color){244, 150, 64, 255};
         } else if (e->kind == FEEDBACK_ENEMY_POISON) {
             SDL_snprintf(text, sizeof(text), "-%d P", e->amount);
             color = (SDL_Color){137, 239, 106, 255};
@@ -4377,8 +4380,16 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         int width = 0;
         npc_draw(r, sx, sy, NPC_ART_ALDRIC, 0);
         TTF_SizeText(r->font_tiny, "ALDRIC", &width, NULL);
-        renderer_draw_text(r, "ALDRIC", sx * TILE_SIZE + (TILE_SIZE - width) / 2, (sy - 1) * TILE_SIZE,
+        int label_x = sx * TILE_SIZE + (TILE_SIZE - width) / 2;
+        renderer_draw_text(r, "ALDRIC", label_x < 2 ? 2 : label_x, (sy - 1) * TILE_SIZE,
             (SDL_Color){206, 196, 170, 255}, r->font_tiny);
+        // A green bar distinguishes the ally's health from enemy bars.
+        SDL_Rect bar = {sx * TILE_SIZE + 2, sy * TILE_SIZE - 5, TILE_SIZE - 4, 3};
+        SDL_SetRenderDrawColor(r->sdl, 20, 52, 24, 255);
+        SDL_RenderFillRect(r->sdl, &bar);
+        bar.w = bar.w * g->aldric_hp / ALDRIC_MAX_HP;
+        SDL_SetRenderDrawColor(r->sdl, 84, 200, 92, 255);
+        SDL_RenderFillRect(r->sdl, &bar);
     }
     // Draw player
     const Item *equipped_weapon = NULL;
