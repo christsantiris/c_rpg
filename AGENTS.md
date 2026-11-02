@@ -162,7 +162,7 @@ This is a permanent dungeon and area creation requirement.
 
 ## 12. README contains the main world map
 
-`docs/images/world-map-final.png` is the permanent final world map asset.
+`docs/world-map.png` is the permanent final world map asset.
 README's embedded map and click-through link must always use this file.
 Publish each finished map revision by replacing its contents; do not switch
 README to a regional preview, draft or revision-specific image filename.
@@ -178,6 +178,6 @@ satisfy this requirement.
 Inspect the actual image linked and embedded in README against the approved
 geography and playable routes before reporting completion. Remove retired
 connections, preserve unrelated geography, and leave undecided connections
-undrawn. Update the atlas source notes and acceptance checks with the image.
+undrawn.
 When later acts are deferred, mark their geography as provisional rather than
 treating their existing depiction as approved V2 design.

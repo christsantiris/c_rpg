@@ -56,8 +56,7 @@ faces and eroded corners. Scattered spires and boulders retain their varied
 shapes, while tall and barrel cacti form small stands. Curved dune ridges cross
 tile boundaries on the open sand, with occasional pebbles and dry scrub.
 These details stay fixed when moving, revisiting, or loading. Existing saved
-maps retain their progress during the layout migration. See
-the [renderer comparisons](art-sources/sunscar/README.md).
+maps retain their progress during the layout migration.
 
 Blowing sand and a light amber haze animate across the play area, including while
 standing still. The sandstorm is visual and does not affect combat or movement.
@@ -105,8 +104,7 @@ wind, storm sequence, freeze, recovery, obelisks, patch clocks and loot underlay
 in active and cached maps. Older saves migrate in place: obsolete Pharaoh attack
 timers reset, while health, deaths, exploration, quest objects and portal
 destinations remain intact. The existing unclaimed-staff flag preserves reward
-availability after an old victory. See the
-[native renderer gallery and play-test guide](art-sources/desert-pharaoh-encounter/README.md).
+availability after an old victory.
 
 ## The Lost Magic Lamp
 

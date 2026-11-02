@@ -118,9 +118,6 @@ Old victories remain completed without inventing another shield. An identifiable
 current dropped legacy Magic Shield remains recoverable as **Magic Shield**,
 including after saving again; it is never retroactively renamed to Aegis.
 
-See the [renderer captures and play-testing guide](art-sources/minotaur-encounter/README.md).
-
-
 ## Entrance relocation and older saves
 
 Save version **176** records `labyrinth_entry_town`, so loading inside the maze
@@ -131,5 +128,3 @@ spur, retaining the square's cobblestones, player position, exploration and loot
 items covering the removed gate receive grass underlays. Saved forest approaches
 gain the landmark, with blocked players and loot moved to accessible road tiles.
 
-See [sealed/open entrance renderer previews](art-sources/labyrinth-entrance/README.md)
-and the updated [world map](images/world-map.png).

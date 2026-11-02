@@ -167,8 +167,6 @@ Return to **Nahla near the Ruined Isle temple approach** for **150 gold and
 2,500 score**. Receiving the mantle neither claims the treasure nor completes
 her quest.
 
-See the [native renderer gallery and play-test guide](art-sources/sun-guardian-encounter/README.md).
-
 ## Return to Town
 
 Return to Town works from every temple tier and from the Ruined Isle. It is a

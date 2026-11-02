@@ -60,15 +60,4 @@ def entrance():
 
 
 if __name__ == '__main__':
-    art = entrance()
-    save_sprite(art, ROOT / 'assets/images/giants-crown-entrance.bmp')
-    output = ROOT / 'docs/art-sources/giants-crown'
-    output.mkdir(parents=True, exist_ok=True)
-    art.save(output / 'entrance.png')
-    # Review at native size beside an established entrance and town building.
-    sheet = Image.new('RGB', (600, 190), (17, 35, 23))
-    sheet.paste(art, (8, 34), art)
-    for path, at in [('assets/images/ashen-entrance.bmp',(200,34)), ('assets/images/blacksmith.bmp',(380,34))]:
-        reference = Image.open(ROOT / path).convert('RGBA')
-        sheet.paste(reference, at, reference)
-    sheet.save(output / 'native-scale-review.png')
+    save_sprite(entrance(), ROOT / 'assets/images/giants-crown-entrance.bmp')

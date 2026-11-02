@@ -128,8 +128,5 @@ def cask():
 
 
 if __name__ == '__main__':
-    output = ROOT / 'docs/art-sources/alehouse'
-    output.mkdir(parents=True, exist_ok=True)
     for name, sprite in [('alehouse', building()), ('alehouse-cask', cask())]:
         save_sprite(sprite, ROOT / 'assets/images' / f'{name}.bmp')
-        sprite.save(output / f'{name}.png')
