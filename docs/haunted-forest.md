@@ -8,6 +8,13 @@ enters the safe approach; entering the forest always starts at **Forest 1**.
 Its interior starts at stage one from either town. Ordinary backtracking within
 an expedition remains available.
 
+Walking north through the approach doorway arrives on Forest 1's south edge,
+still facing north. Every later entrance is opposite the previous stage's exit:
+east to west, north to south, and south to north. Retreat and cached-stage
+revisits preserve the crossing direction and continue along the arrival trail.
+Existing saved stages receive an entrance-trail repair without regenerating
+their clearings, enemies, exploration or quest state.
+
 The forest is drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 ×
 18 tiles around the player. The Necromancer acts within twelve tiles; the camera leans toward him to keep him on screen as his warned spirit bolts and root lanes begin.
 

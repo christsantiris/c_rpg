@@ -7,6 +7,12 @@ large fortified mountain cave from either town to start at **level 1** and
 fight upward through five levels. Mountain levels never play in reverse from
 either town. Ordinary backtracking within a climb remains available.
 
+The northbound cave doorway enters Mountain 1 from its south edge. Each later
+stage enters opposite the previous stage's exit, preserving the travel direction
+on forward trips and retreat. Entering, leaving and revisiting a stage retain
+the crossing step's facing. Older saved entrances are repaired in place while
+keeping exploration, enemies, wounds and quest progress.
+
 The mountains are drawn at the Crown Roads' 1.5× zoom: the camera shows about 30
 × 18 tiles around the player. The Goblin King acts within twelve tiles; the camera leans toward him to keep him on screen as his warned attacks begin.
 

@@ -957,6 +957,12 @@ int map_repair_outdoor_entrance(Map *m, int level, int mountains) {
     }
     TileType wall = mountains ? TILE_MOUNTAIN_WALL : TILE_FOREST_WALL;
     TileType floor = mountains ? TILE_MOUNTAIN_FLOOR : TILE_FOREST_FLOOR;
+    int center_x;
+    int center_y;
+    map_room_center(&m->rooms[0], &center_x, &center_y);
+    if (center_x < 2 || center_x >= MAP_W - 2 || center_y < 2 || center_y >= MAP_H - 2) {
+        return 0;
+    }
     if (mountains && level == 3) {
         floor = TILE_MOUNTAIN_CAVE_FLOOR;
     }
@@ -972,7 +978,8 @@ int map_repair_outdoor_entrance(Map *m, int level, int mountains) {
         return 0;
     }
     m->tiles[y][x] = wall;
-    map_room_center(&m->rooms[0], &x, &y);
+    x = center_x;
+    y = center_y;
     int dx = side == OUTDOOR_SIDE_WEST ? -1 : side == OUTDOOR_SIDE_EAST ? 1 : 0;
     int dy = side == OUTDOOR_SIDE_NORTH ? -1 : side == OUTDOOR_SIDE_SOUTH ? 1 : 0;
     // Keep the old trail and all encounter/quest state. Only extend bare terrain
