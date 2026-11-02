@@ -4,9 +4,30 @@ The castle dungeon is a short undead region linking Oakhaven and Dawnmere. The H
 Goblin Mountains, and Sunken Coast maintain their own progression rather than
 extending dungeon depth.
 
+## Act 1 Outward Band
+
+Haunted Forest and Goblin Mountains share one fixed difficulty band and ignore
+region order: defeating the Lich King or the other outward boss never changes
+their enemies. Regular enemies gain 10% HP, 4 attack and 1 defense and use the
+roster two steps deeper than their stage difficulty, so the first stage
+already mixes Giant Spiders and Dark Elf Archers, or Goblin Warchiefs, with the
+lighter creatures. Their bosses keep base stats: the Necromancer has 165 HP,
+18 attack and 6 defense, and the Goblin King 180 HP, 20 attack and 8 defense.
+The small player-level adjustment below still applies. Enemy count and traps
+still follow each stage's own difficulty.
+
+The band is tuned with a scripted balance simulation of complete single
+expeditions without retreat. A fresh Warrior, Mage or Rogue dies by about stage
+3. A Warrior who cleared the dungeon (about level 5, with roughly five Health
+Potions) finished the forest in 18 of 20 runs and the mountains in 20 of 20; a
+Mage finished 11 of 14 in each, and 12 to 13 of 14 with Aldric. A Rogue with
+the starting dagger did not finish either region and needs a separate class
+balance pass.
+
 ## Region Order Scaling
 
-New enemies scale from the number of **other** regional bosses defeated. This
+Other regions scale new enemies from the number of **other** regional bosses
+defeated, including Haunted Forest and Goblin Mountains victories. This
 order tier ranges from 0 for the first region to 3 for the fourth. Each region
 keeps its own progression and encounter count; the tier changes
 enemy strength when a floor is generated, not on every player level-up.

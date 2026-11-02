@@ -3592,8 +3592,13 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
     if (g->location == LOCATION_TOWN) {
         draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), "ELDERWOOD FOREST\nCASTLE ROAD");
-        draw_shop_blacksmith(r,
-            viewport_to_screen_x(v, TOWN_BLACKSMITH_X), viewport_to_screen_y(v, TOWN_BLACKSMITH_Y));
+        if (r->oakhaven_shop_textures[OAKHAVEN_BLACKSMITH]) {
+            SDL_Rect shop = {viewport_to_screen_x(v, TOWN_BLACKSMITH_X) * TILE_SIZE,
+                viewport_to_screen_y(v, TOWN_BLACKSMITH_Y) * TILE_SIZE, 5 * TILE_SIZE, 4 * TILE_SIZE};
+            SDL_RenderCopy(r->sdl, r->oakhaven_shop_textures[OAKHAVEN_BLACKSMITH], NULL, &shop);
+        } else {
+            draw_shop_blacksmith(r, viewport_to_screen_x(v, TOWN_BLACKSMITH_X), viewport_to_screen_y(v, TOWN_BLACKSMITH_Y));
+        }
         draw_shop_alchemist(r,
             viewport_to_screen_x(v, TOWN_ALCHEMIST_X),
             viewport_to_screen_y(v, TOWN_ALCHEMIST_Y));

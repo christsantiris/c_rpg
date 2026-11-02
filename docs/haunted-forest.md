@@ -31,8 +31,10 @@ either direction. Defeating every regular enemy is never required.
 | 5 | Necromancer's Grove | Trails narrowing into the final boss grove | 8 |
 
 Difficulty controls the regular enemy roster, enemy count, and trap count.
-Clearing dimensions vary when a stage is first generated. Completing other
-regions can strengthen enemy rosters through the existing region-order scaling.
+Clearing dimensions vary when a stage is first generated. The forest uses Act
+1's [outward difficulty band](difficulty-scaling.md#act-1-outward-band): its
+enemies are tougher than the dungeon's from stage 1 and do not change with the
+order in which bosses are defeated.
 Travel score is awarded on first visits to stages from either direction.
 
 ## Enemy Roles
@@ -45,8 +47,8 @@ Travel score is awarded on first visits to stages from either direction.
 - **Forest Troll:** high-health bruiser that moves every other turn.
 - **Dark Elf Guard:** armored melee protector for nearby archers, with the same
   base 36 HP, 11 attack, 7 defense and 44 experience as a Hobgoblin Guard.
-  Guards join the Dark Elf Territory encounters on stage 3 and remain in the
-  deeper forest roster. Existing region-order scaling can introduce them earlier.
+  Guards join the encounters from stage 2 and remain in the deeper forest
+  roster.
 
 ## Central Encounter and Shortcuts
 
