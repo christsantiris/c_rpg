@@ -639,6 +639,8 @@ void game_talk_to_mara(GameState *g);
 void game_talk_to_oswin(GameState *g);
 void game_talk_to_rook(GameState *g);
 void game_talk_to_cain(GameState *g);
+int game_cain_dialogue_active(const GameState *g);
+int game_handle_cain_dialogue_key(GameState *g, int key, int repeat);
 void game_talk_to_bram(GameState *g);
 void game_talk_to_rowan(GameState *g);
 void game_talk_to_dragon_seeker(GameState *g);
