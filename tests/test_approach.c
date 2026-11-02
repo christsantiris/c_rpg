@@ -298,11 +298,13 @@ void test_approaches(void) {
             int south = route->area == LOCATION_DUNGEON || route->area == LOCATION_MOUNTAINS || route->area == LOCATION_FOREST || route->area == LOCATION_SWAMP || approach_entrance_rows(route->area);
             int return_dx = south ? 0 : -dx;
             int return_dy = south ? 1 : -dy;
-            ASSERT("every physical area exit returns onto its entrance path facing away from the area", g->location == LOCATION_APPROACH && g->approach_route == i && g->player.x == g->map.stairs_down_x + return_dx && g->player.y == g->map.stairs_down_y + return_dy && g->player.last_dx == return_dx && g->player.last_dy == return_dy && g->map.tiles[g->player.y][g->player.x] == approach_floor(route->area) && g->enemy_count == 0);
+            int facing_dx = route->area == LOCATION_SWAMP ? -1 : return_dx;
+            int facing_dy = route->area == LOCATION_SWAMP ? 0 : return_dy;
+            ASSERT("every physical area exit returns onto its entrance path and retains the crossing direction", g->location == LOCATION_APPROACH && g->approach_route == i && g->player.x == g->map.stairs_down_x + return_dx && g->player.y == g->map.stairs_down_y + return_dy && g->player.last_dx == facing_dx && g->player.last_dy == facing_dy && g->map.tiles[g->player.y][g->player.x] == approach_floor(route->area) && g->enemy_count == 0);
             LevelCache *cache = area_cache(g, route->area, reverse);
             ASSERT("leaving onto the approach caches the actual combat map and wounded enemies", cache && cache->valid && cache->enemies[0].hp == 7 && memcmp(&visited, &cache->map, sizeof(Map)) == 0);
             ok = save_game(g, slot) && load_game(loaded, slot);
-            ASSERT("saving on a return approach restores its direction, position, and combat cache", ok && loaded->location == LOCATION_APPROACH && loaded->approach_route == i && loaded->player.x == g->player.x && loaded->player.y == g->player.y && loaded->player.last_dx == return_dx && loaded->player.last_dy == return_dy && area_cache(loaded, route->area, reverse)->enemies[0].hp == 7);
+            ASSERT("saving on a return approach restores its direction, position, and combat cache", ok && loaded->location == LOCATION_APPROACH && loaded->approach_route == i && loaded->player.x == g->player.x && loaded->player.y == g->player.y && loaded->player.last_dx == facing_dx && loaded->player.last_dy == facing_dy && area_cache(loaded, route->area, reverse)->enemies[0].hp == 7);
             int health = loaded->player.hp;
             action_resolve_enemies(loaded);
             walk_return_approach(loaded);
