@@ -36,7 +36,8 @@ the Lich King warning there. His town-square version, Stillbury duplicate, and
 replaces The Broken Seals: Bram offers the rescue, the Lich's defeat frees her
 with or without that offer, and she follows safely until their reunion. Bram
 pays 80 gold once; Elowen then stays at the Inn and provides the King clue.
-The remaining starting-cast changes are separate pending steps. Alder and Dain's
+Rook, Mara and Ilya have left the Inn and Tamsin has left the square; their
+quests keep any progress until a later act places them again. Alder and Dain's
 post-Lich arrivals and short regional quest chains are now implemented.
 The [adventure-chain review](../art-sources/oakhaven-adventure-chains/README.md)
 records the arrivals, two-stage objectives, optional boss hunts, journal and route checks.
@@ -122,7 +123,8 @@ Coast has no normal V2 entrance until its later connection is designed.
 Both outward adventures remain physically accessible before the Lich dies.
 Each starts at stage one from either town, allows retreat, and unlocks its
 onward town road through its own boss victory. Rook's labyrinth remains on
-the Haunted Forest approach, now between Oakhaven and Dawnmere.
+the Haunted Forest approach, now between Oakhaven and Dawnmere; its gate stays
+sealed until Rook returns in a later act.
 
 Restore Haunted Forest's dense green crowns, brown trunks, mossy floor, and
 shaded understory, matching the supplied earlier gameplay screenshot. Avoid
@@ -222,7 +224,7 @@ Resurrection later replaces Inn recovery. He returns to full HP whenever the
 player enters a town.
 
 Recruitment and combat are implemented. After the Lich, Aldric
-leaves the square and waits at his Inn seat between Dain and Ilya. Talking to
+leaves the square and waits at his Inn seat east of Dain. Talking to
 him there offers to join (**Y**/**N**). He then follows the player through
 every map transition, walking behind Elowen while she is escorted. Walking into
 him swaps places. Talking to him in the Inn offers to dismiss him to his seat;

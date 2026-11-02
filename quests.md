@@ -13,11 +13,11 @@ The Silent Stormbell, Break the War Machine, and Giant's Crown**.
 | The Broken Seals | Elowen | Oakhaven — Tavern | Oakhaven Dungeon | — | — |
 | Recover the Treasure Map | Dain | Dawnmere — Alehouse | Goblin Mountains | — | — |
 | The Lost Wardens | Alder | Stillbury — Inn | Haunted Forest | — | — |
-| Relight the Drowned Beacons | Mara | Oakhaven — Tavern | Sunken Coast | — | — |
+| Relight the Drowned Beacons | Mara | Unassigned in V2 (left Oakhaven) | Sunken Coast | — | — |
 | The Buried Sun | Nahla | Ruined Isle — Beside the temple | Ruined Temple | — | — |
-| The Ivory Rook | Rook | Oakhaven — Tavern | Rook's Labyrinth | — | — |
+| The Ivory Rook | Rook | Unassigned in V2 (left Oakhaven) | Rook's Labyrinth | — | — |
 | Bring Mira Home | Bram | Stillbury — Inn | Blackwater Swamp | — | — |
-| The Dragon's Hoard | Ilya | Oakhaven — Tavern | Dragonspine | — | — |
+| The Dragon's Hoard | Ilya | Unassigned in V2 (left Oakhaven) | Dragonspine | — | — |
 | The Lost Magic Lamp | Zara | Stillbury — Inn | Sunscar Wastes | — | — |
 | Reclaim the Emberforge | Steward Hadrin | Ridgeshire — Town Hall | Ashen Hollow | — | — |
 | The Silent Expedition | Quartermaster Brenna | Stillbury — Inn | Frostfell Wastes | — | — |
@@ -27,7 +27,7 @@ The Silent Stormbell, Break the War Machine, and Giant's Crown**.
 | Watchfires of Ridgeshire | Marshal Veyra | Ridgeshire — Town Hall | Goblin Mountains | Ashen Hollow | Dragonspine |
 | The Three Great Hunts | Huntmaster Selene | Rosemoor — Adventurer's Guild | Frostfell Wastes | Stonewake Quarry | Sunscar Wastes |
 | Recover Your Equipment | Automatic upon equipment confiscation | Royal Jail | Royal Jail — Guarded evidence room | — | — |
-| The Stolen Heartseed | Forester Tamsin | Oakhaven — Town center, beside the north road | Elderwood Forest | — | — |
+| The Stolen Heartseed | Forester Tamsin | Unassigned in V2 (left Oakhaven) | Elderwood Forest | — | — |
 | The Missing Spice Skiff | Spice Merchant Corvin | Dawnmere — Spice Merchant shop | Saltwind Marsh | — | — |
 | The Silent Stormbell | Watchkeeper Seren | Dawnmere — Town center, beside the east road | Stormwatch Headland | — | — |
 | Break the War Machine | Marshal Veyra | Ridgeshire — Town Hall | Ironfang Mines | — | — |
@@ -53,11 +53,12 @@ Implementation references:
 **All five designs are approved, including Break the War Machine.** Goblins are
 villains; Ironfang's quest undermines their war supply operation.
 
-Corvin, Marshal Veyra, Tamsin, Seren, and Edda are present in their listed locations.
+Corvin, Marshal Veyra, Seren, and Edda are present in their listed locations. Tamsin
+left Oakhaven in V2 and has no location until a later act places her.
 
 | Quest | Design status | Area | Assigning NPC | NPC location | Main activity | Reward target |
 | --- | --- | --- | --- | --- | --- | --- |
-| The Stolen Heartseed | Implemented | Elderwood Forest | Forester Tamsin — existing | Oakhaven — Town center, near the north road | Follow a Dark Elf trail and free a grove from root bindings | 120 gold, 800 score |
+| The Stolen Heartseed | Implemented | Elderwood Forest | Forester Tamsin — existing | Unassigned in V2 (left Oakhaven) | Follow a Dark Elf trail and free a grove from root bindings | 120 gold, 800 score |
 | The Missing Spice Skiff | Implemented | Saltwind Marsh | Spice Merchant Corvin — existing | Dawnmere — Spice Merchant shop | Follow a wreck's cargo trail and recover spices from a remote island by skiff | 150 gold, 1,000 score |
 | The Silent Stormbell | Implemented | Stormwatch Headland | Watchkeeper Seren — existing | Dawnmere — Town center, near the east road | Restore a stormbell and defend its courtyard using wind and shutters | 180 gold, 1,200 score |
 | Break the War Machine | Implemented | Ironfang Mines | Marshal Veyra — existing | Ridgeshire — Town Hall | Destroy a goblin weapons shipment and defeat the Goblin Mine Boss | 160 gold, 1,000 score |

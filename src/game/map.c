@@ -1595,7 +1595,6 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     map_clear_town_harbor(m);
     m->tiles[TOWN_CAIN_Y][TOWN_CAIN_X] = TILE_NPC_CAIN;
     m->tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] = TILE_NPC_ALDRIC;
-    m->tiles[TAMSIN_Y][TAMSIN_X] = TILE_NPC_TAMSIN;
     town_life_place(m, LOCATION_TOWN);
 
     // Spawn at the central crossroads.
@@ -2479,9 +2478,6 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y) {
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y);
     m->tiles[BRAM_INN_Y][BRAM_INN_X] = TILE_NPC_BRAM;
-    m->tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] = TILE_NPC_ROOK;
-    m->tiles[MARA_TAVERN_Y][MARA_TAVERN_X] = TILE_NPC_MARA;
-    m->tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] = TILE_NPC_DRAGON_SEEKER;
 }
 
 void map_place_tavern_brenna(Map *m) {
