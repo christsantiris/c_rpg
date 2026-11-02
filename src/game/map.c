@@ -32,6 +32,9 @@ int map_is_explored(const Map *m, int x, int y) {
 }
 
 int map_is_travel_tile(TileType tile) {
+    if (tile == TILE_SOULSTONE_RITUAL) {
+        return 1;
+    }
     return (tile >= TILE_TOWN_ROAD_ENTRY_NORTH && tile <= TILE_TOWN_ROAD_EXIT_WEST) ||
         tile == TILE_APPROACH_TOWN || tile == TILE_APPROACH_AREA || tile == TILE_APPROACH_DUNGEON_TOWN ||
         tile == TILE_LABYRINTH_ENTRANCE || tile == TILE_ROAD_GATE_OPEN || tile == TILE_ROAD_GATE_CLOSED ||
@@ -475,7 +478,9 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_ROAD_GATE_CLOSED && m->tiles[y][x] != TILE_ROAD_BANK &&
+    return m->tiles[y][x] != TILE_SOULSTONE_SHRINE && m->tiles[y][x] != TILE_NPC_WARLOCK &&
+        m->tiles[y][x] != TILE_GOBLIN_ROAD_GUARD && m->tiles[y][x] != TILE_DARK_ELF_ROAD_GUARD &&
+        m->tiles[y][x] != TILE_ROAD_GATE_CLOSED && m->tiles[y][x] != TILE_ROAD_BANK &&
         m->tiles[y][x] != TILE_NPC_EDDA && m->tiles[y][x] != TILE_NPC_SEREN && m->tiles[y][x] != TILE_NPC_TAMSIN &&
         m->tiles[y][x] != TILE_CROWN_BARRICADE && m->tiles[y][x] != TILE_CROWN_SUPPLIES &&
         m->tiles[y][x] != TILE_IRON_BUNK && m->tiles[y][x] != TILE_IRON_FORGE && m->tiles[y][x] != TILE_IRON_WALL && m->tiles[y][x] != TILE_IRON_WATER &&

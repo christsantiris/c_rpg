@@ -317,19 +317,19 @@ static void test_combat(void) {
     game->aldric_hp = 5;
     add_enemy(game, ENEMY_GOBLIN_SCOUT, 9, 1000, 50, 0);
     action_resolve_enemies(game);
-    ASSERT("losing all HP knocks Aldric out of the party", game->aldric_party_state == ALDRIC_RECOVERING &&
+    ASSERT("losing all HP leaves Aldric dead until resurrected", game->aldric_party_state == ALDRIC_DEAD && game->aldric_hp == 0 &&
         game->aldric_x == -1 && !aldric_beside(game, 9, 10));
     ASSERT("a knocked-out Aldric no longer follows or blocks", !aldric_at(game, 8, 10) && game->player.hp == hp);
     ok = save_game(game, ALDRIC_SAVE_SLOT) && load_game(loaded, ALDRIC_SAVE_SLOT);
-    ASSERT("save/load keeps Aldric recovering at the Inn", ok && loaded->aldric_party_state == ALDRIC_RECOVERING);
+    ASSERT("save/load keeps Aldric dead", ok && loaded->aldric_party_state == ALDRIC_DEAD && loaded->aldric_hp == 0);
     game_return_to_town(game);
     enter_inn(game);
-    ASSERT("he recovers at his Inn seat", game->map.tiles[ALDRIC_INN_Y][ALDRIC_INN_X] == TILE_NPC_ALDRIC);
+    ASSERT("a dead Aldric does not return to his Inn seat", game->map.tiles[ALDRIC_INN_Y][ALDRIC_INN_X] != TILE_NPC_ALDRIC);
     walk_to(game, ALDRIC_INN_X, ALDRIC_INN_Y + 1, NULL);
     aldric_talk(game, ALDRIC_INN_X, ALDRIC_INN_Y);
-    ASSERT("once recovered he offers to rejoin", strstr(game->dialogue_text, "on my feet again") && aldric_prompt_active(game));
+    ASSERT("a dead Aldric cannot offer to rejoin", !aldric_prompt_active(game));
     aldric_handle_key(game, SDL_SCANCODE_Y, 0);
-    ASSERT("he rejoins at full health", follower_ok(game) && game->aldric_hp == ALDRIC_MAX_HP);
+    ASSERT("recruitment cannot bypass resurrection", game->aldric_party_state == ALDRIC_DEAD && game->aldric_hp == 0);
     remove("saves/savegame_99231.json");
 }
 

@@ -129,7 +129,8 @@ void minimap_draw(Renderer *r, const GameState *g) {
                     if (tile == TILE_COAST_DEEP_WATER || tile == TILE_IRON_WATER || tile == TILE_IRON_TRESTLE || tile == TILE_STORM_WATER || tile == TILE_MANGROVE_WATER || tile == TILE_GLASSDEEP_POOL || tile == TILE_STONEWAKE_GAP) {
                         has_water = 1;
                     }
-                    if ((tile >= TILE_TOWN_ROAD_ENTRY_NORTH && tile <= TILE_TOWN_ROAD_EXIT_WEST) ||
+                    if (tile == TILE_SOULSTONE_SHRINE || tile == TILE_SOULSTONE_RITUAL || tile == TILE_NPC_WARLOCK ||
+                        (tile >= TILE_TOWN_ROAD_ENTRY_NORTH && tile <= TILE_TOWN_ROAD_EXIT_WEST) ||
                         tile == TILE_APPROACH_TOWN || tile == TILE_APPROACH_AREA || tile == TILE_APPROACH_DUNGEON_TOWN ||
                         tile == TILE_ROAD_GATE_OPEN || tile == TILE_ROAD_GATE_CLOSED || tile == TILE_LABYRINTH_ENTRANCE ||
                         tile == TILE_CROWN_EXIT || tile == TILE_CROWN_SUPPLIES || tile == TILE_IRON_ENTRANCE || tile == TILE_IRON_EXIT || tile == TILE_IRON_LAMP_LIT || tile == TILE_IRON_SWITCH || tile == TILE_IRON_CACHE || tile == TILE_STORM_EXIT || tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_SUPPLIES || tile == TILE_STORM_CRANK ||

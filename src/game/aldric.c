@@ -47,6 +47,16 @@ void aldric_place(GameState *g) {
     if (!lich_defeated(g)) {
         return;
     }
+    if (g->location == LOCATION_TAVERN && g->aldric_party_state == ALDRIC_DEAD) {
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (g->map.tiles[y][x] == TILE_NPC_ALDRIC) {
+                    g->map.tiles[y][x] = TILE_TAVERN_FLOOR;
+                }
+            }
+        }
+        return;
+    }
     if (g->location == LOCATION_TOWN && g->map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] == TILE_NPC_ALDRIC) {
         g->map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] = TILE_TOWN_PATH;
     } else if (g->location == LOCATION_TAVERN && g->aldric_party_state != ALDRIC_FOLLOWING &&
@@ -137,6 +147,9 @@ void aldric_turn(GameState *g) {
 }
 
 void aldric_take_hit(GameState *g, const Enemy *e) {
+    if (g->aldric_party_state != ALDRIC_FOLLOWING) {
+        return;
+    }
     int damage = e->attack - ALDRIC_DEFENSE;
     if (damage < 1) {
         damage = 1;
@@ -149,23 +162,51 @@ void aldric_take_hit(GameState *g, const Enemy *e) {
         push_message(g, msg);
         return;
     }
-    // Resurrection will replace this stand-in recovery at the Inn.
-    g->aldric_party_state = ALDRIC_RECOVERING;
-    g->aldric_hp = ALDRIC_MAX_HP;
+    g->aldric_party_state = ALDRIC_DEAD;
+    g->aldric_recruited = 1;
+    g->aldric_hp = 0;
     g->aldric_x = -1;
     g->aldric_y = -1;
-    snprintf(msg, sizeof(msg), "%s knocks Aldric out! He is carried to Oakhaven's Inn to recover.", e->name);
+    snprintf(msg, sizeof(msg), "Aldric has died. Seek Soulstone Shrine north of Oakhaven for resurrection.");
     push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
 }
 
+// Shared revival placement; the shrine validates the ritual and pays its cost.
+int aldric_revive(GameState *g, int hp) {
+    if (g->aldric_party_state != ALDRIC_DEAD || hp <= 0) {
+        push_message(g, "No fallen party member needs resurrection.");
+        return 0;
+    }
+    const int dx[] = {0, -1, 1, 0};
+    const int dy[] = {1, 0, 0, -1};
+    for (int side = 0; side < 4; side++) {
+        int x = g->player.x + dx[side];
+        int y = g->player.y + dy[side];
+        if (follow_space(g, x, y) && !map_is_travel_tile(g->map.tiles[y][x])) {
+            g->aldric_party_state = ALDRIC_FOLLOWING;
+            g->aldric_recruited = 1;
+            g->aldric_hp = hp > ALDRIC_MAX_HP ? ALDRIC_MAX_HP : hp;
+            g->aldric_x = x;
+            g->aldric_y = y;
+            combat_feedback_add(g, FEEDBACK_HEAL, FEEDBACK_NOW, x, y, g->aldric_hp);
+            push_message(g, "Aldric returns to life and rejoins your party.");
+            return 1;
+        }
+    }
+    push_message(g, "Make room beside you for Aldric before performing the ritual.");
+    return 0;
+}
+
 void aldric_talk(GameState *g, int x, int y) {
+    if (g->aldric_party_state == ALDRIC_DEAD) {
+        push_message(g, "Aldric is dead. His spirit awaits resurrection at Soulstone Shrine.");
+        return;
+    }
     const char *text = "Clear the dungeon before venturing farther afield. Revisit cleared areas to train, and prepare supplies before a long journey.";
     if (g->aldric_party_state == ALDRIC_FOLLOWING) {
         text = g->location == LOCATION_TAVERN ?
             "Shall I wait here at the Inn? You can find me here whenever you need my sword again." :
             "I'm with you. If you would rather travel alone, tell me at Oakhaven's Inn and I will wait there.";
-    } else if (g->aldric_party_state == ALDRIC_RECOVERING) {
-        text = "That blow laid me flat, but a night at the Inn has me on my feet again. Shall I come with you?";
     } else if (lich_defeated(g)) {
         text = "The Lich King is gone and Elowen is free, but evil still stalks the roads beyond Oakhaven. Alder and Dain have work for a fighter, and my short sword is still sharp. Let me join you.";
     }
@@ -177,7 +218,7 @@ void aldric_talk(GameState *g, int x, int y) {
 }
 
 int aldric_prompt_active(const GameState *g) {
-    return g->dialogue_active && g->location == LOCATION_TAVERN && lich_defeated(g) &&
+    return g->aldric_party_state != ALDRIC_DEAD && g->dialogue_active && g->location == LOCATION_TAVERN && lich_defeated(g) &&
         strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0;
 }
 
@@ -188,6 +229,7 @@ static void join(GameState *g) {
         g->map.tiles[y][x] = TILE_TAVERN_FLOOR;
     }
     g->aldric_party_state = ALDRIC_FOLLOWING;
+    g->aldric_recruited = 1;
     g->aldric_hp = ALDRIC_MAX_HP;
     g->aldric_x = x;
     g->aldric_y = y;

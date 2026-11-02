@@ -297,13 +297,17 @@ void draw_icon_shield(Renderer *r, int px, int py, const Item *item) {
 }
 
 void draw_icon_spell(Renderer *r, int px, int py, SpellID spell_id) {
-    static const int art[] = {ICON_ART_MAGIC_ARROW, ICON_ART_FIREBALL, ICON_ART_HEAL, ICON_ART_RETURN, ICON_ART_FROST, ICON_ART_PORTAL};
+    static const int art[] = {ICON_ART_MAGIC_ARROW, ICON_ART_FIREBALL, ICON_ART_HEAL, ICON_ART_RETURN, ICON_ART_FROST, ICON_ART_PORTAL, ICON_ART_RESURRECTION};
     SDL_Color palette[128] = {{0}};
     icon_palette(palette, NULL);
     if (spell_id == SPELL_FIREBALL) {
         palette['c'] = (SDL_Color){199, 54, 27, 255};
         palette['p'] = (SDL_Color){255, 135, 31, 255};
         palette['P'] = (SDL_Color){255, 233, 111, 255};
+    } else if (spell_id == SPELL_RESURRECTION) {
+        palette['c'] = (SDL_Color){73, 47, 113, 255};
+        palette['p'] = (SDL_Color){129, 88, 192, 255};
+        palette['P'] = (SDL_Color){163, 239, 215, 255};
     } else if (spell_id == SPELL_HEAL) {
         palette['p'] = (SDL_Color){64, 203, 114, 255};
         palette['P'] = (SDL_Color){196, 255, 213, 255};
@@ -311,7 +315,7 @@ void draw_icon_spell(Renderer *r, int px, int py, SpellID spell_id) {
         palette['p'] = (SDL_Color){150, 92, 227, 255};
         palette['P'] = (SDL_Color){231, 203, 255, 255};
     }
-    int index = spell_id >= SPELL_MAGIC_ARROW && spell_id <= SPELL_TELEPORT ? spell_id : SPELL_TELEPORT;
+    int index = spell_id >= SPELL_MAGIC_ARROW && spell_id <= SPELL_RESURRECTION ? spell_id : SPELL_TELEPORT;
     draw_item_art(r, px, py, art[index], palette, NULL);
 }
 

@@ -1222,3 +1222,15 @@ Item item_make_scroll_teleport(void) {
     it.rarity = ITEM_RARITY_RARE;
     return it;
 }
+
+Item item_make_scroll_resurrection(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_SCROLL;
+    strncpy(item.name, "Scroll: Resurrection", sizeof(item.name) - 1);
+    item.spell_id = SPELL_RESURRECTION;
+    item.value = 200;
+    item.class_mask = ITEM_CLASS_MAGE;
+    item.rarity = ITEM_RARITY_RARE;
+    return item;
+}

@@ -32,6 +32,7 @@
 #include "../game/catacombs.h"
 #include "../game/heartseed.h"
 #include "../game/aldric.h"
+#include "../game/resurrection.h"
 #include "../game/spice_skiff.h"
 #include "../game/mangrove.h"
 #include "../game/stormwatch.h"
@@ -1890,7 +1891,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 233);
+    cJSON_AddNumberToObject(root, "save_version", 234);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -2118,6 +2119,8 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "aldric_x", g->aldric_x);
     cJSON_AddNumberToObject(root, "aldric_y", g->aldric_y);
     cJSON_AddNumberToObject(root, "aldric_hp", g->aldric_hp);
+    cJSON_AddNumberToObject(root, "aldric_recruited", g->aldric_recruited);
+    cJSON_AddNumberToObject(root, "resurrection_prompt", g->resurrection_prompt);
     cJSON_AddNumberToObject(root, "dain_quest_state", g->dain_quest_state);
     cJSON_AddNumberToObject(root, "dain_map_fragments",
         g->dain_map_fragments);
@@ -4633,6 +4636,25 @@ int load_game(GameState *g, int slot) {
     g->aldric_y = aldric_y ? aldric_y->valueint : -1;
     cJSON *aldric_hp = cJSON_GetObjectItem(root, "aldric_hp");
     g->aldric_hp = aldric_hp ? aldric_hp->valueint : ALDRIC_MAX_HP;
+    cJSON *recruited = cJSON_GetObjectItem(root, "aldric_recruited");
+    if (save_version >= 234 && (!cJSON_IsNumber(recruited) || recruited->valuedouble != recruited->valueint ||
+        recruited->valueint < 0 || recruited->valueint > 1)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->aldric_recruited = (recruited && recruited->valueint) || g->aldric_party_state != ALDRIC_WAITING;
+    cJSON *ritual = cJSON_GetObjectItem(root, "resurrection_prompt");
+    if (save_version >= 234 && (!cJSON_IsNumber(ritual) || ritual->valuedouble != ritual->valueint ||
+        ritual->valueint < RESURRECTION_NONE || ritual->valueint > RESURRECTION_SPELL_CONFIRM)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->resurrection_prompt = ritual ? ritual->valueint : RESURRECTION_NONE;
+    if (g->aldric_party_state == ALDRIC_DEAD) {
+        g->aldric_hp = 0;
+        g->aldric_x = -1;
+        g->aldric_y = -1;
+    }
     g->dain_quest_state = dain_quest ? dain_quest->valueint : 0;
     g->dain_map_fragments = dain_fragments ? dain_fragments->valueint :
         (legacy_dain_targets ? legacy_dain_targets->valueint : 0);
@@ -6985,6 +7007,13 @@ int load_game(GameState *g, int slot) {
         }
     }
     town_road_refresh_oakhaven(g);
+    aldric_place(g);
+    if (save_version < 234 && g->aldric_party_state == ALDRIC_DEAD && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0) {
+        g->dialogue_active = 0;
+    }
+    if (!resurrection_prompt_active(g)) {
+        g->resurrection_prompt = RESURRECTION_NONE;
+    }
     game_recover_retired_items(g);
     cJSON_Delete(root);
     return 1;

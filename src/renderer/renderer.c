@@ -39,6 +39,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->harbor_texture = load_sprite_texture(sdl, "assets/images/harbor.bmp");
     r->healer_texture = load_sprite_texture(sdl, "assets/images/healer.bmp");
     r->witch_texture = load_sprite_texture(sdl, "assets/images/witch-hut.bmp");
+    r->soulstone_shrine_texture = load_sprite_texture(sdl, "assets/images/soulstone-shrine.bmp");
     r->labyrinth_texture = load_sprite_texture(sdl,
         "assets/images/labyrinth-entrance.bmp");
     r->dungeon_entrance_texture = load_sprite_texture(sdl, "assets/images/dungeon-entrance.bmp");
@@ -143,6 +144,10 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
 }
 
 void renderer_free(Renderer *r) {
+    if (r->soulstone_shrine_texture) {
+        SDL_DestroyTexture(r->soulstone_shrine_texture);
+        r->soulstone_shrine_texture = NULL;
+    }
     SDL_DestroyTexture(r->stonewake_enemy_texture);
     SDL_DestroyTexture(r->stonewake_workshop_texture);
     r->stonewake_workshop_texture = NULL;

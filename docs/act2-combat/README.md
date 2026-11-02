@@ -146,6 +146,6 @@ movement, scaling and both boss suites were retained without edits in that
 commit. Passing the current suite establishes current coverage, not restored
 coverage for the rest of the V1 world.
 
-Aldric's existing Inn recovery remains separate work: the party implementation
-still uses that placeholder instead of the requested future resurrection
-system. This combat change does not revise his recruitment or recovery rules.
+The later [Soulstone Shrine change](../soulstone-shrine/README.md) replaces
+Aldric's Inn recovery with persistent death, paid resurrection and a level-10
+Mage ritual. The tactical behavior described here retains its existing rules.

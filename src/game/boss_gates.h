@@ -27,6 +27,7 @@ const BossGateRule *boss_gate_rule(Location area);
 int boss_gate_open(const GameState *g, Location area);
 int boss_gate_crossing(GameState *g, Location area);
 int boss_gate_checkpoints(const GameState *g, RoadCheckpoint *points);
+int boss_gate_guards(const GameState *g, RoadCheckpoint *guards);
 void boss_gate_refresh(GameState *g);
 void boss_gate_migrate(GameState *g);
 int boss_gate_hint(const GameState *g);

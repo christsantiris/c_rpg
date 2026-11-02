@@ -1,5 +1,6 @@
 #include "test_utils.h"
 #include "game/actions.h"
+#include "game/aldric.h"
 #include "game/approach.h"
 #include "game/boss_gates.h"
 #include "game/crownroad_north.h"
@@ -82,9 +83,18 @@ static void town_connections(GameState *g) {
         }
         g->player.x = point[0].x + (vertical ? 0 : point[0].x < APPROACH_W / 2 ? 1 : -1);
         g->player.y = point[0].y + (!vertical ? 0 : point[0].y < APPROACH_H / 2 ? 1 : -1);
+        int tx = point[0].x;
+        int ty = point[0].y;
+        RoadCheckpoint guards[2];
+        if (boss_gate_guards(g, guards) == 2) {
+            tx = guards[1].x;
+            ty = guards[1].y;
+            g->player.x = tx + (tx < APPROACH_W / 2 ? 1 : -1);
+            g->player.y = ty;
+        }
         int x = g->player.x;
         int y = g->player.y;
-        action_resolve_player(g, (Action){ACTION_MOVE, point[0].x, point[0].y});
+        action_resolve_player(g, (Action){ACTION_MOVE, tx, ty});
         ASSERT("bumping a closed checkpoint names its boss and leaves the player on the approach", g->player.x == x && g->player.y == y &&
             strstr(g->messages[g->message_count - 1], boss_gate_rule(route->area)->boss) && game_has_regional_interaction(g));
         action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
@@ -153,6 +163,119 @@ static int set_legacy_version(void) {
     }
     free(data);
     return ok;
+}
+
+static void guarded_roads(GameState *g, GameState *loaded) {
+    const int routes[] = {0, 2};
+    const int seeds[] = {7, 71, 107, 907};
+    for (int n = 0; n < 2; n++) {
+        for (int seed = 0; seed < 4; seed++) {
+            srand(seeds[seed]);
+            game_init(g);
+            approach_enter_region(g, routes[n]);
+            Location area = approach_route(g)->area;
+            const char *destination = area == LOCATION_FOREST ? "Dawnmere" : "Stillbury";
+            TileType tile = area == LOCATION_FOREST ? TILE_DARK_ELF_ROAD_GUARD : TILE_GOBLIN_ROAD_GUARD;
+            RoadCheckpoint guards[2];
+            RoadCheckpoint gates[2];
+            int count = boss_gate_guards(g, guards);
+            boss_gate_checkpoints(g, gates);
+            int dx = guards[1].x < APPROACH_W / 2 ? 1 : -1;
+            int front_x = guards[1].x + dx;
+            ASSERT("two noncombat sentries stand two and three tiles in front of the existing gate", count == 2 &&
+                abs(guards[0].x - gates[0].x) == 2 && abs(guards[1].x - gates[0].x) == 3 &&
+                g->map.tiles[guards[0].y][guards[0].x] == tile && g->map.tiles[guards[1].y][guards[1].x] == tile && g->enemy_count == 0);
+            ASSERT("the narrow road reaches the front sentry through real movement", path(g, front_x, guards[1].y, 1) &&
+                g->location == LOCATION_APPROACH && g->player.x == front_x && g->player.y == guards[1].y && game_has_regional_interaction(g));
+            int xp = g->player.experience;
+            int gold = g->gold;
+            int hp = g->player.hp;
+            action_resolve_player(g, (Action){ACTION_MOVE, guards[1].x, guards[1].y});
+            action_resolve_enemies(g);
+            ASSERT("bumping the sentry explains its destination without combat, rewards or retaliation", g->player.x == front_x &&
+                strstr(g->messages[g->message_count - 1], destination) && g->player.experience == xp && g->gold == gold && g->player.hp == hp);
+            action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+            ASSERT("the normal interaction key explains the boss required to remove the sentries", strstr(g->messages[g->message_count - 1], boss_gate_rule(area)->boss) != NULL);
+            g->player.known_spells[0] = spell_make_teleport();
+            g->player.equipped_spell = 0;
+            g->player.known_spell_count = 1;
+            g->player.mp = 500;
+            g->player.last_dx = -dx;
+            g->player.last_dy = 0;
+            action_resolve_player(g, (Action){ACTION_CAST_SPELL, 0, 0});
+            ASSERT("Teleport cannot cross the sentries or spend MP on the blocked step", g->player.x == front_x && g->player.mp == 500);
+            g->player.known_spells[0] = spell_make_fireball();
+            action_resolve_player(g, (Action){ACTION_CAST_SPELL, 0, 0});
+            ASSERT("area magic cannot kill sentries or produce loot and XP", boss_gate_guards(g, guards) == 2 &&
+                g->map.tiles[guards[1].y][guards[1].x] == tile && g->player.experience == xp && g->floor_item_count == 0 && g->enemy_count == 0);
+            ASSERT("the guards preserve the real retreat to Oakhaven", path(g, g->map.stairs_up_x, g->map.stairs_up_y, 1) && g->location == LOCATION_TOWN_ROAD);
+            approach_enter_region(g, routes[n]);
+            ASSERT("guards leave the area's adventure entrance usable before boss victory", path(g, g->map.stairs_down_x, g->map.stairs_down_y, 1) && g->location == area);
+            game_return_to_approach(g);
+            ASSERT("returning from an unfinished adventure keeps its guards and retreat", g->location == LOCATION_APPROACH && boss_gate_guards(g, guards) == 2 &&
+                path(g, g->map.stairs_up_x, g->map.stairs_up_y, 0));
+            g->defeated_bosses |= 1u << (area == LOCATION_FOREST ? LOCATION_MOUNTAINS : LOCATION_FOREST);
+            boss_gate_refresh(g);
+            ASSERT("defeating the other area's boss does not remove this road's guards", boss_gate_guards(g, guards) == 2);
+            g->debug_passages_unlocked = 1;
+            boss_gate_refresh(g);
+            ASSERT("debug passage unlock removes the noncombat sentries", boss_gate_guards(g, guards) == 0);
+            g->debug_passages_unlocked = 0;
+            boss_gate_refresh(g);
+            g->defeated_bosses |= 1u << area;
+            boss_gate_refresh(g);
+            ASSERT("the correct boss victory removes both guards and restores their road tiles", boss_gate_guards(g, guards) == 0 &&
+                map_is_walkable(&g->map, guards[0].x, guards[0].y) && map_is_walkable(&g->map, guards[1].x, guards[1].y));
+            int ex = area == LOCATION_FOREST ? APPROACH_W - 1 : 0;
+            ASSERT("the opened road reaches the onward town by actual travel", path(g, ex, APPROACH_H / 2, 1) && g->location == LOCATION_TOWN_ROAD &&
+                g->road_town == (area == LOCATION_FOREST ? LOCATION_DAWNMERE : LOCATION_TOWN2));
+        }
+    }
+    if (save_exists(GATE_SLOT)) {
+        ASSERT("guard save test slot is unused", 0);
+        return;
+    }
+    for (int n = 0; n < 2; n++) {
+        game_init(g);
+        approach_enter_region(g, routes[n]);
+        Location area = approach_route(g)->area;
+        RoadCheckpoint guards[2];
+        boss_gate_guards(g, guards);
+        int dx = guards[1].x < APPROACH_W / 2 ? 1 : -1;
+        // Simulate a pre-sentry save with its player and loot beside the beam.
+        for (int i = 0; i < 2; i++) {
+            g->map.tiles[guards[i].y][guards[i].x] = TILE_TOWN_PATH;
+        }
+        g->player.x = guards[0].x - dx;
+        g->player.y = guards[0].y;
+        g->player.hp = 43;
+        g->gold = 789;
+        g->aldric_party_state = ALDRIC_FOLLOWING;
+        g->aldric_recruited = 1;
+        g->aldric_x = guards[0].x;
+        g->aldric_y = guards[0].y;
+        g->aldric_hp = 77;
+        g->floor_item_count = 2;
+        for (int i = 0; i < 2; i++) {
+            int x = i ? g->player.x : guards[1].x;
+            g->floor_items[i] = (FloorItem){.active = 1, .x = x, .y = guards[1].y, .underlying_tile = TILE_TOWN_PATH, .item = item_make_health_potion()};
+            g->map.tiles[guards[1].y][x] = TILE_ITEM;
+        }
+        map_mark_explored(&g->map, 30, 5);
+        ASSERT("loading a pre-sentry save adds its guards and moves the player safely in front", save_game(g, GATE_SLOT) && load_game(loaded, GATE_SLOT) &&
+            boss_gate_guards(loaded, guards) == 2 && loaded->player.x == guards[1].x + dx && loaded->player.y == guards[1].y &&
+            loaded->gold == 789 && loaded->player.hp == 43 && map_is_explored(&loaded->map, 30, 5));
+        ASSERT("save restoration preserves Aldric's wounds without leaving him in a guard", loaded->aldric_hp == 77 &&
+            map_is_walkable(&loaded->map, loaded->aldric_x, loaded->aldric_y));
+        ASSERT("saved loot on or behind sentries moves onto reachable road without ghost items", loaded->floor_items[0].active && loaded->floor_items[1].active &&
+            path(loaded, loaded->floor_items[0].x, loaded->floor_items[0].y, 0) && path(loaded, loaded->floor_items[1].x, loaded->floor_items[1].y, 0) &&
+            loaded->map.tiles[g->player.y][g->player.x] == TILE_TOWN_PATH);
+        ASSERT("closed sentries survive a current save round trip", save_game(loaded, GATE_SLOT) && load_game(g, GATE_SLOT) && boss_gate_guards(g, guards) == 2);
+        g->defeated_bosses |= 1u << area;
+        boss_gate_refresh(g);
+        ASSERT("save/load cannot restore guards after their boss was defeated", save_game(g, GATE_SLOT) && load_game(loaded, GATE_SLOT) && boss_gate_guards(loaded, guards) == 0 && boss_gate_open(loaded, area));
+    }
+    remove("saves/savegame_99311.json");
 }
 
 static void saved_connections(GameState *g, GameState *loaded) {
@@ -226,6 +349,7 @@ void test_boss_gates(void) {
     town_connections(g);
     northern_connections(g);
     saved_connections(g, loaded);
+    guarded_roads(g, loaded);
     free(g);
     free(loaded);
 }

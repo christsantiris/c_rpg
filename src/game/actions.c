@@ -37,6 +37,7 @@
 #include "landscapes.h"
 #include "wilds.h"
 #include "enemy_tactics.h"
+#include "resurrection.h"
 #include <SDL2/SDL.h>
 #include <stdlib.h>
 #include <string.h>
@@ -745,7 +746,7 @@ static const Item *equipped_armor(const GameState *g) {
     return &g->inventory[g->equipped_armor];
 }
 
-static int equipped_spell_cost(const GameState *g, const Spell *spell) {
+int action_spell_mp_cost(const GameState *g, const Spell *spell) {
     const Item *armor = equipped_armor(g);
     if (spell->mp_cost == 0) {
         return spell->mp_cost;
@@ -1707,6 +1708,10 @@ static void resolve_player_action(GameState *g, Action a) {
                 push_message(g, "Your class cannot learn that spell");
                 return;
             }
+            if (item->spell_id == SPELL_RESURRECTION && (g->player.player_class != CLASS_MAGE || g->player.level < RESURRECTION_LEVEL)) {
+                push_message(g, "Resurrection requires Mage level 10. Keep the scroll until you are ready.");
+                return;
+            }
             for (int i = 0; i < g->player.known_spell_count; i++) {
                 if (g->player.known_spells[i].id == item->spell_id) {
                     push_message(g, "Already know that spell");
@@ -1726,6 +1731,7 @@ static void resolve_player_action(GameState *g, Action a) {
                     learned = spell_make_frost_bolt();
                     break;
                 case SPELL_TELEPORT: learned = spell_make_teleport(); break;
+                case SPELL_RESURRECTION: learned = spell_make_resurrection(); break;
                 case SPELL_RETURN_TO_TOWN:
                     learned = spell_make_return_to_town();
                     break;
@@ -1844,7 +1850,12 @@ static void resolve_player_action(GameState *g, Action a) {
             return;
         }
         int spell_power = equipped_spell_power(g);
-        int mana_cost = equipped_spell_cost(g, sp);
+        int mana_cost = action_spell_mp_cost(g, sp);
+
+        if (sp->id == SPELL_RESURRECTION) {
+            resurrection_offer_spell(g);
+            return;
+        }
 
         if (g->player.mp < mana_cost) {
             push_message(g, "Not enough MP!");

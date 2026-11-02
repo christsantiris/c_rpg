@@ -19,6 +19,7 @@
 #include "../game/elderwood.h"
 #include "town_road_renderer.h"
 #include "../game/town_road.h"
+#include "../game/resurrection.h"
 #include "sprites.h"
 #include "world_props.h"
 #include "goblin_king_renderer.h"
@@ -570,11 +571,12 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int shortcut = game_shortcut_prompt_active(g);
     int quest_offer = game_quest_offer_active(g);
     int stormbell_prompt = stormbell_prompt_active(g);
+    int shrine_prompt = resurrection_prompt_active(g);
     int escort_dialogue = strcmp(g->dialogue_speaker, "Elowen") == 0 ||
         (g->aldric_party_state == ALDRIC_FOLLOWING && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0);
     int dock_dialogue = coastal_approach(g) && strcmp(g->dialogue_speaker, "Captain Rowan") == 0;
     if (!g->dialogue_active ||
-        (!escort_dialogue && !dock_dialogue && !shortcut && !stormbell_prompt && !town_life_is_interior(g->location) && g->location != LOCATION_TAVERN &&
+        (!escort_dialogue && !dock_dialogue && !shortcut && !stormbell_prompt && !shrine_prompt && !town_life_is_interior(g->location) && g->location != LOCATION_TAVERN &&
         g->location != LOCATION_INN && g->location != LOCATION_HEALER && g->location != LOCATION_WITCH &&
         g->location != LOCATION_GUILD &&
         g->location != LOCATION_TOWN_HALL &&
@@ -2519,6 +2521,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     break;
                 case TILE_ROAD_GATE_CLOSED:
                 case TILE_ROAD_GATE_OPEN:
+                case TILE_GOBLIN_ROAD_GUARD:
+                case TILE_DARK_ELF_ROAD_GUARD:
                     draw_town_path(r, sx, sy);
                     break;
                 case TILE_FLOOR:
@@ -3092,6 +3096,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_TOWN_ROAD_EXIT_SOUTH:
                 case TILE_TOWN_ROAD_EXIT_WEST:
                 case TILE_BROKEN_FERRY:
+                case TILE_SOULSTONE_SHRINE:
+                case TILE_SOULSTONE_RITUAL:
+                case TILE_NPC_WARLOCK:
                     draw_town_path(r, sx, sy); break;
                 case TILE_LABYRINTH_ENTRANCE:
                     draw_town_floor(r, sx, sy); break;
