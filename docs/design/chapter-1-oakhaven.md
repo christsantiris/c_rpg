@@ -49,7 +49,11 @@ The [building swap review](../art-sources/inn-tavern-swap/README.md) records the
 renderer inspection, door travel, save/load checks and passing test suite.
 
 The Blacksmith and Alchemist use the established building interaction:
-walk through the door, approach the resident, and Talk to open the shop.
+walk through the door, approach the resident, and Talk to open the shop. This is
+implemented for Oakhaven: **Blacksmith Joran** and **Alchemist Wren** (placeholder
+names) keep their existing exteriors, and their interiors work like the
+Goldsmith's, with the stock unchanged. Stillbury's and Rosemoor's shops still
+open when the player steps onto their doors.
 
 ## Dungeon, rescue, and homecoming
 
