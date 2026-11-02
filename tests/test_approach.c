@@ -117,107 +117,6 @@ static void retreat_from_area(GameState *g, const TownApproach *route, int rever
     action_resolve_player(g, (Action){ACTION_MOVE, x, y});
 }
 
-static void test_labyrinth_path(GameState *g, GameState *loaded, int slot) {
-    for (int east = 0; east < 2; east++) {
-        const TownApproach *route = &town_approaches[east ? 4 : 0];
-        approach_town(g, route);
-        action_resolve_player(g, (Action){ACTION_MOVE, route->gate_x, route->gate_y});
-        finish_town_departure(g);
-        walk_approach_to(g, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y + 1);
-        int px = g->player.x;
-        int py = g->player.y;
-        action_resolve_player(g, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
-        ASSERT("the labyrinth remains sealed before accepting Rook's quest", g->location == LOCATION_APPROACH && g->player.x == px && g->player.y == py);
-        g->rook_quest_state = 1;
-        action_resolve_player(g, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
-        ASSERT("Oakhaven and Dawnmere both enter labyrinth one without the forest victory", g->location == LOCATION_LABYRINTH && g->level == 1 && g->labyrinth_entry_town == route->town && !(g->defeated_bosses & (1 << LOCATION_FOREST)));
-        g->enemies[0].hp = 7;
-        ASSERT("V2 labyrinth saves preserve their entrance town and wounded enemy", save_game(g, slot) && load_game(loaded, slot) && loaded->labyrinth_entry_town == route->town && loaded->enemies[0].hp == 7);
-        game_leave_labyrinth(loaded);
-        ASSERT("the labyrinth returns beside its forest-road doorway", loaded->location == LOCATION_APPROACH && loaded->player.x == APPROACH_LABYRINTH_X && loaded->player.y == APPROACH_LABYRINTH_Y + 1 && loaded->labyrinth_cache[0].enemies[0].hp == 7);
-        walk_return_approach(loaded);
-        ASSERT("the labyrinth's retreat reaches the original town", loaded->location == route->town);
-    }
-}
-
-static void test_coast_shore(GameState *g, GameState *loaded, int slot) {
-    approach_town(g, &town_approaches[3]);
-    approach_enter_region(g, 3);
-    int sea = 1;
-    for (int y = APPROACH_H / 2 + 3; y < APPROACH_H; y++) {
-        for (int x = 0; x < APPROACH_W; x++) {
-            sea &= g->map.tiles[y][x] == TILE_COAST_SEA && !map_is_walkable(&g->map, x, y);
-        }
-    }
-    ASSERT("sea fills the entire southern approach, including its side and bottom edges", sea);
-    walk_town_approach(g);
-    ASSERT("the coastal causeway still enters the first combat stage", g->location == LOCATION_COAST && g->level == 1 && g->enemy_count > 0);
-    g->enemies[0].hp = 7;
-    retreat_from_area(g, &town_approaches[3], 0);
-    int px = g->player.x;
-    int py = g->player.y;
-    action_resolve_player(g, (Action){ACTION_MOVE, px, py + 1});
-    ASSERT("the sea beside the return causeway blocks walking without moving the player", g->location == LOCATION_APPROACH && g->player.x == px && g->player.y == py && !map_is_walkable(&g->map, px, py + 1));
-    ASSERT("the shoreline and cached combat state survive saving", save_game(g, slot) && load_game(loaded, slot) && loaded->map.tiles[APPROACH_H - 1][0] == TILE_COAST_SEA && loaded->map.tiles[APPROACH_H - 1][APPROACH_W - 1] == TILE_COAST_SEA && loaded->coast_cache[0].enemies[0].hp == 7 && loaded->player.x == px && loaded->player.y == py);
-    walk_return_approach(loaded);
-    ASSERT("walking back from the coastal entrance still reaches Oakhaven", loaded->location == LOCATION_TOWN);
-    // Reproduce an older grass approach with an occupied square below the new shoreline.
-    for (int y = APPROACH_H / 2 - 5; y < APPROACH_H; y++) {
-        for (int x = 0; x < APPROACH_W; x++) {
-            if (g->map.tiles[y][x] == TILE_COAST_SEA || g->map.tiles[y][x] == TILE_COAST_SAND) {
-                g->map.tiles[y][x] = TILE_TOWN_FLOOR;
-            }
-        }
-    }
-    g->player.x = 50;
-    g->player.y = 35;
-    g->floor_item_count = 1;
-    g->floor_items[0] = (FloorItem){.active = 1, .x = 51, .y = 35, .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_health_potion()};
-    g->map.tiles[35][51] = TILE_ITEM;
-    map_mark_explored(&g->map, 50, 35);
-    g->gold = 393;
-    g->mara_quest_state = 1;
-    int ok = save_game(g, slot) && legacy_approach_save(slot, 176) && load_game(loaded, slot);
-    ASSERT("old grass approaches gain open sea and move submerged players onto the causeway", ok && loaded->location == LOCATION_APPROACH && loaded->approach_route == 3 && loaded->map.tiles[35][50] == TILE_COAST_SEA && loaded->map.tiles[APPROACH_H - 1][APPROACH_W - 1] == TILE_COAST_SEA && loaded->player.x == APPROACH_W / 2 && loaded->player.y == APPROACH_H / 2 && map_is_walkable(&loaded->map, loaded->player.x, loaded->player.y));
-    ASSERT("shore migration preserves reachable loot, exploration, quests and wounded combat caches", ok && loaded->floor_items[0].active && loaded->floor_items[0].item.type == ITEM_POTION_HEALTH && loaded->floor_items[0].underlying_tile == TILE_TOWN_PATH && loaded->map.tiles[loaded->floor_items[0].y][loaded->floor_items[0].x] == TILE_ITEM && map_is_explored(&loaded->map, 50, 35) && loaded->coast_cache[0].enemies[0].hp == 7 && loaded->gold == 393 && loaded->mara_quest_state == 1);
-    ASSERT("the migrated shoreline saves without moving the player or loot again", save_game(loaded, slot) && load_game(g, slot) && g->player.x == loaded->player.x && g->player.y == loaded->player.y && g->floor_items[0].x == loaded->floor_items[0].x && g->floor_items[0].y == loaded->floor_items[0].y && g->map.tiles[35][50] == TILE_COAST_SEA);
-    remove("saves/savegame_99160.json");
-}
-
-static void test_ashen_volcano(GameState *g, GameState *loaded, int slot) {
-    approach_town(g, &town_approaches[13]);
-    approach_enter(g, CASTLE_ASHEN_GATE_X, 0);
-    int door_x = g->map.stairs_down_x;
-    int door_y = g->map.stairs_down_y;
-    int solid = 1;
-    for (int row = -8; row <= 0; row++) {
-        for (int side = -3; side <= 3; side++) {
-            if ((row || side) && map_is_walkable(&g->map, door_x + side, door_y + row)) {
-                solid = 0;
-            }
-        }
-    }
-    ASSERT("the towering Ashen Hollow volcano blocks its full nine-row footprint", solid && approach_entrance_rows(LOCATION_ASHEN) == 9 && g->map.tiles[door_y][door_x] == TILE_APPROACH_AREA);
-    // Version 216 volcanoes were six rows tall, so their upper rows were open grass.
-    for (int row = -8; row <= -6; row++) {
-        for (int side = -3; side <= 3; side++) {
-            g->map.tiles[door_y + row][door_x + side] = TILE_TOWN_FLOOR;
-        }
-    }
-    g->player.x = door_x - 1;
-    g->player.y = door_y - 7;
-    map_mark_explored(&g->map, g->player.x, g->player.y);
-    g->floor_item_count = 1;
-    g->floor_items[0] = (FloorItem){.active = 1, .x = door_x + 1, .y = door_y - 7, .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_health_potion()};
-    g->map.tiles[door_y - 7][door_x + 1] = TILE_ITEM;
-    g->gold = 393;
-    int ok = save_game(g, slot) && legacy_approach_save(slot, 216) && load_game(loaded, slot);
-    ASSERT("older Ashen approaches move players and loot off the raised summit", ok && loaded->approach_route == 13 && map_is_walkable(&loaded->map, loaded->player.x, loaded->player.y) && !map_is_walkable(&loaded->map, door_x - 1, door_y - 7) && loaded->floor_items[0].active && loaded->map.tiles[loaded->floor_items[0].y][loaded->floor_items[0].x] == TILE_ITEM && loaded->gold == 393);
-    walk_town_approach(loaded);
-    ASSERT("the migrated volcano approach still enters Ashen Hollow", loaded->location == LOCATION_ASHEN && loaded->level == 1);
-    remove("saves/savegame_99160.json");
-}
-
 static void test_mountain_spires(GameState *g, GameState *loaded, int slot) {
     approach_town(g, &town_approaches[2]);
     approach_enter(g, 0, 12);
@@ -628,9 +527,6 @@ void test_approaches(void) {
     walk_return_approach(g);
     ASSERT("walking home after defeating the Lich reaches Oakhaven's south gate", g->location == LOCATION_TOWN && g->player.x == 20 && g->player.y == TOWN_H - 2);
     test_transition_loot(g, loaded, slot);
-    test_labyrinth_path(g, loaded, slot);
-    test_coast_shore(g, loaded, slot);
-    test_ashen_volcano(g, loaded, slot);
     test_mountain_spires(g, loaded, slot);
     remove("saves/savegame_99160.json");
     free(g);

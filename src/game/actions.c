@@ -2986,7 +2986,7 @@ int action_drink_quick_potion(GameState *g, EnemyProjectiles *shots) {
 }
 
 static int enemy_position_occupied(const GameState *g, int skip, int x, int y) {
-    if (jail_prisoner_at(g, x, y)) {
+    if (jail_prisoner_at(g, x, y) || aldric_at(g, x, y)) {
         return 1;
     }
     for (int i = 0; i < g->enemy_count; i++) {
@@ -3771,6 +3771,11 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
         int dy = g->player.y - e->y;
         int adjacent = abs_int(dx) <= 1 && abs_int(dy) <= 1 &&
             !(dx == 0 && dy == 0);
+        // A regular enemy beside Aldric but not the player strikes him instead.
+        if (!adjacent && !e->is_boss && aldric_beside(g, e->x, e->y)) {
+            aldric_take_hit(g, e);
+            continue;
+        }
         if (!enemy_is_major_boss(e) && !adjacent && !pursuers[i] &&
             !(game_is_crownroad(g) &&
             e->type == ENEMY_ROAD_ARCHER &&
@@ -4125,7 +4130,36 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
     stormbell_turn(g);
 }
 
+// Aldric strikes with the player's melee damage rules; his kills reward the player.
+void action_aldric_strike(GameState *g, Enemy *e) {
+    int dmg = ALDRIC_ATTACK - stormwatch_defense(e, g->aldric_x, g->aldric_y);
+    if (dmg < 1) {
+        dmg = 1;
+    }
+    dmg = northroad_weapon_damage(g, e, dmg);
+    dmg = catacombs_enemy_damage(g, e, dmg);
+    dmg = castle_enemy_damage(g, e, dmg);
+    dmg = lich_enemy_damage(g, e, dmg);
+    dmg = sun_guardian_enemy_damage(g, e, dmg);
+    e->hp -= dmg;
+    combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, dmg);
+    char msg[MAX_MESSAGE_LEN];
+    if (e->hp <= 0) {
+        e->active = 0;
+        drop_loot(g, e, 0);
+        player_gain_xp(g, e->experience);
+        game_update_level_progress(g);
+        snprintf(msg, sizeof(msg), "Aldric killed %s!", e->name);
+    } else {
+        snprintf(msg, sizeof(msg), "Aldric hit %s: %d dmg", e->name, dmg);
+    }
+    push_message(g, msg);
+}
+
 void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots) {
+    if (!g->game_won && g->location != LOCATION_APPROACH && g->location != LOCATION_TOWN_ROAD) {
+        aldric_turn(g);
+    }
     resolve_enemy_actions(g, shots);
     elowen_follow(g, -1, -1);
     aldric_follow(g, -1, -1);

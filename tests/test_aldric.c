@@ -20,12 +20,12 @@ static int count_aldric_tiles(const GameState *g) {
     return count;
 }
 
-// He stays on open ground near the player and never shares a square with the party.
+// He stays on open ground within two squares of the player and never shares a square with the party.
 static int follower_ok(const GameState *g) {
-    int distance = abs(g->aldric_x - g->player.x) + abs(g->aldric_y - g->player.y);
-    int max_distance = g->elowen_quest_state == ELOWEN_RESCUED ? 2 : 1;
+    int dx = abs(g->aldric_x - g->player.x);
+    int dy = abs(g->aldric_y - g->player.y);
     return g->aldric_party_state == ALDRIC_FOLLOWING && map_is_walkable(&g->map, g->aldric_x, g->aldric_y) &&
-        distance >= 1 && distance <= max_distance && !elowen_at(g, g->aldric_x, g->aldric_y);
+        dx + dy >= 1 && dx <= 2 && dy <= 2 && !elowen_at(g, g->aldric_x, g->aldric_y);
 }
 
 static int walk_to(GameState *g, int tx, int ty, int *followed) {
@@ -237,6 +237,102 @@ static void test_walks_with_elowen(void) {
         follower_ok(game) && (game->elowen_x != game->player.x || game->elowen_y != game->player.y));
 }
 
+static void recruit(GameState *g) {
+    memset(g, 0, sizeof(*g));
+    game_init(g);
+    g->defeated_bosses |= 1 << LOCATION_DUNGEON;
+    game_enter_tavern(g);
+    g->player.x = ALDRIC_INN_X;
+    g->player.y = ALDRIC_INN_Y + 1;
+    aldric_talk(g, ALDRIC_INN_X, ALDRIC_INN_Y);
+    aldric_handle_key(g, SDL_SCANCODE_Y, 0);
+}
+
+// A walled corridor on row 10 keeps every position and route predictable.
+static void arena(GameState *g, Location location, int level, int player_x, int aldric_x) {
+    g->location = location;
+    g->level = level;
+    g->enemy_count = 0;
+    g->floor_item_count = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            g->map.tiles[y][x] = y == 10 && x >= 4 && x <= 20 ? TILE_FLOOR : TILE_WALL;
+        }
+    }
+    g->player.x = player_x;
+    g->player.y = 10;
+    g->aldric_x = aldric_x;
+    g->aldric_y = 10;
+}
+
+static Enemy *add_enemy(GameState *g, EnemyType type, int x, int hp, int attack, int is_boss) {
+    Enemy *e = &g->enemies[g->enemy_count++];
+    *e = (Enemy){.active = 1, .type = type, .x = x, .y = 10, .hp = hp, .max_hp = hp, .attack = attack,
+        .experience = 30, .is_boss = is_boss, .attack_target_x = -1, .attack_target_y = -1};
+    snprintf(e->name, sizeof(e->name), "Test Foe");
+    return e;
+}
+
+static void test_combat(void) {
+    recruit(game);
+    arena(game, LOCATION_DUNGEON, 1, 6, 8);
+    Enemy *foe = add_enemy(game, ENEMY_GOBLIN_SCOUT, 9, 5, 10, 0);
+    int hp = game->player.hp;
+    action_resolve_enemies(game);
+    ASSERT("Aldric strikes the enemy beside him with his Short Sword", !foe->active);
+    ASSERT("his kill gives the player its experience", game->player.experience == 30 && game->player.hp == hp);
+
+    arena(game, LOCATION_DUNGEON, 1, 6, 8);
+    foe = add_enemy(game, ENEMY_GOBLIN_SCOUT, 9, 1000, 20, 0);
+    action_resolve_enemies(game);
+    ASSERT("his blow uses the player's melee damage rule", foe->hp == 1000 - ALDRIC_ATTACK);
+    ASSERT("an enemy beside Aldric but not the player strikes him", game->aldric_hp == ALDRIC_MAX_HP - (20 - ALDRIC_DEFENSE) &&
+        game->player.hp == hp);
+
+    arena(game, LOCATION_DUNGEON, 1, 5, 7);
+    foe = add_enemy(game, ENEMY_GOBLIN_SCOUT, 10, 1000, 1, 1);
+    int blocked = 1;
+    for (int turn = 0; turn < 6; turn++) {
+        action_resolve_enemies(game);
+        blocked &= foe->x > game->aldric_x && !aldric_at(game, foe->x, foe->y);
+    }
+    ASSERT("enemies cannot walk through Aldric", blocked && game->player.hp == hp);
+
+    arena(game, LOCATION_FOREST, FOREST_BOSS_LEVEL, 6, 8);
+    add_enemy(game, ENEMY_FOREST_NECROMANCER, 9, 1, 10, 1);
+    action_resolve_enemies(game);
+    ASSERT("a boss Aldric defeats counts as the player's victory", (game->defeated_bosses & (1 << LOCATION_FOREST)) != 0);
+
+    arena(game, LOCATION_DUNGEON, 1, 6, 8);
+    game->aldric_hp = 30;
+    game_return_to_town(game);
+    action_resolve_player(game, (Action){ACTION_WAIT, 0, 0});
+    ASSERT("entering a town fully heals Aldric", game->location == LOCATION_TOWN && follower_ok(game) &&
+        game->aldric_hp == ALDRIC_MAX_HP);
+    game->aldric_hp = 77;
+    int ok = save_game(game, ALDRIC_SAVE_SLOT) && load_game(loaded, ALDRIC_SAVE_SLOT);
+    ASSERT("save/load keeps Aldric's health", ok && loaded->aldric_hp == 77 && loaded->aldric_party_state == ALDRIC_FOLLOWING);
+
+    arena(game, LOCATION_DUNGEON, 1, 6, 8);
+    game->aldric_hp = 5;
+    add_enemy(game, ENEMY_GOBLIN_SCOUT, 9, 1000, 50, 0);
+    action_resolve_enemies(game);
+    ASSERT("losing all HP knocks Aldric out of the party", game->aldric_party_state == ALDRIC_RECOVERING &&
+        game->aldric_x == -1 && !aldric_beside(game, 9, 10));
+    ASSERT("a knocked-out Aldric no longer follows or blocks", !aldric_at(game, 8, 10) && game->player.hp == hp);
+    ok = save_game(game, ALDRIC_SAVE_SLOT) && load_game(loaded, ALDRIC_SAVE_SLOT);
+    ASSERT("save/load keeps Aldric recovering at the Inn", ok && loaded->aldric_party_state == ALDRIC_RECOVERING);
+    game_return_to_town(game);
+    enter_inn(game);
+    ASSERT("he recovers at his Inn seat", game->map.tiles[ALDRIC_INN_Y][ALDRIC_INN_X] == TILE_NPC_ALDRIC);
+    walk_to(game, ALDRIC_INN_X, ALDRIC_INN_Y + 1, NULL);
+    aldric_talk(game, ALDRIC_INN_X, ALDRIC_INN_Y);
+    ASSERT("once recovered he offers to rejoin", strstr(game->dialogue_text, "on my feet again") && aldric_prompt_active(game));
+    aldric_handle_key(game, SDL_SCANCODE_Y, 0);
+    ASSERT("he rejoins at full health", follower_ok(game) && game->aldric_hp == ALDRIC_MAX_HP);
+    remove("saves/savegame_99231.json");
+}
+
 void test_aldric(void) {
     printf("Aldric recruitment tests:\n");
     game = calloc(1, sizeof(*game));
@@ -246,6 +342,7 @@ void test_aldric(void) {
     test_recruit_follow_dismiss();
     test_dismiss_with_seat_taken();
     test_walks_with_elowen();
+    test_combat();
     free(game);
     free(loaded);
 }

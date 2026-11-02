@@ -1587,6 +1587,7 @@ void game_init(GameState *g) {
     g->aldric_party_state = ALDRIC_WAITING;
     g->aldric_x = -1;
     g->aldric_y = -1;
+    g->aldric_hp = ALDRIC_MAX_HP;
     g->dain_quest_state = 0;
     g->dain_map_fragments = 0;
     g->alder_quest_state = 0;
