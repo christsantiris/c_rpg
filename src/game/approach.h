@@ -36,6 +36,7 @@ void approach_migrate_scenery(GameState *g);
 TileType approach_coast_ground(int x, int y);
 void approach_refresh_dungeon(GameState *g);
 void approach_refresh_forest(GameState *g);
+void approach_retire_labyrinth(GameState *g);
 int approach_forest_town_exit(const GameState *g, int *x, int *y);
 void approach_refresh_mountains(GameState *g);
 void approach_refresh_swamp(GameState *g);

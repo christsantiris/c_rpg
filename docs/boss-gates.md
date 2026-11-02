@@ -16,7 +16,7 @@ directions; ordinary enemy respawns never close it again.
 | Royal Catacombs | Boss-gated road | Grave Marshal; Catacombs section of the northern castle connection |
 | Sunken Coast | Boss-gated destination | Drowned Queen unlocks the docks; existing chart and sailing rules remain |
 | Castle interior | Internal progression | Existing Castellan, Royal Arcanist and Lord Veyr encounter rules |
-| Rook's Labyrinth | Free travel | Minotaur still guards the Ivory Rook; Rook's quest opens the entrance |
+| Rook's Labyrinth | Deferred | No world entrance in V2; maze and quest implementation retained for a later arc |
 | Stonewake Quarry | Free travel | Quarry Colossus and quarry quest remain optional |
 | Saltwind Marsh | Free travel | Sszareth does not seal the final departure |
 | Stormwatch Headland | Free travel | Tempest Matriarch does not seal the final departure |

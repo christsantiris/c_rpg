@@ -80,6 +80,15 @@ accepted follow-up immediately, with no extra Inn turn-in. Earlier victories
 are credited when the short quest is turned in. The boss retains its existing
 loot; this story follow-up adds no second NPC payment.
 
+The map points toward the goblin fortress stores, and Dain asks the player to
+search the King's records for whoever supplies the raids. Defeating the Goblin
+King reveals royal funding; defeating the Necromancer reveals royal protection
+for his work. Both sealed parchments are kept in **Q → Evidence**, independently
+of either quest chain. Optional return conversations with Dain and Alder
+interpret the relevant record and recognize the corroboration if both were
+found. Their existing first-part rewards remain one-time; no second return is
+required. See [the story payoff](act2-story-payoff-plan.md).
+
 ## Zara: The Lost Magic Lamp
 
 Zara waits in **Stillbury's Tavern**. Press `T` beside her, then `Y` to accept.
@@ -231,7 +240,9 @@ without requiring the absent Lich King to be defeated again.
 ## Rook: The Ivory Rook
 
 In V2, Rook has left Oakhaven and no one offers this quest until a later act
-places him. Existing quest progress is kept.
+places him. The labyrinth entrance, label and world-map landmark are also
+removed for now. Existing quest progress is kept. The notes below describe the
+retained quest implementation for later placement.
 
 Speak with Rook in Oakhaven's Inn and press `Y` to accept his one-time
 retrieval quest. This opens the labyrinth gate beside the Haunted Forest

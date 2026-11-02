@@ -36,6 +36,10 @@ to the Inn for a reward and the first clue behind the realm's troubles.
 After the Lich's defeat, Alder and Dain offer two short adventures on the first
 two forest or mountain stages, followed by optional hunts for those regions'
 bosses. Both bosses can also be reached without accepting their quests.
+Their defeats reveal royal parchments bearing the King's seal. Revisit the
+documents in the journal's **Evidence** tab; they use no inventory or quest
+slots. Alder and Dain can help interpret the discoveries on an optional return
+to the Inn. See [Act 2's story payoff](docs/act2-story-payoff-plan.md).
 
 Soulstone Shrine stands beside the path north of Oakhaven, before the broken
 ferry. Its warlock offers resurrection for **200 gold per fallen companion**.
@@ -45,7 +49,7 @@ present from the start; its services require a recruited companion.
 
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/world-map.png?v=7dbeb3544a3c)](docs/world-map.png?v=7dbeb3544a3c)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=3b6c4e6693a3)](docs/world-map.png?v=3b6c4e6693a3)
 
 The current V2 focus is Act 1: Oakhaven, Goblin Mountains to its west, Haunted
 Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
@@ -54,6 +58,7 @@ The river begins in Frostfell's snow and ice, passes Rosemoor and Blackwater
 Swamp, then flows through Northern Rapids to the eastern estuary.
 The rest of the world is shown as provisional context and will be redesigned
 in later steps; later connections remain undecided.
+Rook's Labyrinth is deferred to a later arc and has no current world entrance.
 
 ## Controls
 
@@ -65,7 +70,7 @@ in later steps; later connections remain undecided.
 | `T` | Talk to a nearby NPC or rescue a forest warden |
 | `I` | Open or close inventory |
 | `B` | Open spellbook |
-| `Q` | Open the quest and boss journal |
+| `Q` | Open the quest, boss and evidence journal |
 | `C` | Cast the equipped spell |
 | `F` | Use an equipped bow or the Demonic Sword's ranged attack |
 | `H` | Open help |
@@ -170,9 +175,10 @@ See the [parameter table](#debug-script-parameters) and
 [weapon-to-parameter mapping](#debug-weapon-names) below for exact accepted values.
 
 Select **New Game**, enter a name, and choose a class, or load an existing
-character. All four town-to-town roads, the Sunken Coast dock road, island sailing
-without a treasure map, and the labyrinth entrance are open immediately.
-Locked dungeon doors, mountain barriers, temple doors, the labyrinth vault,
+character. All four town-to-town roads, the Sunken Coast dock road and island sailing
+without a treasure map are open immediately. The deferred labyrinth has no
+entrance, including in debug mode.
+Locked dungeon doors, mountain barriers, temple doors,
 quarry crane walkways and castle portcullises open as you explore. Each unused
 quarry crossing lowers once; its crane then respects manual raised, crossing and
 salvage settings. Boss-blocked exits,
@@ -349,4 +355,5 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Roll for stats. Choose a class based on strengths. Ascending armor class chance to hit. 
 - Add paypal/other integration to buy gold
    Add real money feature to buy in-game gold.
+- Bugs: Exit north door start next stage facing south. Should be facing north.
 

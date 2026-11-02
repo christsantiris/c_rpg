@@ -1,5 +1,6 @@
 #include "../game/coast_exits.h"
 #include "../game/boss_gates.h"
+#include "../game/royal_evidence.h"
 #include "../game/giants_crown.h"
 #include "../game/ironfang.h"
 #include "../game/crownroad_north.h"
@@ -1891,7 +1892,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 234);
+    cJSON_AddNumberToObject(root, "save_version", 235);
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -2109,6 +2110,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "portal_y",          g->portal_y);
     cJSON_AddNumberToObject(root, "portal_origin_tile", g->portal_origin_tile);
     cJSON_AddNumberToObject(root, "defeated_bosses", g->defeated_bosses);
+    cJSON_AddNumberToObject(root, "royal_evidence_seen", g->royal_evidence_seen);
     cJSON_AddNumberToObject(root, "elowen_quest_state",
         g->elowen_quest_state);
     cJSON_AddNumberToObject(root, "elowen_x", g->elowen_x);
@@ -4621,6 +4623,13 @@ int load_game(GameState *g, int slot) {
     g->portal_origin_tile = portal_origin_tile
         ? portal_origin_tile->valueint : TILE_FLOOR;
     g->defeated_bosses = defeated_bosses ? defeated_bosses->valueint : 0;
+    const cJSON *evidence_seen = cJSON_GetObjectItem(root, "royal_evidence_seen");
+    if (save_version >= 235 && (!cJSON_IsNumber(evidence_seen) || evidence_seen->valuedouble != evidence_seen->valueint ||
+        evidence_seen->valueint < 0 || evidence_seen->valueint > 3 || (evidence_seen->valueint & ~royal_evidence_found(g)))) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->royal_evidence_seen = save_version >= 235 ? evidence_seen->valueint : 0;
     g->elowen_quest_state = elowen_quest ? elowen_quest->valueint : 0;
     cJSON *elowen_x = cJSON_GetObjectItem(root, "elowen_x");
     cJSON *elowen_y = cJSON_GetObjectItem(root, "elowen_y");
@@ -7006,6 +7015,8 @@ int load_game(GameState *g, int slot) {
             *alchemist = TILE_LOCAL_DOOR;
         }
     }
+    approach_retire_labyrinth(g);
+    game_repair_outdoor_entries(g);
     town_road_refresh_oakhaven(g);
     aldric_place(g);
     if (save_version < 234 && g->aldric_party_state == ALDRIC_DEAD && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0) {
@@ -7013,6 +7024,10 @@ int load_game(GameState *g, int slot) {
     }
     if (!resurrection_prompt_active(g)) {
         g->resurrection_prompt = RESURRECTION_NONE;
+    }
+    if (save_version < 235) {
+        // Earlier victories gain journal evidence without interrupting a resumed adventure.
+        g->royal_evidence_seen = royal_evidence_found(g);
     }
     game_recover_retired_items(g);
     cJSON_Delete(root);

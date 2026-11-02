@@ -444,6 +444,7 @@ typedef struct {
     int portal_x, portal_y;
     TileType portal_origin_tile;
     int defeated_bosses;
+    int royal_evidence_seen;
     int kraken_bow_unclaimed;
     int sandstorm_staff_unclaimed;
     int prism_sovereign_reward_pending; // Bits: 1 Prismweave Robes, 2 Strength Potion.
@@ -519,6 +520,7 @@ int game_has_regional_interaction(const GameState *g);
 int game_locked_door_target(const GameState *g, int *x, int *y);
 void game_move_player(GameState *g, int dx, int dy);
 void game_descend(GameState *g);
+void game_repair_outdoor_entries(GameState *g);
 void game_ascend(GameState *g);
 void enemies_spawn(GameState *g);
 Enemy *game_spawn_marshal_guard(GameState *g, int x, int y, int boss_index);

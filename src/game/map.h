@@ -814,6 +814,7 @@ void map_mirror_horizontal(Map *m);
 int map_is_travel_tile(TileType tile);
 void map_reveal_forest_exit(Map *m);
 void map_reveal_forest_entrance(Map *m);
+int map_repair_outdoor_entrance(Map *m, int level, int mountains);
 int map_forest_difficulty(int level);
 void map_generate_mountains(Map *m, int level);
 int map_mountain_difficulty(int level);

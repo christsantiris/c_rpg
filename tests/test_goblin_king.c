@@ -1,6 +1,7 @@
 #include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/goblin_king.h"
+#include "game/royal_evidence.h"
 #include "../src/systems/save_load.h"
 #include "../external/cJSON.h"
 #include <stdlib.h>
@@ -108,8 +109,10 @@ static void kill_with(int method) {
 
 static void test_rewards(void) {
     int victories = 1;
+    int evidence = 1;
     for (int method = 0; method < 5; method++) {
         kill_with(method);
+        evidence &= royal_evidence_pending(&game) == ROYAL_EVIDENCE_FUNDING;
         int shields = 0;
         for (int i = 0; i < game.floor_item_count; i++) {
             shields += game.floor_items[i].active && strcmp(game.floor_items[i].item.name, "Goblin King's Shield") == 0;
@@ -117,6 +120,7 @@ static void test_rewards(void) {
         victories &= !game.enemies[0].active && shields == 1 && game.goblin_king_reward_state == 1 && (game.defeated_bosses & (1 << LOCATION_MOUNTAINS));
     }
     ASSERT("melee, bow, Magic Arrow, Fireball and Frost Bolt each guarantee one Goblin King's Shield", victories);
+    ASSERT("every player killing method reveals the Goblin King's royal payment parchment", evidence);
     Enemy *e = setup();
     game.player.x = e->x - 1;
     game.player.y = e->y;

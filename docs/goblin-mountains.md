@@ -93,6 +93,14 @@ dialogue. Victory completes the follow-up immediately; earlier victories are
 credited at the short quest's turn-in. No extra Inn return or NPC payment is
 required. Existing Goblin King loot remains available.
 
+His defeat also reveals **Royal Payment Records** bearing the King's seal:
+the Crown funded his raids and paid to keep the western road closed. The
+parchment appears even without Dain's quests and remains readable in
+**Q → Evidence**. Dain's map now points the player toward the fortress stores
+and the records behind the raids. His optional post-victory dialogue interprets
+the payments, and links them to the Necromancer's protection if both documents
+were found. See [the story payoff](act2-story-payoff-plan.md).
+
 Marshal Veyra's **Watchfires of Ridgeshire** still spans three regions:
 **Goblin Mountains 5**, **Ashen Hollow 3** and **Dragonspine 3**. Clear each
 fire's defenders and press `A` beside it. The mountain fire occupies an ordinary

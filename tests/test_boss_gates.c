@@ -77,7 +77,7 @@ static void town_connections(GameState *g) {
         ASSERT("either approach still reaches its boss adventure and its original town", path(g, g->map.stairs_down_x, g->map.stairs_down_y, 0) &&
             path(g, g->map.stairs_up_x, g->map.stairs_up_y, 0));
         if (route->area == LOCATION_FOREST) {
-            ASSERT("the optional labyrinth stays reachable from both forest approaches before the Necromancer falls", path(g, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y, 0));
+            ASSERT("the deferred labyrinth is absent from both forest approaches", g->map.tiles[APPROACH_LABYRINTH_Y][APPROACH_LABYRINTH_X] != TILE_LABYRINTH_ENTRANCE);
             g->defeated_bosses |= 1 << LOCATION_LABYRINTH;
             ASSERT("a Minotaur victory never opens the Haunted Forest road", !boss_gate_open(g, LOCATION_FOREST));
         }
@@ -325,6 +325,96 @@ static void saved_connections(GameState *g, GameState *loaded) {
     remove("saves/savegame_99311.json");
 }
 
+static int labyrinth_entrances(const GameState *g) {
+    int count = 0;
+    for (int y = 0; y < APPROACH_H; y++) {
+        for (int x = 0; x < APPROACH_W; x++) {
+            count += g->map.tiles[y][x] == TILE_LABYRINTH_ENTRANCE;
+        }
+    }
+    return count;
+}
+
+static void deferred_labyrinth(GameState *g, GameState *loaded) {
+    const int routes[] = {0, 4};
+    const int seeds[] = {17, 107, 907};
+    for (int n = 0; n < 2; n++) {
+        for (int seed = 0; seed < 3; seed++) {
+            for (int flags = 0; flags < 4; flags++) {
+                game_init(g);
+                srand(seeds[seed]);
+                g->rook_quest_state = flags & 1;
+                g->debug_passages_unlocked = flags == 3;
+                g->defeated_bosses = flags == 2 ? 1u << LOCATION_FOREST : 0;
+                approach_enter_region(g, routes[n]);
+                ASSERT("normal, old-quest, victorious and debug forest roads have no labyrinth entrance or spur", !labyrinth_entrances(g) &&
+                    g->map.tiles[APPROACH_LABYRINTH_Y + 1][APPROACH_LABYRINTH_X] != TILE_TOWN_PATH);
+                ASSERT("the forest entrance remains usable through actual movement after deferring the labyrinth", path(g, g->map.stairs_down_x, g->map.stairs_down_y, 1) &&
+                    g->location == LOCATION_FOREST && g->level == 1);
+                game_return_to_approach(g);
+                ASSERT("returning from the forest never restores the retired entrance", g->location == LOCATION_APPROACH && !labyrinth_entrances(g));
+                int open = boss_gate_open(g, LOCATION_FOREST);
+                int onward_x = n ? 0 : APPROACH_W - 1;
+                ASSERT("only boss victory or debug opens onward travel after labyrinth removal", path(g, onward_x, APPROACH_H / 2, 0) == open);
+                if (open) {
+                    ASSERT("onward forest travel still reaches the opposite town exterior", path(g, onward_x, APPROACH_H / 2, 1) &&
+                        g->location == LOCATION_TOWN_ROAD && g->road_town == (n ? LOCATION_TOWN : LOCATION_DAWNMERE));
+                    approach_enter_region(g, routes[n]);
+                }
+                ASSERT("the actual retreat to the original town remains usable", path(g, g->map.stairs_up_x, g->map.stairs_up_y, 1) &&
+                    g->location == LOCATION_TOWN_ROAD && g->road_town == (n ? LOCATION_DAWNMERE : LOCATION_TOWN));
+            }
+        }
+    }
+    ASSERT("deferred labyrinth save slot is unused", !save_exists(GATE_SLOT));
+    if (save_exists(GATE_SLOT)) {
+        return;
+    }
+    for (int n = 0; n < 2; n++) {
+        game_init(g);
+        approach_enter_region(g, routes[n]);
+        game_enter_labyrinth(g);
+        g->enemies[0].hp = 37;
+        game_leave_labyrinth(g);
+        g->rook_quest_state = 1;
+        g->rook_labyrinth_switches = 3;
+        g->gold = 789;
+        g->player.hp = 43;
+        g->player.x = APPROACH_LABYRINTH_X;
+        g->player.y = APPROACH_LABYRINTH_Y + 1;
+        for (int y = APPROACH_LABYRINTH_Y - 2; y <= APPROACH_LABYRINTH_Y; y++) {
+            for (int x = APPROACH_LABYRINTH_X - 1; x <= APPROACH_LABYRINTH_X + 1; x++) {
+                g->map.tiles[y][x] = TILE_WALL;
+            }
+        }
+        g->map.tiles[APPROACH_LABYRINTH_Y][APPROACH_LABYRINTH_X] = TILE_LABYRINTH_ENTRANCE;
+        g->map.tiles[g->player.y][g->player.x] = TILE_TOWN_PATH;
+        map_mark_explored(&g->map, 30, 5);
+        g->floor_item_count = 2;
+        for (int i = 0; i < 2; i++) {
+            int y = APPROACH_LABYRINTH_Y - i * 2;
+            g->floor_items[i] = (FloorItem){.active = 1, .x = APPROACH_LABYRINTH_X, .y = y,
+                .underlying_tile = i ? TILE_WALL : TILE_LABYRINTH_ENTRANCE, .item = item_make_health_potion()};
+            g->map.tiles[y][APPROACH_LABYRINTH_X] = TILE_ITEM;
+        }
+        TileType unchanged = g->map.tiles[5][30];
+        ASSERT("saved forest roads lose only the retired entrance while retaining wounds, gold, exploration and quest progress", save_game(g, GATE_SLOT) &&
+            load_game(loaded, GATE_SLOT) && !labyrinth_entrances(loaded) && loaded->player.hp == 43 && loaded->gold == 789 &&
+            loaded->rook_quest_state == 1 && loaded->rook_labyrinth_switches == 3 && map_is_explored(&loaded->map, 30, 5) && loaded->map.tiles[5][30] == unchanged);
+        ASSERT("deferred labyrinth caches retain their saved enemies and wounds", loaded->labyrinth_cache[0].valid && loaded->labyrinth_cache[0].enemies[0].hp == 37);
+        ASSERT("loot on the retired entrance and covered by new trees remains reachable", loaded->floor_items[0].active && loaded->floor_items[1].active &&
+            loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->floor_items[1].underlying_tile == TILE_TOWN_PATH &&
+            path(loaded, loaded->floor_items[0].x, loaded->floor_items[0].y, 0) && path(loaded, loaded->floor_items[1].x, loaded->floor_items[1].y, 0));
+        ASSERT("saving the repaired approach cannot restore a labyrinth entrance", save_game(loaded, GATE_SLOT) && load_game(g, GATE_SLOT) && !labyrinth_entrances(g));
+        game_enter_labyrinth(g);
+        ASSERT("a legacy save inside the deferred labyrinth remains loadable", save_game(g, GATE_SLOT) && load_game(loaded, GATE_SLOT) && loaded->location == LOCATION_LABYRINTH);
+        game_leave_labyrinth(loaded);
+        ASSERT("a legacy labyrinth expedition can leave onto the real forest road and retreat", loaded->location == LOCATION_APPROACH && !labyrinth_entrances(loaded) &&
+            map_is_walkable(&loaded->map, loaded->player.x, loaded->player.y) && path(loaded, loaded->map.stairs_up_x, loaded->map.stairs_up_y, 1) && loaded->location == LOCATION_TOWN_ROAD);
+    }
+    remove("saves/savegame_99311.json");
+}
+
 void test_boss_gates(void) {
     printf("Shared boss gates and two-way road passage:\n");
     GameState *g = calloc(1, sizeof(*g));
@@ -350,6 +440,7 @@ void test_boss_gates(void) {
     northern_connections(g);
     saved_connections(g, loaded);
     guarded_roads(g, loaded);
+    deferred_labyrinth(g, loaded);
     free(g);
     free(loaded);
 }
