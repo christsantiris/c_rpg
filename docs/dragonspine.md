@@ -118,6 +118,9 @@ See the [native renderer gallery and play-test guide](art-sources/red-dragon-enc
 
 ## The Dragon's Hoard
 
+In V2, Ilya has left Oakhaven and no one offers this quest until a later act
+places her. Existing quest progress is kept.
+
 Ilya waits in **Oakhaven's Inn**, alongside Elowen and Mara. Press
 `T` beside her to hear the offer, then `Y` to accept **The Dragon's Hoard**. On
 Dragonspine stage 5, find the golden goblet in the dragon's lair, stand on it,

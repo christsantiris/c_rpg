@@ -68,6 +68,9 @@ corner. A three-tile trail links the rounded grove to its bramble flank.
 
 ## The Stolen Heartseed
 
+In V2, Tamsin has left Oakhaven and no one offers this quest until a later act
+places her. Existing quest progress is kept.
+
 Forester Tamsin stands beside Oakhaven's northern road. Talk with her and accept
 **The Stolen Heartseed**. Search the Dark Elf Archer camp in stage 2's western clearing
 for orders identifying the **golden-root grove in stage 4's eastern clearing**.

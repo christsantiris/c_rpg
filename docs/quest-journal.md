@@ -26,6 +26,9 @@ Dawnmere and requires no second Inn turn-in. A boss defeated earlier receives
 credit when the first part is turned in. Physical boss access never depends on
 NPC conversations or quest acceptance.
 
+Mara, Ilya and Rook have left Oakhaven in V2; their journal entries keep any
+existing progress, but no one offers these quests until a later act.
+
 Mara assigns **Relight the Drowned Beacons** in **Oakhaven's Inn**.
 The beacons remain on Sunken Coast stages 2, 3, and 4. Return to her in the
 Inn for 80 gold and 600 score; her location change preserves existing
@@ -127,9 +130,7 @@ from the original quest giver, except Tomas's escort reward, awarded on arrival.
 Boss victories are recorded immediately and
 remain complete during later expeditions.
 
-To playtest capacity, accept Bram, Mara, and Rook's quests in Oakhaven's
-Inn, then speak to Ilya. Her offer should explain the full capacity and Y
-must leave it unaccepted. Finish an active quest's objectives and check that
-it moves to Completed, then accept Ilya's offer before claiming the pending reward.
-An existing save above the limit should retain every quest and display its
-actual count; Tomas must still reveal the escape hatch at full capacity.
+Act 1's quest givers offer at most two optional quests at a time, so a new V2
+character cannot reach the limit yet; automated tests cover it. An existing
+save above the limit should retain every quest and display its actual count;
+Tomas must still reveal the escape hatch at full capacity.

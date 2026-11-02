@@ -4033,21 +4033,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, y - 4), swamp ? "E: DEMON'S CHAMBER" : "E: GOBLIN KING'S HALL");
     }
 
-    if (g->location == LOCATION_TAVERN) {
+    if (g->location == LOCATION_TAVERN && g->elowen_quest_state == ELOWEN_HOME) {
         int name_w = 0;
-        if (g->elowen_quest_state == ELOWEN_HOME) {
-            TTF_SizeText(r->font_tiny, "ELOWEN", &name_w, NULL);
-            renderer_draw_text(r, "ELOWEN", viewport_to_screen_x(v, ELOWEN_TAVERN_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2,
-                viewport_to_screen_y(v, ELOWEN_TAVERN_Y - 1) * TILE_SIZE, (SDL_Color){182, 214, 232, 255}, r->font_tiny);
-        }
-        TTF_SizeText(r->font_tiny, "MARA", &name_w, NULL);
-        int name_x = viewport_to_screen_x(v, MARA_TAVERN_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
-        int name_y = viewport_to_screen_y(v, MARA_TAVERN_Y - 1) * TILE_SIZE;
-        renderer_draw_text(r, "MARA", name_x, name_y, area_label_color(LOCATION_COAST), r->font_tiny);
-        TTF_SizeText(r->font_tiny, "ILYA", &name_w, NULL);
-        name_x = viewport_to_screen_x(v, ILYA_TAVERN_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2;
-        name_y = viewport_to_screen_y(v, ILYA_TAVERN_Y - 1) * TILE_SIZE;
-        renderer_draw_text(r, "ILYA", name_x, name_y, area_label_color(LOCATION_DRAGONSPINE), r->font_tiny);
+        TTF_SizeText(r->font_tiny, "ELOWEN", &name_w, NULL);
+        renderer_draw_text(r, "ELOWEN", viewport_to_screen_x(v, ELOWEN_TAVERN_X) * TILE_SIZE + (TILE_SIZE - name_w) / 2,
+            viewport_to_screen_y(v, ELOWEN_TAVERN_Y - 1) * TILE_SIZE, (SDL_Color){182, 214, 232, 255}, r->font_tiny);
     }
 
     if (g->location == LOCATION_GLASSDEEP) {
@@ -4142,10 +4132,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_x(v, BRAM_INN_X) * TILE_SIZE - 8,
             viewport_to_screen_y(v, BRAM_INN_Y - 1) * TILE_SIZE,
             (SDL_Color){233, 201, 133, 255}, r->font_tiny);
-        renderer_draw_text(r, "ROOK",
-            viewport_to_screen_x(v, ROOK_TAVERN_X) * TILE_SIZE - 8,
-            viewport_to_screen_y(v, ROOK_TAVERN_Y - 1) * TILE_SIZE,
-            (SDL_Color){182, 214, 232, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_WORKSHOP) {
         renderer_draw_text(r, "GARRICK - SHARPENING", viewport_to_screen_x(v, WORKSHOP_SMITH_X) * TILE_SIZE - 60,

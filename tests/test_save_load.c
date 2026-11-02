@@ -6,6 +6,7 @@
 #include "game/approach.h"
 #include "../src/game/game.h"
 #include "../src/game/aldric.h"
+#include "../src/game/heartseed.h"
 #include "../src/systems/save_load.h"
 #include "../src/screens/slot_select.h"
 #include "../external/cJSON.h"
@@ -1442,6 +1443,40 @@ static void test_aldric_inn_migration(void) {
     free(loaded);
 }
 
+static void test_retired_cast_migration(void) {
+    GameState *original = calloc(1, sizeof(*original));
+    GameState *loaded = calloc(1, sizeof(*loaded));
+    if (save_exists(LEGACY_SLOT)) {
+        ASSERT("retired cast migration test slot must be unused", 0);
+        free(original);
+        free(loaded);
+        return;
+    }
+    game_init(original);
+    original->map.tiles[TAMSIN_Y][TAMSIN_X] = TILE_NPC_TAMSIN;
+    original->dialogue_active = 1;
+    snprintf(original->dialogue_speaker, sizeof(original->dialogue_speaker), "Forester Tamsin");
+    int ok = save_game(original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 231) && load_game(loaded, LEGACY_SLOT);
+    ASSERT("older saves lose Tamsin from Oakhaven's square and her open offer", ok &&
+        loaded->map.tiles[TAMSIN_Y][TAMSIN_X] == TILE_TOWN_FLOOR && !loaded->dialogue_active);
+    game_enter_tavern(original);
+    original->map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] = TILE_NPC_ROOK;
+    original->map.tiles[MARA_TAVERN_Y][MARA_TAVERN_X] = TILE_NPC_MARA;
+    original->map.tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] = TILE_NPC_DRAGON_SEEKER;
+    original->mara_quest_state = 1;
+    original->dialogue_active = 1;
+    snprintf(original->dialogue_speaker, sizeof(original->dialogue_speaker), "Rook");
+    ok = save_game(original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 231) && load_game(loaded, LEGACY_SLOT);
+    ASSERT("older saves lose Rook, Mara and Ilya from the Inn but keep quest progress", ok &&
+        loaded->map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_TAVERN_FLOOR &&
+        loaded->map.tiles[MARA_TAVERN_Y][MARA_TAVERN_X] == TILE_TAVERN_FLOOR &&
+        loaded->map.tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] == TILE_TAVERN_FLOOR &&
+        loaded->mara_quest_state == 1 && !loaded->dialogue_active);
+    remove_test_save(LEGACY_SLOT);
+    free(original);
+    free(loaded);
+}
+
 static void test_retired_enemy_migration(void) {
     const int slot = 99306;
     ASSERT("retired-enemy migration fixture does not overwrite an existing save", !save_exists(slot));
@@ -1539,6 +1574,7 @@ void test_save_load(void) {
     test_retired_enemy_migration();
     test_aldric_town_migration();
     test_aldric_inn_migration();
+    test_retired_cast_migration();
     test_narrow_shortcut_migration();
     test_shared_town_gate_migration();
     test_forest_entry_migration();

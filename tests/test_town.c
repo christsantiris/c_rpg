@@ -5,6 +5,7 @@
 #include "../src/game/map.h"
 #include "../src/game/game.h"
 #include "../src/game/restoration.h"
+#include "../src/game/heartseed.h"
 #include "../src/screens/shop.h"
 #include "../src/screens/harbor.h"
 #include "../src/systems/save_load.h"
@@ -619,6 +620,12 @@ void test_bram_guidance(void) {
         map_is_walkable(&g.map, TOWN_BRAM_X, TOWN_BRAM_Y) &&
         g.map.tiles[TOWN_CAIN_Y][TOWN_CAIN_X] == TILE_NPC_CAIN &&
         g.map.tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] == TILE_NPC_ALDRIC);
+    g.player.x = TAMSIN_X + 1;
+    g.player.y = TAMSIN_Y;
+    ASSERT("Tamsin no longer stands in Oakhaven's square and cannot be spoken to there",
+        map_is_walkable(&g.map, TAMSIN_X, TAMSIN_Y) && !heartseed_talk(&g) && !g.dialogue_active);
+    g.player.x = 20;
+    g.player.y = 12;
     game_talk_to_bram(&g);
     ASSERT("Bram cannot be spoken to from the town square", !g.dialogue_active);
     g.player.x = TOWN_TAVERN_DOOR_X;
