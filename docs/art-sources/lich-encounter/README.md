@@ -1,5 +1,9 @@
 # Round 1: Lich King encounter
 
+Chapter 1 V2 now replaces the original reward with the all-class
+[Crypt Ring](../crypt-ring/README.md), granting +5 maximum HP and +5 maximum MP.
+The captures and Cryptblade references below record the earlier encounter review.
+
 The first approved boss update implements the Dungeon floor-5 Lich King.
 The remaining bosses are unchanged. Base health, attack, experience and the
 Cryptblade's equipment stats remain intact; the existing regional scaling

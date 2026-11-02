@@ -120,7 +120,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     } else if (g->location == LOCATION_TOWN) {
         SDL_snprintf(loc, sizeof(loc), "OakHaven");
     } else if (g->location == LOCATION_TAVERN) {
-        SDL_snprintf(loc, sizeof(loc), "TAVERN");
+        SDL_snprintf(loc, sizeof(loc), "INN");
     } else if (g->location == LOCATION_DAWNMERE) {
         SDL_snprintf(loc, sizeof(loc), "DAWNMERE");
     } else if (g->location == LOCATION_TOWN2) {
@@ -158,7 +158,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     } else if (g->location == LOCATION_WITCH) {
         SDL_snprintf(loc, sizeof(loc), "WITCH");
     } else if (g->location == LOCATION_INN) {
-        SDL_snprintf(loc, sizeof(loc), "INN");
+        SDL_snprintf(loc, sizeof(loc), "TAVERN");
     } else if (g->location == LOCATION_GUILD) {
         SDL_snprintf(loc, sizeof(loc), "ADVENTURER'S GUILD");
     } else if (g->location == LOCATION_GIANTS_CROWN) {

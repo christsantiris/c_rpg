@@ -1,118 +1,240 @@
 #include "test_utils.h"
 #include "game/game.h"
+#include "game/town_life.h"
 #include "screens/quest_journal.h"
 #include "systems/save_load.h"
-#include "../external/cJSON.h"
 #include <stdlib.h>
 #include <string.h>
 
-#define ALDER_SLOT 99147
-#define ALDER_SAVE "saves/savegame_99147.json"
+#define ADVENTURE_SLOT 99147
 static GameState game;
 static GameState loaded;
 
-static int legacy_save(void) {
-    if (!save_game(&game, ALDER_SLOT)) {
-        return 0;
+static int count_tile(TileType tile) {
+    int count = 0;
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            count += game.map.tiles[y][x] == tile;
+        }
     }
-    FILE *file = fopen(ALDER_SAVE, "rb");
-    if (!file) {
-        return 0;
+    return count;
+}
+
+static void walk_inn(int tx, int ty) {
+    int previous[MAP_H][MAP_W];
+    int queue[MAP_W * MAP_H];
+    memset(previous, -1, sizeof(previous));
+    int start = game.player.y * MAP_W + game.player.x;
+    int head = 0;
+    int tail = 1;
+    queue[0] = start;
+    previous[game.player.y][game.player.x] = start;
+    const int dx[] = {0, 1, 0, -1};
+    const int dy[] = {-1, 0, 1, 0};
+    while (head < tail && previous[ty][tx] < 0) {
+        int cell = queue[head++];
+        for (int side = 0; side < 4; side++) {
+            int x = cell % MAP_W + dx[side];
+            int y = cell / MAP_W + dy[side];
+            if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H || previous[y][x] >= 0 ||
+                !map_is_walkable(&game.map, x, y) || game.map.tiles[y][x] == TILE_TAVERN_EXIT) {
+                continue;
+            }
+            previous[y][x] = cell;
+            queue[tail++] = y * MAP_W + x;
+        }
     }
-    fseek(file, 0, SEEK_END);
-    long size = ftell(file);
-    rewind(file);
-    char *buffer = malloc((size_t)size + 1);
-    if (!buffer) {
-        fclose(file);
-        return 0;
+    ASSERT("both new quest givers have continuous routes from the Inn entrance", previous[ty][tx] >= 0);
+    if (previous[ty][tx] < 0) {
+        return;
     }
-    size_t read = fread(buffer, 1, (size_t)size, file);
-    buffer[read] = '\0';
-    fclose(file);
-    cJSON *root = cJSON_Parse(buffer);
-    free(buffer);
-    if (!root) {
-        return 0;
+    int count = 0;
+    for (int cell = ty * MAP_W + tx; cell != start; cell = previous[cell / MAP_W][cell % MAP_W]) {
+        queue[count++] = cell;
     }
-    cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 97);
-    char *json = cJSON_PrintUnformatted(root);
-    cJSON_Delete(root);
-    if (!json) {
-        return 0;
+    for (int i = count - 1; i >= 0; i--) {
+        action_resolve_player(&game, (Action){ACTION_MOVE, queue[i] % MAP_W, queue[i] / MAP_W});
     }
-    file = fopen(ALDER_SAVE, "wb");
-    if (!file) {
-        free(json);
-        return 0;
+    ASSERT("walking the route reaches the NPC without leaving the Inn", game.location == LOCATION_TAVERN && game.player.x == tx && game.player.y == ty);
+}
+
+static void enter_inn(void) {
+    game_enter_town_gate(&game, LOCATION_TOWN, 0, 12);
+    game.player.x = TOWN_TAVERN_DOOR_X;
+    game.player.y = TOWN_TAVERN_DOOR_Y + 1;
+    action_resolve_player(&game, (Action){ACTION_MOVE, TOWN_TAVERN_DOOR_X, TOWN_TAVERN_DOOR_Y});
+}
+
+static void test_arrivals(void) {
+    for (int seed = 0; seed < 3; seed++) {
+        memset(&game, 0, sizeof(game));
+        game_init(&game);
+        srand(6400 + seed);
+        game.defeated_bosses = 1 << LOCATION_FOREST;
+        enter_inn();
+        ASSERT("other boss victories do not cause the post-Lich arrivals", !count_tile(TILE_NPC_ALDER) && !count_tile(TILE_NPC_DAIN));
+        game.player.x = ALDER_OAKHAVEN_X;
+        game.player.y = ALDER_OAKHAVEN_Y + 1;
+        game_talk_to_alder(&game);
+        game.player.x = DAIN_OAKHAVEN_X;
+        game.player.y = DAIN_OAKHAVEN_Y + 1;
+        game_talk_to_dain(&game);
+        ASSERT("neither NPC can be spoken to before the Lich is defeated", !game.dialogue_active);
+        game.dialogue_active = 1;
+        snprintf(game.dialogue_speaker, MAX_SPEAKER_LEN, "Alder");
+        ASSERT("saved or forged dialogue cannot bypass the Lich prerequisite", !game_quest_offer_active(&game) &&
+            !game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0) && !game.alder_quest_state);
+        game.defeated_bosses = 1 << LOCATION_DUNGEON;
+        // The two adventures are available even before Elowen's reunion.
+        game.elowen_quest_state = 2;
+        enter_inn();
+        ASSERT("returning after the Lich places exactly one Alder and one Dain", count_tile(TILE_NPC_ALDER) == 1 && count_tile(TILE_NPC_DAIN) == 1 &&
+            game.map.tiles[BRAM_INN_Y][BRAM_INN_X] == TILE_NPC_BRAM);
+        ASSERT("both arrivals and the unfinished reunion survive save/load", save_game(&game, ADVENTURE_SLOT) && load_game(&loaded, ADVENTURE_SLOT) &&
+            loaded.map.tiles[ALDER_OAKHAVEN_Y][ALDER_OAKHAVEN_X] == TILE_NPC_ALDER &&
+            loaded.map.tiles[DAIN_OAKHAVEN_Y][DAIN_OAKHAVEN_X] == TILE_NPC_DAIN && loaded.elowen_quest_state == 2);
+        game = loaded;
+        walk_inn(ALDER_OAKHAVEN_X, ALDER_OAKHAVEN_Y + 1);
+        game_talk_to_alder(&game);
+        ASSERT("Alder introduces the eastward two-ranger adventure", game_quest_offer_active(&game) && strstr(game.dialogue_text, "Forest 1") && strstr(game.dialogue_text, "Forest 2"));
+        game_handle_quest_offer_key(&game, SDL_SCANCODE_N, 0);
+        walk_inn(DAIN_OAKHAVEN_X, DAIN_OAKHAVEN_Y + 1);
+        game_talk_to_dain(&game);
+        ASSERT("Dain introduces the westward two-half adventure", game_quest_offer_active(&game) && strstr(game.dialogue_text, "Mountains 1 and 2"));
+        game_handle_quest_offer_key(&game, SDL_SCANCODE_N, 0);
+        walk_inn(20, 21);
+        action_resolve_player(&game, (Action){ACTION_MOVE, 20, 22});
+        ASSERT("both new actors preserve the actual exit back to Oakhaven", game.location == LOCATION_TOWN);
+        game_enter_inn(&game);
+        ASSERT("Stillbury no longer duplicates Alder or Dain", !count_tile(TILE_NPC_ALDER) && !count_tile(TILE_NPC_DAIN));
+        int x;
+        int y;
+        town_life_generate(&game.map, LOCATION_ALEHOUSE, &x, &y);
+        ASSERT("Dawnmere's Alehouse keeps its ordinary host after Dain leaves", !count_tile(TILE_NPC_DAIN) && game.map.tiles[RESIDENT_Y][RESIDENT_X] == TILE_NPC_RESIDENT);
     }
-    int written = fputs(json, file) >= 0;
-    fclose(file);
-    free(json);
-    return written;
+}
+
+static void test_late_acceptance(int alder) {
+    memset(&game, 0, sizeof(game));
+    game_init(&game);
+    game.defeated_bosses = 1 << LOCATION_DUNGEON;
+    if (alder) {
+        game_enter_forest(&game);
+    } else {
+        game_enter_mountains(&game);
+    }
+    map_mark_explored(&game.map, game.player.x, game.player.y);
+    game_descend(&game);
+    game_return_to_approach(&game);
+    loaded = game;
+    enter_inn();
+    walk_inn(alder ? ALDER_OAKHAVEN_X : DAIN_OAKHAVEN_X, (alder ? ALDER_OAKHAVEN_Y : DAIN_OAKHAVEN_Y) + 1);
+    if (alder) {
+        game_talk_to_alder(&game);
+    } else {
+        game_talk_to_dain(&game);
+    }
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
+    LevelCache *cache = alder ? game.forest_cache : game.mountain_cache;
+    LevelCache *before = alder ? loaded.forest_cache : loaded.mountain_cache;
+    ASSERT("accepting a first quest preserves both explored regional maps", cache[0].valid && cache[1].valid &&
+        memcmp(&cache[0].map, &before[0].map, sizeof(Map)) == 0 &&
+        memcmp(&cache[1].map, &before[1].map, sizeof(Map)) == 0 &&
+        (alder ? game.max_forest_level_reached : game.max_mountain_level_reached) == 2);
+    if (alder) {
+        game_enter_forest(&game);
+    } else {
+        game_enter_mountains(&game);
+    }
+    for (int stage = 1; stage <= 2; stage++) {
+        int objective = alder ? count_tile(TILE_FOREST_WARDEN) : 0;
+        for (int i = 0; !alder && i < game.enemy_count; i++) {
+            objective += game.enemies[i].active && game.enemies[i].dain_fragment != 0;
+        }
+        ASSERT("late acceptance adds exactly one objective to each previously explored early stage", objective == 1);
+        if (stage == 1) {
+            game_descend(&game);
+        }
+    }
+}
+
+static void test_chain(int alder) {
+    memset(&game, 0, sizeof(game));
+    game_init(&game);
+    game.defeated_bosses = 1 << LOCATION_DUNGEON;
+    int *state = alder ? &game.alder_quest_state : &game.dain_quest_state;
+    int *progress = alder ? &game.alder_wardens_rescued : &game.dain_map_fragments;
+    Location region = alder ? LOCATION_FOREST : LOCATION_MOUNTAINS;
+    void (*talk)(GameState *) = alder ? game_talk_to_alder : game_talk_to_dain;
+    int x = alder ? ALDER_OAKHAVEN_X : DAIN_OAKHAVEN_X;
+    int y = alder ? ALDER_OAKHAVEN_Y : DAIN_OAKHAVEN_Y;
+    *state = 2;
+    *progress = 3;
+    game.elowen_quest_state = 1;
+    game.rook_quest_state = 1;
+    game.mara_quest_state = 1;
+    enter_inn();
+    walk_inn(x, y + 1);
+    int gold = game.gold;
+    talk(&game);
+    ASSERT("turning in the short quest pays once and offers its boss sequel", *state == REGIONAL_CHAIN_BOSS_OFFERED &&
+        game.gold == gold + (alder ? 70 : 60) && game_quest_offer_active(&game) && strstr(game.dialogue_text, "kingdom"));
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
+    ASSERT("boss sequels respect the three-active-quest limit", *state == REGIONAL_CHAIN_BOSS_OFFERED && game_quest_offer_at_limit(&game));
+    game.mara_quest_state = 2;
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_N, 0);
+    ASSERT("declining a sequel leaves first-part rewards and progress intact", *state == REGIONAL_CHAIN_BOSS_OFFERED && *progress == 3 && game.gold == gold + (alder ? 70 : 60));
+    talk(&game);
+    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
+    ASSERT("accepting the boss sequel retains the completed first part", *state == REGIONAL_CHAIN_BOSS_ACTIVE && *progress == 3 && game_active_quest_count(&game) == 3);
+    ASSERT("the sequel and first-part state survive saving", save_game(&game, ADVENTURE_SLOT) && load_game(&loaded, ADVENTURE_SLOT) &&
+        (alder ? loaded.alder_quest_state : loaded.dain_quest_state) == REGIONAL_CHAIN_BOSS_ACTIVE &&
+        (alder ? loaded.alder_wardens_rescued : loaded.dain_map_fragments) == 3);
+    game = loaded;
+    game.defeated_bosses |= 1 << region;
+    game_update_level_progress(&game);
+    ASSERT("boss victory completes the sequel and releases its active slot immediately", *state == REGIONAL_CHAIN_COMPLETE && game_active_quest_count(&game) == 2);
+    talk(&game);
+    talk(&game);
+    ASSERT("the completed chain gives onward directions without another turn-in payment", !game_quest_offer_active(&game) &&
+        strstr(game.dialogue_text, alder ? "Dawnmere" : "Stillbury") && game.gold == gold + (alder ? 70 : 60));
+    ASSERT("the completed chain remains completed after saving", save_game(&game, ADVENTURE_SLOT) && load_game(&loaded, ADVENTURE_SLOT) &&
+        (alder ? loaded.alder_quest_state : loaded.dain_quest_state) == REGIONAL_CHAIN_COMPLETE);
+
+    game_init(&game);
+    game.defeated_bosses = (1 << LOCATION_DUNGEON) | (1 << region);
+    *state = 2;
+    *progress = 3;
+    enter_inn();
+    walk_inn(x, y + 1);
+    talk(&game);
+    ASSERT("a boss defeated before the first turn-in is credited without another fight", *state == REGIONAL_CHAIN_COMPLETE &&
+        !game_quest_offer_active(&game) && !game_active_quest_count(&game) && quest_journal_count(&game, QUEST_TAB_COMPLETED) == 2);
+
+    game_init(&game);
+    game.defeated_bosses = 1 << LOCATION_DUNGEON;
+    if (alder) {
+        game_enter_forest(&game);
+    } else {
+        game_enter_mountains(&game);
+    }
+    for (int stage = 1; stage < 5; stage++) {
+        game_descend(&game);
+    }
+    int boss = 0;
+    for (int i = 0; i < game.enemy_count; i++) {
+        boss |= game.enemies[i].active && game.enemies[i].type == (alder ? ENEMY_FOREST_NECROMANCER : ENEMY_MOUNTAIN_GOBLIN_KING);
+    }
+    ASSERT("both bosses remain available without either NPC conversation or quest", game.level == 5 && boss && !*state && !*progress);
 }
 
 void test_alder_relocation(void) {
-    printf("Alder in Stillbury's Inn tests:\n");
-    memset(&game, 0, sizeof(game));
-    game.player.player_class = CLASS_WARRIOR;
-    game_init(&game);
-    game_enter_tavern(&game);
-    game.player.x = 28;
-    game.player.y = 8;
-    game_talk_to_alder(&game);
-    ASSERT("Alder no longer offers his quest in the Tavern", !game.alder_quest_state && !game.dialogue_active && game.map.tiles[7][28] == TILE_TAVERN_FLOOR);
-    game_leave_tavern(&game);
-    game_enter_town2(&game);
-    game.player.x = TOWN_INN_DOOR_X;
-    game.player.y = TOWN_INN_DOOR_Y + 1;
-    action_resolve_player(&game, (Action){ACTION_MOVE, TOWN_INN_DOOR_X, TOWN_INN_DOOR_Y});
-    ASSERT("Stillbury's Inn houses Alder and Bram without Elowen or Rook", game.location == LOCATION_INN &&
-        game.map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_NPC_ALDER && game.map.tiles[ELOWEN_TAVERN_Y][ELOWEN_TAVERN_X] == TILE_TAVERN_FLOOR &&
-        game.map.tiles[7][28] == TILE_NPC_INNKEEPER && game.map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_TAVERN_FLOOR &&
-        !map_is_walkable(&game.map, ALDER_INN_X, ALDER_INN_Y) && map_is_walkable(&game.map, ALDER_INN_X, ALDER_INN_Y + 1));
-    game_talk_to_alder(&game);
-    ASSERT("Alder cannot assign his quest remotely in the Inn", !game.alder_quest_state);
-    game.player.x = ALDER_INN_X;
-    game.player.y = ALDER_INN_Y + 1;
-    action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
-    ASSERT("Alder requires talking rather than Action", !game.alder_quest_state);
-    game_talk_to_alder(&game);
-    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
-    ASSERT("Alder assigns the forest quest and anchors dialogue beside his Inn position", game.alder_quest_state == 1 &&
-        game.dialogue_x == ALDER_INN_X && game.dialogue_y == ALDER_INN_Y && strstr(game.dialogue_text, "Stillbury's Inn"));
-    game.alder_wardens_rescued = 5;
-    QuestJournalEntry entry;
-    ASSERT("journal directs the player back to Stillbury's Inn", quest_journal_get_entry(&game, QUEST_TAB_ACTIVE, 0, &entry) &&
-        strstr(entry.summary_line_2, "Stillbury's Inn") && entry.objective_complete[0] && entry.objective_complete[2]);
-    ASSERT("current saves retain Alder and rescue progress", save_game(&game, ALDER_SLOT) && load_game(&loaded, ALDER_SLOT) &&
-        loaded.alder_quest_state == 1 && loaded.alder_wardens_rescued == 5 && loaded.map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_NPC_ALDER);
-    game.gold = 617;
-    game.player.y = ALDER_INN_Y;
-    game.floor_item_count = 1;
-    game.floor_items[0] = (FloorItem){.active = 1, .x = ALDER_INN_X, .y = ALDER_INN_Y,
-        .underlying_tile = TILE_TAVERN_FLOOR, .item = item_make_short_sword()};
-    game.map.tiles[ALDER_INN_Y][ALDER_INN_X] = TILE_ITEM;
-    ASSERT("legacy Inn adds Alder without losing rescue progress or money", legacy_save() && load_game(&loaded, ALDER_SLOT) &&
-        loaded.alder_quest_state == 1 && loaded.alder_wardens_rescued == 5 && loaded.gold == 617 &&
-        loaded.map.tiles[ALDER_INN_Y][ALDER_INN_X] == TILE_NPC_ALDER);
-    ASSERT("migration moves overlapping player and loot safely beside Alder", loaded.player.y == ALDER_INN_Y + 1 &&
-        loaded.floor_items[0].active && loaded.floor_items[0].y == ALDER_INN_Y + 1 &&
-        loaded.floor_items[0].underlying_tile == TILE_TAVERN_FLOOR && loaded.map.tiles[ALDER_INN_Y + 1][ALDER_INN_X] == TILE_ITEM);
-    game = loaded;
-    game.alder_quest_state = 2;
-    game.alder_wardens_rescued = 7;
-    int score = game.score;
-    game_talk_to_alder(&game);
-    game_talk_to_alder(&game);
-    ASSERT("Alder awards the original reward once in Stillbury's Inn", game.alder_quest_state == 3 && game.gold == 687 && game.score == score + 500);
-    game_enter_tavern(&game);
-    game.map.tiles[7][28] = TILE_NPC_ALDER;
-    ASSERT("legacy Tavern removes Alder while preserving completed rescues", legacy_save() && load_game(&loaded, ALDER_SLOT) &&
-        loaded.map.tiles[7][28] == TILE_TAVERN_FLOOR && loaded.alder_quest_state == 3 && loaded.alder_wardens_rescued == 7);
-    int x;
-    int y;
-    map_generate_guild(&loaded.map, &x, &y);
-    ASSERT("the shared Guild template does not gain Alder", loaded.map.tiles[ALDER_INN_Y][ALDER_INN_X] != TILE_NPC_ALDER);
-    remove(ALDER_SAVE);
+    printf("Post-Lich adventure arrivals and quest chains:\n");
+    ASSERT("adventure test save slot is unused", !save_exists(ADVENTURE_SLOT));
+    test_arrivals();
+    test_late_acceptance(1);
+    test_late_acceptance(0);
+    test_chain(1);
+    test_chain(0);
+    remove("saves/savegame_99147.json");
 }

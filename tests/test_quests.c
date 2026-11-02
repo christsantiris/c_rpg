@@ -31,14 +31,6 @@ static int count_enemy_type(const GameState *g, EnemyType type) {
     return count;
 }
 
-static int count_active_enemies(const GameState *g) {
-    int count = 0;
-    for (int i = 0; i < g->enemy_count; i++) {
-        count += g->enemies[i].active;
-    }
-    return count;
-}
-
 static void lower_coast_tide(GameState *g) {
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -63,7 +55,7 @@ void test_quest_activation_gating(void) {
     game_descend(&g);
     int object_x = 0;
     int object_y = 0;
-    ASSERT("Elowen's seals require quest activation",
+    ASSERT("retired burial-seal objectives do not spawn",
         !find_tile(&g.map, TILE_BROKEN_BURIAL_SEAL, &object_x, &object_y));
 
     game_return_to_town(&g);
@@ -84,96 +76,26 @@ void test_quest_activation_gating(void) {
 }
 
 void test_elowen_quest(void) {
-    printf("Elowen quest tests:\n");
-    GameState g;
-    g.player.player_class = CLASS_WARRIOR;
+    printf("Bram's Save Elowen offer tests:\n");
+    GameState g = {0};
     game_init(&g);
-
-    g.level_cache[3].valid = 1;
-    g.portal_active = 1;
-    g.portal_location = LOCATION_DUNGEON;
+    game_enter_dungeon(&g);
+    game_descend(&g);
+    g.enemies[0].hp = 7;
+    game_return_to_town(&g);
     game_enter_tavern(&g);
-    g.player.x = ELOWEN_TAVERN_X;
-    g.player.y = ELOWEN_TAVERN_Y + 1;
-    game_talk_to_elowen(&g);
+    g.player.x = BRAM_INN_X;
+    g.player.y = BRAM_INN_Y + 1;
+    game_talk_to_bram(&g);
+    ASSERT("Bram offers the rescue from his Inn counter", game_quest_offer_active(&g) &&
+        strstr(g.dialogue_text, "my daughter Elowen") && strstr(g.dialogue_text, "Lich King"));
+    game_handle_quest_offer_key(&g, SDL_SCANCODE_N, 0);
+    ASSERT("declining leaves the rescue available", !g.elowen_quest_state && !g.dialogue_active);
+    game_talk_to_bram(&g);
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
-    ASSERT("Elowen offers The Broken Seals", g.elowen_quest_state == 1);
-    ASSERT("Elowen speaks through dialogue state", g.dialogue_active &&
-        strstr(g.dialogue_text, "burial seals") != NULL);
-    ASSERT("event log records only the quest assignment",
-        strcmp(g.messages[g.message_count - 1],
-            "Quest assigned: The Broken Seals.") == 0);
-    ASSERT("new quest begins with no restored seals",
-        g.elowen_seals_restored == 0);
-    ASSERT("accepting Elowen's quest starts a fresh dungeon expedition",
-        !g.level_cache[3].valid && !g.portal_active);
-
-    g.location = LOCATION_DUNGEON;
-    g.level = 2;
-    map_generate(&g.map, g.level);
-    g.enemy_count = 0;
-    game_refresh_quest_encounters(&g);
-    int encounter_x = 0;
-    int encounter_y = 0;
-    ASSERT("a cleared dungeon floor receives a guarded seal encounter",
-        find_tile(&g.map, TILE_BROKEN_BURIAL_SEAL, &encounter_x,
-            &encounter_y) && count_active_enemies(&g) >= 3);
-
-    game_enter_dungeon(&g);
-    ASSERT("new dungeon expedition starts on floor one", g.level == 1);
-    int expected_levels[3] = {2, 3, 4};
-    for (int seal = 0; seal < 3; seal++) {
-        while (g.level < expected_levels[seal]) {
-            game_descend(&g);
-        }
-        int seal_x = 0;
-        int seal_y = 0;
-        ASSERT("quest floor contains a broken burial seal",
-            find_tile(&g.map, TILE_BROKEN_BURIAL_SEAL, &seal_x, &seal_y));
-        g.player.x = seal_x;
-        g.player.y = seal_y;
-        Action restore = {ACTION_INTERACT, 0, 0};
-        action_resolve_player(&g, restore);
-        ASSERT("A restores the burial seal",
-            g.map.tiles[seal_y][seal_x] == TILE_RESTORED_BURIAL_SEAL);
-    }
-    ASSERT("three restored seals make the quest ready",
-        g.elowen_quest_state == 2 && g.elowen_seals_restored == 7);
-
-    game_return_to_town(&g);
-    int gold_before = g.gold;
-    game_enter_tavern(&g);
-    g.player.x = ELOWEN_TAVERN_X;
-    g.player.y = ELOWEN_TAVERN_Y + 1;
-    game_talk_to_elowen(&g);
-    ASSERT("Elowen completes the quest", g.elowen_quest_state == 3);
-    ASSERT("Elowen awards 40 gold", g.gold == gold_before + 40);
-
-    game_enter_dungeon(&g);
-    ASSERT("replayed dungeon begins again on floor one", g.level == 1);
-    int living_enemies = 0;
-    for (int i = 0; i < g.enemy_count; i++) {
-        living_enemies += g.enemies[i].active;
-    }
-    ASSERT("new expedition repopulates regular enemies", living_enemies > 0);
-
-    g.defeated_bosses |= 1 << LOCATION_DUNGEON;
-    g.level = DUNGEON_DEPTH;
-    map_generate(&g.map, g.level);
-    enemies_spawn(&g);
-    int liches = 0;
-    for (int i = 0; i < g.enemy_count; i++) {
-        liches += g.enemies[i].type == ENEMY_LICH_KING;
-    }
-    ASSERT("defeated Lich King does not respawn", liches == 0);
-    game_return_to_town(&g);
-    game_enter_dungeon(&g);
-    while (g.level < DUNGEON_DEPTH) {
-        game_descend(&g);
-    }
-    ASSERT("replayed finale keeps its return stairs open",
-        g.map.tiles[g.map.stairs_down_y][g.map.stairs_down_x] ==
-            TILE_DUNGEON_STAIRS_RETURN);
+    ASSERT("accepting Save Elowen records the quest without resetting dungeon progress", g.elowen_quest_state == 1 &&
+        g.level_cache[1].valid && g.level_cache[1].enemies[0].hp == 7 && g.max_level_reached == 2);
+    ASSERT("the event log identifies the rescue assignment", strstr(g.messages[g.message_count - 1], "Save Elowen") != NULL);
 }
 
 void test_tavern_interior(void) {
@@ -193,9 +115,8 @@ void test_tavern_interior(void) {
 
     int elowen_x = 0;
     int elowen_y = 0;
-    ASSERT("Elowen occupies her original Tavern position",
-        find_tile(&g.map, TILE_NPC_ELOWEN, &elowen_x, &elowen_y) &&
-        elowen_x == ELOWEN_TAVERN_X && elowen_y == ELOWEN_TAVERN_Y);
+    ASSERT("Elowen is absent from the Inn before her rescue",
+        !find_tile(&g.map, TILE_NPC_ELOWEN, &elowen_x, &elowen_y));
     ASSERT("Elowen can be approached beside her Tavern position",
         map_is_walkable(&g.map, ELOWEN_TAVERN_X, ELOWEN_TAVERN_Y + 1));
     int dain_x = 0;
@@ -208,11 +129,12 @@ void test_tavern_interior(void) {
     int alder_y = 0;
     ASSERT("Alder no longer occupies the Tavern",
         !find_tile(&g.map, TILE_NPC_ALDER, &alder_x, &alder_y));
-    ASSERT("Alder's old Tavern position is walkable",
-        map_is_walkable(&g.map, 28, 7));
+    ASSERT("Bram now occupies the Inn's former Alder counter position",
+        g.map.tiles[BRAM_INN_Y][BRAM_INN_X] == TILE_NPC_BRAM &&
+        map_is_walkable(&g.map, BRAM_INN_X, BRAM_INN_Y + 1));
     int mara_x = 0;
     int mara_y = 0;
-    ASSERT("Mara occupies her original Oakhaven Tavern position",
+    ASSERT("Mara occupies her original Oakhaven Inn position",
         find_tile(&g.map, TILE_NPC_MARA, &mara_x, &mara_y) &&
         mara_x == MARA_TAVERN_X && mara_y == MARA_TAVERN_Y);
     ASSERT("Mara can be approached beside her Tavern position",
@@ -247,108 +169,66 @@ void test_tavern_interior(void) {
 }
 
 static void visit_dain(GameState *g) {
-    game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
-    const TownBuilding *b = town_life_building(LOCATION_ALEHOUSE);
-    g->player.x = b->x + b->w / 2;
-    g->player.y = b->y + b->h;
-    action_resolve_player(g, (Action){ACTION_MOVE, g->player.x, g->player.y - 1});
-    g->player.x = DAIN_ALEHOUSE_X;
-    g->player.y = DAIN_ALEHOUSE_Y + 1;
+    game_enter_town_gate(g, LOCATION_TOWN, 0, 12);
+    g->player.x = TOWN_TAVERN_DOOR_X;
+    g->player.y = TOWN_TAVERN_DOOR_Y + 1;
+    action_resolve_player(g, (Action){ACTION_MOVE, TOWN_TAVERN_DOOR_X, TOWN_TAVERN_DOOR_Y});
+    g->player.x = DAIN_OAKHAVEN_X;
+    g->player.y = DAIN_OAKHAVEN_Y + 1;
 }
 
 void test_dain_quest(void) {
-    printf("Dain quest tests:\n");
-    GameState g;
-    g.player.player_class = CLASS_WARRIOR;
+    printf("Dain's two map halves tests:\n");
+    GameState g = {0};
     game_init(&g);
-
-    g.mountain_cache[3].valid = 1;
-    g.portal_active = 1;
-    g.portal_location = LOCATION_MOUNTAINS;
+    g.defeated_bosses = 1 << LOCATION_DUNGEON;
+    game_enter_mountains(&g);
+    for (int stage = 1; stage < 4; stage++) {
+        game_descend(&g);
+    }
+    game_return_to_approach(&g);
     visit_dain(&g);
     game_talk_to_dain(&g);
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
-    ASSERT("Dain assigns Recover the Treasure Map", g.dain_quest_state == 1);
-    ASSERT("new Dain quest begins with no map fragments",
-        g.dain_map_fragments == 0);
-    ASSERT("Dain speaks through the dialogue bubble", g.dialogue_active &&
-        strcmp(g.dialogue_speaker, "Dain") == 0);
-    ASSERT("accepting Dain's quest starts a fresh mountain expedition",
-        !g.mountain_cache[3].valid && !g.portal_active);
-
-    int target_levels[3] = {2, 3, 4};
-    EnemyType target_types[3] = {
-        ENEMY_GOBLIN_ARCHER, ENEMY_GOBLIN_WARCHIEF, ENEMY_GOBLIN_SHAMAN
-    };
-    g.location = LOCATION_MOUNTAINS;
-    for (int target = 0; target < 3; target++) {
-        g.level = target_levels[target];
-        map_generate_mountains(&g.map, g.level);
-        enemies_spawn(&g);
-        ASSERT("needed mountain specialist has a guaranteed encounter",
-            count_enemy_type(&g, target_types[target]) > 0);
-        int marked_target = 0;
+    ASSERT("Dain assigns the map retrieval without collecting a half", g.dain_quest_state == 1 && !g.dain_map_fragments);
+    ASSERT("accepting the retrieval preserves the explored mountain expedition", g.mountain_cache[3].valid && g.max_mountain_level_reached == 4);
+    game_enter_mountains(&g);
+    for (int stage = 1; stage <= MOUNTAIN_DEPTH; stage++) {
+        int bearers = 0;
         for (int i = 0; i < g.enemy_count; i++) {
-            if (g.enemies[i].type == target_types[target] &&
-                g.enemies[i].dain_fragment != 0) {
-                marked_target = 1;
-            }
+            bearers += g.enemies[i].active && g.enemies[i].dain_fragment != 0;
         }
-        ASSERT("map bearer is distinct from ordinary enemies",
-            marked_target);
-    }
-
-    g.level = 4;
-    map_generate_mountains(&g.map, g.level);
-    g.enemy_count = 0;
-    LevelCache *cached = &g.mountain_cache[2];
-    map_generate_mountains(&cached->map, 3);
-    cached->enemy_count = 0;
-    cached->level_cleared = 1;
-    cached->valid = 1;
-    game_ascend(&g);
-    int cached_bearers = 0;
-    int cached_enemies = 0;
-    for (int i = 0; i < g.enemy_count; i++) {
-        if (g.enemies[i].active &&
-            g.enemies[i].dain_fragment == DAIN_FRAGMENT_WARCHIEF) {
-            cached_bearers++;
+        ASSERT("only Mountains 1 and 2 contain pending map halves", bearers == (stage <= 2));
+        game_refresh_quest_encounters(&g);
+        int refreshed = 0;
+        for (int i = 0; i < g.enemy_count; i++) {
+            refreshed += g.enemies[i].active && g.enemies[i].dain_fragment != 0;
         }
-        cached_enemies += g.enemies[i].active;
-    }
-    ASSERT("backtracking adds a guarded bearer to a cleared cached stage",
-        g.level == 3 && cached_bearers == 1 && cached_enemies >= 3);
-    game_refresh_quest_encounters(&g);
-    int refreshed_bearers = 0;
-    for (int i = 0; i < g.enemy_count; i++) {
-        if (g.enemies[i].active &&
-            g.enemies[i].dain_fragment == DAIN_FRAGMENT_WARCHIEF) {
-            refreshed_bearers++;
+        ASSERT("refreshing a stage never duplicates its map bearer", refreshed == bearers);
+        if (stage < MOUNTAIN_DEPTH) {
+            game_descend(&g);
         }
     }
-    ASSERT("refreshing a cached stage does not duplicate its bearer",
-        refreshed_bearers == 1);
-
+    g.level = 1;
     game_record_dain_kill(&g, ENEMY_GOBLIN_ARCHER);
-    ASSERT("Archer defeat recovers its map fragment",
-        g.dain_map_fragments == DAIN_FRAGMENT_ARCHER);
-    game_record_dain_kill(&g, ENEMY_GOBLIN_WARCHIEF);
-    ASSERT("Warchief defeat recovers its map fragment",
-        g.dain_map_fragments ==
-            (DAIN_FRAGMENT_ARCHER | DAIN_FRAGMENT_WARCHIEF));
+    ASSERT("the first bearer yields one half", g.dain_map_fragments == DAIN_FRAGMENT_ARCHER && g.dain_quest_state == 1);
+    g.level = 3;
     game_record_dain_kill(&g, ENEMY_GOBLIN_SHAMAN);
-    ASSERT("three map fragments make Dain's quest ready",
-        g.dain_quest_state == 2 && g.dain_map_fragments == 7);
-
-    int gold_before = g.gold;
+    ASSERT("deeper enemies add no third map piece", g.dain_map_fragments == DAIN_FRAGMENT_ARCHER);
+    g.level = 2;
+    game_record_dain_kill(&g, ENEMY_GOBLIN_WARCHIEF);
+    ASSERT("two halves finish retrieval without the Goblin King", g.dain_map_fragments == DAIN_MAP_COMPLETE && g.dain_quest_state == 2 &&
+        !(g.defeated_bosses & (1 << LOCATION_MOUNTAINS)));
+    int gold = g.gold;
     visit_dain(&g);
     game_talk_to_dain(&g);
-    ASSERT("Dain completes the mountain quest", g.dain_quest_state == 3);
-    ASSERT("Dain awards 60 gold", g.gold == gold_before + 60);
+    game_talk_to_dain(&g);
+    ASSERT("Dain pays once and offers the Goblin King follow-up", g.gold == gold + 60 &&
+        g.dain_quest_state == REGIONAL_CHAIN_BOSS_OFFERED && game_quest_offer_active(&g) && strstr(g.dialogue_text, "Goblin King"));
 }
 
 void test_dain_town_center(void) {
-    printf("Dain in Dawnmere's Alehouse tests:\n");
+    printf("Dain at Oakhaven's Inn tests:\n");
     static GameState g;
     static GameState loaded;
     memset(&g, 0, sizeof(g));
@@ -374,111 +254,109 @@ void test_dain_town_center(void) {
     g.player.y = DAIN_TOWN_Y + 1;
     game_talk_to_dain(&g);
     ASSERT("Dain cannot be talked to at his former plaza position", !g.dialogue_active && !g.dain_quest_state);
+    g.defeated_bosses |= 1 << LOCATION_DUNGEON;
     visit_dain(&g);
     action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("Dain requires conversation rather than Action", !g.dain_quest_state);
     g.sunscar_lamp_quest_state = 1;
     game_talk_to_dain(&g);
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
-    ASSERT("Dain assigns the same mountain quest in Dawnmere and leaves Zara's quest intact", g.dain_quest_state == 1 &&
+    ASSERT("Dain assigns the same mountain quest in Oakhaven and leaves Zara's quest intact", g.dain_quest_state == 1 &&
         !g.dain_map_fragments && g.sunscar_lamp_quest_state == 1 &&
-        g.dialogue_x == DAIN_ALEHOUSE_X && g.dialogue_y == DAIN_ALEHOUSE_Y &&
-        strstr(g.dialogue_text, "stages 2, 3, and 4") && strstr(g.dialogue_text, "Dawnmere's Alehouse"));
-    g.dain_map_fragments = DAIN_FRAGMENT_ARCHER | DAIN_FRAGMENT_SHAMAN;
+        g.dialogue_x == DAIN_OAKHAVEN_X && g.dialogue_y == DAIN_OAKHAVEN_Y &&
+        strstr(g.dialogue_text, "Mountains 1 and 2") && strstr(g.dialogue_text, "Oakhaven's Inn"));
+    g.dain_map_fragments = DAIN_FRAGMENT_ARCHER;
     QuestJournalEntry entry;
     ASSERT("the journal retains mountain objectives and rewards and names the new return location", quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 0, &entry) &&
-        strcmp(entry.title, "Recover the Treasure Map") == 0 && entry.stages[0] == 2 && entry.stages[1] == 3 && entry.stages[2] == 4 &&
-        entry.reward_gold == 60 && entry.reward_score == 400 && entry.objective_complete[0] && !entry.objective_complete[1] &&
-        entry.objective_complete[2] && strstr(entry.summary_line_2, "Dawnmere's Alehouse"));
-    ASSERT("saving in Dawnmere retains Dain and partial map progress", save_game(&g, 99141) && load_game(&loaded, 99141) &&
-        loaded.location == LOCATION_ALEHOUSE && loaded.dain_quest_state == 1 && loaded.dain_map_fragments == 5 && loaded.sunscar_lamp_quest_state == 1 &&
-        loaded.map.tiles[DAIN_ALEHOUSE_Y][DAIN_ALEHOUSE_X] == TILE_NPC_DAIN);
+        strcmp(entry.title, "Recover the Treasure Map") == 0 && entry.stages[0] == 1 && entry.stages[1] == 2 && entry.objective_count == 2 &&
+        entry.reward_gold == 60 && entry.reward_score == 400 && entry.objective_complete[0] && !entry.objective_complete[1] && strstr(entry.summary_line_2, "Oakhaven's Inn"));
+    ASSERT("saving in Oakhaven retains Dain and partial map progress", save_game(&g, 99141) && load_game(&loaded, 99141) &&
+        loaded.location == LOCATION_TAVERN && loaded.dain_quest_state == 1 && loaded.dain_map_fragments == 1 && loaded.sunscar_lamp_quest_state == 1 &&
+        loaded.map.tiles[DAIN_OAKHAVEN_Y][DAIN_OAKHAVEN_X] == TILE_NPC_DAIN);
     g = loaded;
     int gold = g.gold;
     int score = g.score;
     game_talk_to_dain(&g);
     ASSERT("partial map progress cannot claim the reward", g.gold == gold && g.score == score && g.dain_quest_state == 1);
-    ASSERT("Dain's progress reminder retains the complete return directions", strstr(g.dialogue_text, "Dawnmere's Alehouse.") &&
-        strstr(g.dialogue_text, "2 of 3 map fragments"));
+    ASSERT("Dain's progress reminder retains the complete return directions", strstr(g.dialogue_text, "Oakhaven's Inn.") &&
+        strstr(g.dialogue_text, "1 of 2 map halves"));
     g.dain_quest_state = 2;
-    g.dain_map_fragments = 7;
+    g.dain_map_fragments = DAIN_MAP_COMPLETE;
     g.player.x = 20;
     g.player.y = TOWN_H - 2;
     game_talk_to_dain(&g);
     ASSERT("completed quest rewards cannot be claimed remotely", g.gold == gold && g.score == score && g.dain_quest_state == 2);
-    g.player.x = DAIN_ALEHOUSE_X;
-    g.player.y = DAIN_ALEHOUSE_Y + 1;
+    g.player.x = DAIN_OAKHAVEN_X;
+    g.player.y = DAIN_OAKHAVEN_Y + 1;
     game_talk_to_dain(&g);
     game_talk_to_dain(&g);
-    ASSERT("Dain awards the original 60 gold and 400 score once in Dawnmere", g.dain_quest_state == 3 && g.gold == gold + 60 && g.score == score + 400);
-    ASSERT("completed quest survives saving and loading in Dawnmere", save_game(&g, 99141) && load_game(&loaded, 99141) &&
-        loaded.dain_quest_state == 3 && loaded.dain_map_fragments == 7 && loaded.gold == gold + 60 && loaded.score == score + 400);
+    ASSERT("Dain awards the original 60 gold and 400 score once in Oakhaven", g.dain_quest_state == 3 && g.gold == gold + 60 && g.score == score + 400);
+    ASSERT("completed quest survives saving and loading in Oakhaven", save_game(&g, 99141) && load_game(&loaded, 99141) &&
+        loaded.dain_quest_state == 3 && loaded.dain_map_fragments == DAIN_MAP_COMPLETE && loaded.gold == gold + 60 && loaded.score == score + 400);
     remove("saves/savegame_99141.json");
 }
 
 void test_alder_quest(void) {
-    printf("Alder quest tests:\n");
-    GameState g;
-    g.player.player_class = CLASS_WARRIOR;
+    printf("Alder's two ranger rescues tests:\n");
+    GameState g = {0};
     game_init(&g);
-    game_enter_inn(&g);
-    g.player.x = ALDER_INN_X;
-    g.player.y = ALDER_INN_Y + 1;
-
-    g.forest_cache[3].valid = 1;
-    g.portal_active = 1;
-    g.portal_location = LOCATION_FOREST;
+    g.defeated_bosses = 1 << LOCATION_DUNGEON;
+    game_enter_tavern(&g);
+    g.player.x = ALDER_OAKHAVEN_X;
+    g.player.y = ALDER_OAKHAVEN_Y + 1;
     game_talk_to_alder(&g);
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
-    ASSERT("Alder assigns The Lost Wardens", g.alder_quest_state == 1);
-    ASSERT("new Alder quest begins with no rescues",
-        g.alder_wardens_rescued == 0);
-    ASSERT("Alder speaks through dialogue state", g.dialogue_active &&
-        strcmp(g.dialogue_speaker, "Alder") == 0 && strstr(g.dialogue_text, "levels 2, 3, and 4") && strstr(g.dialogue_text, "Stillbury"));
-    ASSERT("accepting Alder's quest starts a fresh forest expedition",
-        !g.forest_cache[3].valid && !g.portal_active);
-    game_leave_inn(&g);
-
-    int target_levels[3] = {2, 3, 4};
-    EnemyType guardian_types[3] = {
-        ENEMY_GIANT_SPIDER, ENEMY_DARK_ELF_ARCHER, ENEMY_FOREST_TROLL
-    };
+    ASSERT("Alder assigns The Lost Rangers", g.alder_quest_state == 1 && !g.alder_wardens_rescued);
+    game_leave_tavern(&g);
     game_enter_forest(&g);
-    for (int target = 0; target < 3; target++) {
-        while (g.level < target_levels[target]) {
+    for (int stage = 1; stage <= FOREST_DEPTH; stage++) {
+        int x = 0;
+        int y = 0;
+        int ranger = find_tile(&g.map, TILE_FOREST_WARDEN, &x, &y);
+        ASSERT("only Forest 1 and 2 contain the two rangers", ranger == (stage <= 2));
+        if (ranger) {
+            int captors = 0;
+            for (int i = 0; i < g.enemy_count; i++) {
+                if (g.enemies[i].active && strcmp(g.enemies[i].name, ALDER_CAPTOR_NAME) == 0) {
+                    captors++;
+                    ASSERT("each ranger's captors are Giant Spiders", g.enemies[i].type == ENEMY_GIANT_SPIDER);
+                }
+            }
+            int progress = g.alder_wardens_rescued;
+            game_rescue_forest_warden(&g, x, y);
+            ASSERT("living spider captors prevent the rescue", captors == 3 && g.alder_wardens_rescued == progress);
+            for (int i = 0; i < g.enemy_count; i++) {
+                if (strcmp(g.enemies[i].name, ALDER_CAPTOR_NAME) == 0) {
+                    g.enemies[i].active = 0;
+                }
+            }
+            game_rescue_forest_warden(&g, x, y);
+            ASSERT("freeing the ranger removes the captive tile", g.map.tiles[y][x] == TILE_FOREST_FLOOR &&
+                strcmp(g.dialogue_speaker, "Forest Ranger") == 0);
+        }
+        if (stage == 2) {
+            ASSERT("both rescues complete before fighting the Necromancer", g.alder_quest_state == 2 &&
+                g.alder_wardens_rescued == ALDER_RESCUE_COMPLETE && !(g.defeated_bosses & (1 << LOCATION_FOREST)));
+        }
+        if (stage < FOREST_DEPTH) {
             game_descend(&g);
         }
-        int warden_x = 0;
-        int warden_y = 0;
-        ASSERT("missing warden appears in the assigned forest stage",
-            find_tile(&g.map, TILE_FOREST_WARDEN, &warden_x, &warden_y));
-        ASSERT("forest warden has a thematic guardian",
-            count_enemy_type(&g, guardian_types[target]) > 0);
-        game_rescue_forest_warden(&g, warden_x, warden_y);
-        ASSERT("rescued warden leaves forest floor behind",
-            g.map.tiles[warden_y][warden_x] == TILE_FOREST_FLOOR);
     }
-    ASSERT("three rescues make Alder's quest ready",
-        g.alder_quest_state == 2 && g.alder_wardens_rescued == 7);
-
     game_return_to_town(&g);
-    game_enter_inn(&g);
-    g.player.x = ALDER_INN_X;
-    g.player.y = ALDER_INN_Y + 1;
-    int gold_before = g.gold;
-    int score_before = g.score;
+    game_enter_tavern(&g);
+    g.player.x = ALDER_OAKHAVEN_X;
+    g.player.y = ALDER_OAKHAVEN_Y + 1;
+    int gold = g.gold;
+    int score = g.score;
     game_talk_to_alder(&g);
-    ASSERT("Alder completes the forest quest", g.alder_quest_state == 3);
-    ASSERT("Alder awards 70 gold", g.gold == gold_before + 70);
-    ASSERT("Alder awards 500 score", g.score == score_before + 500);
-    game_leave_inn(&g);
-
+    game_talk_to_alder(&g);
+    ASSERT("Alder pays once and offers the Necromancer follow-up", g.alder_quest_state == REGIONAL_CHAIN_BOSS_OFFERED &&
+        g.gold == gold + 70 && g.score == score + 500 && game_quest_offer_active(&g));
+    game_leave_tavern(&g);
     game_enter_forest(&g);
-    game_descend(&g);
-    int warden_x = 0;
-    int warden_y = 0;
-    ASSERT("rescued wardens do not respawn",
-        !find_tile(&g.map, TILE_FOREST_WARDEN, &warden_x, &warden_y));
+    int x = 0;
+    int y = 0;
+    ASSERT("rescued rangers never respawn", !find_tile(&g.map, TILE_FOREST_WARDEN, &x, &y));
 }
 
 void test_mara_quest(void) {
@@ -575,12 +453,11 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
         Location location;
         int *state;
     } offers[] = {
-        {"Elowen", LOCATION_TAVERN, &g->elowen_quest_state},
-        {"Dain", LOCATION_ALEHOUSE, &g->dain_quest_state},
-        {"Alder", LOCATION_INN, &g->alder_quest_state},
+        {"Bram", LOCATION_TAVERN, &g->elowen_quest_state},
+        {"Dain", LOCATION_TAVERN, &g->dain_quest_state},
+        {"Alder", LOCATION_TAVERN, &g->alder_quest_state},
         {"Mara", LOCATION_TAVERN, &g->mara_quest_state},
         {"Rook", LOCATION_TAVERN, &g->rook_quest_state},
-        {"Bram", LOCATION_INN, &g->innkeeper_quest_state},
         {"Zara", LOCATION_INN, &g->sunscar_lamp_quest_state},
         {"Ilya", LOCATION_TAVERN, &g->dragon_treasure_quest_state},
         {"Nahla", LOCATION_ISLAND, &g->temple_treasure_state},
@@ -599,6 +476,7 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
     size_t count = sizeof(offers) / sizeof(offers[0]);
     for (size_t i = 0; i < count; i++) {
         game_init(g);
+        g->defeated_bosses = 1 << LOCATION_DUNGEON;
         *offers[i].state = 1;
         ASSERT("each optional quest uses one active slot", game_active_quest_count(g) == 1);
         *offers[i].state = 2;
@@ -644,12 +522,12 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
     ASSERT("a full-journal offer can still be dismissed", !loaded->dialogue_active);
     loaded->elowen_quest_state = 2;
     loaded->elowen_seals_restored = 7;
-    loaded->player.x = ELOWEN_TAVERN_X;
-    loaded->player.y = ELOWEN_TAVERN_Y + 1;
+    loaded->player.x = BRAM_INN_X;
+    loaded->player.y = BRAM_INN_Y + 1;
     int gold = loaded->gold;
-    game_talk_to_elowen(loaded);
+    game_talk_to_bram(loaded);
     ASSERT("rewards can be claimed with all three slots occupied", loaded->elowen_quest_state == 3 &&
-        loaded->gold == gold + 40 && game_active_quest_count(loaded) == 3);
+        loaded->gold == gold + 80 && game_active_quest_count(loaded) == 3);
     loaded->dain_quest_state = 2;
     loaded->dain_map_fragments = 7;
     loaded->player.x = ROOK_TAVERN_X;
@@ -688,12 +566,11 @@ void test_quest_offer_controls(void) {
         int y;
         int *state;
     } cases[] = {
-        {game_talk_to_elowen, LOCATION_TAVERN, ELOWEN_TAVERN_X, ELOWEN_TAVERN_Y, &g.elowen_quest_state},
-        {game_talk_to_dain, LOCATION_ALEHOUSE, DAIN_ALEHOUSE_X, DAIN_ALEHOUSE_Y, &g.dain_quest_state},
-        {game_talk_to_alder, LOCATION_INN, ALDER_INN_X, ALDER_INN_Y, &g.alder_quest_state},
+        {game_talk_to_bram, LOCATION_TAVERN, BRAM_INN_X, BRAM_INN_Y, &g.elowen_quest_state},
+        {game_talk_to_dain, LOCATION_TAVERN, DAIN_OAKHAVEN_X, DAIN_OAKHAVEN_Y, &g.dain_quest_state},
+        {game_talk_to_alder, LOCATION_TAVERN, ALDER_OAKHAVEN_X, ALDER_OAKHAVEN_Y, &g.alder_quest_state},
         {game_talk_to_mara, LOCATION_TAVERN, MARA_TAVERN_X, MARA_TAVERN_Y, &g.mara_quest_state},
         {game_talk_to_rook, LOCATION_TAVERN, ROOK_TAVERN_X, ROOK_TAVERN_Y, &g.rook_quest_state},
-        {game_talk_to_innkeeper, LOCATION_INN, 28, 7, &g.innkeeper_quest_state},
         {game_talk_to_guild_seeker, LOCATION_INN, ZARA_INN_X, ZARA_INN_Y, &g.sunscar_lamp_quest_state},
         {game_talk_to_dragon_seeker, LOCATION_TAVERN, ILYA_TAVERN_X, ILYA_TAVERN_Y, &g.dragon_treasure_quest_state},
         {game_talk_to_nahla, LOCATION_ISLAND, ISLAND_NAHLA_X, ISLAND_NAHLA_Y, &g.temple_treasure_state},
@@ -705,6 +582,7 @@ void test_quest_offer_controls(void) {
     for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
         g.player.player_class = CLASS_WARRIOR;
         game_init(&g);
+        g.defeated_bosses = 1 << LOCATION_DUNGEON;
         g.location = cases[i].location;
         g.player.x = cases[i].x;
         g.player.y = cases[i].y + 1;
@@ -729,14 +607,14 @@ void test_quest_offer_controls(void) {
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
     game_enter_tavern(&g);
-    g.player.x = ELOWEN_TAVERN_X;
-    g.player.y = ELOWEN_TAVERN_Y + 1;
+    g.player.x = BRAM_INN_X;
+    g.player.y = BRAM_INN_Y + 1;
     g.level_cache[3].valid = 1;
     g.level_cache[3].level_cleared = 1;
     g.max_level_reached = 4;
     g.portal_active = 1;
     g.portal_location = LOCATION_DUNGEON;
-    game_talk_to_elowen(&g);
+    game_talk_to_bram(&g);
     ASSERT("an undecided offer and existing expedition survive save/load", save_game(&g, 99150) && load_game(&loaded, 99150) &&
         game_quest_offer_active(&loaded) && !loaded.elowen_quest_state && loaded.level_cache[3].valid && !loaded.portal_active);
     game_handle_quest_offer_key(&loaded, SDL_SCANCODE_ESCAPE, 0);
@@ -744,10 +622,10 @@ void test_quest_offer_controls(void) {
         loaded.level_cache[3].valid && loaded.level_cache[3].level_cleared && loaded.max_level_reached == 4 && !loaded.portal_active);
     ASSERT("a declined quest remains inactive after saving", save_game(&loaded, 99150) && load_game(&g, 99150) &&
         !g.elowen_quest_state && !game_quest_offer_active(&g) && !quest_journal_count(&g, QUEST_TAB_ACTIVE));
-    game_talk_to_elowen(&g);
+    game_talk_to_bram(&g);
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
-    ASSERT("only acceptance starts a fresh dungeon expedition", g.elowen_quest_state == 1 && !g.level_cache[3].valid &&
-        !g.portal_active && g.max_level_reached == 1);
+    ASSERT("accepting the rescue preserves the existing dungeon expedition", g.elowen_quest_state == 1 && g.level_cache[3].valid &&
+        !g.portal_active && g.max_level_reached == 4);
     ASSERT("accepted quests stay active after save/load without another offer", save_game(&g, 99150) && load_game(&loaded, 99150) &&
         loaded.elowen_quest_state == 1 && !game_quest_offer_active(&loaded) && quest_journal_count(&loaded, QUEST_TAB_ACTIVE) == 1);
     test_quest_capacity(&g, &loaded);

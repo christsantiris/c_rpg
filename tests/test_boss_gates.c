@@ -61,8 +61,8 @@ static int path(GameState *g, int tx, int ty, int walk) {
 }
 
 static void town_connections(GameState *g) {
-    const int routes[] = {0, 4, 1, 15, 2, 11, 5, 9};
-    for (int i = 0; i < 8; i++) {
+    const int routes[] = {0, 4, 2, 11, 5, 9};
+    for (int i = 0; i < 6; i++) {
         game_init(g);
         approach_enter_region(g, routes[i]);
         const TownApproach *route = approach_route(g);
@@ -101,28 +101,16 @@ static void town_connections(GameState *g) {
 }
 
 static void northern_connections(GameState *g) {
-    for (int castle = 0; castle < 2; castle++) {
-        for (int flags = 0; flags < 4; flags++) {
-            game_init(g);
-            g->elderwood_defeated = (flags & 1) != 0;
-            g->defeated_bosses = flags & 2 ? 1 << LOCATION_CATACOMBS : 0;
-            approach_enter_region(g, castle ? 14 : 16);
-            int ex = NORTH_ROAD_X;
-            int ey = castle ? APPROACH_H - 1 : 0;
-            ASSERT("the northern road requires both victories for a complete crossing from either end", path(g, ex, ey, 0) == (flags == 3));
-            ASSERT("a northern expedition always retains a retreat to its original endpoint", path(g, NORTH_ROAD_X, castle ? 0 : APPROACH_H - 1, 0));
-            ASSERT("the first uncleared northern adventure can be entered from its incoming side", castle ?
-                path(g, NORTH_CAT_X, NORTH_CAT_Y - 5, 0) : path(g, NORTH_ELDER_X, NORTH_ELDER_Y, 0));
-            if (castle && (flags & 2)) {
-                ASSERT("a castle-side Catacombs victory exposes Elderwood without bypassing Elderthorn", path(g, NORTH_ELDER_X, NORTH_ELDER_Y - 5, 0));
-            }
-            if (!castle && (flags & 1)) {
-                ASSERT("an Oakhaven-side Elderwood victory exposes the Catacombs without bypassing the Marshal", path(g, NORTH_CAT_X, NORTH_CAT_Y, 0));
-            }
-            if (flags == 3) {
-                ASSERT("an entirely secured northern approach can be crossed on foot", path(g, ex, ey, 1) &&
-                    g->location == (castle ? LOCATION_TOWN_ROAD : LOCATION_CROWNROAD_NORTH));
-            }
+    for (int flags = 0; flags < 4; flags++) {
+        game_init(g);
+        g->elderwood_defeated = (flags & 1) != 0;
+        g->defeated_bosses = flags & 2 ? 1 << LOCATION_CATACOMBS : 0;
+        approach_enter_region(g, 14);
+        ASSERT("northern rapids never become a crossing to Oakhaven after either victory", !path(g, NORTH_ROAD_X, APPROACH_H - 1, 0));
+        ASSERT("a northern expedition retains its castle retreat", path(g, NORTH_ROAD_X, 0, 0));
+        ASSERT("castle-side travelers can enter the Catacombs before its checkpoint", path(g, NORTH_CAT_X, NORTH_CAT_Y - 5, 0));
+        if (flags & 2) {
+            ASSERT("Catacombs victory gives access to Elderwood from the castle", path(g, NORTH_ELDER_X, NORTH_ELDER_Y - 5, 0));
         }
     }
     game_init(g);
@@ -172,7 +160,7 @@ static void saved_connections(GameState *g, GameState *loaded) {
     if (save_exists(GATE_SLOT)) {
         return;
     }
-    for (int castle = 0; castle < 2; castle++) {
+    for (int castle = 1; castle < 2; castle++) {
         game_init(g);
         approach_enter_region(g, castle ? 14 : 16);
         g->gold = 789;

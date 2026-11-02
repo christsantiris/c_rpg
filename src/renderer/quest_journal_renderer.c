@@ -86,6 +86,9 @@ static int draw_details(Renderer *r, const QuestJournalEntry *entry, int x, int 
     y += compact ? 4 : 12;
     SDL_snprintf(line, sizeof(line), "PROGRESS: %d / %d", complete_count, entry->objective_count);
     y += wrapped(r, line, x, y, width, r->font_small, white, draw) + (compact ? 20 : 32);
+    if (!entry->reward_gold && !entry->reward_score && !entry->reward_item) {
+        return y + 14;
+    }
     if (entry->reward_item && entry->reward_gold > 0) {
         SDL_snprintf(line, sizeof(line), "REWARD: %d GOLD + %s", entry->reward_gold, entry->reward_item);
     } else if (entry->reward_item) {

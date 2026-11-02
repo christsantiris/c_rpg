@@ -84,6 +84,10 @@ static void prepare_legacy_region(int forest, int level) {
     for (int i = 0; i < depth; i++) {
         if (forest) {
             map_generate_forest(&cache[i].map, i == 7 ? FOREST_BOSS_LEVEL : (i == 3 ? FOREST_DEPTH : i + 1));
+            if (i == 0) {
+                // This V1 fixture predates the V2 west-side forest entrance.
+                map_mirror_horizontal(&cache[i].map);
+            }
         } else {
             map_generate_swamp(&cache[i].map, i + 1);
         }
@@ -188,7 +192,7 @@ static void test_mountain_migration(void) {
             for (int enemy = 0; enemy < loaded.enemy_count; enemy++) {
                 bearers += loaded.enemies[enemy].dain_fragment == DAIN_FRAGMENT_WARCHIEF;
             }
-            ASSERT("migration removes Bomber fragments from the old second stage", bearers == 0 && loaded.enemies[0].dain_fragment == 0);
+            ASSERT("the old Bomber loses its marker and the V2 second-half bearer appears", bearers == 1 && loaded.enemies[0].dain_fragment == 0);
         }
         ASSERT("mountain migration is stable after saving the current format", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == loaded.level && reloaded.enemies[0].hp == loaded.enemies[0].hp);
         remove("saves/savegame_99123.json");
@@ -310,7 +314,7 @@ static void test_split_forest_migration(void) {
                     wardens += loaded.map.tiles[row][column] == TILE_FOREST_WARDEN;
                 }
             }
-            ASSERT("only unfinished third rescues appear on the explored fourth level", loaded.level == 4 && wardens == !rescued &&
+            ASSERT("the V2 rescue never adds a third ranger on the old fourth level", loaded.level == 4 && wardens == 0 &&
                 loaded.enemies[0].hp == 11 && loaded.alder_wardens_rescued == original.alder_wardens_rescued);
             ASSERT("migrated forest quest rewrites and reloads successfully", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) &&
                 reloaded.alder_wardens_rescued == loaded.alder_wardens_rescued);
@@ -373,7 +377,7 @@ static void test_split_mountain_migration(void) {
                     loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == original.floor_items[0].underlying_tile);
             }
             ASSERT("old active Shaman becomes a regular enemy without losing damage", loaded.level == 3 && (collected ?
-                loaded.enemies[0].dain_fragment == DAIN_FRAGMENT_WARCHIEF :
+                (!loaded.enemies[0].active && !loaded.enemies[0].dain_fragment && loaded.enemies[0].hp == 0) :
                 (!loaded.enemies[0].dain_fragment && loaded.enemies[0].hp == 9 && strcmp(loaded.enemies[0].name, "Goblin Shaman") == 0)));
             if (!collected) {
                 loaded.player.attack = 10000;
@@ -388,7 +392,7 @@ static void test_split_mountain_migration(void) {
             for (int i = 0; i < loaded.enemy_count; i++) {
                 bearers += loaded.enemies[i].active && loaded.enemies[i].dain_fragment == DAIN_FRAGMENT_SHAMAN;
             }
-            ASSERT("only missing Shaman fragments gain bearers on the explored fourth stage", loaded.level == 4 && bearers == !collected &&
+            ASSERT("the V2 map quest adds no third half on the old fourth stage", loaded.level == 4 && bearers == 0 &&
                 loaded.enemies[0].hp == 11 && loaded.dain_map_fragments == original.dain_map_fragments);
             game_refresh_quest_encounters(&loaded);
             int refreshed = 0;
@@ -498,7 +502,7 @@ static void test_near_side_quest_migration(void) {
             for (int enemy = 0; enemy < loaded.enemy_count; enemy++) {
                 objectives += loaded.enemies[enemy].active && loaded.enemies[enemy].dain_fragment == DAIN_FRAGMENT_ARCHER;
             }
-            ASSERT("a collected first objective does not respawn on new level two", loaded.level == 2 && !objectives);
+            ASSERT("only the V2 second ranger can appear on the cached second stage", loaded.level == 2 && objectives == forest);
             game_descend(&loaded);
             objectives = 0;
             for (int row = 0; row < MAP_H; row++) {
@@ -511,8 +515,8 @@ static void test_near_side_quest_migration(void) {
             }
             int enemies = loaded.enemy_count;
             game_refresh_quest_encounters(&loaded);
-            ASSERT("a missing second objective appears once on cached level three without resetting enemies", loaded.level == 3 &&
-                objectives == 1 && loaded.enemies[0].hp == 17 && loaded.enemy_count == enemies);
+            ASSERT("V2 objectives never extend past stage two or reset saved third-stage enemies", loaded.level == 3 &&
+                objectives == 0 && loaded.enemies[0].hp == 17 && loaded.enemy_count == enemies);
             ASSERT("relocated objectives and partial progress survive another save", save_game(&loaded, ROUTE_SAVE_SLOT) &&
                 load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == 3 &&
                 reloaded.alder_wardens_rescued == 1 && reloaded.dain_map_fragments == 1 && reloaded.enemy_count == enemies);
@@ -678,7 +682,7 @@ static void test_forest_adventure_migration(void) {
 
     game_init(&original);
     original.defeated_bosses |= 1 << LOCATION_FOREST;
-    approach_enter(&original, 0, 12);
+    approach_enter_region(&original, 0);
     // A player on the former crossroads arm can be saved off the new road, on its verge.
     original.player.x = 55;
     original.player.y = 26;

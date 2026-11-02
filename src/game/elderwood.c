@@ -357,7 +357,7 @@ static void load_floor(GameState *g) {
 
 void elderwood_enter(GameState *g) {
     const TownApproach *route = approach_route(g);
-    g->elderwood_entry_town = route ? route->town : LOCATION_TOWN;
+    g->elderwood_entry_town = route ? route->town : LOCATION_CASTLE;
     discard_loot(g);
     g->location = LOCATION_ELDERWOOD;
     g->approach_route = -1;
@@ -687,7 +687,12 @@ void northern_refresh(GameState *g) {
             g->map.tiles[y][x] = TILE_NORTH_CATACOMBS;
         }
     }
-    g->map.tiles[ELDERWOOD_H - 1][NORTH_ROAD_X] = TILE_NORTH_OAKHAVEN;
+    // Oakhaven's river has no crossing; the northern adventures return to the castle.
+    for (int y = ELDERWOOD_H - 3; y < ELDERWOOD_H; y++) {
+        for (int x = 0; x < ELDERWOOD_W; x++) {
+            g->map.tiles[y][x] = TILE_COAST_DEEP_WATER;
+        }
+    }
     g->map.tiles[0][NORTH_ROAD_X] = TILE_NORTH_CASTLE;
     g->map.stairs_up_x = NORTH_ROAD_X;
     g->map.stairs_up_y = route->town == LOCATION_CASTLE ? 0 : ELDERWOOD_H - 1;
@@ -736,10 +741,7 @@ int northern_travel(GameState *g, int x, int y) {
         g->catacombs_entry_town = route->town;
         game_enter_catacombs(g);
     } else if (tile == TILE_NORTH_OAKHAVEN) {
-        if (route->town == LOCATION_CASTLE && (!boss_gate_crossing(g, LOCATION_CATACOMBS) || !boss_gate_crossing(g, LOCATION_ELDERWOOD))) {
-            return 1;
-        }
-        game_leave_approach_to_town(g, LOCATION_TOWN);
+        push_message(g, "The northern rapids have no crossing here.");
     } else if (tile == TILE_NORTH_CASTLE) {
         if (route->town == LOCATION_TOWN && (!boss_gate_crossing(g, LOCATION_ELDERWOOD) || !boss_gate_crossing(g, LOCATION_CATACOMBS))) {
             return 1;

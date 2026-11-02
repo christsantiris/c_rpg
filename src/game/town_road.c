@@ -26,7 +26,7 @@ int town_road_connection(Location town, TownSide side, TownApproach *connection)
     }
     for (int i = 0; i < town_approach_count; i++) {
         const TownApproach *route = &town_approaches[i];
-        if (route->town == town && town_road_side(route->gate_x, route->gate_y) == side) {
+        if (!route->unplaced && route->town == town && town_road_side(route->gate_x, route->gate_y) == side) {
             *connection = *route;
             return 1;
         }
@@ -64,6 +64,14 @@ static void generate_town_road(GameState *g) {
     for (int y = TOWN_SPRITE_Y; y < TOWN_SPRITE_Y + TOWN_SPRITE_H; y++) {
         for (int x = TOWN_SPRITE_X; x < TOWN_SPRITE_X + TOWN_SPRITE_W; x++) {
             g->map.tiles[y][x] = TILE_WALL;
+        }
+    }
+    if (g->road_town == LOCATION_TOWN) {
+        // The river spans the whole northern boundary; no bridge or ford exists here.
+        for (int y = 0; y <= 10; y++) {
+            for (int x = 0; x < TOWN_ROAD_W; x++) {
+                g->map.tiles[y][x] = TILE_COAST_DEEP_WATER;
+            }
         }
     }
     for (int side = 0; side < 4; side++) {

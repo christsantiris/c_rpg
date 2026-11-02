@@ -133,14 +133,15 @@ static void test_alehouse(void) {
         action_resolve_player(&game, (Action){ACTION_MOVE, x, step});
     }
     ASSERT("walking from the plaza selects the Alehouse rather than the merchant", game.location == LOCATION_ALEHOUSE &&
-        !game.enemy_count && !game.dialogue_active && game.map.tiles[DAIN_ALEHOUSE_Y][DAIN_ALEHOUSE_X] == TILE_NPC_DAIN &&
+        !game.enemy_count && !game.dialogue_active && game.map.tiles[RESIDENT_Y][RESIDENT_X] == TILE_NPC_RESIDENT &&
         all_walkable_connected(&game.map, game.player.x, game.player.y));
-    game.player.x = DAIN_ALEHOUSE_X;
-    game.player.y = DAIN_ALEHOUSE_Y + 1;
-    ASSERT("Dain can be offered his quest through Alehouse Talk", town_life_talk(&game, 0) && game_quest_offer_active(&game));
-    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
+    game.player.x = RESIDENT_X;
+    game.player.y = RESIDENT_Y + 1;
+    ASSERT("the Alehouse host offers hospitality without Dain's quest", town_life_talk(&game, 0) && !game_quest_offer_active(&game) &&
+        strcmp(game.dialogue_speaker, "Alehouse Host") == 0);
+    game.dain_quest_state = 1;
     game.dain_map_fragments = 5;
-    ASSERT("Alehouse saving retains Dain, quest progress and cask shelves", save_game(&game, TOWN_LIFE_SLOT) &&
+    ASSERT("Alehouse saving retains its host, unrelated quest progress and cask shelves", save_game(&game, TOWN_LIFE_SLOT) &&
         load_game(&loaded, TOWN_LIFE_SLOT) && loaded.location == LOCATION_ALEHOUSE && loaded.dain_quest_state == 1 &&
         loaded.dain_map_fragments == 5 && loaded.map.tiles[7][9] == TILE_TAVERN_TABLE);
     loaded.player.x = 20;

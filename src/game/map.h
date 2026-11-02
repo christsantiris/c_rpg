@@ -83,6 +83,11 @@
 #define DAIN_ALEHOUSE_Y 18
 #define ALDER_INN_X 31
 #define ALDER_INN_Y 18
+// Oakhaven's Inn receives these quest givers after the Lich King's defeat.
+#define ALDER_OAKHAVEN_X 18
+#define ALDER_OAKHAVEN_Y 7
+#define DAIN_OAKHAVEN_X 18
+#define DAIN_OAKHAVEN_Y 18
 #define GUILD_ORIN_X 10
 #define GUILD_ORIN_Y 18
 #define GUILD_SELENE_X 28
@@ -101,10 +106,16 @@
 #define ROOK_TAVERN_Y 18
 #define TOWN_CAIN_X 19
 #define TOWN_CAIN_Y 11
+// Historical town-square coordinates, retained for old save fixtures.
 #define TOWN_BRAM_X 17
 #define TOWN_BRAM_Y 11
+#define BRAM_INN_X 28
+#define BRAM_INN_Y 7
 #define TOWN_ALDRIC_X 21
 #define TOWN_ALDRIC_Y 13
+// Aldric moves into Oakhaven's Inn after the Lich King's defeat.
+#define ALDRIC_INN_X 24
+#define ALDRIC_INN_Y 18
 // Former Oakhaven dock footprint, retained for legacy save migrations.
 #define TOWN_HARBOR_W 5
 #define TOWN_HARBOR_H 4
@@ -794,6 +805,7 @@ void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y);
 void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_mirror_horizontal(Map *m);
+int map_is_travel_tile(TileType tile);
 void map_reveal_forest_exit(Map *m);
 void map_reveal_forest_entrance(Map *m);
 int map_forest_difficulty(int level);

@@ -291,16 +291,17 @@ void lich_restore_reward(GameState *g) {
     if (g->location != LOCATION_DUNGEON || g->level != DUNGEON_DEPTH || g->map.room_count < 1 || !(g->defeated_bosses & (1 << LOCATION_DUNGEON))) {
         return;
     }
-    int floor_blade = 0;
+    int floor_reward = 0;
     for (int i = 0; i < g->floor_item_count; i++) {
-        floor_blade |= g->floor_items[i].active && strcmp(g->floor_items[i].item.name, "Cryptblade") == 0;
+        const FloorItem *item = &g->floor_items[i];
+        floor_reward |= item->active && (strcmp(item->item.name, "Crypt Ring") == 0 || strcmp(item->item.name, "Cryptblade") == 0);
     }
     const Room *room = &g->map.rooms[g->map.room_count - 1];
     int cache = 0;
     for (int y = room->y + 1; y < room->y + room->h - 1; y++) {
         for (int x = room->x + 1; x < room->x + room->w - 1; x++) {
             if (tile_at(g, x, y) == TILE_LICH_RELIQUARY) {
-                if (g->lich_reward_state != 1 || floor_blade) {
+                if (g->lich_reward_state != 1 || floor_reward) {
                     set_tile(g, x, y, TILE_FLOOR);
                 } else {
                     cache = 1;
@@ -308,14 +309,14 @@ void lich_restore_reward(GameState *g) {
             }
         }
     }
-    if (g->lich_reward_state != 1 || floor_blade || cache) {
+    if (g->lich_reward_state != 1 || floor_reward || cache) {
         return;
     }
     for (int y = room->y + room->h - 2; y > room->y; y--) {
         for (int x = room->x + 1; x < room->x + room->w - 1; x++) {
             if (g->map.tiles[y][x] == TILE_FLOOR && !occupied(g->enemies, g->enemy_count, x, y)) {
                 g->map.tiles[y][x] = TILE_LICH_RELIQUARY;
-                push_message(g, "Unclaimed Cryptblade waits in the Lich's reliquary. Open with Interact, then Pick Up the released loot.");
+                push_message(g, "Unclaimed Crypt Ring waits in the Lich's reliquary. Open with Interact, then Pick Up the released loot.");
                 return;
             }
         }
@@ -357,14 +358,14 @@ int lich_interact(GameState *g) {
     }
     if (tile == TILE_LICH_RELIQUARY) {
         if (g->inventory_count >= MAX_INVENTORY) {
-            push_message(g, "Inventory full. Cryptblade remains safe in the reliquary.");
+            push_message(g, "Inventory full. Crypt Ring remains safe in the reliquary.");
         } else {
-            Item reward = item_make_cryptblade();
+            Item reward = item_make_crypt_ring();
             g->inventory[g->inventory_count++] = reward;
             g->score += reward.value;
             g->lich_reward_state = 2;
             set_tile(g, x, y, TILE_FLOOR);
-            push_message(g, "Cryptblade recovered from the Lich's reliquary!");
+            push_message(g, "Crypt Ring recovered from the Lich's reliquary!");
         }
         return 1;
     }

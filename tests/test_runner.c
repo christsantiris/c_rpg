@@ -119,6 +119,7 @@ void test_mountain_terrain(void);
 void test_dragonspine(void);
 void test_elowen_quest(void);
 void test_elowen_relocation(void);
+void test_aldric(void);
 void test_tavern_interior(void);
 void test_dain_quest(void);
 void test_poison_sword(void);
@@ -266,6 +267,7 @@ int main(void) {
     printf("\n");
     test_elowen_quest();
     test_elowen_relocation();
+    test_aldric();
     printf("\n");
     test_tavern_interior();
     test_jail();

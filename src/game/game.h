@@ -35,7 +35,18 @@
 
 #define DAIN_FRAGMENT_ARCHER 1
 #define DAIN_FRAGMENT_WARCHIEF 2
-#define DAIN_FRAGMENT_SHAMAN 4
+#define DAIN_FRAGMENT_SHAMAN 4 // Reserved historical third fragment.
+#define DAIN_MAP_COMPLETE (DAIN_FRAGMENT_ARCHER | DAIN_FRAGMENT_WARCHIEF)
+
+#define ALDER_RANGER_STAGE_1 1
+#define ALDER_RANGER_STAGE_2 2
+#define ALDER_RESCUE_COMPLETE (ALDER_RANGER_STAGE_1 | ALDER_RANGER_STAGE_2)
+#define ALDER_CAPTOR_NAME "Spider Captor"
+
+// Both Chapter 1 regional chains share these states after their first turn-in.
+#define REGIONAL_CHAIN_BOSS_OFFERED 3
+#define REGIONAL_CHAIN_BOSS_ACTIVE 4
+#define REGIONAL_CHAIN_COMPLETE 5
 
 #define ALDER_WARDEN_STAGE_2 1
 #define ALDER_WARDEN_STAGE_3 2
@@ -144,12 +155,12 @@ typedef enum {
     LOCATION_FOREST,
     LOCATION_MOUNTAINS,
     LOCATION_COAST,
-    LOCATION_TAVERN,
+    LOCATION_TAVERN, // Oakhaven Inn; retain the historical serialized identifier.
     LOCATION_ISLAND,
     LOCATION_TEMPLE,
     LOCATION_LABYRINTH,
     LOCATION_TOWN2,
-    LOCATION_INN,
+    LOCATION_INN, // Stillbury Tavern; retain the historical serialized identifier.
     LOCATION_FOREST_ROAD,
     LOCATION_SWAMP,
     LOCATION_HIGH_PASS,
@@ -403,7 +414,7 @@ typedef struct {
     int       gold;
     Location labyrinth_entry_town;
     int       rook_quest_state;
-    int       innkeeper_quest_state;
+    int innkeeper_quest_state; // Retired Mira quest; reserved for historical save data.
     int       rook_labyrinth_switches;
     int       rook_quest_completions;
     FloorItem floor_items[MAX_FLOOR_ITEMS];
@@ -439,11 +450,16 @@ typedef struct {
     int red_dragon_reward_state; // 0: not earned, 1: unclaimed mantle, 2: claimed.
     int cinder_lord_reward_pending; // Bits: 1 Embercleaver, 2 Strength Potion.
     int desert_pharaoh_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
-    int elowen_quest_state;
-    int elowen_seals_restored;
-    int dain_quest_state;
+    int elowen_quest_state; // 0 missing, 1 assigned, 2 rescued/following, 3 reunited.
+    int elowen_x;
+    int elowen_y;
+    int elowen_seals_restored; // Reserved historical Broken Seals progress.
+    int aldric_party_state; // 0 waiting in Oakhaven, 1 following the player.
+    int aldric_x;
+    int aldric_y;
+    int dain_quest_state; // 0 offer, 1 halves, 2 turn-in, 3 boss offer, 4 boss active, 5 complete.
     int dain_map_fragments;
-    int alder_quest_state;
+    int alder_quest_state; // 0 offer, 1 rangers, 2 turn-in, 3 boss offer, 4 boss active, 5 complete.
     int alder_wardens_rescued;
     int mara_quest_state;
     int mara_beacons_lit;
@@ -571,8 +587,6 @@ int game_workshop_item_index(const GameState *g, int row);
 void game_leave_guild(GameState *g);
 void game_talk_to_guild_seeker(GameState *g);
 void game_collect_desert_lamp(GameState *g);
-void game_talk_to_innkeeper(GameState *g);
-void game_rescue_innkeeper_daughter(GameState *g, int x, int y);
 void game_enter_labyrinth(GameState *g);
 void game_leave_labyrinth(GameState *g);
 int game_labyrinth_is_open(const GameState *g);
@@ -622,7 +636,6 @@ void game_talk_to_oswin(GameState *g);
 void game_talk_to_rook(GameState *g);
 void game_talk_to_cain(GameState *g);
 void game_talk_to_bram(GameState *g);
-void game_talk_to_aldric(GameState *g);
 void game_talk_to_rowan(GameState *g);
 void game_talk_to_dragon_seeker(GameState *g);
 void game_talk_to_royal_guard(GameState *g, int x, int y);

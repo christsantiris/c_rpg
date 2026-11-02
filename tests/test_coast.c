@@ -111,12 +111,10 @@ void test_coast(void) {
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
 
-    Action south = {ACTION_MOVE, 20, TOWN_H - 1};
-    g.player.x = 20;
-    g.player.y = TOWN_H - 2;
-    action_resolve_player(&g, south);
+    // Exercise the unplaced coastal content without adding a V2 town connection.
+    approach_enter_region(&g, 3);
     walk_town_approach(&g);
-    ASSERT("south town exit enters coast", g.location == LOCATION_COAST);
+    ASSERT("the isolated coastal entrance still loads its adventure", g.location == LOCATION_COAST);
     ASSERT("coast begins on stage one", g.level == 1);
     ASSERT("coast uses blue ruin terrain",
         g.map.tiles[g.player.y][g.player.x] == TILE_COAST_FLOOR);

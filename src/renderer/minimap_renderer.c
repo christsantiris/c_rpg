@@ -1,6 +1,7 @@
 #include "../game/coast_exits.h"
 #include "../game/boss_gates.h"
 #include "../game/approach.h"
+#include "../game/town_road.h"
 #include "minimap_renderer.h"
 #include "../game/jail.h"
 #include "../game/spice_skiff.h"
@@ -15,7 +16,7 @@
 #define MINIMAP_PAD   6
 
 void minimap_draw(Renderer *r, const GameState *g) {
-    if (g->location != LOCATION_APPROACH && g->location != LOCATION_GIANTS_CROWN && g->location != LOCATION_CROWNROAD_NORTH && g->location != LOCATION_IRONFANG && g->location != LOCATION_STORMWATCH && g->location != LOCATION_MANGROVES && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
+    if (g->location != LOCATION_TOWN_ROAD && g->location != LOCATION_APPROACH && g->location != LOCATION_GIANTS_CROWN && g->location != LOCATION_CROWNROAD_NORTH && g->location != LOCATION_IRONFANG && g->location != LOCATION_STORMWATCH && g->location != LOCATION_MANGROVES && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
         g->location != LOCATION_DRAGONSPINE &&
@@ -40,6 +41,10 @@ void minimap_draw(Renderer *r, const GameState *g) {
     if (g->location == LOCATION_APPROACH) {
         map_w = APPROACH_W;
         map_h = APPROACH_H;
+    }
+    if (g->location == LOCATION_TOWN_ROAD) {
+        map_w = TOWN_ROAD_W;
+        map_h = TOWN_ROAD_H;
     }
     if (g->location == LOCATION_MANGROVES) {
         map_w = MANGROVE_W;
@@ -121,10 +126,13 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         continue;
                     }
                     TileType tile = g->map.tiles[sy][sx];
-                    if (tile == TILE_IRON_WATER || tile == TILE_IRON_TRESTLE || tile == TILE_STORM_WATER || tile == TILE_MANGROVE_WATER || tile == TILE_GLASSDEEP_POOL || tile == TILE_STONEWAKE_GAP) {
+                    if (tile == TILE_COAST_DEEP_WATER || tile == TILE_IRON_WATER || tile == TILE_IRON_TRESTLE || tile == TILE_STORM_WATER || tile == TILE_MANGROVE_WATER || tile == TILE_GLASSDEEP_POOL || tile == TILE_STONEWAKE_GAP) {
                         has_water = 1;
                     }
-                    if (tile == TILE_CROWN_EXIT || tile == TILE_CROWN_SUPPLIES || tile == TILE_IRON_ENTRANCE || tile == TILE_IRON_EXIT || tile == TILE_IRON_LAMP_LIT || tile == TILE_IRON_SWITCH || tile == TILE_IRON_CACHE || tile == TILE_STORM_EXIT || tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_SUPPLIES || tile == TILE_STORM_CRANK ||
+                    if ((tile >= TILE_TOWN_ROAD_ENTRY_NORTH && tile <= TILE_TOWN_ROAD_EXIT_WEST) ||
+                        tile == TILE_APPROACH_TOWN || tile == TILE_APPROACH_AREA || tile == TILE_APPROACH_DUNGEON_TOWN ||
+                        tile == TILE_ROAD_GATE_OPEN || tile == TILE_ROAD_GATE_CLOSED || tile == TILE_LABYRINTH_ENTRANCE ||
+                        tile == TILE_CROWN_EXIT || tile == TILE_CROWN_SUPPLIES || tile == TILE_IRON_ENTRANCE || tile == TILE_IRON_EXIT || tile == TILE_IRON_LAMP_LIT || tile == TILE_IRON_SWITCH || tile == TILE_IRON_CACHE || tile == TILE_STORM_EXIT || tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_SUPPLIES || tile == TILE_STORM_CRANK ||
                         tile == TILE_MANGROVE_EXIT || tile == TILE_MANGROVE_LANDING || tile == TILE_MANGROVE_RETURN || tile == TILE_MANGROVE_CACHE ||
                         tile == TILE_CASTLE_TRAP_OPEN || tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT || tile == TILE_CASTLE_MUSTER ||
                         tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||

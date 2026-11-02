@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Stillbury inn sprite.
+"""Oakhaven inn sprite.
 
-Draws 7 x 5 tiles (168 x 120) for the inn lot at TOWN_INN_X/Y in Stillbury, with
-the double door on TOWN_INN_DOOR_X/Y. Run `make sprites` to rewrite
+Draws 7 x 5 tiles (168 x 120) for the inn lot at TOWN_TAVERN_X/Y in Oakhaven, with
+the double door on TOWN_TAVERN_DOOR_X/Y. Run `make sprites` to rewrite
 assets/images/inn.bmp.
 """
 from pathlib import Path

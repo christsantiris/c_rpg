@@ -5,6 +5,7 @@
 #include "northroad_checks.h"
 #include "town_road_checks.h"
 #include "game/elderwood.h"
+#include "game/boss_gates.h"
 #include "systems/save_load.h"
 #include "screens/quest_journal.h"
 #include "cJSON.h"
@@ -443,14 +444,15 @@ void test_elderwood(void) {
     test_treefolk_combat(g);
     test_wolf_save_migration(g, loaded);
     game_init(g);
-    g->player.x = 20;
-    g->player.y = 1;
     action_resolve_player(g, (Action){ACTION_MOVE, 20, 0});
-    finish_town_departure(g);
-    ASSERT("Oakhaven's north gate reaches the safe northern road", northern_approach(g) && g->enemy_count == 0 && g->player.last_dy == -1);
-    ASSERT("Elderthorn blocks both the catacombs approach and the castle", !path(g, NORTH_CAT_X, NORTH_CAT_Y, 0) && !path(g, NORTH_ROAD_X, 0, 0));
-    ASSERT("the Elderwood landmark is reachable from the road", path(g, NORTH_ELDER_X, NORTH_ELDER_Y, 1));
-    ASSERT("walking into the sprite begins Elderwood stage one", g->location == LOCATION_ELDERWOOD && g->level == 1 && g->enemy_count > 0 && g->elderwood_entry_town == LOCATION_TOWN);
+    ASSERT("Oakhaven has no northern road across the rapids", g->location == LOCATION_TOWN);
+    approach_enter_region(g, 14);
+    ASSERT("the existing northern approach starts at the castle end", northern_approach(g) && g->enemy_count == 0 && approach_route(g)->town == LOCATION_CASTLE);
+    ASSERT("Catacombs block access to Elderwood while retaining the castle retreat", !path(g, NORTH_ELDER_X, NORTH_ELDER_Y - 5, 0) && path(g, NORTH_ROAD_X, 0, 0));
+    g->defeated_bosses |= 1 << LOCATION_CATACOMBS;
+    boss_gate_refresh(g);
+    ASSERT("the Elderwood landmark is reachable after the castle-side Catacombs victory", path(g, NORTH_ELDER_X, NORTH_ELDER_Y - 5, 1));
+    ASSERT("walking into the sprite begins Elderwood stage one from the castle route", g->location == LOCATION_ELDERWOOD && g->level == 1 && g->enemy_count > 0 && g->elderwood_entry_town == LOCATION_CASTLE);
     g->enemies[0].hp = 7;
     g->enemies[0].attack_phase = 1;
     g->enemies[0].boss_attack = ELDER_CHARGE;
@@ -468,7 +470,7 @@ void test_elderwood(void) {
     test_restore_cached_floor(g);
     ASSERT("the saved archived floor fixture resumes the exact living woods stage", g->location == LOCATION_ELDERWOOD && g->level == 1 && g->enemies[0].hp == 7 && !g->portal_active);
     game_return_to_approach(g);
-    ASSERT("retreating returns beside the woodland sprite without entering town", northern_approach(g) && g->player.x == NORTH_ELDER_X && g->player.y == NORTH_ELDER_Y + 1);
+    ASSERT("retreating returns beside the woodland sprite without entering town", northern_approach(g) && g->player.x == NORTH_ELDER_X && g->player.y == NORTH_ELDER_Y - 6);
     elderwood_enter(g);
     for (int i = 1; i < ELDERWOOD_DEPTH; i++) {
         game_descend(g);
@@ -479,12 +481,12 @@ void test_elderwood(void) {
     g->player.y = boss->y + 1;
     g->player.attack = 10000;
     action_resolve_player(g, (Action){ACTION_MOVE, boss->x, boss->y});
-    ASSERT("an actual boss kill records Elderthorn separately from the legacy boss mask", g->elderwood_defeated && !boss->active && !(g->defeated_bosses & (1 << LOCATION_CATACOMBS)));
+    ASSERT("an actual boss kill records Elderthorn separately from the legacy boss mask", g->elderwood_defeated && !boss->active && (g->defeated_bosses & (1 << LOCATION_CATACOMBS)));
     BossJournalEntry entry;
     ASSERT("the boss journal records Elderthorn's defeat", quest_journal_get_boss(g, 16, &entry) && entry.defeated && !strcmp(entry.name, "Elderthorn"));
     game_return_to_approach(g);
-    ASSERT("defeating Elderthorn opens the road to Catacombs while Castle stays locked", path(g, NORTH_CAT_X, NORTH_CAT_Y, 0) && !path(g, NORTH_ROAD_X, 0, 0));
-    ASSERT("walking into the relocated Catacombs begins its original first floor", path(g, NORTH_CAT_X, NORTH_CAT_Y, 1) && g->location == LOCATION_CATACOMBS && g->level == 1 && g->catacombs_entry_town == LOCATION_TOWN && g->map.room_count > 0);
+    ASSERT("the secured northern adventures retain a route to the castle", path(g, NORTH_CAT_X, NORTH_CAT_Y, 0) && path(g, NORTH_ROAD_X, 0, 0));
+    ASSERT("walking into the relocated Catacombs begins its original first floor", path(g, NORTH_CAT_X, NORTH_CAT_Y, 1) && g->location == LOCATION_CATACOMBS && g->level == 1 && g->catacombs_entry_town == LOCATION_CASTLE && g->map.room_count > 0);
     g->enemies[0].hp = 8;
     game_leave_catacombs(g);
     ASSERT("Catacombs retreat preserves combat and returns to the shared road", northern_approach(g) && g->catacombs_cache[0].enemies[0].hp == 8 && g->player.x == NORTH_CAT_X);
@@ -496,13 +498,11 @@ void test_elderwood(void) {
     action_resolve_player(g, (Action){ACTION_MOVE, CROWNROAD_X, TOWN_H - 1});
     ASSERT("Castle's south gate reaches the occupied northern road", g->location == LOCATION_CROWNROAD_NORTH && g->enemy_count == NORTH_ENEMIES && g->player.last_dy == 1);
     walk_crownroad_north(g, 0);
-    ASSERT("the open road can be walked south back to Oakhaven", path(g, NORTH_ROAD_X, ELDERWOOD_H - 1, 1) && g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_TOWN);
-    walk_into_arrived_town(g);
-    ASSERT("entering Oakhaven from the north places the player by its northern exit", g->location == LOCATION_TOWN && g->player.y == 1);
+    ASSERT("the southern rapids stay impassable after both victories", !path(g, NORTH_ROAD_X, ELDERWOOD_H - 1, 0));
     game_init(g);
     g->debug_passages_unlocked = 1;
     for (int i = 0; i < town_approach_count; i++) {
-        if (town_approaches[i].area == LOCATION_ELDERWOOD) {
+        if (town_approaches[i].area == LOCATION_CATACOMBS) {
             approach_enter_region(g, i);
             break;
         }
@@ -540,7 +540,7 @@ void test_elderwood(void) {
     town_road_enter(g, LOCATION_DAWNMERE, TOWN_SIDE_WEST, 0);
     ASSERT("bypassing a town leaves the last visit unchanged", g->last_town_visited == LOCATION_TOWN2);
     for (int i = 0; i < town_approach_count; i++) {
-        if (town_approaches[i].area == LOCATION_ELDERWOOD) {
+        if (town_approaches[i].area == LOCATION_CATACOMBS) {
             approach_enter_region(g, i);
             break;
         }
@@ -555,7 +555,7 @@ void test_elderwood(void) {
     action_resolve_player(loaded, (Action){ACTION_MOVE, 21, 12});
     ASSERT("walking the former Elderwood portal tile stays in Stillbury", loaded->location == LOCATION_TOWN2 && !loaded->portal_active);
     test_restore_cached_floor(loaded);
-    ASSERT("the archived Elderwood encounter retains its physical entry and wounds", loaded->location == LOCATION_ELDERWOOD && loaded->elderwood_entry_town == LOCATION_TOWN && loaded->enemies[0].hp == 11 && loaded->player.x == portal_x && loaded->player.y == portal_y);
+    ASSERT("the archived Elderwood encounter retains its physical entry and wounds", loaded->location == LOCATION_ELDERWOOD && loaded->elderwood_entry_town == LOCATION_CASTLE && loaded->enemies[0].hp == 11 && loaded->player.x == portal_x && loaded->player.y == portal_y);
     game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
     game_enter_catacombs(g);
     game_open_town_portal(g);

@@ -1,6 +1,6 @@
 # Rook's Labyrinth — Minotaur encounter
 
-Rook, in **Oakhaven's Tavern**, assigns The Ivory Rook quest. Accept with `Y`
+Rook, in **Oakhaven's Inn**, assigns The Ivory Rook quest. Accept with `Y`
 to open the labyrinth gate beside the **Haunted Forest entrance on the road
 between Oakhaven and Stillbury**. It is outside both towns, just west of the
 forest sprite. Oakhaven's west gate or Stillbury's east gate leads onto this
@@ -15,7 +15,7 @@ Necromancer is defeated.
 
 Five maze floors each hold a rune. All five runes open the final vault gate;
 the Minotaur must fall before the player can take the ivory rook. Return to
-**Rook in Oakhaven's Tavern** for the one-time 40 gold and 500 score reward.
+**Rook in Oakhaven's Inn** for the one-time 40 gold and 500 score reward.
 
 ## Scrolling camera
 

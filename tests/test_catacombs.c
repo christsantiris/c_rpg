@@ -194,6 +194,8 @@ static void test_travel(void) {
     start_catacombs();
     game.location = LOCATION_CASTLE;
     map_generate_castle(&game.map, &game.player.x, &game.player.y);
+    game.enemy_count = 0;
+    game.floor_item_count = 0;
     game.player.x = CROWNROAD_X;
     game.player.y = TOWN_H - 2;
     action_resolve_player(&game, (Action){ACTION_MOVE, CROWNROAD_X, TOWN_H - 1});
