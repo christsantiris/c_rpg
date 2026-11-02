@@ -164,8 +164,8 @@ static void test_goldsmith(void) {
         start_town(LOCATION_TOWN);
         ASSERT("Goldsmith preserves all Oakhaven paths and gate approaches", all_walkable_connected(&game.map, 20, 12));
         ASSERT("walking from the plaza actually enters the Goldsmith", walk_to(&game, x, y) && game.location == LOCATION_GOLDSMITH);
-        ASSERT("Goldsmith counter can be approached through real movement", walk_to(&game, RESIDENT_X, RESIDENT_Y + 1) && town_life_near_goldsmith(&game));
-        ASSERT("Goldsmith interior and inventory survive save/load", save_game(&game, TOWN_LIFE_SLOT) && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.location == LOCATION_GOLDSMITH && town_life_near_goldsmith(&loaded));
+        ASSERT("Goldsmith counter can be approached through real movement", walk_to(&game, RESIDENT_X, RESIDENT_Y + 1) && town_life_near_shopkeeper(&game));
+        ASSERT("Goldsmith interior and inventory survive save/load", save_game(&game, TOWN_LIFE_SLOT) && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.location == LOCATION_GOLDSMITH && town_life_near_shopkeeper(&loaded));
         ASSERT("Goldsmith exit actually returns to its Oakhaven doorstep", walk_to(&loaded, 20, 22) && loaded.location == LOCATION_TOWN && loaded.player.x == x && loaded.player.y == y + 1);
     }
     start_town(LOCATION_TOWN);
@@ -200,7 +200,7 @@ static void test_accessory_buildings(void) {
             start_town(b->town);
             ASSERT("accessory workshops preserve all town paths and gate approaches", all_walkable_connected(&game.map, game.player.x, game.player.y));
             ASSERT("walking from town enters the intended accessory workshop", walk_to(&game, x, y) && game.location == b->interior);
-            ASSERT("the shop counter is reachable through real movement", walk_to(&game, RESIDENT_X, RESIDENT_Y + 1) && (i == 0 ? town_life_near_cobbler(&game) : town_life_near_belt_maker(&game)));
+            ASSERT("the shop counter is reachable through real movement", walk_to(&game, RESIDENT_X, RESIDENT_Y + 1) && town_life_near_shopkeeper(&game));
             ASSERT("accessory workshop interiors survive save/load", save_game(&game, TOWN_LIFE_SLOT) && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.location == b->interior);
             ASSERT("the workshop exit actually returns to the correct town doorstep", walk_to(&loaded, 20, 22) && loaded.location == b->town && loaded.player.x == x && loaded.player.y == y + 1);
         }
@@ -226,9 +226,44 @@ static void test_accessory_buildings(void) {
     remove(TOWN_LIFE_PATH);
 }
 
+static void test_oakhaven_shops(void) {
+    printf("Oakhaven walk-in shop tests:\n");
+    const Location interiors[] = {LOCATION_BLACKSMITH, LOCATION_ALCHEMIST};
+    const TileType bodies[] = {TILE_SHOP_BLACKSMITH, TILE_SHOP_ALCHEMIST};
+    const TileType old_doors[] = {TILE_BLACKSMITH_DOOR, TILE_ALCHEMIST_DOOR};
+    for (int i = 0; i < 2; i++) {
+        const TownBuilding *b = town_life_building(interiors[i]);
+        int x = b->x + b->w / 2;
+        int y = b->y + b->h - 1;
+        start_town(LOCATION_TOWN);
+        ASSERT("Oakhaven keeps the shop's exterior art and solid walls", b->own_exterior &&
+            game.map.tiles[b->y][b->x] == bodies[i] && !map_is_walkable(&game.map, b->x, b->y));
+        ASSERT("the shop door is a walk-in entrance", game.map.tiles[y][x] == TILE_LOCAL_DOOR &&
+            all_walkable_connected(&game.map, game.player.x, game.player.y));
+        ASSERT("walking through the door enters the shop", walk_to(&game, x, y) && game.location == interiors[i] &&
+            town_life_is_shop(game.location));
+        ASSERT("the shopkeeper's counter is reachable through real movement", walk_to(&game, RESIDENT_X, RESIDENT_Y + 1) &&
+            town_life_near_shopkeeper(&game));
+        game.player.x = 20;
+        game.player.y = 21;
+        ASSERT("the shop opens only beside the shopkeeper", !town_life_near_shopkeeper(&game));
+        ASSERT("the shop interior survives save/load", save_game(&game, TOWN_LIFE_SLOT) && load_game(&loaded, TOWN_LIFE_SLOT) &&
+            loaded.location == interiors[i]);
+        ASSERT("the shop exit returns to Oakhaven's doorstep", walk_to(&loaded, 20, 22) && loaded.location == LOCATION_TOWN &&
+            loaded.player.x == x && loaded.player.y == y + 1);
+        start_town(LOCATION_TOWN);
+        game.map.tiles[y][x] = old_doors[i];
+        ASSERT("older Oakhaven saves gain the walk-in door", save_game(&game, TOWN_LIFE_SLOT) && downgrade_town_save(232) &&
+            load_game(&loaded, TOWN_LIFE_SLOT) && loaded.map.tiles[y][x] == TILE_LOCAL_DOOR && loaded.gold == 123);
+        ASSERT("the upgraded door is an actual transition", walk_to(&loaded, x, y) && loaded.location == interiors[i]);
+    }
+    remove(TOWN_LIFE_PATH);
+}
+
 void test_town_life(void) {
     test_accessory_buildings();
     test_goldsmith();
+    test_oakhaven_shops();
     printf("Town resident building tests:\n");
     const Location towns[5] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN4, LOCATION_TOWN3, LOCATION_DAWNMERE};
     for (int i = 0; i < 5; i++) {

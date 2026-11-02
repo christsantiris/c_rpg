@@ -192,11 +192,11 @@ void test_town_map(void) {
         m.tiles[TOWN_ALCHEMIST_Y][TOWN_ALCHEMIST_X] ==
             TILE_SHOP_ALCHEMIST);
     ASSERT("blacksmith has a walk-in doorway",
-        m.tiles[TOWN_BLACKSMITH_Y + 3][TOWN_BLACKSMITH_X + 2] == TILE_BLACKSMITH_DOOR &&
+        m.tiles[TOWN_BLACKSMITH_Y + 3][TOWN_BLACKSMITH_X + 2] == TILE_LOCAL_DOOR &&
         map_is_walkable(&m, TOWN_BLACKSMITH_X + 2, TOWN_BLACKSMITH_Y + 3));
     ASSERT("alchemist has a walk-in doorway",
         m.tiles[TOWN_ALCHEMIST_Y + 3][TOWN_ALCHEMIST_X + 2] ==
-            TILE_ALCHEMIST_DOOR &&
+            TILE_LOCAL_DOOR &&
         map_is_walkable(&m, TOWN_ALCHEMIST_X + 2,
             TOWN_ALCHEMIST_Y + 3));
     ASSERT("town square spans the Blacksmith and Alchemist",

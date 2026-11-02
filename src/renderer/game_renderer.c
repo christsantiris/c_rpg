@@ -3586,7 +3586,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
     for (const TownBuilding *local_building = town_life_building(g->location); local_building && local_building->town == g->location;
         local_building = town_life_next_building(g->location, local_building)) {
-        town_life_draw_building(r, v, local_building);
+        if (!local_building->own_exterior) {
+            town_life_draw_building(r, v, local_building);
+        }
     }
     if (g->location == LOCATION_TOWN) {
         draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), "ELDERWOOD FOREST\nCASTLE ROAD");
@@ -4187,9 +4189,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 viewport_to_screen_y(v, y) * TILE_SIZE - 12, (SDL_Color){240, 190, 95, 255}, r->font_tiny);
         }
     }
-    if (g->location == LOCATION_GOLDSMITH || g->location == LOCATION_COBBLER || g->location == LOCATION_BELT_MAKER) {
+    if (town_life_is_shop(g->location)) {
+        const char *keeper = g->location == LOCATION_COBBLER ? "ELIN - BOOTS" : g->location == LOCATION_BELT_MAKER ? "TORREN - BELTS" :
+            g->location == LOCATION_BLACKSMITH ? "JORAN - ARMS" : g->location == LOCATION_ALCHEMIST ? "WREN - POTIONS" : "IVEN - JEWELRY";
         char counter[64];
-        SDL_snprintf(counter, sizeof(counter), "%s (%s)", g->location == LOCATION_COBBLER ? "ELIN - BOOTS" : g->location == LOCATION_BELT_MAKER ? "TORREN - BELTS" : "IVEN - JEWELRY", SDL_GetScancodeName(g->key_bindings[CONTROL_TALK]));
+        SDL_snprintf(counter, sizeof(counter), "%s (%s)", keeper, SDL_GetScancodeName(g->key_bindings[CONTROL_TALK]));
         renderer_draw_text(r, counter, viewport_to_screen_x(v, RESIDENT_X) * TILE_SIZE - 80,
             viewport_to_screen_y(v, RESIDENT_Y - 2) * TILE_SIZE + 12, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
         int exit_x = viewport_to_screen_x(v, 20) * TILE_SIZE - 90;

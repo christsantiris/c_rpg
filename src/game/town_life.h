@@ -16,6 +16,7 @@ typedef struct {
     const char *speaker;
     const char *before;
     const char *after;
+    int own_exterior; // The town map draws this shop; town life supplies its interior.
 } TownBuilding;
 
 const TownBuilding *town_life_building(Location location);
@@ -26,9 +27,8 @@ void town_life_generate(Map *map, Location interior, int *sx, int *sy);
 void town_life_enter(GameState *g, int x, int y);
 void town_life_leave(GameState *g);
 int town_life_talk(GameState *g, int greeting);
-int town_life_near_goldsmith(const GameState *g);
-int town_life_near_cobbler(const GameState *g);
-int town_life_near_belt_maker(const GameState *g);
+int town_life_is_shop(Location location);
+int town_life_near_shopkeeper(const GameState *g);
 void town_life_migrate(GameState *g);
 
 #endif
