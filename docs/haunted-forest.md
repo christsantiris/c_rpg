@@ -129,6 +129,14 @@ Victory completes the follow-up immediately, with no extra Inn turn-in. Earlier
 boss victories count when the rangers are turned in. Existing boss loot remains
 available; the follow-up adds no extra NPC payment.
 
+The boss's defeat also reveals a **Royal Writ of Protection** bearing the
+King's seal: patrols were ordered to leave the Necromancer's work undisturbed.
+It appears even without Alder's quests and remains readable in **Q → Evidence**.
+An optional return to Alder connects this protection to his abandoned rangers;
+if the goblin payment records were also found, he recognizes the corroboration.
+No extra turn-in, quest slot or inventory item is required. See
+[the story payoff](act2-story-payoff-plan.md).
+
 The V2 chain's two ranger bits and later boss-hunt states use the existing
 serialized quest fields. Save version 230 records the expanded state values.
 

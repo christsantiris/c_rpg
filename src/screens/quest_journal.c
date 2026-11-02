@@ -1,4 +1,5 @@
 #include "quest_journal.h"
+#include "../game/royal_evidence.h"
 #include <SDL2/SDL.h>
 #include "../game/catacombs.h"
 #include "../game/jail.h"
@@ -180,13 +181,13 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
     },
     {
         "Defeat the Necromancer", "Alder",
-        "Rid the Haunted Forest of the Necromancer and continue investigating the evil's source.",
+        "Defeat the Necromancer and search his correspondence for whoever protects his work.",
         "His defeat opens the forest road east to Dawnmere. Continue your adventure there.",
         {"Defeat the Necromancer"}, "Haunted Forest", {FOREST_BOSS_LEVEL}, 0, 0
     },
     {
         "Defeat the Goblin King", "Dain",
-        "Rid the Goblin Mountains of the Goblin King and continue investigating the evil's source.",
+        "Defeat the Goblin King and search his records for whoever supplies his raids.",
         "His defeat opens the mountain road west to Stillbury. Continue your adventure there.",
         {"Defeat the Goblin King"}, "Goblin Mountains", {MOUNTAIN_BOSS_LEVEL}, 0, 0
     }
@@ -343,6 +344,9 @@ void quest_journal_init(QuestJournalScreen *screen) {
 }
 
 int quest_journal_count(const GameState *g, QuestJournalTab tab) {
+    if (tab == QUEST_TAB_EVIDENCE) {
+        return royal_evidence_count(g);
+    }
     if (tab == QUEST_TAB_BOSSES) {
         return JOURNAL_BOSS_COUNT;
     }
@@ -381,7 +385,7 @@ int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entr
 }
 
 int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, QuestJournalEntry *entry) {
-    if (tab == QUEST_TAB_BOSSES) {
+    if (tab == QUEST_TAB_BOSSES || tab == QUEST_TAB_EVIDENCE) {
         return 0;
     }
     int visible_index = 0;
@@ -402,6 +406,12 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         if (quest == 0) {
             entry->summary_line_2 = state == ELOWEN_HOME ? "Elowen is home at Oakhaven's Inn. Bram's reward has been collected." :
                 state == ELOWEN_RESCUED ? definition->summary_line_2 : "Bram waits at Oakhaven's Inn. Rescue Elowen from the Lich King.";
+        }
+        if (state == 3 && (quest == 21 || quest == 22)) {
+            entry->summary_line_1 = quest == 21 ? "The Necromancer's royal writ bears the King's seal, granting protection to his work." :
+                "The Goblin King's payment records bear the King's seal, funding raids and the western-road blockade.";
+            entry->summary_line_2 = quest == 21 ? "Read it in Evidence. The road east to Dawnmere is open; no Inn return is required." :
+                "Read it in Evidence. The road west to Stillbury is open; no Inn return is required.";
         }
         entry->area = definition->area;
         entry->objective_count = definition->stages[3] ? 4 : definition->stages[2] ? 3 : definition->stages[1] ? 2 : 1;

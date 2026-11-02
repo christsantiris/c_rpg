@@ -2998,10 +2998,20 @@ static void resolve_player_action(GameState *g, Action a) {
 void action_resolve_player(GameState *g, Action a) {
     int old_x = g->player.x;
     int old_y = g->player.y;
+    int dx = a.target_x - old_x;
+    int dy = a.target_y - old_y;
     Location location = g->location;
     int level = g->level;
+    int route = g->approach_route;
+    Location road_town = g->road_town;
     resolve_player_action(g, a);
-    if (location != g->location || level != g->level) {
+    if (location != g->location || level != g->level || route != g->approach_route || road_town != g->road_town) {
+        // Travel handlers return before the ordinary movement-facing update.
+        // A doorway or boundary crossing keeps the direction of that step.
+        if (a.type == ACTION_MOVE && abs(dx) + abs(dy) == 1) {
+            g->player.last_dx = dx;
+            g->player.last_dy = dy;
+        }
         g->elowen_x = -1;
         g->elowen_y = -1;
         g->aldric_x = -1;

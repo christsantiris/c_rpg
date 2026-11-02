@@ -14,6 +14,8 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "renderer/renderer.h"
 #include "game/elowen.h"
 #include "game/aldric.h"
+#include "game/royal_evidence.h"
+#include "renderer/royal_evidence_renderer.h"
 #include "renderer/viewport.h"
 #include "renderer/landing_renderer.h"
 #include "renderer/game_over_renderer.h"
@@ -769,6 +771,9 @@ int main(int argc, char **argv) {
                         break;
                     }
                     int sc = event.key.keysym.scancode;
+                    if (screen == SCREEN_PLAYING && royal_evidence_handle_key(&game, sc, event.key.repeat)) {
+                        break;
+                    }
                     if (screen == SCREEN_PLAYING && game_handle_cain_dialogue_key(&game, sc, event.key.repeat)) {
                         break;
                     }
@@ -1355,7 +1360,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
                         break;
                     }
 
@@ -1614,6 +1619,7 @@ int main(int argc, char **argv) {
         }
         int wind_paused = screen != SCREEN_PLAYING || player_projectile_animating || player_slide_animating ||
             entry_gate.active || enemy_shots.count > 0 || !(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) ||
+            royal_evidence_pending(&game) ||
             game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) ||
             game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game);
         if (update_stormwatch_clock(&game, &wind_clock, SDL_GetTicks(), wind_paused)) {
@@ -1699,6 +1705,14 @@ int main(int argc, char **argv) {
             game_draw(&renderer, view, &viewport);
             game_draw_enemy_projectiles(&renderer, &game, &enemy_shots, &viewport,
                 SDL_GetTicks() - enemy_shots_started_at);
+            if (!player_projectile_animating && !player_slide_animating && !entry_gate.active && enemy_shots.count == 0) {
+                int id = royal_evidence_pending(&game);
+                int width = renderer.screen_w - 32 < 900 ? renderer.screen_w - 32 : 900;
+                int height = renderer.screen_h - 32 < 480 ? renderer.screen_h - 32 : 480;
+                royal_evidence_draw(&renderer, &game, royal_evidence_document(id),
+                    (SDL_Rect){(renderer.screen_w - width) / 2, (renderer.screen_h - height) / 2, width, height},
+                    "ENTER / SPACE / ESC: KEEP IN JOURNAL");
+            }
         } else if (screen == SCREEN_GAME_OVER) {
             game_over_draw(&renderer, &game);
         } else if (screen == SCREEN_HELP) {

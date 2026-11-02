@@ -92,9 +92,11 @@ void test_quest_journal(void) {
         screen.tab == QUEST_TAB_BOSSES &&
         quest_journal_count(&g, screen.tab) == JOURNAL_BOSS_COUNT);
     quest_journal_handle_key(&screen, SDL_SCANCODE_RIGHT, JOURNAL_BOSS_COUNT, SDL_SCANCODE_Q);
-    ASSERT("right wraps from bosses to active quests", screen.tab == QUEST_TAB_ACTIVE);
+    ASSERT("evidence follows bosses without changing existing quest tabs", screen.tab == QUEST_TAB_EVIDENCE);
+    quest_journal_handle_key(&screen, SDL_SCANCODE_RIGHT, 0, SDL_SCANCODE_Q);
+    ASSERT("right wraps from evidence to active quests", screen.tab == QUEST_TAB_ACTIVE);
     quest_journal_handle_key(&screen, SDL_SCANCODE_LEFT, 2, SDL_SCANCODE_Q);
-    ASSERT("left wraps from active quests to bosses", screen.tab == QUEST_TAB_BOSSES);
+    ASSERT("left wraps from active quests to evidence", screen.tab == QUEST_TAB_EVIDENCE);
     const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,
         LOCATION_TEMPLE, LOCATION_SWAMP, LOCATION_DRAGONSPINE, LOCATION_FROSTFELL,

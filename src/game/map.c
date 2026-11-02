@@ -633,6 +633,28 @@ typedef enum {
     OUTDOOR_SIDE_SOUTH
 } OutdoorSide;
 
+static const OutdoorSide forest_exits[FOREST_DEPTH] = {
+    OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_SOUTH,
+    OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_EAST
+};
+
+static const OutdoorSide mountain_exits[MOUNTAIN_DEPTH] = {
+    OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_SOUTH,
+    OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_SOUTH
+};
+
+static OutdoorSide outdoor_entrance(const OutdoorSide *exits, int index, OutdoorSide first) {
+    if (index == 0) {
+        return first;
+    }
+    switch (exits[index - 1]) {
+        case OUTDOOR_SIDE_WEST: return OUTDOOR_SIDE_EAST;
+        case OUTDOOR_SIDE_EAST: return OUTDOOR_SIDE_WEST;
+        case OUTDOOR_SIDE_NORTH: return OUTDOOR_SIDE_SOUTH;
+        default: return OUTDOOR_SIDE_NORTH;
+    }
+}
+
 // The coast also uses selected clearing templates.
 static const ForestTemplate forest_templates[] = {
     {7, {5,42,42,92,92,132,166}, {42,14,68,12,66,40,42}, 8,
@@ -849,26 +871,6 @@ int map_forest_difficulty(int level) {
 
 void map_generate_forest(Map *m, int level) {
     static const int templates[FOREST_DEPTH] = {0, 1, 2, 4, 7};
-    static const OutdoorSide entrances[] = {
-        OUTDOOR_SIDE_WEST,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_WEST,
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_WEST
-    };
-    static const OutdoorSide exits[] = {
-        OUTDOOR_SIDE_EAST,
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_EAST,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_EAST
-    };
     int index = level - 1;
     if (index < 0) {
         index = 0;
@@ -876,9 +878,9 @@ void map_generate_forest(Map *m, int level) {
     if (index >= FOREST_DEPTH) {
         index = FOREST_DEPTH - 1;
     }
-    index = templates[index];
-    map_generate_outdoor(m, map_forest_difficulty(level), entrances[index], exits[index], 1,
-        &forest_templates[index]);
+    OutdoorSide entrance = outdoor_entrance(forest_exits, index, OUTDOOR_SIDE_SOUTH);
+    map_generate_outdoor(m, map_forest_difficulty(level), entrance, forest_exits[index], 1,
+        &forest_templates[templates[index]]);
     int hidden_start_x;
     int hidden_start_y;
     int hidden_end_x;
@@ -938,6 +940,56 @@ void map_reveal_forest_exit(Map *m) {
     }
 }
 
+int map_repair_outdoor_entrance(Map *m, int level, int mountains) {
+    int depth = mountains ? MOUNTAIN_DEPTH : FOREST_DEPTH;
+    if (level < 1 || level > depth || m->room_count < 1) {
+        return 0;
+    }
+    const OutdoorSide *exits = mountains ? mountain_exits : forest_exits;
+    OutdoorSide side = outdoor_entrance(exits, level - 1, OUTDOOR_SIDE_SOUTH);
+    int x = m->stairs_up_x;
+    int y = m->stairs_up_y;
+    if ((side == OUTDOOR_SIDE_WEST && x == 1) ||
+        (side == OUTDOOR_SIDE_EAST && x == MAP_W - 2) ||
+        (side == OUTDOOR_SIDE_NORTH && y == 1) ||
+        (side == OUTDOOR_SIDE_SOUTH && y == MAP_H - 2)) {
+        return 0;
+    }
+    TileType wall = mountains ? TILE_MOUNTAIN_WALL : TILE_FOREST_WALL;
+    TileType floor = mountains ? TILE_MOUNTAIN_FLOOR : TILE_FOREST_FLOOR;
+    if (mountains && level == 3) {
+        floor = TILE_MOUNTAIN_CAVE_FLOOR;
+    }
+    if (x == 1) {
+        x = 0;
+    } else if (x == MAP_W - 2) {
+        x = MAP_W - 1;
+    } else if (y == 1) {
+        y = 0;
+    } else if (y == MAP_H - 2) {
+        y = MAP_H - 1;
+    } else {
+        return 0;
+    }
+    m->tiles[y][x] = wall;
+    map_room_center(&m->rooms[0], &x, &y);
+    int dx = side == OUTDOOR_SIDE_WEST ? -1 : side == OUTDOOR_SIDE_EAST ? 1 : 0;
+    int dy = side == OUTDOOR_SIDE_NORTH ? -1 : side == OUTDOOR_SIDE_SOUTH ? 1 : 0;
+    // Keep the old trail and all encounter/quest state. Only extend bare terrain
+    // from the first clearing to the correctly oriented boundary.
+    while (x > 0 && x < MAP_W - 1 && y > 0 && y < MAP_H - 1) {
+        if (m->tiles[y][x] == wall) {
+            m->tiles[y][x] = floor;
+        }
+        x += dx;
+        y += dy;
+    }
+    m->tiles[y][x] = mountains ? TILE_MOUNTAIN_ENTRANCE : TILE_FOREST_ENTRANCE;
+    m->stairs_up_x = x - dx;
+    m->stairs_up_y = y - dy;
+    return 1;
+}
+
 static int mountain_tile_in_room(const Map *m, int x, int y) {
     for (int i = 0; i < m->room_count; i++) {
         const Room *room = &m->rooms[i];
@@ -972,14 +1024,6 @@ int map_mountain_difficulty(int level) {
 
 void map_generate_mountains(Map *m, int level) {
     static const int templates[MOUNTAIN_DEPTH] = {0, 1, 2, 4, 7};
-    static const OutdoorSide entrances[MOUNTAIN_DEPTH] = {
-        OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_WEST
-    };
-    static const OutdoorSide exits[MOUNTAIN_DEPTH] = {
-        OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_SOUTH
-    };
     int index = level - 1;
     if (index < 0) {
         index = 0;
@@ -987,7 +1031,8 @@ void map_generate_mountains(Map *m, int level) {
     if (index >= MOUNTAIN_DEPTH) {
         index = MOUNTAIN_DEPTH - 1;
     }
-    map_generate_outdoor(m, map_mountain_difficulty(level), entrances[index], exits[index], 0,
+    OutdoorSide entrance = outdoor_entrance(mountain_exits, index, OUTDOOR_SIDE_SOUTH);
+    map_generate_outdoor(m, map_mountain_difficulty(level), entrance, mountain_exits[index], 0,
         &mountain_templates[templates[index]]);
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -1331,10 +1376,6 @@ TileType map_coast_trap_underlay(const Map *m, int x, int y) {
 
 void map_generate_coast(Map *m, int level) {
     static const int templates[COAST_DEPTH] = {0, 1, 2, 5, 7};
-    static const OutdoorSide entrances[COAST_DEPTH] = {
-        OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_SOUTH
-    };
     static const OutdoorSide exits[COAST_DEPTH] = {
         OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_WEST,
         OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_EAST
@@ -1346,7 +1387,8 @@ void map_generate_coast(Map *m, int level) {
     if (index >= COAST_DEPTH) {
         index = COAST_DEPTH - 1;
     }
-    map_generate_outdoor(m, templates[index] + 1, entrances[index], exits[index], 0,
+    OutdoorSide entrance = outdoor_entrance(exits, index, OUTDOOR_SIDE_NORTH);
+    map_generate_outdoor(m, templates[index] + 1, entrance, exits[index], 0,
         &forest_templates[templates[index]]);
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {

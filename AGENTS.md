@@ -142,6 +142,10 @@ This is a permanent dungeon and area creation requirement.
 - Every playable stage must have its intended entrance, retreat route and onward
   exit or final objective. Outdoor exits belong at the actual map boundary;
   indoor transitions must follow that area's established stair/door rules.
+- Preserve travel direction across transitions. An outdoor exit must connect to
+  the opposite boundary of the next stage (north exit to south entrance, and so
+  on), with a usable inward path. Crossing a doorway or boundary must retain the
+  direction of the crossing step, including retreat and cached-stage revisits.
 - Validate the actual transition tile and the continuous route to it, not just
   the saved stair/approach coordinates. A reachable coordinate without a working
   transition does not pass validation.
