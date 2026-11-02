@@ -36,7 +36,7 @@ int map_is_travel_tile(TileType tile) {
         tile == TILE_APPROACH_TOWN || tile == TILE_APPROACH_AREA || tile == TILE_APPROACH_DUNGEON_TOWN ||
         tile == TILE_LABYRINTH_ENTRANCE || tile == TILE_ROAD_GATE_OPEN || tile == TILE_ROAD_GATE_CLOSED ||
         tile == TILE_FOREST_ENTRANCE || tile == TILE_FOREST_EXIT ||
-        tile == TILE_MOUNTAIN_ENTRANCE || tile == TILE_MOUNTAIN_EXIT;
+        tile == TILE_MOUNTAIN_ENTRANCE || tile == TILE_MOUNTAIN_EXIT || tile == TILE_BROKEN_FERRY;
 }
 
 void map_mirror_horizontal(Map *m) {
@@ -1545,7 +1545,11 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 1; x < TOWN_W - 1; x++)
         m->tiles[12][x] = TILE_TOWN_PATH;
 
-    // Northern rapids close the north side. The western road reaches the mountains.
+    // The north gate reaches the riverbank; the rapids themselves remain impassable.
+    for (int x = 18; x <= 22; x++) {
+        m->tiles[0][x] = TILE_TOWN_EXIT;
+    }
+    // The western road reaches the mountains.
     for (int y = 10; y <= 12; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }

@@ -10,6 +10,11 @@
 #define TOWN_SPRITE_W 17
 #define TOWN_SPRITE_H 15
 #define TOWN_ROAD_COUNT 5
+#define OAKHAVEN_RIVER_EDGE 10
+#define OAKHAVEN_FERRY_X (TOWN_ROAD_W / 2)
+#define OAKHAVEN_FERRY_Y 12
+#define OAKHAVEN_FERRY_ART_X (OAKHAVEN_FERRY_X - 3)
+#define OAKHAVEN_FERRY_ART_Y 7
 
 typedef enum {
     TOWN_SIDE_NORTH,
@@ -27,5 +32,6 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing);
 int town_road_depart(GameState *g, int x, int y);
 int town_road_travel(GameState *g, int x, int y);
 void town_road_migrate(GameState *g);
+void town_road_refresh_oakhaven(GameState *g);
 
 #endif

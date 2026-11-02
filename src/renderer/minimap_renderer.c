@@ -204,7 +204,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_STONEWAKE_CRANE_DOWN || tile == TILE_STONEWAKE_CRANE_SALVAGE ||
                         tile == TILE_STONEWAKE_REMOTE || tile == TILE_STONEWAKE_SUPPLIES) {
                         has_stair = 1;
-                    } else if (tile == TILE_FOREST_LANDMARK) {
+                    } else if (tile == TILE_FOREST_LANDMARK || tile == TILE_BROKEN_FERRY) {
                         has_stair = 1;
                     } else if (tile == TILE_BROKEN_BURIAL_SEAL) {
                         has_stair = 1;

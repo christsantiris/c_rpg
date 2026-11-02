@@ -6984,6 +6984,7 @@ int load_game(GameState *g, int slot) {
             *alchemist = TILE_LOCAL_DOOR;
         }
     }
+    town_road_refresh_oakhaven(g);
     game_recover_retired_items(g);
     cJSON_Delete(root);
     return 1;

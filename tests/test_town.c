@@ -139,8 +139,8 @@ void test_town_map(void) {
         spawn_x == 20 && spawn_y == 12);
 
     // Exit tiles at north edge
-    ASSERT("north side has no exit across the rapids",
-        m.tiles[0][20] == TILE_WALL);
+    ASSERT("north gate reaches the local riverbank",
+        m.tiles[0][20] == TILE_TOWN_EXIT);
     ASSERT("mountain exit at west crossroad",
         m.tiles[12][0] == TILE_TOWN_EXIT);
     ASSERT("the old Tavern loop is gone before Town 2 is discovered",
@@ -181,8 +181,8 @@ void test_town_map(void) {
     map_set_town2_road(&m, 1);
     ASSERT("forest exit at east crossroad",
         m.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT);
-    ASSERT("no northern crossing opens with other road unlocks",
-        m.tiles[0][20] == TILE_WALL);
+    ASSERT("other road unlocks preserve access to the riverbank",
+        m.tiles[0][20] == TILE_TOWN_EXIT);
 
     // Shop tiles in correct positions
     ASSERT("blacksmith remains in the starting town",
