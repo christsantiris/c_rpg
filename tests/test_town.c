@@ -388,9 +388,9 @@ void test_forest(void) {
     walk_town_approach(&g);
     ASSERT("east town exit enters forest", g.location == LOCATION_FOREST);
     ASSERT("forest begins on level one", g.level == 1);
-    ASSERT("leaving Oakhaven east enters the forest at its west edge", g.player.x == 1);
-    ASSERT("forest has a west entrance facing Oakhaven",
-        g.map.tiles[g.map.stairs_up_y][0] == TILE_FOREST_ENTRANCE);
+    ASSERT("the northbound forest doorway arrives at the south edge", g.player.y == MAP_H - 2);
+    ASSERT("forest retreat lies south behind its entrance",
+        g.map.tiles[MAP_H - 1][g.map.stairs_up_x] == TILE_FOREST_ENTRANCE);
     ASSERT("forest exit begins hidden",
         g.map.tiles[g.map.stairs_down_y][MAP_W - 1] == TILE_FOREST_WALL);
     ASSERT("forest generation includes branching clearings",
@@ -457,8 +457,8 @@ void test_forest(void) {
     Action onward = {ACTION_MOVE, MAP_W - 1, g.player.y};
     action_resolve_player(&g, onward);
     ASSERT("forest exit advances without clearing enemies", g.level == 2);
-    ASSERT("next forest stage starts at south edge",
-        g.player.y == MAP_H - 2);
+    ASSERT("the eastbound crossing enters the next forest stage from the west",
+        g.player.x == 1);
     Action back = outdoor_entrance_action(&g.map);
     action_resolve_player(&g, back);
     ASSERT("forest entrance returns to previous stage", g.level == 1);
@@ -489,7 +489,7 @@ void test_forest(void) {
     }
 
     static const int expected_rooms[FOREST_DEPTH] = {7, 9, 9, 10, 10};
-    static const int expected_entrances[FOREST_DEPTH] = {0, 2, 1, 0, 0};
+    static const int expected_entrances[FOREST_DEPTH] = {2, 0, 2, 1, 0};
     static const int expected_exits[FOREST_DEPTH] = {0, 1, 2, 0, 0};
     g.enemy_count = 0;
     for (int level = 1; level <= FOREST_DEPTH; level++) {
@@ -927,7 +927,7 @@ void test_mountains(void) {
     test_goblin_king_retaliation();
     printf("Goblin Mountains tests:\n");
     static const int expected_rooms[MOUNTAIN_DEPTH] = {7, 8, 8, 9, 10};
-    static const int expected_entrances[MOUNTAIN_DEPTH] = {0, 2, 1, 0, 0};
+    static const int expected_entrances[MOUNTAIN_DEPTH] = {2, 2, 0, 1, 1};
     static const int expected_exits[MOUNTAIN_DEPTH] = {1, 0, 2, 2, 2};
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
