@@ -7,6 +7,7 @@ int tests_run    = 0;
 int tests_passed = 0;
 
 void test_movement(void);
+void test_travel_direction(void);
 void test_approaches(void);
 void test_boss_gates(void);
 void test_road_scenery(void);
@@ -94,6 +95,7 @@ int main(void) {
     // ASSERT("sanity check false", 1 == 0);
     printf("=== CONR Test Suite ===\n\n");
     test_movement();
+    test_travel_direction();
     test_town_roads();
     test_boss_gates();
     test_royal_evidence();
