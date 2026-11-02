@@ -36,6 +36,7 @@
 #include "regional_terrain.h"
 #include "landscapes.h"
 #include "wilds.h"
+#include "enemy_tactics.h"
 #include <SDL2/SDL.h>
 #include <stdlib.h>
 #include <string.h>
@@ -3422,6 +3423,9 @@ static int necromancer_revive(GameState *g, int necromancer_index) {
 }
 
 static int enemy_blocks_line_of_sight(const GameState *g, int shooter_index, int x, int y) {
+    if (aldric_at(g, x, y)) {
+        return 1;
+    }
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *other = &g->enemies[i];
         if (i == shooter_index || !other->active) {
@@ -3819,12 +3823,8 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
         int dy = g->player.y - e->y;
         int adjacent = abs_int(dx) <= 1 && abs_int(dy) <= 1 &&
             !(dx == 0 && dy == 0);
-        // A regular enemy beside Aldric but not the player strikes him instead.
-        if (!adjacent && !e->is_boss && aldric_beside(g, e->x, e->y)) {
-            aldric_take_hit(g, e);
-            continue;
-        }
-        if (!enemy_is_major_boss(e) && !adjacent && !pursuers[i] &&
+        int beside_aldric = !enemy_is_major_boss(e) && aldric_beside(g, e->x, e->y);
+        if (!enemy_is_major_boss(e) && !adjacent && !beside_aldric && !pursuers[i] &&
             !(game_is_crownroad(g) &&
             e->type == ENEMY_ROAD_ARCHER &&
             clear_orthogonal_path(g, i, e))) {
@@ -3927,6 +3927,11 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
         if ((enemy_prefers_range(e) || enemy_is_support(e)) &&
             e->move_timer % 2 == 0 && path_distance > 0 &&
             path_distance < 3 && enemy_move_away(g, i)) {
+            e->move_timer++;
+            continue;
+        }
+
+        if (adjacent && g->location == LOCATION_MOUNTAINS && enemy_goblin_frontline(e) && enemy_tactics_move(g, i) > 0) {
             e->move_timer++;
             continue;
         }
@@ -4105,7 +4110,9 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
             snprintf(msg, sizeof(msg), "%s: %d dmg", e->type == ENEMY_THORN_DRYAD ? "Thorn volley" : "Dark Elf arrow", dmg);
             push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             if (e->type == ENEMY_DARK_ELF_RANGER) {
-                enemy_move_to_flank(g, i);
+                if (enemy_tactics_move(g, i) < 0) {
+                    enemy_move_to_flank(g, i);
+                }
             }
             continue;
         }
@@ -4124,6 +4131,16 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
                 continue;
             }
+        }
+
+        // Ranged and support roles act before defending themselves in melee.
+        if (beside_aldric) {
+            aldric_take_hit(g, e);
+            continue;
+        }
+
+        if (enemy_tactics_move(g, i) >= 0) {
+            continue;
         }
 
         if (enemy_is_support(e) && enemy_has_nearby_ally(g, i, 4)) {
