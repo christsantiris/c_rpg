@@ -454,9 +454,10 @@ typedef struct {
     int elowen_x;
     int elowen_y;
     int elowen_seals_restored; // Reserved historical Broken Seals progress.
-    int aldric_party_state; // 0 waiting in Oakhaven, 1 following the player.
+    int aldric_party_state; // 0 waiting in Oakhaven, 1 following, 2 recovering at the Inn.
     int aldric_x;
     int aldric_y;
+    int aldric_hp;
     int dain_quest_state; // 0 offer, 1 halves, 2 turn-in, 3 boss offer, 4 boss active, 5 complete.
     int dain_map_fragments;
     int alder_quest_state; // 0 offer, 1 rangers, 2 turn-in, 3 boss offer, 4 boss active, 5 complete.
@@ -613,6 +614,7 @@ int game_set_quick_potion(GameState *g, int index);
 int game_quick_potion_count(const GameState *g);
 void action_resolve_enemies(GameState *g);
 void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots);
+void action_aldric_strike(GameState *g, Enemy *e);
 int kraken_tile_threatened(const GameState *g, const Enemy *e, int x, int y);
 
 void player_gain_xp(GameState *g, int xp);

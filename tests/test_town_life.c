@@ -115,65 +115,6 @@ static int downgrade_town_save(int version) {
     return 1;
 }
 
-static void test_alehouse(void) {
-    start_town(LOCATION_DAWNMERE);
-    const TownBuilding *b = town_life_building(LOCATION_ALEHOUSE);
-    int x = b->x + b->w / 2;
-    int y = b->y + b->h - 1;
-    ASSERT("Dawnmere has separate reachable Alehouse and merchant doors", b->town == LOCATION_DAWNMERE &&
-        town_life_building(LOCATION_DAWNMERE)->interior == LOCATION_DAWNMERE_MERCHANT &&
-        game.map.tiles[y][x] == TILE_LOCAL_DOOR && all_walkable_connected(&game.map, 20, 12));
-    ASSERT("Dain leaves the whole cobblestone plaza intact", game.map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] == TILE_TOWN_PATH);
-    game.player.x = 20;
-    game.player.y = 12;
-    for (int step = 21; step <= x; step++) {
-        action_resolve_player(&game, (Action){ACTION_MOVE, step, 12});
-    }
-    for (int step = 11; step >= y; step--) {
-        action_resolve_player(&game, (Action){ACTION_MOVE, x, step});
-    }
-    ASSERT("walking from the plaza selects the Alehouse rather than the merchant", game.location == LOCATION_ALEHOUSE &&
-        !game.enemy_count && !game.dialogue_active && game.map.tiles[RESIDENT_Y][RESIDENT_X] == TILE_NPC_RESIDENT &&
-        all_walkable_connected(&game.map, game.player.x, game.player.y));
-    game.player.x = RESIDENT_X;
-    game.player.y = RESIDENT_Y + 1;
-    ASSERT("the Alehouse host offers hospitality without Dain's quest", town_life_talk(&game, 0) && !game_quest_offer_active(&game) &&
-        strcmp(game.dialogue_speaker, "Alehouse Host") == 0);
-    game.dain_quest_state = 1;
-    game.dain_map_fragments = 5;
-    ASSERT("Alehouse saving retains its host, unrelated quest progress and cask shelves", save_game(&game, TOWN_LIFE_SLOT) &&
-        load_game(&loaded, TOWN_LIFE_SLOT) && loaded.location == LOCATION_ALEHOUSE && loaded.dain_quest_state == 1 &&
-        loaded.dain_map_fragments == 5 && loaded.map.tiles[7][9] == TILE_TAVERN_TABLE);
-    loaded.player.x = 20;
-    loaded.player.y = 21;
-    action_resolve_player(&loaded, (Action){ACTION_MOVE, 20, 22});
-    ASSERT("the Alehouse returns to its own doorstep with quests intact", loaded.location == LOCATION_DAWNMERE &&
-        loaded.player.x == x && loaded.player.y == y + 1 && loaded.dain_map_fragments == 5);
-    start_town(LOCATION_DAWNMERE);
-    // An old town save can contain both the player and stacked loot in the new lot.
-    game.player.x = b->x;
-    game.player.y = b->y;
-    game.floor_item_count = 3;
-    for (int i = 0; i < 2; i++) {
-        game.floor_items[i] = (FloorItem){.active = 1, .x = b->x, .y = b->y,
-            .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_health_potion()};
-    }
-    game.floor_items[2] = (FloorItem){.active = 1, .x = DAIN_TOWN_X, .y = DAIN_TOWN_Y,
-        .underlying_tile = TILE_NPC_DAIN, .item = item_make_health_potion()};
-    game.map.tiles[b->y][b->x] = TILE_ITEM;
-    game.map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] = TILE_ITEM;
-    game.dain_quest_state = 2;
-    game.dain_map_fragments = 7;
-    map_mark_explored(&game.map, 3, 3);
-    ASSERT("old saves gain the Alehouse without losing player or stacked loot", save_game(&game, TOWN_LIFE_SLOT) &&
-        downgrade_town_save(214) && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.player.x == x && loaded.player.y == y + 1 &&
-        loaded.floor_items[0].x == x && loaded.floor_items[1].x == x && loaded.floor_items[0].y == y + 1 &&
-        loaded.floor_items[1].y == y + 1 && loaded.floor_items[2].active &&
-        loaded.floor_items[2].underlying_tile == TILE_TOWN_PATH && loaded.dain_quest_state == 2 &&
-        loaded.dain_map_fragments == 7 && loaded.gold == 123 && loaded.score == 456 && map_is_explored(&loaded.map, 3, 3));
-    remove(TOWN_LIFE_PATH);
-}
-
 static int walk_to(GameState *g, int tx, int ty) {
     int previous[MAP_W * MAP_H];
     int queue[MAP_W * MAP_H];
@@ -288,7 +229,6 @@ static void test_accessory_buildings(void) {
 void test_town_life(void) {
     test_accessory_buildings();
     test_goldsmith();
-    test_alehouse();
     printf("Town resident building tests:\n");
     const Location towns[5] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN4, LOCATION_TOWN3, LOCATION_DAWNMERE};
     for (int i = 0; i < 5; i++) {

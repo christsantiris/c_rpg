@@ -2117,6 +2117,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "aldric_party_state", g->aldric_party_state);
     cJSON_AddNumberToObject(root, "aldric_x", g->aldric_x);
     cJSON_AddNumberToObject(root, "aldric_y", g->aldric_y);
+    cJSON_AddNumberToObject(root, "aldric_hp", g->aldric_hp);
     cJSON_AddNumberToObject(root, "dain_quest_state", g->dain_quest_state);
     cJSON_AddNumberToObject(root, "dain_map_fragments",
         g->dain_map_fragments);
@@ -4608,6 +4609,8 @@ int load_game(GameState *g, int slot) {
     g->aldric_party_state = aldric_state ? aldric_state->valueint : ALDRIC_WAITING;
     g->aldric_x = aldric_x ? aldric_x->valueint : -1;
     g->aldric_y = aldric_y ? aldric_y->valueint : -1;
+    cJSON *aldric_hp = cJSON_GetObjectItem(root, "aldric_hp");
+    g->aldric_hp = aldric_hp ? aldric_hp->valueint : ALDRIC_MAX_HP;
     g->dain_quest_state = dain_quest ? dain_quest->valueint : 0;
     g->dain_map_fragments = dain_fragments ? dain_fragments->valueint :
         (legacy_dain_targets ? legacy_dain_targets->valueint : 0);
