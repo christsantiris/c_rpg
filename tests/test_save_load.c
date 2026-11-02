@@ -1131,7 +1131,17 @@ static void test_forest_entry_migration(void) {
         memset(original, 0, sizeof(*original));
         game_init(original);
         game_enter_forest(original);
-        // V2 generation already supplies the historic west-side entry for this fixture.
+        // Recreate the historic west-side entrance before the direction repairs.
+        original->map.tiles[MAP_H - 1][original->map.stairs_up_x] = TILE_FOREST_WALL;
+        int entry_x;
+        int entry_y;
+        map_room_center(&original->map.rooms[0], &entry_x, &entry_y);
+        for (int col = 0; col <= entry_x; col++) {
+            original->map.tiles[entry_y][col] = TILE_FOREST_FLOOR;
+        }
+        original->map.tiles[entry_y][0] = TILE_FOREST_ENTRANCE;
+        original->map.stairs_up_x = 1;
+        original->map.stairs_up_y = entry_y;
         int x;
         int y;
         map_room_center(&original->map.rooms[0], &x, &y);
@@ -1175,7 +1185,7 @@ static void test_forest_entry_migration(void) {
         int ok = save_game(original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 157) && load_game(loaded, LEGACY_SLOT);
         LevelCache *cache = &loaded->forest_cache[0];
         ASSERT("legacy forest entry migration preserves character progress and enemy health", ok && loaded->player.hp == hp && loaded->gold == 321 && loaded->score == 9876 && cache->valid && cache->enemies[0].hp == 17 && cache->enemies[0].move_timer == 2);
-        ASSERT("cached first forest stage mirrors terrain, explored tiles, enemies, and warned targets together", ok && cache->map.stairs_up_x == MAP_W - 2 && cache->map.stairs_down_x == 1 && cache->map.tiles[y + 1][MAP_W - 1 - x] == TILE_FOREST_FALSE_MARKER && map_is_explored(&cache->map, MAP_W - 1 - x, y) && !map_is_explored(&cache->map, x, y) && cache->enemies[0].x == MAP_W - 2 - x && cache->enemies[0].attack_target_x == MAP_W - 1 - x && cache->enemies[0].facing_dx == -1);
+        ASSERT("cached first forest stage mirrors terrain, explored tiles, enemies, and warned targets together", ok && cache->map.stairs_up_y == MAP_H - 2 && cache->map.stairs_down_x == 1 && cache->map.tiles[y + 1][MAP_W - 1 - x] == TILE_FOREST_FALSE_MARKER && map_is_explored(&cache->map, MAP_W - 1 - x, y) && !map_is_explored(&cache->map, x, y) && cache->enemies[0].x == MAP_W - 2 - x && cache->enemies[0].attack_target_x == MAP_W - 1 - x && cache->enemies[0].facing_dx == -1);
         ASSERT("saved forest portal coordinates move with the mirrored destination", ok && !loaded->portal_active && loaded->portal_x == MAP_W - 4 - x && loaded->portal_y == y);
         if (active) {
             ASSERT("active forest migration preserves the player's relative position and facing", loaded->player.x == MAP_W - 1 - px && loaded->player.y == y && loaded->player.last_dx == -1 && loaded->enemies[0].x == MAP_W - 2 - x);
@@ -1184,7 +1194,7 @@ static void test_forest_entry_migration(void) {
             ASSERT("migrating a cached forest leaves the player in town at the same position", loaded->location == LOCATION_TOWN && loaded->player.x == px && loaded->player.last_dx == 1);
         }
         int saved_x = loaded->player.x;
-        ASSERT("repaired forest saves do not mirror again on another load", save_game(loaded, MIGRATED_SLOT) && load_game(original, MIGRATED_SLOT) && original->player.x == saved_x && original->forest_cache[0].map.stairs_up_x == MAP_W - 2 && original->portal_x == MAP_W - 4 - x);
+        ASSERT("repaired forest saves do not mirror again on another load", save_game(loaded, MIGRATED_SLOT) && load_game(original, MIGRATED_SLOT) && original->player.x == saved_x && original->forest_cache[0].map.stairs_up_y == MAP_H - 2 && original->portal_x == MAP_W - 4 - x);
         if (!active) {
             test_restore_cached_floor(original);
             ASSERT("a migrated town archived floor reloads to the same place in the corrected forest", original->location == LOCATION_FOREST && original->level == 1 && original->player.x == MAP_W - 4 - x && original->player.y == y);
