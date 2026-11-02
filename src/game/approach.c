@@ -332,7 +332,7 @@ void approach_refresh_forest(GameState *g) {
     int ox;
     int oy;
     int open = approach_forest_town_exit(g, &ox, &oy);
-    int from = open || tx == 0 ? 1 : APPROACH_LABYRINTH_X;
+    int from = open || tx == 0 ? 1 : door_x;
     int to = open || tx != 0 ? APPROACH_W - 2 : door_x;
     for (int x = from; x <= to; x++) {
         g->map.tiles[ty][x] = TILE_TOWN_PATH;
@@ -345,14 +345,6 @@ void approach_refresh_forest(GameState *g) {
     }
     g->map.tiles[door_y + 1][door_x] = TILE_TOWN_PATH;
     g->map.tiles[door_y][door_x] = TILE_APPROACH_AREA;
-    // The labyrinth shares this road; Rook's quest controls its sealed/open gate.
-    for (int y = APPROACH_LABYRINTH_Y - 2; y <= APPROACH_LABYRINTH_Y; y++) {
-        for (int x = APPROACH_LABYRINTH_X - 1; x <= APPROACH_LABYRINTH_X + 1; x++) {
-            g->map.tiles[y][x] = TILE_WALL;
-        }
-    }
-    g->map.tiles[APPROACH_LABYRINTH_Y + 1][APPROACH_LABYRINTH_X] = TILE_TOWN_PATH;
-    g->map.tiles[APPROACH_LABYRINTH_Y][APPROACH_LABYRINTH_X] = TILE_LABYRINTH_ENTRANCE;
     g->map.tiles[ty][tx] = TILE_APPROACH_TOWN;
     if (open) {
         g->map.tiles[oy][ox] = TILE_APPROACH_DUNGEON_TOWN;
@@ -378,6 +370,43 @@ void approach_refresh_forest(GameState *g) {
         if (item->active && !map_is_travel_tile(g->map.tiles[item->y][item->x])) {
             g->map.tiles[item->y][item->x] = TILE_ITEM;
         }
+    }
+}
+
+void approach_retire_labyrinth(GameState *g) {
+    const TownApproach *route = approach_route(g);
+    if (!route || route->area != LOCATION_FOREST) {
+        return;
+    }
+    int entrance = g->map.tiles[APPROACH_LABYRINTH_Y][APPROACH_LABYRINTH_X] == TILE_LABYRINTH_ENTRANCE;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        const FloorItem *item = &g->floor_items[i];
+        entrance |= item->active && item->underlying_tile == TILE_LABYRINTH_ENTRANCE;
+    }
+    if (!entrance) {
+        return;
+    }
+    // Repair only the retired landmark and spur; leave the rest of the saved road intact.
+    for (int y = APPROACH_LABYRINTH_Y - 2; y <= APPROACH_LABYRINTH_Y; y++) {
+        for (int x = APPROACH_LABYRINTH_X - 1; x <= APPROACH_LABYRINTH_X + 1; x++) {
+            g->map.tiles[y][x] = y < APPROACH_LABYRINTH_Y ? TILE_FOREST_WALL : TILE_TOWN_FLOOR;
+        }
+    }
+    g->map.tiles[APPROACH_LABYRINTH_Y + 1][APPROACH_LABYRINTH_X] = TILE_TOWN_FLOOR;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        int footprint = abs(item->x - APPROACH_LABYRINTH_X) <= 1 && item->y >= APPROACH_LABYRINTH_Y - 2 && item->y <= APPROACH_LABYRINTH_Y;
+        int spur = item->x == APPROACH_LABYRINTH_X && item->y == APPROACH_LABYRINTH_Y + 1;
+        if (!item->active || (!footprint && !spur)) {
+            continue;
+        }
+        item->underlying_tile = TILE_TOWN_FLOOR;
+        if (item->y < APPROACH_LABYRINTH_Y) {
+            item->x = g->map.stairs_down_x;
+            item->y = g->map.stairs_up_y;
+            item->underlying_tile = TILE_TOWN_PATH;
+        }
+        g->map.tiles[item->y][item->x] = TILE_ITEM;
     }
 }
 
@@ -900,14 +929,6 @@ int approach_travel(GameState *g, int x, int y) {
     const TownApproach *route = approach_route(g);
     if (!route) {
         return 0;
-    }
-    if (route->area == LOCATION_FOREST && g->map.tiles[y][x] == TILE_LABYRINTH_ENTRANCE) {
-        if (game_labyrinth_is_open(g)) {
-            game_enter_labyrinth(g);
-        } else {
-            push_message(g, "The labyrinth is sealed. Speak to Rook in Oakhaven's Inn.");
-        }
-        return 1;
     }
     if (g->map.tiles[y][x] == TILE_APPROACH_TOWN) {
         game_leave_approach(g);

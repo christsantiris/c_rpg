@@ -26,6 +26,25 @@ Dawnmere and requires no second Inn turn-in. A boss defeated earlier receives
 credit when the first part is turned in. Physical boss access never depends on
 NPC conversations or quest acceptance.
 
+The **Evidence** tab follows Bosses. Defeating the Goblin King reveals royal
+payment records funding his raids and the western-road blockade. Defeating
+the Necromancer reveals a royal writ protecting his work. Both parchments show
+the King's seal, and finding both strengthens the journal's conclusion. The
+new documents do not reveal who is behind the King's actions.
+
+Each parchment appears after the killing turn and its animations finish.
+Press **Enter / Space / Esc** to keep it in the journal and resume play;
+closing the page uses no turn. While the page is open, movement and combat
+commands are held. Press **Q**, change to **Evidence** with **Tab / Left /
+Right**, then use **Up / Down** to reread discovered documents. Journal key
+remapping still applies. Missing documents are not shown in advance.
+
+Evidence requires no accepted quest, spare active slot, bag space, floor loot
+space or additional Inn return. Each boss opens its own onward road regardless
+of which document is found first or whether the other boss has been defeated.
+Evidence and acknowledgment persist through save/load. Older boss victories
+gain their journal records without a new popup on loading.
+
 Mara, Ilya and Rook have left Oakhaven in V2; their journal entries keep any
 existing progress, but no one offers these quests until a later act.
 
@@ -101,7 +120,7 @@ Quests move to **Completed** as soon as their objectives are finished, freeing
 an active slot immediately. If an NPC reward still needs to be collected, the
 entry shows **COMPLETED - REWARD PENDING** and retains the return instructions.
 Collecting that reward keeps the quest in Completed. Use Tab or Left/Right
-to cycle through **Active → Completed → Bosses**.
+to cycle through **Active → Completed → Bosses → Evidence**.
 
 **Guide Tomas Home** and **Recover Your Equipment** remain visible in Active
 when needed, but do not consume optional slots. A full journal cannot prevent

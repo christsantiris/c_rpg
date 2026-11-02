@@ -1,5 +1,6 @@
 #include "coast_exits.h"
 #include "boss_gates.h"
+#include "royal_evidence.h"
 #include "giants_crown.h"
 #include "ironfang.h"
 #include "crownroad_north.h"
@@ -1590,6 +1591,7 @@ void game_init(GameState *g) {
     g->portal_y = 0;
     g->portal_origin_tile = TILE_FLOOR;
     g->defeated_bosses = 0;
+    g->royal_evidence_seen = 0;
     g->kraken_bow_unclaimed = 0;
     g->sandstorm_staff_unclaimed = 0;
     g->desert_pharaoh_reward_state = 0;
@@ -3323,6 +3325,64 @@ static void clear_floor_loot(GameState *g) {
         }
     }
     g->floor_item_count = 0;
+}
+
+static void repair_outdoor_entry(GameState *g, Map *map, int level, int mountains, int active) {
+    int old_x = map->stairs_up_x;
+    int old_y = map->stairs_up_y;
+    int edge_x = old_x == 1 ? 0 : old_x == MAP_W - 2 ? MAP_W - 1 : old_x;
+    int edge_y = old_y == 1 ? 0 : old_y == MAP_H - 2 ? MAP_H - 1 : old_y;
+    Location area = mountains ? LOCATION_MOUNTAINS : LOCATION_FOREST;
+    int portal = g->portal_active && g->portal_location == area && g->portal_level == level &&
+        map->tiles[edge_y][edge_x] == TILE_PORTAL;
+    if (!map_repair_outdoor_entrance(map, level, mountains)) {
+        return;
+    }
+    if (portal) {
+        g->portal_x = old_x;
+        g->portal_y = old_y;
+        g->portal_origin_tile = map->tiles[old_y][old_x];
+        map->tiles[old_y][old_x] = TILE_PORTAL;
+    }
+    if (!active) {
+        return;
+    }
+    if (g->player.x == edge_x && g->player.y == edge_y) {
+        g->player.x = old_x;
+        g->player.y = old_y;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (!item->active) {
+            continue;
+        }
+        if (item->x == edge_x && item->y == edge_y) {
+            item->x = map->stairs_up_x;
+            item->y = map->stairs_up_y;
+            item->underlying_tile = map->tiles[item->y][item->x];
+            if (item->underlying_tile == TILE_ITEM) {
+                item->underlying_tile = mountains ? TILE_MOUNTAIN_FLOOR : TILE_FOREST_FLOOR;
+            }
+            map->tiles[item->y][item->x] = TILE_ITEM;
+        }
+    }
+    map_mark_explored(map, g->player.x, g->player.y);
+}
+
+void game_repair_outdoor_entries(GameState *g) {
+    if (g->location == LOCATION_FOREST || g->location == LOCATION_MOUNTAINS) {
+        repair_outdoor_entry(g, &g->map, g->level, g->location == LOCATION_MOUNTAINS, 1);
+    }
+    for (int level = 1; level <= FOREST_DEPTH; level++) {
+        if (g->forest_cache[level - 1].valid) {
+            repair_outdoor_entry(g, &g->forest_cache[level - 1].map, level, 0, 0);
+        }
+    }
+    for (int level = 1; level <= MOUNTAIN_DEPTH; level++) {
+        if (g->mountain_cache[level - 1].valid) {
+            repair_outdoor_entry(g, &g->mountain_cache[level - 1].map, level, 1, 0);
+        }
+    }
 }
 
 static void prepare_forest_arrival(GameState *g, int from_high) {
@@ -5503,8 +5563,9 @@ void game_leave_labyrinth(GameState *g) {
     save_labyrinth_floor(g);
     return_to_town(g, g->labyrinth_entry_town);
     enter_return_approach(g, LOCATION_FOREST);
-    g->player.x = APPROACH_LABYRINTH_X;
-    g->player.y = APPROACH_LABYRINTH_Y + 1;
+    // A legacy expedition can retreat safely after its outdoor entrance is retired.
+    g->player.x = g->map.stairs_down_x;
+    g->player.y = g->map.stairs_up_y;
     g->player.last_dx = 0;
     g->player.last_dy = 1;
     map_mark_explored(&g->map, g->player.x, g->player.y);
@@ -6516,10 +6577,11 @@ void game_talk_to_dain(GameState *g) {
             "You have %d of 2 map halves. Find the Archer Map Bearer in Mountains 1 and the Warchief Map Bearer in Mountains 2. Bring both halves back to me at Oakhaven's Inn.", halves);
     } else if (g->dain_quest_state == REGIONAL_CHAIN_COMPLETE) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "The map is whole and the Goblin King is defeated. Follow the mountain road west to Stillbury. Continue your adventure there to uncover why these evil creatures descended on the kingdom.");
+            "%sThe King's seal proves the Crown paid for goblin raids and the western-road blockade. Follow the opened road west to Stillbury to learn why.",
+            royal_evidence_count(g) == 2 ? "The payments match the Necromancer's royal writ. " : "");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "%sDefeat the Goblin King to rid the mountains of his rule. His fall opens the road west to Stillbury, where you can continue investigating why these evil creatures descended on the kingdom.",
+            "%sThe map marks the goblin fortress stores. Defeat the Goblin King and search his records for who supplies the raids. His fall opens the western road to Stillbury. Continue investigating the evil in our kingdom.",
             turned_in ? "The map is whole! Take 60 gold with my thanks. " : "The map is whole, but the Goblin King still rules. ");
     }
 }
@@ -6574,10 +6636,11 @@ void game_talk_to_alder(GameState *g) {
             "You have rescued %d of my 2 rangers. Defeat the spider captors in Forest 1 and 2, then speak to each ranger. Return to me at Oakhaven's Inn when both are safe.", rescued);
     } else if (g->alder_quest_state == REGIONAL_CHAIN_COMPLETE) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "My rangers are safe and the Necromancer is defeated. Follow the forest road east to Dawnmere. Continue your adventure there to uncover why these evil creatures descended on the kingdom.");
+            "%sThe King's writ ordered patrols to leave the Necromancer's work undisturbed. My rangers were abandoned. Follow the opened road east to Dawnmere to learn why.",
+            royal_evidence_count(g) == 2 ? "Royal funding in the mountains, royal protection here: both records implicate the King. " : "");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "%sRid the Haunted Forest of the Necromancer. His fall opens the road east to Dawnmere, where you can continue investigating why these evil creatures descended on the kingdom.",
+            "%sMy rangers saw couriers entering the grove. Defeat the Necromancer and search his correspondence for who protects his work. His fall opens the eastern road to Dawnmere. Continue investigating the evil in our kingdom.",
             turned_in ? "Both rangers are home! Take 70 gold with my thanks. " : "My rangers are safe, but the Necromancer still blights the forest. ");
     }
 }

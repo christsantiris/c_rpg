@@ -2552,10 +2552,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                         x >= g->map.stairs_down_x - 3 && x <= g->map.stairs_down_x + 3 &&
                         y > g->map.stairs_down_y - (approach_route(g)->area == LOCATION_MOUNTAINS ? APPROACH_MOUNTAIN_ROWS : 6) && y <= g->map.stairs_down_y) {
                         draw_approach_ground(r, g, sx, sy, x, y);
-                    } else if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_FOREST &&
-                        x >= APPROACH_LABYRINTH_X - 1 && x <= APPROACH_LABYRINTH_X + 1 &&
-                        y >= APPROACH_LABYRINTH_Y - 2 && y <= APPROACH_LABYRINTH_Y) {
-                        draw_town_floor(r, sx, sy);
                     } else if (g->location == LOCATION_APPROACH && approach_route(g) &&
                         approach_entrance_rows(approach_route(g)->area) &&
                         x >= g->map.stairs_down_x - 3 && x <= g->map.stairs_down_x + 3 &&
@@ -3548,16 +3544,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         if (open || approach_route(g)->town == LOCATION_TOWN3) {
             draw_town_road_sign(r, viewport_to_screen_x(v, g->map.stairs_up_x - 7), viewport_to_screen_y(v, 3), "ROSEMOOR");
         }
-    }
-
-    if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_FOREST) {
-        int x = viewport_to_screen_x(v, APPROACH_LABYRINTH_X);
-        int y = viewport_to_screen_y(v, APPROACH_LABYRINTH_Y);
-        draw_labyrinth_entrance(r, x, y, game_labyrinth_is_open(g));
-        int width;
-        TTF_SizeText(r->font_tiny, "ROOK'S LABYRINTH", &width, NULL);
-        renderer_draw_text(r, "ROOK'S LABYRINTH", x * TILE_SIZE + (TILE_SIZE - width) / 2, (y - 3) * TILE_SIZE,
-            game_labyrinth_is_open(g) ? (SDL_Color){225, 201, 111, 255} : (SDL_Color){105, 105, 90, 255}, r->font_tiny);
     }
 
     mangrove_draw_landmark(r, g, v);
