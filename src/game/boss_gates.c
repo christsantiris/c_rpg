@@ -1,6 +1,8 @@
 #include "boss_gates.h"
+#include "aldric.h"
 #include "approach.h"
 #include "elderwood.h"
+#include "elowen.h"
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,6 +67,9 @@ static void passage_message(GameState *g, Location area) {
     const BossGateRule *rule = boss_gate_rule(area);
     if (boss_gate_open(g, area)) {
         snprintf(message, sizeof(message), "Passage secured through %s. The road is open in both directions.", approach_area_name(area));
+    } else if (approach_route(g) && approach_route(g)->town == LOCATION_TOWN && (area == LOCATION_FOREST || area == LOCATION_MOUNTAINS)) {
+        snprintf(message, sizeof(message), "The %s guards hold the road to %s. Defeat %s in %s to force their retreat.",
+            area == LOCATION_FOREST ? "Dark Elf" : "goblin", area == LOCATION_FOREST ? "Dawnmere" : "Stillbury", rule->boss, approach_area_name(area));
     } else {
         snprintf(message, sizeof(message), "Passage blocked. Defeat %s in %s to secure this road.", rule->boss, approach_area_name(area));
     }
@@ -100,6 +105,26 @@ int boss_gate_checkpoints(const GameState *g, RoadCheckpoint *points) {
     return 1;
 }
 
+int boss_gate_guards(const GameState *g, RoadCheckpoint *guards) {
+    const TownApproach *route = approach_route(g);
+    if (!route || route->town != LOCATION_TOWN || (route->area != LOCATION_FOREST && route->area != LOCATION_MOUNTAINS) || boss_gate_open(g, route->area)) {
+        return 0;
+    }
+    RoadCheckpoint points[2];
+    if (boss_gate_checkpoints(g, points) != 1) {
+        return 0;
+    }
+    RoadCheckpoint point = points[0];
+    int dx = point.vertical ? 0 : point.x < APPROACH_W / 2 ? 1 : -1;
+    int dy = !point.vertical ? 0 : point.y < APPROACH_H / 2 ? 1 : -1;
+    for (int i = 0; i < 2; i++) {
+        guards[i] = point;
+        guards[i].x += dx * (i + 2);
+        guards[i].y += dy * (i + 2);
+    }
+    return 2;
+}
+
 static void landing(const GameState *g, int *x, int *y) {
     *x = g->map.stairs_up_x;
     *y = g->map.stairs_up_y;
@@ -115,7 +140,7 @@ static void replace_tile(GameState *g, int x, int y, TileType tile) {
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *item = &g->floor_items[i];
         if (item->active && item->x == x && item->y == y) {
-            if (tile == TILE_ROAD_BANK || tile == TILE_ROAD_GATE_CLOSED) {
+            if (tile == TILE_ROAD_BANK || tile == TILE_ROAD_GATE_CLOSED || tile == TILE_GOBLIN_ROAD_GUARD || tile == TILE_DARK_ELF_ROAD_GUARD) {
                 landing(g, &item->x, &item->y);
                 item->underlying_tile = TILE_TOWN_PATH;
                 continue;
@@ -125,6 +150,46 @@ static void replace_tile(GameState *g, int x, int y, TileType tile) {
                 g->map.tiles[y][x] = TILE_ITEM;
             }
         }
+    }
+}
+
+static int behind_guards(RoadCheckpoint front, int x, int y) {
+    if (front.vertical) {
+        return x == front.x && (front.y < APPROACH_H / 2 ? y <= front.y : y >= front.y);
+    }
+    return y == front.y && (front.x < APPROACH_W / 2 ? x <= front.x : x >= front.x);
+}
+
+static void place_guards(GameState *g) {
+    RoadCheckpoint guards[2];
+    int count = boss_gate_guards(g, guards);
+    if (!count) {
+        return;
+    }
+    for (int i = 0; i < count; i++) {
+        replace_tile(g, guards[i].x, guards[i].y, guards[i].area == LOCATION_FOREST ? TILE_DARK_ELF_ROAD_GUARD : TILE_GOBLIN_ROAD_GUARD);
+    }
+    RoadCheckpoint front = guards[count - 1];
+    // Older saves may stand or leave loot between the new sentries and beam.
+    if (behind_guards(front, g->player.x, g->player.y)) {
+        g->player.x = front.x + (front.vertical ? 0 : front.x < APPROACH_W / 2 ? 1 : -1);
+        g->player.y = front.y + (!front.vertical ? 0 : front.y < APPROACH_H / 2 ? 1 : -1);
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && behind_guards(front, item->x, item->y)) {
+            if (g->map.tiles[item->y][item->x] == TILE_ITEM) {
+                g->map.tiles[item->y][item->x] = TILE_TOWN_PATH;
+            }
+            landing(g, &item->x, &item->y);
+            item->underlying_tile = TILE_TOWN_PATH;
+        }
+    }
+    if (g->elowen_quest_state == ELOWEN_RESCUED && behind_guards(front, g->elowen_x, g->elowen_y)) {
+        elowen_follow(g, -1, -1);
+    }
+    if (g->aldric_party_state == ALDRIC_FOLLOWING && behind_guards(front, g->aldric_x, g->aldric_y)) {
+        aldric_follow(g, -1, -1);
     }
 }
 
@@ -165,6 +230,7 @@ void boss_gate_refresh(GameState *g) {
         }
         replace_tile(g, point.x, point.y, boss_gate_open(g, point.area) ? TILE_ROAD_GATE_OPEN : TILE_ROAD_GATE_CLOSED);
     }
+    place_guards(g);
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *item = &g->floor_items[i];
         if (item->active && !map_is_travel_tile(g->map.tiles[item->y][item->x])) {
@@ -174,6 +240,14 @@ void boss_gate_refresh(GameState *g) {
 }
 
 static int nearby(const GameState *g, RoadCheckpoint *point) {
+    RoadCheckpoint guards[2];
+    int guard_count = boss_gate_guards(g, guards);
+    for (int i = 0; i < guard_count; i++) {
+        if (abs(g->player.x - guards[i].x) + abs(g->player.y - guards[i].y) <= 1) {
+            *point = guards[i];
+            return 1;
+        }
+    }
     RoadCheckpoint points[2];
     int count = boss_gate_checkpoints(g, points);
     for (int n = 0; n < count; n++) {
@@ -200,6 +274,14 @@ int boss_gate_interact(GameState *g) {
 }
 
 int boss_gate_bump(GameState *g, int x, int y) {
+    RoadCheckpoint guards[2];
+    int guard_count = boss_gate_guards(g, guards);
+    for (int i = 0; i < guard_count; i++) {
+        if (x == guards[i].x && y == guards[i].y) {
+            passage_message(g, guards[i].area);
+            return 1;
+        }
+    }
     RoadCheckpoint points[2];
     int count = boss_gate_checkpoints(g, points);
     for (int n = 0; n < count; n++) {

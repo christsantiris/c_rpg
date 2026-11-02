@@ -37,13 +37,21 @@ After the Lich's defeat, Alder and Dain offer two short adventures on the first
 two forest or mountain stages, followed by optional hunts for those regions'
 bosses. Both bosses can also be reached without accepting their quests.
 
+Soulstone Shrine stands beside the path north of Oakhaven, before the broken
+ferry. Its warlock offers resurrection for **200 gold per fallen companion**.
+A level-10 Mage can buy the **400-gold Resurrection scroll** and perform the
+ritual directly at the shrine's marked circle for **80 MP**. The shrine is
+present from the start; its services require a recruited companion.
+
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/world-map.png?v=11cedbc263f8)](docs/world-map.png?v=11cedbc263f8)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=7dbeb3544a3c)](docs/world-map.png?v=7dbeb3544a3c)
 
 The current V2 focus is Act 1: Oakhaven, Goblin Mountains to its west, Haunted
 Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
 to a broken ferry landing at Northern Rapids; the river cannot be crossed.
+The river begins in Frostfell's snow and ice, passes Rosemoor and Blackwater
+Swamp, then flows through Northern Rapids to the eastern estuary.
 The rest of the world is shown as provisional context and will be redesigned
 in later steps; later connections remain undecided.
 
@@ -335,16 +343,10 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Fix Linux installer
 
 ### Feature enhancements
-- Expand world map
-   Farms between areas for rest to improve hp. New story lines. More coherent quest structure. Use larger scale sprites. Chain quests together. Unlock new quests with completion of another. NPCs can offer quest part 2. Max number of active quests - NPC can say come back when you have completed xyz task.
-- Recruit a party to join the adventure
-   NPCs that can team up with the player character and accompany on the quest. Implement resurrection. 
 - Improve difficulty scaling and economy
    Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. Purchasing new weapons, armor and tomes should become necessary to progress.
-- Add paypal/other integration to buy gold
-   Add real money feature to buy in-game gold.
 - DnD style stats instead of static class based stats
    Roll for stats. Choose a class based on strengths. Ascending armor class chance to hit. 
-- Fix wasted space in labrynth area. Rescale to 1.5x? 
-   Minotaur too easy. Ivory rook uses a not p.
+- Add paypal/other integration to buy gold
+   Add real money feature to buy in-game gold.
 

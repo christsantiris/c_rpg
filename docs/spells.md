@@ -1,7 +1,7 @@
 # Spells
 
-The game provides Magic Arrow, Fireball, Heal, Frost Bolt, Teleport, and Return
-to Town. Most spells consume MP; damage spells scale with character level and
+The game provides Magic Arrow, Fireball, Heal, Frost Bolt, Teleport, Return
+to Town, and Resurrection. Most spells consume MP; damage spells scale with character level and
 equipped staff spell power. Magic Arrow, Fireball, and Heal support up to three
 ranks.
 
@@ -15,6 +15,7 @@ ranks.
 | Return to Town | One-way escape | 0 | Last town visited | - | - |
 | Frost Bolt | Ranged control | 14 | 18 damage, freeze | 5 | - |
 | Teleport | Utility movement | 12 | Move up to 4 tiles | 4 | - |
+| Resurrection | Shrine ritual, Mage level 10 | 80 | Revive a companion at half HP | Fixed shrine | - |
 
 Damage uses the following scaling formula before spell-rank and staff bonuses
 are applied:
@@ -160,3 +161,23 @@ In the Royal Catacombs, Return to Town is a one-way escape to the last town
 visited too.
 Ordinary upstairs and the defeated Marshal's return passage lead back to the
 road beside the Catacombs sprite instead. See [Royal Catacombs](catacombs.md).
+
+## Resurrection
+
+The Soulstone Warlock sells **Scroll: Resurrection** for **400 gold** at
+[Soulstone Shrine](soulstone-shrine/README.md), on Oakhaven's northern outskirts.
+Buying and reading it requires a level-10 Mage; the warlock's services also
+require a recruited companion. Read the scroll from inventory, then equip the
+permanent spell through the spellbook. It has one rank and a base cost of
+**80 MP**, with the existing equipment cost reductions.
+
+Stand on the shrine's marked ritual circle and use the remapped Cast key
+(`C` by default). Confirm **Y** to restore a dead companion at **50% HP**;
+**N / Esc / Enter** cancels. A successful cast consumes one turn, places the
+companion on free adjacent ground and rejoins the party. It needs no aim
+direction or conversation with the warlock. Casting anywhere else, during
+combat, without enough MP or without a valid fallen companion performs no
+ritual. Cancellation and unavailable placement spend no MP.
+
+The spell does not restore the player after death. The shrine is the required
+ritual site for both spellcasters and the warlock's separate paid service.
