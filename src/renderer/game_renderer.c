@@ -619,6 +619,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int viewport_h = r->tiles_y * TILE_SIZE;
     int bubble_w = viewport_w < 736 ? viewport_w - 16 : 720;
     const char *hint = shortcut ? "Enter to continue" : quest_offer ? "Accept quest? Y: Yes   N: No" : "";
+    if (game_cain_dialogue_active(g)) {
+        hint = "1: Tell me about Oakhaven\n2: Return to Town\nEnter / Esc: Close";
+    }
     if (war_machine_dialogue(g)) {
         hint = quest_offer ? "Y: Accept   N: Decline\n1: Watchfires   2: Break the War Machine" : "1: Watchfires   2: Break the War Machine";
     }

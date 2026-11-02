@@ -5961,9 +5961,12 @@ void game_talk_to_bram(GameState *g) {
     } else if (g->elowen_quest_state == ELOWEN_HOME) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Thank you for saving Elowen. She is safe here in Oakhaven's Inn. Speak to her about what she heard the Lich King say.");
+    } else if (g->elowen_quest_state == ELOWEN_ASSIGNED) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Please bring my daughter Elowen home. The Lich King holds her in the dungeon south of Oakhaven. Defeat him and bring her back to me.");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Welcome to Oakhaven's Inn. The Lich King in the dungeon south of Oakhaven raises undead and endangers our town. He holds my daughter Elowen. Please defeat him and bring her home. The blacksmith sells weapons and armor; the alchemist sells potions and scrolls for your journey.");
+            "Welcome to Oakhaven's Inn. The Lich King in the dungeon south of Oakhaven raises undead and endangers our town. He holds my daughter Elowen. Please defeat him and bring her home.");
     }
 }
 
@@ -5972,21 +5975,43 @@ void game_talk_to_cain(GameState *g) {
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Cain");
     g->dialogue_x = TOWN_CAIN_X;
     g->dialogue_y = TOWN_CAIN_Y;
-    const char *warning = "Rapids block the north. Goblin Mountains lie west, Haunted Forest east, and the Lich King's dungeon south.";
-    const char *recommendation = "Ask Bram at Oakhaven's Inn about his missing daughter.";
     if (g->cain_scroll_given) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "%s Read your scroll to learn Return to Town. Use it when danger grows!", warning);
+            "Read your scroll to learn Return to Town. The spell brings you back to town when danger grows, but gives you no portal back to the place you left.");
     } else if (g->inventory_count >= MAX_INVENTORY) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "%s %s Make room in your pack, then return for a Return to Town scroll.", warning, recommendation);
+            "I have a Return to Town scroll for you, but your pack is full. Make room, then ask me about Return to Town to collect it.");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "%s %s Take this Return to Town scroll; read it to learn a way home!", warning, recommendation);
+            "Welcome to Oakhaven. Take this Return to Town scroll; read it to learn a way home when danger grows. It brings you back to town, but gives you no portal back to the place you left.");
         g->inventory[g->inventory_count++] = item_make_scroll_return_to_town();
         g->cain_scroll_given = 1;
         push_message(g, "Cain gives you a Scroll of Return to Town.");
     }
+}
+
+int game_cain_dialogue_active(const GameState *g) {
+    return g->location == LOCATION_TOWN && g->dialogue_active &&
+        strcmp(g->dialogue_speaker, "Cain") == 0;
+}
+
+// The existing saved dialogue fields retain either topic; no separate page state is needed.
+int game_handle_cain_dialogue_key(GameState *g, int key, int repeat) {
+    if (!game_cain_dialogue_active(g)) {
+        return 0;
+    }
+    if (repeat) {
+        return 1;
+    }
+    if (key == SDL_SCANCODE_ESCAPE || key == SDL_SCANCODE_RETURN || key == SDL_SCANCODE_KP_ENTER) {
+        g->dialogue_active = 0;
+    } else if (key == SDL_SCANCODE_1 || key == SDL_SCANCODE_KP_1) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The blacksmith sells weapons and armor; the alchemist has potions and scrolls. Visit the goldsmith for rings and amulets. Walk inside and Talk at the counter. Nessa runs the bakery; speak to Bram at the Inn. Rapids block the north. Goblin Mountains lie west, Haunted Forest east, and the dungeon south.");
+    } else if (key == SDL_SCANCODE_2 || key == SDL_SCANCODE_KP_2) {
+        game_talk_to_cain(g);
+    }
+    return 1;
 }
 
 int game_has_treasure_map(const GameState *g) {

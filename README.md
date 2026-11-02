@@ -26,6 +26,10 @@ retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
 explore a five-floor undead dungeon, the five-level haunted forest, a five-level goblin mountain climb
 and many other adventures.
 
+Cain offers a Return to Town scroll and optional guidance about Oakhaven.
+While speaking to him, choose **1** for the town guide or **2** for Return to
+Town instructions; **Enter / Esc** closes the conversation.
+
 In Oakhaven, Bram asks you to rescue his daughter Elowen from the Lich King.
 You can find and free her without accepting the quest first. Bring her home
 to the Inn for a reward and the first clue behind the realm's troubles.

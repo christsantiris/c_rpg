@@ -4,6 +4,7 @@
 #include "game/coastal_travel.h"
 #include "../src/game/map.h"
 #include "../src/game/game.h"
+#include "../src/game/elowen.h"
 #include "../src/game/restoration.h"
 #include "../src/game/heartseed.h"
 #include "../src/screens/shop.h"
@@ -648,10 +649,9 @@ void test_bram_guidance(void) {
         strstr(g.dialogue_text, "Lich King") &&
         strstr(g.dialogue_text, "dungeon south of Oakhaven") &&
         strstr(g.dialogue_text, "endangers our town"));
-    ASSERT("Bram explains supplies and offers the rescue without giving items",
-        strstr(g.dialogue_text, "blacksmith sells weapons and armor") &&
-        strstr(g.dialogue_text, "alchemist sells potions and scrolls") &&
-        strstr(g.dialogue_text, "journey.") && g.inventory_count == count &&
+    ASSERT("Bram's rescue offer stays separate from shop advice and gives no items",
+        !strstr(g.dialogue_text, "blacksmith") && !strstr(g.dialogue_text, "alchemist") &&
+        g.inventory_count == count &&
         game_quest_offer_active(&g));
     ASSERT("Bram's inn placement and dialogue survive saving", !save_exists(99237) &&
         save_game(&g, 99237) && load_game(&loaded, 99237) &&
@@ -661,6 +661,12 @@ void test_bram_guidance(void) {
         loaded.dialogue_active && strcmp(loaded.dialogue_speaker, "Bram") == 0 &&
         strstr(loaded.dialogue_text, "Lich King"));
     remove("saves/savegame_99237.json");
+    game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
+    game_talk_to_bram(&g);
+    ASSERT("an accepted rescue gets a short reminder without another offer or shop instructions",
+        g.elowen_quest_state == ELOWEN_ASSIGNED && !game_quest_offer_active(&g) &&
+        strstr(g.dialogue_text, "Please bring my daughter Elowen home") &&
+        !strstr(g.dialogue_text, "Welcome") && !strstr(g.dialogue_text, "blacksmith"));
     g.defeated_bosses |= 1 << LOCATION_DUNGEON;
     g.elowen_quest_state = 2;
     game_talk_to_bram(&g);
@@ -690,7 +696,7 @@ void test_bram_guidance(void) {
 }
 
 void test_cain_gift(void) {
-    printf("Cain gift tests:\n");
+    printf("Cain gift and optional Oakhaven guide tests:\n");
     GameState g;
     g.player.player_class = CLASS_WARRIOR;
     game_init(&g);
@@ -706,15 +712,42 @@ void test_cain_gift(void) {
 
     int count = g.inventory_count;
     game_talk_to_cain(&g);
-    ASSERT("Cain warns about dangers outside town in his dialogue bubble",
+    ASSERT("Cain's opening conversation explains his scroll separately from town services",
         g.dialogue_active && strcmp(g.dialogue_speaker, "Cain") == 0 &&
-        strstr(g.dialogue_text, "Rapids block the north") &&
-        strstr(g.dialogue_text, "Haunted Forest east") &&
+        strstr(g.dialogue_text, "Return to Town scroll") &&
+        !strstr(g.dialogue_text, "Blacksmith") && game_cain_dialogue_active(&g) &&
         g.dialogue_x == TOWN_CAIN_X && g.dialogue_y == TOWN_CAIN_Y);
     ASSERT("Cain gives one Return to Town scroll",
         g.cain_scroll_given && g.inventory_count == count + 1 &&
         g.inventory[count].type == ITEM_SCROLL &&
         g.inventory[count].spell_id == SPELL_RETURN_TO_TOWN);
+    ASSERT("choosing Cain's optional guide explains services and current Act 1 roads",
+        game_handle_cain_dialogue_key(&g, SDL_SCANCODE_1, 0) &&
+        strstr(g.dialogue_text, "blacksmith") && strstr(g.dialogue_text, "weapons and armor") &&
+        strstr(g.dialogue_text, "alchemist") && strstr(g.dialogue_text, "potions and scrolls") &&
+        strstr(g.dialogue_text, "goldsmith") && strstr(g.dialogue_text, "rings and amulets") &&
+        strstr(g.dialogue_text, "Talk at the counter") &&
+        strstr(g.dialogue_text, "Bram at the Inn") &&
+        strstr(g.dialogue_text, "Rapids block the north") &&
+        strstr(g.dialogue_text, "Goblin Mountains lie west, Haunted Forest east") &&
+        g.inventory_count == count + 1 && !game_active_quest_count(&g));
+    ASSERT("Cain's guide is not a quest offer and gameplay keys cannot act through it",
+        !game_quest_offer_active(&g) && game_handle_cain_dialogue_key(&g, SDL_SCANCODE_W, 0) &&
+        game_handle_cain_dialogue_key(&g, SDL_SCANCODE_2, 1) &&
+        strstr(g.dialogue_text, "blacksmith"));
+    static GameState loaded;
+    ASSERT("Cain's selected guide and one-time gift survive saving", !save_exists(99238) &&
+        save_game(&g, 99238) && load_game(&loaded, 99238) &&
+        game_cain_dialogue_active(&loaded) && loaded.cain_scroll_given &&
+        loaded.inventory_count == count + 1 && strcmp(loaded.dialogue_text, g.dialogue_text) == 0);
+    ASSERT("the loaded guide can switch to portal instructions without repeating the gift",
+        game_handle_cain_dialogue_key(&loaded, SDL_SCANCODE_2, 0) &&
+        strstr(loaded.dialogue_text, "no portal back") && !strstr(loaded.dialogue_text, "Blacksmith") &&
+        loaded.inventory_count == count + 1);
+    ASSERT("Enter closes Cain's conversation and restores gameplay input",
+        game_handle_cain_dialogue_key(&loaded, SDL_SCANCODE_RETURN, 0) &&
+        !game_cain_dialogue_active(&loaded) && !game_handle_cain_dialogue_key(&loaded, SDL_SCANCODE_1, 0));
+    remove("saves/savegame_99238.json");
     game_talk_to_cain(&g);
     ASSERT("talking again does not duplicate the gift",
         g.inventory_count == count + 1);
@@ -738,11 +771,21 @@ void test_cain_gift(void) {
     ASSERT("a full pack leaves the gift available for later",
         g.inventory_count == MAX_INVENTORY && !g.cain_scroll_given &&
         strstr(g.dialogue_text, "Make room"));
+    ASSERT("Cain's town guide is available even when the gift cannot fit",
+        game_handle_cain_dialogue_key(&g, SDL_SCANCODE_KP_1, 0) &&
+        strstr(g.dialogue_text, "goldsmith") && !g.cain_scroll_given &&
+        g.inventory_count == MAX_INVENTORY);
+    ASSERT("Escape closes the optional guide without claiming a gift or quest",
+        game_handle_cain_dialogue_key(&g, SDL_SCANCODE_ESCAPE, 0) &&
+        !g.dialogue_active && !g.cain_scroll_given && !game_active_quest_count(&g));
     game_remove_inventory_item(&g, MAX_INVENTORY - 1);
     game_talk_to_cain(&g);
     ASSERT("Cain gives the scroll after the player makes room",
         g.inventory_count == MAX_INVENTORY && g.cain_scroll_given &&
         g.inventory[MAX_INVENTORY - 1].spell_id == SPELL_RETURN_TO_TOWN);
+    g.location = LOCATION_FOREST;
+    ASSERT("Cain's topic keys cannot capture input outside Oakhaven",
+        !game_cain_dialogue_active(&g) && !game_handle_cain_dialogue_key(&g, SDL_SCANCODE_1, 0));
 }
 
 static void test_oakhaven_portal_save(void) {
