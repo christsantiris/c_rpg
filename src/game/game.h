@@ -513,6 +513,7 @@ int game_shortcut_prompt_active(const GameState *g);
 int game_handle_shortcut_prompt_key(GameState *g, int key, int repeat);
 void game_migrate_boss_shortcuts(GameState *g);
 int game_has_regional_interaction(const GameState *g);
+int game_locked_door_target(const GameState *g, int *x, int *y);
 void game_move_player(GameState *g, int dx, int dy);
 void game_descend(GameState *g);
 void game_ascend(GameState *g);

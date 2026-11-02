@@ -70,7 +70,7 @@ The Lich King begins inside a sealed, single-entrance chamber behind a locked
 door. No regular enemy can spawn in that room, and the Lich remains completely
 dormant until the player unlocks the door and enters the chamber. A golden key
 is always visible at the center of the penultimate room. Stand on the key and
-press `P` to collect it; walking into the locked door then consumes the key and
+press `P` to collect it; pressing Interact (`A` by default) beside the locked door consumes the key and
 opens the boss room. The player does not need to clear every regular enemy.
 
 Cain gives each character one Scroll: Return to Town after the player speaks

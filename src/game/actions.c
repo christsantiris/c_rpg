@@ -36,6 +36,7 @@
 #include "regional_terrain.h"
 #include "landscapes.h"
 #include "wilds.h"
+#include <SDL2/SDL.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -959,7 +960,50 @@ static int mountain_obstacle(TileType tile) {
         tile == TILE_MOUNTAIN_CHASM;
 }
 
+int game_locked_door_target(const GameState *g, int *x, int *y) {
+    if (g->location != LOCATION_DUNGEON) {
+        return 0;
+    }
+    const int dx[] = {g->player.last_dx, 0, 1, 0, -1};
+    const int dy[] = {g->player.last_dy, -1, 0, 1, 0};
+    for (int i = 0; i < 5; i++) {
+        if (abs(dx[i]) + abs(dy[i]) != 1) {
+            continue;
+        }
+        int nx = g->player.x + dx[i];
+        int ny = g->player.y + dy[i];
+        if (nx >= 0 && nx < MAP_W && ny >= 0 && ny < MAP_H &&
+            (g->map.tiles[ny][nx] == TILE_LOCKED_DOOR || g->map.tiles[ny][nx] == TILE_CRYPT_DOOR)) {
+            *x = nx;
+            *y = ny;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int dungeon_door_has_key(const GameState *g, TileType tile) {
+    return tile == TILE_LOCKED_DOOR ? g->dungeon_key_found : g->dungeon_crypt_keys > 0;
+}
+
+static void dungeon_door_hint(GameState *g, TileType tile) {
+    if (!dungeon_door_has_key(g, tile)) {
+        push_message(g, tile == TILE_LOCKED_DOOR ? "The Lich King's door is locked. Find its golden key." : "The crypt is locked. Find its key.");
+        return;
+    }
+    char message[MAX_MESSAGE_LEN];
+    snprintf(message, sizeof(message), "Press %s to unlock the %s.",
+        SDL_GetScancodeName((SDL_Scancode)g->key_bindings[CONTROL_MOVE_LEFT]),
+        tile == TILE_LOCKED_DOOR ? "Lich King's door" : "crypt door");
+    push_message(g, message);
+}
+
 int game_has_regional_interaction(const GameState *g) {
+    int door_x;
+    int door_y;
+    if (game_locked_door_target(g, &door_x, &door_y)) {
+        return 1;
+    }
     if (boss_gate_hint(g)) {
         return 1;
     }
@@ -1413,6 +1457,23 @@ static void resolve_player_action(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        int door_x;
+        int door_y;
+        if (game_locked_door_target(g, &door_x, &door_y)) {
+            TileType door = g->map.tiles[door_y][door_x];
+            if (!dungeon_door_has_key(g, door)) {
+                dungeon_door_hint(g, door);
+                return;
+            }
+            if (door == TILE_LOCKED_DOOR) {
+                g->dungeon_key_found = 0;
+            } else {
+                g->dungeon_crypt_keys--;
+            }
+            g->map.tiles[door_y][door_x] = TILE_FLOOR;
+            push_message(g, door == TILE_LOCKED_DOOR ? "The dungeon key unlocks the door!" : "The crypt key unlocks the door!");
+            return;
+        }
         if (boss_gate_interact(g)) {
             return;
         }
@@ -2781,24 +2842,11 @@ static void resolve_player_action(GameState *g, Action a) {
             return;
         }
 
-        if (g->map.tiles[ty][tx] == TILE_LOCKED_DOOR) {
-            if (!g->dungeon_key_found) {
-                push_message(g, "The Lich King's door is locked.");
-                return;
-            }
-            g->dungeon_key_found = 0;
-            g->map.tiles[ty][tx] = TILE_FLOOR;
-            push_message(g, "The dungeon key unlocks the door!");
-        }
-
-        if (g->map.tiles[ty][tx] == TILE_CRYPT_DOOR) {
-            if (g->dungeon_crypt_keys < 1) {
-                push_message(g, "The crypt is locked. Find its key.");
-                return;
-            }
-            g->dungeon_crypt_keys--;
-            g->map.tiles[ty][tx] = TILE_FLOOR;
-            push_message(g, "The crypt key unlocks the door!");
+        if (g->map.tiles[ty][tx] == TILE_LOCKED_DOOR || g->map.tiles[ty][tx] == TILE_CRYPT_DOOR) {
+            g->player.last_dx = tx - g->player.x;
+            g->player.last_dy = ty - g->player.y;
+            dungeon_door_hint(g, g->map.tiles[ty][tx]);
+            return;
         }
 
         if (g->location == LOCATION_COAST &&
