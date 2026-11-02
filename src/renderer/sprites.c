@@ -4566,6 +4566,53 @@ void draw_coast_transition(Renderer *r, int covered_width) {
     }
 }
 
+static void draw_rapids_transition(Renderer *r, int covered_width) {
+    if (covered_width <= 0) {
+        return;
+    }
+    int max_width = (r->screen_w + 1) / 2;
+    if (covered_width > max_width) {
+        covered_width = max_width;
+    }
+    int height = (int)((Uint64)r->screen_h * covered_width / max_width);
+    SDL_Rect clip = {0, 0, r->screen_w, height};
+    SDL_Rect previous_clip;
+    SDL_bool had_clip = SDL_RenderIsClipEnabled(r->sdl);
+    if (had_clip) {
+        SDL_RenderGetClipRect(r->sdl, &previous_clip);
+        if (!SDL_IntersectRect(&clip, &previous_clip, &clip)) {
+            return;
+        }
+    }
+    SDL_RenderSetClipRect(r->sdl, &clip);
+    fill_rect(r, 0, 0, r->screen_w, height, (SDL_Color){6, 38, 60, 255});
+    int drift = (int)(SDL_GetTicks() / 24u % 32u);
+    // Eastward white water breaks around river rocks, matching the local bank.
+    for (int y = 0; y < height; y += 40) {
+        int row = y / 40;
+        for (int x = -80; x < r->screen_w; x += 80) {
+            int column = (x + 80) / 80;
+            int px = x + drift + (row % 2) * 24;
+            fill_rect(r, px, y + 7, 48, 6, (SDL_Color){14, 65, 82, 255});
+            fill_rect(r, px + 4, y + 8, 31, 2, (SDL_Color){83, 165, 177, 255});
+            fill_rect(r, px + 9, y + 6, 15, 2, (SDL_Color){204, 231, 227, 255});
+            fill_rect(r, px + 26, y + 27, 43, 3, (SDL_Color){139, 202, 215, 255});
+            fill_rect(r, px + 39, y + 25, 14, 2, (SDL_Color){204, 231, 227, 255});
+            if ((row * 3 + column) % 7 == 0) {
+                int rock_x = x + 30;
+                fill_rect(r, rock_x - 6, y + 17, 6, 9, (SDL_Color){204, 231, 227, 255});
+                fill_rect(r, rock_x - 2, y + 13, 23, 3, (SDL_Color){139, 202, 215, 255});
+                fill_rect(r, rock_x - 2, y + 27, 28, 3, (SDL_Color){204, 231, 227, 255});
+                fill_rect(r, rock_x, y + 17, 21, 10, (SDL_Color){29, 44, 47, 255});
+                fill_rect(r, rock_x + 3, y + 14, 14, 10, (SDL_Color){64, 79, 74, 255});
+                fill_rect(r, rock_x + 5, y + 14, 9, 3, (SDL_Color){121, 131, 111, 255});
+                fill_rect(r, rock_x + 21, y + 20, 17, 2, (SDL_Color){139, 202, 215, 255});
+            }
+        }
+    }
+    SDL_RenderSetClipRect(r->sdl, had_clip ? &previous_clip : NULL);
+}
+
 static void draw_transition_terrain(Renderer *r, const Map *map, int tx, int ty, int mx, int my, TownExitStyle style) {
     TileType tile = map->tiles[my][mx];
     switch (style) {
@@ -4621,6 +4668,9 @@ void draw_area_transition(Renderer *r, int covered_width, TownExitStyle style) {
             return;
         case TOWN_EXIT_COAST:
             draw_coast_transition(r, covered_width);
+            return;
+        case TOWN_EXIT_RAPIDS:
+            draw_rapids_transition(r, covered_width);
             return;
         case TOWN_EXIT_FROST:
         case TOWN_EXIT_DESERT:
@@ -5301,7 +5351,7 @@ void draw_swamp_entrance(Renderer *r, int tile_x, int tile_y) {
 }
 
 void draw_area_entrance(Renderer *r, TownExitStyle style, int tile_x, int tile_y, int rows) {
-    if (!r->area_entrance_textures[style]) {
+    if (style < TOWN_EXIT_DUNGEON || style > TOWN_EXIT_GIANTS || !r->area_entrance_textures[style]) {
         draw_labyrinth_entrance_fallback(r, tile_x, tile_y, 1);
         return;
     }
