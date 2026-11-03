@@ -122,7 +122,7 @@ static void occupation(GameState *g, GameState *loaded) {
             ASSERT("no two soldiers share a post", g->enemies[n].x != g->enemies[i].x || g->enemies[n].y != g->enemies[i].y);
         }
     }
-    ASSERT("Captain Rusk leads the waterfront command", strcmp(g->enemies[DAWNMERE_RUSK].name, "Captain Rusk") == 0 && g->enemies[DAWNMERE_RUSK].max_hp == 115);
+    ASSERT("Captain Rusk leads the waterfront command", strcmp(g->enemies[DAWNMERE_RUSK].name, "Captain Rusk") == 0 && g->enemies[DAWNMERE_RUSK].max_hp == 150);
     ASSERT("Dawnmere has a north waterfront gate and no southern or eastern branch", g->map.tiles[0][20] == TILE_TOWN_EXIT && g->map.tiles[24][20] == TILE_WALL && g->map.tiles[12][TOWN_W - 1] == TILE_WALL);
     int before = g->player.x;
     g->player.x = 20;
