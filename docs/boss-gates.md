@@ -10,7 +10,7 @@ directions; ordinary enemy respawns never close it again.
 | --- | --- | --- |
 | Oakhaven Dungeon | Local adventure | Lich King; returns north to Oakhaven |
 | Haunted Forest | Boss-gated road | Necromancer; Oakhaven ↔ Dawnmere |
-| Goblin Mountains | Boss-gated road | Goblin King; Oakhaven ↔ Stillbury |
+| Goblin Mountains | Boss-gated road | Goblin King; Oakhaven ↔ Sunscar Wastes |
 | Blackwater Swamp | Boss-gated road | Swamp Demon; Stillbury ↔ Rosemoor |
 | Elderwood Forest | Boss-gated road | Elderthorn; Elderwood section of the northern castle connection |
 | Royal Catacombs | Boss-gated road | Grave Marshal; Catacombs section of the northern castle connection |
@@ -18,7 +18,7 @@ directions; ordinary enemy respawns never close it again.
 | Castle interior | Internal progression | Existing Castellan, Royal Arcanist and Lord Veyr encounter rules |
 | Rook's Labyrinth | Deferred | No world entrance in V2; maze and quest implementation retained for a later arc |
 | Stonewake Quarry | Free travel | Quarry Colossus and quarry quest remain optional |
-| Saltwind Marsh | Free travel | Sszareth does not seal the final departure |
+| Saltwind Marsh | Boss-gated destination | Sszareth unlocks the final river launch; retreat and ordinary stage travel remain open |
 | Stormwatch Headland | Free travel | Tempest Matriarch does not seal the final departure |
 | Ironfang Mines | Free travel | Goblin Mine Boss does not seal the final departure |
 | Giant's Peaks | Free travel | The Last Jarl still guards the royal vault and crown |
@@ -48,7 +48,7 @@ minimap use a lock before victory and a check mark afterward. Entrance sprites
 remain available to challenge the boss. Single-tile roads stay single tile.
 
 On Oakhaven's mountain road, two **Hobgoblin Guards** hold the route to
-Stillbury. Two **Dark Elf Guards** hold its forest road to Dawnmere. These
+Sunscar Wastes. Two **Dark Elf Guards** hold its forest road to Dawnmere. These
 noncombat sentries stand in single file, two and three tiles in front of the
 beam on the player's approach. They cannot be attacked, frozen or killed, have
 no combat health bars, and award no loot or XP. They block walking, projectiles

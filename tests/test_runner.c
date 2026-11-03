@@ -17,6 +17,7 @@ void test_enemy_projectiles(void);
 void test_act2_tactics(void);
 void test_resurrection(void);
 void test_royal_evidence(void);
+void test_eastern_arc(void);
 void test_map(void);
 void test_map_tiles(void);
 void test_viewport(void);
@@ -99,6 +100,7 @@ int main(void) {
     test_town_roads();
     test_boss_gates();
     test_royal_evidence();
+    test_eastern_arc();
     test_road_scenery();
     test_approaches();
     test_enemy_projectiles();

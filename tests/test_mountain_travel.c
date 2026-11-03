@@ -58,7 +58,8 @@ static void mountain_walk_road(GameState *g, int west) {
     walk_into_arrived_town(g);
 }
 
-static void mountain_crossing(int stillbury, int return_home) {
+static void mountain_crossing(int return_home) {
+    const int stillbury = 0;
     mountain.player.player_class = CLASS_WARRIOR;
     game_init(&mountain);
     srand(2701 + stillbury);
@@ -68,14 +69,14 @@ static void mountain_crossing(int stillbury, int return_home) {
     Location home = mountain.location;
     action_resolve_player(&mountain, (Action){ACTION_MOVE, stillbury ? TOWN_W - 1 : 0, 12});
     finish_town_departure(&mountain);
-    ASSERT("both town gates lead to a safe mountain road", mountain.location == LOCATION_APPROACH && mountain.enemy_count == 0);
+    ASSERT("Oakhaven’s gate leads to a safe mountain road", mountain.location == LOCATION_APPROACH && mountain.enemy_count == 0);
     int x;
     int y;
-    ASSERT("the same mountain landmark stands at the same road position from either town", mountain.map.stairs_down_x == APPROACH_W / 2 && mountain.map.stairs_down_y == APPROACH_H / 2 - 2);
+    ASSERT("the same mountain landmark stands at the same road position from Oakhaven", mountain.map.stairs_down_x == APPROACH_W / 2 && mountain.map.stairs_down_y == APPROACH_H / 2 - 2);
     ASSERT("mountain road has no town branch or direct boss shortcut", !approach_shortcut_exit(&mountain, &x, &y) && !approach_boss_exit(&mountain, &x, &y));
     ASSERT("the road beyond the mountain is locked before victory", !approach_mountain_town_exit(&mountain, &x, &y));
     walk_town_approach(&mountain);
-    ASSERT("either town always enters the foot of the mountain at level one", mountain.location == LOCATION_MOUNTAINS && mountain.level == 1 && mountain.mountain_entry_town == home);
+    ASSERT("Oakhaven always enters the foot of the mountain at level one", mountain.location == LOCATION_MOUNTAINS && mountain.level == 1 && mountain.mountain_entry_town == home);
     mountain_step(&mountain, 1);
     ASSERT("retreating at the foot returns to the pathway", mountain.location == LOCATION_APPROACH);
     walk_return_approach(&mountain);
@@ -122,13 +123,20 @@ static void mountain_crossing(int stillbury, int return_home) {
     ASSERT("King victory creates no shortcut tile", shortcuts == 0);
     mountain_step(&mountain, 0);
     ASSERT("the summit exit returns to the straight safe road", mountain.location == LOCATION_APPROACH && mountain.enemy_count == 0 && mountain.player.y == mountain.map.stairs_up_y);
-    ASSERT("victory opens the other town's gate", approach_mountain_town_exit(&mountain, &x, &y));
+    ASSERT("victory opens the Sunscar gate", approach_mountain_town_exit(&mountain, &x, &y));
     ASSERT("the unlocked road stays one tile wide", mountain.map.tiles[y][mountain.player.x] == TILE_TOWN_PATH && mountain.map.tiles[y + 1][mountain.player.x + 1] == TILE_TOWN_FLOOR);
     ASSERT("the unlocked road and quest progress survive saving", save_game(&mountain, MOUNTAIN_TRAVEL_SLOT) && load_game(&restored, MOUNTAIN_TRAVEL_SLOT) && restored.dain_map_fragments == DAIN_MAP_COMPLETE && approach_mountain_town_exit(&restored, &x, &y));
     mountain = restored;
     mountain_walk_road(&mountain, return_home ? stillbury : !stillbury);
-    Location target = return_home ? home : stillbury ? LOCATION_TOWN : LOCATION_TOWN2;
-    ASSERT("the road permits walking home or onward to the other town", mountain.location == target);
+    ASSERT("the road permits walking home or onward into Sunscar", mountain.location == (return_home ? home : LOCATION_DESERT));
+    if (!return_home) {
+        mountain.player.x = mountain.map.stairs_up_x - 1;
+        mountain.player.y = mountain.map.stairs_up_y;
+        action_resolve_player(&mountain, (Action){ACTION_MOVE, mountain.map.stairs_up_x, mountain.map.stairs_up_y});
+        ASSERT("Sunscar's real eastern entrance returns to the mountain road", mountain.location == LOCATION_APPROACH && mountain.approach_route == 2 && mountain.player.x == 1 && mountain.player.last_dx == 1);
+        mountain_walk_road(&mountain, 0);
+    }
+    Location target = LOCATION_TOWN;
     action_resolve_player(&mountain, (Action){ACTION_MOVE, target == LOCATION_TOWN ? 0 : TOWN_W - 1, 12});
     walk_town_approach(&mountain);
     ASSERT("reentry after victory still starts at level one", mountain.location == LOCATION_MOUNTAINS && mountain.level == 1);
@@ -148,9 +156,7 @@ void test_mountain_travel(void) {
     printf("Forward mountain climb and road tests:\n");
     ASSERT("mountains have five levels with the King and watchfire at the summit", MOUNTAIN_DEPTH == 5 && MOUNTAIN_BOSS_LEVEL == 5 && WATCHFIRE_MOUNTAINS_LEVEL == 5);
     ASSERT("mountain travel test slot is unused", !save_exists(MOUNTAIN_TRAVEL_SLOT));
-    for (int stillbury = 0; stillbury < 2; stillbury++) {
-        for (int home = 0; home < 2; home++) {
-            mountain_crossing(stillbury, home);
-        }
+    for (int home = 0; home < 2; home++) {
+        mountain_crossing(home);
     }
 }

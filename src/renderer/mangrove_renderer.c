@@ -1,8 +1,10 @@
 #include "mangrove_renderer.h"
 #include "sprites.h"
+#include "info_panel.h"
 #include "world_props.h"
 #include "controls_renderer.h"
 #include "../game/mangrove.h"
+#include "../game/eastern_arc.h"
 #include "../game/spice_skiff.h"
 
 static int water(const Map *map, int x, int y) {
@@ -75,26 +77,62 @@ void mangrove_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, 
     } else if (tile == TILE_MANGROVE_CACHE) {
         draw_world_prop(r, sx, sy, PROP_CHEST, (SDL_Color){169, 137, 73, 255});
     } else if (tile == TILE_MANGROVE_RETURN || tile == TILE_MANGROVE_EXIT) {
-        const char *label = tile == TILE_MANGROVE_RETURN ? (g->level == 1 ? "TO DAWNMERE" : "BACK") :
-            g->level == MANGROVE_DEPTH ? (g->mangrove_defeated || g->debug_passages_unlocked ? "RETURN" : "SEALED") : "ONWARD";
         for (int row = 0; row < TILE_SIZE; row += 6) {
             SDL_SetRenderDrawColor(r->sdl, 133, 102, 61, 255);
             SDL_Rect plank = {px, py + row, TILE_SIZE, 5};
             SDL_RenderFillRect(r->sdl, &plank);
         }
+
+    }
+}
+
+static void draw_transitions(Renderer *r, const GameState *g, const Viewport *v) {
+    float zoom;
+    float zoom_y;
+    SDL_RenderGetScale(r->sdl, &zoom, &zoom_y);
+    int view_w = (int)((r->screen_w - INFO_PANEL_W) / zoom);
+    int view_h = (int)(r->tiles_y * TILE_SIZE / zoom);
+    for (int end = 0; end < 2; end++) {
+        int x = end ? g->map.stairs_down_x : g->map.stairs_up_x;
+        int y = end ? g->map.stairs_down_y : g->map.stairs_up_y;
+        if (!viewport_is_visible(v, x, y) || !map_is_explored(&g->map, x, y)) {
+            continue;
+        }
+        const char *label = end ? (g->level == MANGROVE_DEPTH ?
+            (g->mangrove_defeated || g->debug_passages_unlocked ? "RIVER CROSSING" : "SSZARETH: SEALED") : "ONWARD") :
+            g->level == 1 ? "TO DAWNMERE" : "BACK";
+        if (g->location == LOCATION_MANGROVE_PATH) {
+            label = end ? "SALTWIND MARSH" : "S: DAWNMERE";
+        }
+        if (g->location == LOCATION_RIVER_CROSSING) {
+            label = end ? "STILLBURY DOCK APPROACH" : "TO SALTWIND";
+        }
         int width;
         TTF_SizeText(r->font_tiny, label, &width, NULL);
-        int lx = px + 12 - width / 2;
-        if (x == 0) {
-            lx = px + 4;
-        } else if (x == MANGROVE_W - 1) {
-            lx = px + 20 - width;
+        int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
+        int py = viewport_to_screen_y(v, y) * TILE_SIZE + (y == 0 ? 6 : -14);
+        if (px < 6) {
+            px = 6;
+        } else if (px > view_w - width - 6) {
+            px = view_w - width - 6;
         }
-        renderer_draw_text(r, label, lx, py + (y == 0 ? 2 : -12), (SDL_Color){223, 211, 140, 255}, r->font_tiny);
+        if (py < 6) {
+            py = 6;
+        } else if (py > view_h - 34) {
+            py = view_h - 34;
+        }
+        SDL_Rect backing = {px - 3, py - 3, width + 6, TTF_FontHeight(r->font_tiny) + 6};
+        SDL_SetRenderDrawColor(r->sdl, 12, 31, 27, 255);
+        SDL_RenderFillRect(r->sdl, &backing);
+        renderer_draw_text(r, label, px, py, (SDL_Color){235, 216, 146, 255}, r->font_tiny);
     }
 }
 
 void mangrove_draw_landmark(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location == LOCATION_MANGROVES || g->location == LOCATION_RIVER_CROSSING) {
+        draw_transitions(r, g, v);
+        return;
+    }
     if (g->location != LOCATION_MANGROVE_PATH) {
         return;
     }
@@ -103,6 +141,7 @@ void mangrove_draw_landmark(Renderer *r, const GameState *g, const Viewport *v) 
     SDL_Rect dest = {x - 3 * TILE_SIZE, y - 5 * TILE_SIZE, 168, 144};
     SDL_RenderCopy(r->sdl, r->mangrove_entrance_texture, NULL, &dest);
     renderer_draw_text(r, "SALTWIND MARSH", x - 85, y - 6 * TILE_SIZE, (SDL_Color){163, 207, 105, 255}, r->font_tiny);
+    draw_transitions(r, g, v);
 }
 
 static void quest_label(Renderer *r, const Viewport *v, const char *text, int x, int y) {
@@ -140,25 +179,26 @@ void mangrove_draw_spice_quest(Renderer *r, const GameState *g, const Viewport *
 }
 
 void mangrove_draw_boat(Renderer *r, const GameState *g, const Viewport *v) {
-    if (g->location != LOCATION_MANGROVES || !g->mangroves.initialized ||
-        !map_is_explored(&g->map, g->mangroves.boat_x, g->mangroves.boat_y)) {
+    const MangroveState *boat = mangrove_boat_state(g);
+    if ((g->location != LOCATION_MANGROVES && g->location != LOCATION_RIVER_CROSSING) || !boat->initialized ||
+        !map_is_explored(&g->map, boat->boat_x, boat->boat_y)) {
         return;
     }
-    int direction = g->mangroves.boat_dy < 0 ? 0 : g->mangroves.boat_dx > 0 ? 1 : g->mangroves.boat_dy > 0 ? 2 : 3;
+    int direction = boat->boat_dy < 0 ? 0 : boat->boat_dx > 0 ? 1 : boat->boat_dy > 0 ? 2 : 3;
     SDL_Rect source = {direction * 36, 0, 36, 36};
-    SDL_Rect dest = {viewport_to_screen_x(v, g->mangroves.boat_x) * TILE_SIZE - 6,
-        viewport_to_screen_y(v, g->mangroves.boat_y) * TILE_SIZE - 6, 36, 36};
+    SDL_Rect dest = {viewport_to_screen_x(v, boat->boat_x) * TILE_SIZE - 6,
+        viewport_to_screen_y(v, boat->boat_y) * TILE_SIZE - 6, 36, 36};
     SDL_RenderCopy(r->sdl, r->skiff_texture, &source, &dest);
 }
 
 void mangrove_draw_hint(Renderer *r, const GameState *g) {
-    if (g->location != LOCATION_MANGROVES) {
+    if (g->location != LOCATION_MANGROVES && g->location != LOCATION_RIVER_CROSSING) {
         return;
     }
     const char *hint = mangrove_hint(g);
     char text[180];
-    SDL_snprintf(text, sizeof(text), "%s | %s | %s", mangrove_stage_name(g->level),
-        g->mangroves.aboard ? "PADDLING" : "ASHORE", hint ? hint : "FIND TIMBER LANDINGS ALONG THE CHANNELS");
+    SDL_snprintf(text, sizeof(text), "%s | %s | %s", g->location == LOCATION_RIVER_CROSSING ? "RIVER: SALTWIND SOUTH / STILLBURY NORTH" : mangrove_stage_name(g->level),
+        mangrove_aboard(g) ? "PADDLING" : "ASHORE", hint ? hint : "FIND TIMBER LANDINGS ALONG THE CHANNELS");
     if (hint) {
         SDL_snprintf(text, sizeof(text), "%s: %s", controls_key_name(g->key_bindings[CONTROL_MOVE_LEFT]), hint);
     }

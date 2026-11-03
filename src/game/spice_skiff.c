@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const char spice_skiff_offer[] = "My spice skiff vanished in Saltwind Marsh, south of Dawnmere. "
-    "Search stage 2's northern island. Bring its manifest and sealed spice casket here for 150 gold.";
+const char spice_skiff_offer[] = "My skiff tried to evade royal confiscations in Saltwind Marsh, north of Dawnmere. "
+    "Search stage 2's northern island. Recover its manifest and cargo on stages 2 and 3. Return whenever you can for 150 gold.";
 
 static void sync_state(GameState *g) {
     if (g->spice_skiff_quest_state == 1 && g->spice_skiff_progress == 3) {

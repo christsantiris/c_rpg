@@ -1553,26 +1553,14 @@ void map_place_town4_guards(Map *m, int avoid_x, int avoid_y) {
 }
 
 void map_place_town2_center(Map *m) {
-    if (m->tiles[11][TOWN3_ROAD_X] == TILE_TOWN_FLOOR) {
-        m->tiles[11][TOWN3_ROAD_X] = TILE_TOWN_PATH;
-    }
-    for (int x = 18; x <= 22; x++) {
-        m->tiles[0][x] = TILE_TOWN_EXIT;
-    }
-    // Sunscar Wastes branches west from Stillbury.
-    for (int y = 10; y <= 14; y++) {
-        m->tiles[y][0] = TILE_TOWN_EXIT;
-    }
-    map_place_town2_south_gate(m);
     for (int x = TOWN_HEALER_DOOR_X; x <= TOWN_WITCH_DOOR_X; x++) {
         m->tiles[13][x] = TILE_TOWN_PATH;
     }
+    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
 }
 
 void map_place_town2_south_gate(Map *m) {
-    for (int x = SOUTH_AREA_GATE_X - 2; x <= SOUTH_AREA_GATE_X + 2; x++) {
-        m->tiles[TOWN_H - 1][x] = TILE_TOWN_EXIT;
-    }
+    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
 }
 
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
@@ -1836,8 +1824,13 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     // Stillbury's Tavern stands east of the Healer, opening onto the square.
     map_place_town_inn(m);
     town_life_place(m, LOCATION_TOWN2);
-    *spawn_x = TOWN_W - 2;
-    *spawn_y = 12;
+    for (int y = 0; y < TOWN_H; y++) {
+        m->tiles[y][0] = TILE_WALL;
+        m->tiles[y][TOWN_W - 1] = TILE_WALL;
+    }
+    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
+    *spawn_x = 20;
+    *spawn_y = TOWN_H - 2;
 }
 
 static void map_generate_town_square(Map *m) {
@@ -1881,10 +1874,9 @@ void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
     }
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
-        m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
-    // Northern connections will be designed in the next world-map step.
-    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
+    // Saltwind follows the river-facing northern waterfront.
+    m->tiles[0][20] = TILE_TOWN_EXIT;
     town_life_place(m, LOCATION_DAWNMERE);
     m->tiles[SEREN_Y][SEREN_X] = TILE_NPC_SEREN;
     *spawn_x = 20;

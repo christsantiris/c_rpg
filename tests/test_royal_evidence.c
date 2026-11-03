@@ -171,7 +171,7 @@ static void story_followups(GameState *g) {
                 game_talk_to_dain(g);
             }
             ASSERT("optional Inn followups interpret royal evidence and retain the proper onward destination", g->dialogue_active &&
-                strstr(g->dialogue_text, "King") && strstr(g->dialogue_text, alder ? "Dawnmere" : "Stillbury") &&
+                strstr(g->dialogue_text, "King") && strstr(g->dialogue_text, alder ? "Dawnmere" : "Sunscar Wastes") &&
                 strlen(g->dialogue_text) < MAX_DIALOGUE_LEN - 1 && !strstr(g->dialogue_text, "Arcanist"));
             ASSERT("finding both records changes the NPC's interpretation without another reward", (!both || strstr(g->dialogue_text, alder ? "both records" : "match")) && g->gold == 0);
         }

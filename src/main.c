@@ -15,6 +15,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/elowen.h"
 #include "game/aldric.h"
 #include "game/royal_evidence.h"
+#include "game/eastern_arc.h"
 #include "renderer/royal_evidence_renderer.h"
 #include "renderer/viewport.h"
 #include "renderer/landing_renderer.h"
@@ -141,8 +142,7 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         }
     }
     if (g->location == LOCATION_DAWNMERE) {
-        *style = action.target_y == 0 ? TOWN_EXIT_MOUNTAINS :
-            action.target_x == TOWN_W - 1 || action.target_y == TOWN_H - 1 ? TOWN_EXIT_ROAD : TOWN_EXIT_DUNGEON;
+        *style = action.target_y == 0 ? TOWN_EXIT_ROAD : TOWN_EXIT_FOREST;
         return 1;
     }
     if (g->location == LOCATION_TOWN3 || g->location == LOCATION_CASTLE) {
@@ -190,7 +190,7 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
     }
     if (action.target_y == TOWN_H - 1) {
         if (g->location == LOCATION_TOWN2) {
-            *style = TOWN_EXIT_GLASSDEEP;
+            *style = TOWN_EXIT_ROAD;
             return 1;
         }
         *style = g->location == LOCATION_TOWN4 ?
@@ -771,7 +771,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     int sc = event.key.keysym.scancode;
-                    if (screen == SCREEN_PLAYING && royal_evidence_handle_key(&game, sc, event.key.repeat)) {
+                    if (screen == SCREEN_PLAYING && (eastern_handle_key(&game, sc, event.key.repeat) || royal_evidence_handle_key(&game, sc, event.key.repeat))) {
                         break;
                     }
                     if (screen == SCREEN_PLAYING && game_handle_cain_dialogue_key(&game, sc, event.key.repeat)) {
@@ -1118,13 +1118,13 @@ int main(int argc, char **argv) {
                             case CONTROL_TALK: {
                                 if (town_life_near_shopkeeper(&game)) {
                                     game.dialogue_active = 0;
-                                    ShopType type = game.location == LOCATION_COBBLER ? SHOP_TYPE_COBBLER : game.location == LOCATION_BELT_MAKER ? SHOP_TYPE_BELT_MAKER :
+                                    ShopType type = game.location == LOCATION_ALEHOUSE ? SHOP_TYPE_PROVISIONS : game.location == LOCATION_COBBLER ? SHOP_TYPE_COBBLER : game.location == LOCATION_BELT_MAKER ? SHOP_TYPE_BELT_MAKER :
                                         game.location == LOCATION_BLACKSMITH ? SHOP_TYPE_BLACKSMITH : game.location == LOCATION_ALCHEMIST ? SHOP_TYPE_ALCHEMIST : SHOP_TYPE_GOLDSMITH;
                                     shop_init(&shop_screen, type, game.defeated_bosses, game.player.player_class);
                                     screen = SCREEN_SHOP;
                                     break;
                                 }
-                                if (resurrection_talk(&game) || restoration_talk(&game) || town_life_talk(&game, 0)) {
+                                if (eastern_talk(&game) || resurrection_talk(&game) || restoration_talk(&game) || town_life_talk(&game, 0)) {
                                     break;
                                 }
                                 if (crown_quest_talk(&game) || stormbell_talk(&game) || heartseed_talk(&game) || jail_talk_nearby(&game)) {
@@ -1360,7 +1360,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (game.stillbury_prompt || royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
                         break;
                     }
 
@@ -1619,7 +1619,7 @@ int main(int argc, char **argv) {
         }
         int wind_paused = screen != SCREEN_PLAYING || player_projectile_animating || player_slide_animating ||
             entry_gate.active || enemy_shots.count > 0 || !(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) ||
-            royal_evidence_pending(&game) ||
+            game.stillbury_prompt || royal_evidence_pending(&game) ||
             game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) ||
             game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game);
         if (update_stormwatch_clock(&game, &wind_clock, SDL_GetTicks(), wind_paused)) {
@@ -1645,7 +1645,7 @@ int main(int argc, char **argv) {
 
         // Update music based on screen and location
         game_refresh_debug_passages(&game);
-        int traveling = game.location == LOCATION_MANGROVE_PATH || game.location == LOCATION_TOWN_ROAD || game.location == LOCATION_APPROACH ||
+        int traveling = game.location == LOCATION_RIVER_CROSSING || game.location == LOCATION_MANGROVE_PATH || game.location == LOCATION_TOWN_ROAD || game.location == LOCATION_APPROACH ||
             game.location == LOCATION_FOREST_ROAD || game.location == LOCATION_HIGH_PASS ||
             game.location == LOCATION_SWAMP_ROAD || game.location == LOCATION_CROWNROAD ||
             game.location == LOCATION_CROWNROAD_WEST;
@@ -1661,6 +1661,7 @@ int main(int argc, char **argv) {
             game.location == LOCATION_INN || game.location == LOCATION_HEALER || game.location == LOCATION_WITCH ||
             game.location == LOCATION_GUILD ||
             game.location == LOCATION_ISLAND || town_life_is_interior(game.location);
+        is_town = is_town && !eastern_town_combat(&game);
         int in_town2 = game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_INN || game.location == LOCATION_HEALER || game.location == LOCATION_WITCH || game.location == LOCATION_BUTCHER;
         int in_town3 = game.location == LOCATION_TOWN3 ||
