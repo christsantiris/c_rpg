@@ -40,7 +40,7 @@ encounters, quests and entrance behavior. The castle retains its own grounds.
 
 New characters still start in Oakhaven. Return to Town uses the last safe town
 actually entered. Occupied Dawnmere and wanted Stillbury do not become anchors;
-liberated Dawnmere supplies potions and arrows at its Alehouse. Passing around a town leaves that destination unchanged.
+liberated Dawnmere becomes one. Passing around a town leaves that destination unchanged.
 Return portals preserve their expedition anchors and physical entrance towns. Narrative
 arrivals, including Tomas's escape-tunnel return, retain their existing events.
 Physical travel along the regional roads uses the new town exteriors.

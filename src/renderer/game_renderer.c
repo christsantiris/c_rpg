@@ -3621,9 +3621,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         for (int i = 0; i < 3; i++) {
             draw_world_prop(r, viewport_to_screen_x(v, standards[i][0]), viewport_to_screen_y(v, standards[i][1]), PROP_BANNER, banner);
         }
-        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), g->dawnmere_liberated ? "N: SALTWIND MARSH" : "N: WATERFRONT HELD");
-        draw_town_road_sign(r, viewport_to_screen_x(v, 2), viewport_to_screen_y(v, 17), "HAUNTED FOREST\nOAKHAVEN");
-        draw_town_road_sign(r, viewport_to_screen_x(v, 8), viewport_to_screen_y(v, 15), g->dawnmere_progress & 1 ? "CHECKPOINT CLEARED" : "ROYAL CHECKPOINT");
+        // Signs stand clear of building labels and walls in both occupied and liberated states.
+        draw_town_road_sign(r, viewport_to_screen_x(v, 24), viewport_to_screen_y(v, 2), g->dawnmere_liberated ? "N: SALTWIND MARSH" : "N: WATERFRONT HELD");
+        draw_town_road_sign(r, viewport_to_screen_x(v, 1), viewport_to_screen_y(v, 17), "HAUNTED FOREST\nOAKHAVEN");
+        draw_town_road_sign(r, viewport_to_screen_x(v, 8), viewport_to_screen_y(v, 14), g->dawnmere_progress & 1 ? "CHECKPOINT CLEARED" : "ROYAL CHECKPOINT");
         draw_town_road_sign(r, viewport_to_screen_x(v, 20), viewport_to_screen_y(v, 17), g->dawnmere_progress & 2 ? "MARKET CLEARED" : "MARKET GARRISON");
         draw_town_road_sign(r, viewport_to_screen_x(v, 35), viewport_to_screen_y(v, 6), g->dawnmere_liberated ? "DAWNMERE LIBERATED" : "RUSK'S COMMAND");
     }

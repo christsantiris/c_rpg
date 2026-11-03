@@ -23,7 +23,7 @@ static const TownBuilding buildings[] = {
         spice_skiff_offer, NULL},
     {LOCATION_DAWNMERE, LOCATION_ALEHOUSE, 25, 5, 7, 6, 4, 0,
         "ALEHOUSE", "Alehouse Host",
-        "Welcome to Dawnmere's Alehouse. Rest your feet and share a tale from the road.", NULL},
+        "Welcome back to the Alehouse. Crossing the river? The regular crossing is closed by order of the King. Your only way over is through Saltwind Marsh, north of town.", NULL},
     {LOCATION_TOWN, LOCATION_GOLDSMITH, 25, 17, 5, 4, 5, 0,
         "GOLDSMITH", "Goldsmith Iven",
         "Welcome! I buy and sell rings and amulets. Approach my counter and Talk to browse the jewelry.", NULL},
@@ -139,8 +139,7 @@ int town_life_is_shop(Location location) {
 }
 
 int town_life_near_shopkeeper(const GameState *g) {
-    return (town_life_is_shop(g->location) || (g->location == LOCATION_ALEHOUSE && g->dawnmere_liberated)) &&
-        abs(g->player.x - RESIDENT_X) <= 1 && abs(g->player.y - RESIDENT_Y) <= 1;
+    return town_life_is_shop(g->location) && abs(g->player.x - RESIDENT_X) <= 1 && abs(g->player.y - RESIDENT_Y) <= 1;
 }
 
 int town_life_talk(GameState *g, int greeting) {

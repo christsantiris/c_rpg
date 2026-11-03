@@ -361,5 +361,4 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Roll for stats. Choose a class based on strengths. Ascending armor class chance to hit. 
 - Add paypal/other integration to buy gold
    Add real money feature to buy in-game gold.
-- Bugs: Exit north door start next stage facing south. Should be facing north.
 
