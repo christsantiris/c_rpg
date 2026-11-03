@@ -113,7 +113,7 @@ static void occupation(GameState *g, GameState *loaded) {
     game_init(g);
     game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
     ASSERT("occupied Dawnmere has three persistent royal squads and retains Oakhaven as its safe anchor", g->enemy_count == DAWNMERE_GARRISON && !g->dawnmere_liberated && g->last_town_visited == LOCATION_TOWN);
-    ASSERT("the west gate checkpoint explains why royal troops will attack before any fighting", g->dialogue_active && strcmp(g->dialogue_speaker, "Royal Checkpoint") == 0 && strstr(g->dialogue_text, "martial law") && strstr(g->dialogue_text, "we attack") && g->dialogue_x == g->enemies[0].x && g->dialogue_y == g->enemies[0].y);
+    ASSERT("the west gate checkpoint orders the player to leave before any fighting", eastern_challenge_active(g) && strstr(g->dialogue_text, "martial law") && strstr(g->dialogue_text, "Leave town now") && g->dialogue_x == g->enemies[0].x && g->dialogue_y == g->enemies[0].y);
     for (int i = 0; i < g->enemy_count; i++) {
         int archer = i % DAWNMERE_SQUAD == 2 || i % DAWNMERE_SQUAD == 4;
         ASSERT("royal soldiers spawn on usable streets outside NPCs and buildings", map_is_walkable(&g->map, g->enemies[i].x, g->enemies[i].y) && g->enemies[i].boss_aux_y == i / DAWNMERE_SQUAD + 1);
@@ -123,6 +123,8 @@ static void occupation(GameState *g, GameState *loaded) {
         }
     }
     ASSERT("Captain Rusk leads the waterfront command", strcmp(g->enemies[DAWNMERE_RUSK].name, "Captain Rusk") == 0 && g->enemies[DAWNMERE_RUSK].max_hp == 150);
+    ASSERT("forcing a way in starts only the checkpoint squad's attack", eastern_handle_key(g, SDL_SCANCODE_N, 0) && !eastern_challenge_active(g) && g->location == LOCATION_DAWNMERE && g->dawnmere_alerted &&
+        g->enemies[DAWNMERE_SQUAD - 1].boss_aux_x && !g->enemies[DAWNMERE_SQUAD].boss_aux_x && recent_message(g, "force your way into Dawnmere"));
     ASSERT("Dawnmere has a north waterfront gate and no southern or eastern branch", g->map.tiles[0][20] == TILE_TOWN_EXIT && g->map.tiles[24][20] == TILE_WALL && g->map.tiles[12][TOWN_W - 1] == TILE_WALL);
     int before = g->player.x;
     g->player.x = 20;
@@ -131,7 +133,7 @@ static void occupation(GameState *g, GameState *loaded) {
     ASSERT("the occupied waterfront blocks travel and points to the road around town", g->location == LOCATION_DAWNMERE && g->player.y == 1 && strstr(g->messages[g->message_count - 1], "walk around the town"));
     g->player.x = before;
     g->player.y = 12;
-    ASSERT("the sheltered Alehouse can be approached before crossing the checkpoint", journey_to(g, 1, 22) && journey_to(g, 28, 22) && journey_to(g, 28, 11) && !g->dawnmere_alerted);
+    ASSERT("the sheltered Alehouse can be approached by a side lane", journey_to(g, 1, 22) && journey_to(g, 28, 22) && journey_to(g, 28, 11));
     action_resolve_player(g, (Action){ACTION_MOVE, 28, 10});
     ASSERT("the occupation contact is sheltered inside the Alehouse", g->location == LOCATION_ALEHOUSE && g->map.tiles[DAWNMERE_SEREN_Y][DAWNMERE_SEREN_X] == TILE_NPC_SEREN);
     ASSERT("Seren is reachable and offers liberation in a normal dialogue", journey_to(g, DAWNMERE_SEREN_X, DAWNMERE_SEREN_Y + 1) && eastern_talk(g) && game_quest_offer_active(g));
@@ -144,11 +146,11 @@ static void occupation(GameState *g, GameState *loaded) {
     game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0);
     ASSERT("accepting liberation uses one free active slot", g->dawnmere_quest_state == 1 && game_active_quest_count(g) == 3);
     ASSERT("leaving the shelter restores the same garrison", journey_to(g, g->map.stairs_down_x, g->map.stairs_down_y) && g->location == LOCATION_DAWNMERE && g->enemy_count == DAWNMERE_GARRISON);
-    g->enemies[1].hp -= 11;
+    g->enemies[DAWNMERE_SQUAD + 1].hp -= 11;
     g->enemies[0].active = 0;
     eastern_update(g);
-    ASSERT("a struck squad says why it joins the fight", recent_message(g, "You attacked the checkpoint squad") && g->enemies[DAWNMERE_SQUAD - 1].boss_aux_x && !g->enemies[DAWNMERE_SQUAD].boss_aux_x);
-    ASSERT("wounds and casualties survive entering an interior and saving there", save_game(g, EASTERN_SLOT) && load_game(loaded, EASTERN_SLOT) && loaded->enemies[1].hp == g->enemies[1].hp && !loaded->enemies[0].active && loaded->dawnmere_alerted);
+    ASSERT("a struck squad says why it joins the fight", recent_message(g, "You attacked the market squad") && g->enemies[2 * DAWNMERE_SQUAD - 1].boss_aux_x && !g->enemies[DAWNMERE_RUSK].boss_aux_x);
+    ASSERT("wounds and casualties survive entering an interior and saving there", save_game(g, EASTERN_SLOT) && load_game(loaded, EASTERN_SLOT) && loaded->enemies[DAWNMERE_SQUAD + 1].hp == g->enemies[DAWNMERE_SQUAD + 1].hp && !loaded->enemies[0].active && loaded->dawnmere_alerted);
     g->player.level = 10;
     g->player.experience_next = 1000;
     int gold = g->gold;
@@ -342,6 +344,23 @@ static void liberation_without_offer(GameState *g) {
     ASSERT("liberation objectives immediately appear under Completed", quest_journal_get_entry(g, QUEST_TAB_COMPLETED, 0, &entry) && strcmp(entry.title, "Dawnmere Under Occupation") == 0);
 }
 
+static void checkpoint_choice(GameState *g, GameState *loaded) {
+    game_init(g);
+    game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
+    int x = g->player.x;
+    int y = g->player.y;
+    ASSERT("the challenge waits for an answer instead of letting the player walk past", eastern_challenge_active(g) && eastern_handle_key(g, SDL_SCANCODE_D, 0) && eastern_challenge_active(g) && g->player.x == x && g->player.y == y);
+    ASSERT("an unanswered challenge survives save/load", save_game(g, EASTERN_SLOT) && load_game(loaded, EASTERN_SLOT) && eastern_challenge_active(loaded));
+    ASSERT("leaving town returns to the road outside the west gate without a fight", eastern_handle_key(g, SDL_SCANCODE_Y, 0) && g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_DAWNMERE &&
+        !g->dawnmere_alerted && !g->dialogue_active && recent_message(g, "walk around the town to the Saltwind road"));
+    town_road_entrance(TOWN_SIDE_WEST, &x, &y);
+    ASSERT("every west gate arrival repeats the challenge", journey_to(g, x, y) && g->location == LOCATION_DAWNMERE && eastern_challenge_active(g));
+    ASSERT("Esc also leaves town", eastern_handle_key(g, SDL_SCANCODE_ESCAPE, 0) && g->location == LOCATION_TOWN_ROAD && !g->dawnmere_alerted);
+    town_road_enter(g, LOCATION_DAWNMERE, TOWN_SIDE_NORTH, 0);
+    town_road_entrance(TOWN_SIDE_NORTH, &x, &y);
+    ASSERT("the held waterfront gate also stays closed from outside, leaving the challenged west gate as the way in", !journey_to(g, x, y) && g->location == LOCATION_TOWN_ROAD && recent_message(g, "holds the waterfront gate"));
+}
+
 static void garrison_warnings(GameState *g) {
     game_init(g);
     game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
@@ -438,6 +457,7 @@ void test_eastern_arc(void) {
     GameState *loaded = calloc(1, sizeof(*loaded));
     occupation(g, loaded);
     liberation_without_offer(g);
+    checkpoint_choice(g, loaded);
     garrison_warnings(g);
     garrison_reinforcement(g, loaded);
     dawnmere_bypass(g);

@@ -641,6 +641,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     if (aldric_prompt_active(g)) {
         hint = g->aldric_party_state == ALDRIC_FOLLOWING ? "Wait at the Inn? Y: Yes   N: No" : "Join your party? Y: Yes   N: No";
     }
+    if (eastern_challenge_active(g)) {
+        hint = "Y / Esc: Leave town\nN: Force your way in";
+    }
     if (shortcut && strcmp(g->dialogue_speaker, "Take shortcut?") == 0) {
         hint = "Enter: Travel   Esc: Stay";
     }
