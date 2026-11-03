@@ -1,4 +1,5 @@
 #include "boss_gates.h"
+#include "eastern_arc.h"
 #include "containers.h"
 #include "mangrove.h"
 #include "town_road.h"
@@ -17,7 +18,7 @@ typedef struct {
 
 static const DeltaLayout layouts[MANGROVE_DEPTH] = {
     {"Saltwind Landing", {{14, 8, 9, 6}, {43, 11, 11, 6}, {23, 30, 11, 6}, {51, 30, 7, 5}},
-        {{14, 14}, {32, 11}, {23, 24}, {51, 25}}, {{44, 9}, {25, 31}, {52, 31}}, {14, 0}, {63, 30}},
+        {{14, 14}, {32, 11}, {23, 24}, {51, 25}}, {{44, 9}, {25, 31}, {52, 31}}, {6, 39}, {63, 30}},
     {"Splitroot Delta", {{9, 29, 7, 7}, {24, 8, 9, 5}, {49, 11, 9, 7}, {32, 30, 11, 6}},
         {{16, 29}, {24, 13}, {40, 11}, {32, 24}}, {{24, 8}, {49, 11}, {34, 31}}, {0, 30}, {32, 39}},
     {"Mudback Pools", {{32, 7, 10, 5}, {10, 25, 7, 9}, {34, 29, 11, 7}, {53, 15, 8, 8}},
@@ -25,7 +26,7 @@ static const DeltaLayout layouts[MANGROVE_DEPTH] = {
     {"Stiltwater Village", {{8, 15, 6, 10}, {29, 9, 10, 6}, {30, 29, 10, 7}, {52, 30, 9, 6}},
         {{14, 15}, {29, 15}, {30, 22}, {52, 24}}, {{29, 8}, {31, 30}, {53, 31}}, {0, 15}, {52, 39}},
     {"Heartroot Sanctuary", {{52, 7, 8, 5}, {13, 15, 9, 8}, {17, 31, 10, 5}, {43, 29, 14, 8}},
-        {{52, 12}, {22, 15}, {17, 26}, {43, 21}}, {{13, 14}, {18, 32}, {46, 32}}, {52, 0}, {43, 39}}
+        {{52, 12}, {22, 15}, {17, 26}, {43, 21}}, {{13, 14}, {18, 32}, {46, 32}}, {52, 0}, {61, 0}}
 };
 
 static int inside(int x, int y) {
@@ -137,8 +138,19 @@ void mangrove_generate_level(Map *map, int stage, unsigned int searched) {
         carve(map, 37, 11, 37, 29, TILE_MANGROVE_DECK);
     }
     // Reachable boundary jetties continue into the next stage's opposite edge.
-    carve(map, plan->entry[0], plan->entry[1], plan->islands[0][0], plan->islands[0][1], TILE_MANGROVE_MUD);
-    carve(map, plan->exit[0], plan->exit[1], plan->islands[3][0], plan->islands[3][1], stage == 4 ? TILE_MANGROVE_DECK : TILE_MANGROVE_MUD);
+    if (stage == 1) {
+        carve(map, 6, MANGROVE_H - 1, 6, 8, TILE_MANGROVE_MUD);
+        carve(map, 6, 8, plan->islands[0][0], plan->islands[0][1], TILE_MANGROVE_MUD);
+    } else {
+        carve(map, plan->entry[0], plan->entry[1], plan->islands[0][0], plan->islands[0][1], TILE_MANGROVE_MUD);
+    }
+    if (stage == MANGROVE_DEPTH) {
+        // The launch turns north toward the river without paving over its boat landing.
+        carve(map, 61, 0, 61, 29, TILE_MANGROVE_MUD);
+        carve(map, 61, 29, 43, 29, TILE_MANGROVE_MUD);
+    } else {
+        carve(map, plan->exit[0], plan->exit[1], plan->islands[3][0], plan->islands[3][1], stage == 4 ? TILE_MANGROVE_DECK : TILE_MANGROVE_MUD);
+    }
     map->tiles[plan->entry[1]][plan->entry[0]] = TILE_MANGROVE_RETURN;
     map->tiles[plan->exit[1]][plan->exit[0]] = TILE_MANGROVE_EXIT;
     for (int i = 0; i < 3; i++) {
@@ -157,7 +169,7 @@ void mangrove_generate(Map *map, unsigned int searched) {
 }
 
 void mangrove_capture(const GameState *g, MangroveState *state) {
-    if (g->location != LOCATION_MANGROVES) {
+    if (g->location != LOCATION_MANGROVES && g->location != LOCATION_RIVER_CROSSING) {
         return;
     }
     state->stage = g->level;
@@ -177,6 +189,10 @@ void mangrove_capture(const GameState *g, MangroveState *state) {
 }
 
 void mangrove_store(GameState *g) {
+    if (g->location == LOCATION_RIVER_CROSSING) {
+        mangrove_capture(g, &g->river_boat);
+        return;
+    }
     mangrove_capture(g, &g->mangroves);
     if (g->location == LOCATION_MANGROVES) {
         g->mangrove_stages[g->level - 1] = g->mangroves;
@@ -184,6 +200,7 @@ void mangrove_store(GameState *g) {
 }
 
 void mangrove_path(GameState *g, int returning) {
+    eastern_store(g);
     g->location = LOCATION_MANGROVE_PATH;
     g->level = 1;
     g->approach_route = -1;
@@ -193,11 +210,11 @@ void mangrove_path(GameState *g, int returning) {
     memset(&g->map, 0, sizeof(g->map));
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
-            g->map.tiles[y][x] = y >= MANGROVE_GATE_Y ? TILE_MANGROVE_WATER :
+            g->map.tiles[y][x] = y <= MANGROVE_GATE_Y ? TILE_MANGROVE_WATER :
                 x > 0 && x < MANGROVE_PATH_W - 1 && y > 0 ? TILE_TOWN_FLOOR : TILE_WALL;
         }
     }
-    for (int y = 0; y <= MANGROVE_GATE_Y - 4; y++) {
+    for (int y = MANGROVE_GATE_Y + 1; y < MANGROVE_PATH_H; y++) {
         g->map.tiles[y][MANGROVE_GATE_X] = TILE_TOWN_PATH;
     }
     for (int y = MANGROVE_GATE_Y - 3; y <= MANGROVE_GATE_Y; y++) {
@@ -205,12 +222,18 @@ void mangrove_path(GameState *g, int returning) {
             g->map.tiles[y][x] = TILE_MANGROVE_ROOT;
         }
     }
+    g->map.tiles[MANGROVE_GATE_Y][MANGROVE_GATE_X] = TILE_APPROACH_AREA;
+    g->map.tiles[MANGROVE_PATH_H - 1][MANGROVE_GATE_X] = TILE_APPROACH_TOWN;
+    g->map.stairs_up_x = MANGROVE_GATE_X;
+    g->map.stairs_up_y = MANGROVE_PATH_H - 1;
+    g->map.stairs_down_x = MANGROVE_GATE_X;
+    g->map.stairs_down_y = MANGROVE_GATE_Y;
     g->player.x = MANGROVE_GATE_X;
-    g->player.y = returning ? MANGROVE_GATE_Y - 4 : 1;
+    g->player.y = returning ? MANGROVE_GATE_Y + 1 : MANGROVE_PATH_H - 2;
     g->player.last_dx = 0;
-    g->player.last_dy = returning ? -1 : 1;
+    g->player.last_dy = returning ? 1 : -1;
     map_mark_explored(&g->map, g->player.x, g->player.y);
-    push_message(g, "Saltwind Marsh lies south. Dawnmere is back to the north.");
+    push_message(g, "Saltwind Marsh lies north, along the river. Dawnmere is back to the south.");
 }
 
 static void reset_boat(MangroveState *state, int island) {
@@ -251,6 +274,13 @@ static void load_stage(GameState *g, int stage) {
         FloorItem *item = &g->floor_items[i];
         if (item->active) {
             item->underlying_tile = g->map.tiles[item->y][item->x];
+            for (int n = 0; n < i; n++) {
+                const FloorItem *earlier = &g->floor_items[n];
+                if (earlier->active && earlier->x == item->x && earlier->y == item->y) {
+                    item->underlying_tile = earlier->underlying_tile;
+                    break;
+                }
+            }
             g->map.tiles[item->y][item->x] = TILE_ITEM;
         }
     }
@@ -306,6 +336,29 @@ void mangrove_enter(GameState *g, int portal) {
     push_message(g, message);
 }
 
+void mangrove_return_from_river(GameState *g) {
+    load_stage(g, MANGROVE_DEPTH);
+    arrival(g, 0);
+}
+
+int mangrove_aboard(const GameState *g) {
+    return (g->location == LOCATION_MANGROVES && g->mangroves.aboard) ||
+        (g->location == LOCATION_RIVER_CROSSING && g->river_boat.aboard);
+}
+
+const MangroveState *mangrove_boat_state(const GameState *g) {
+    return g->location == LOCATION_RIVER_CROSSING ? &g->river_boat : &g->mangroves;
+}
+
+static void boating_landing(const GameState *g, int index, int *x, int *y) {
+    if (g->location == LOCATION_RIVER_CROSSING) {
+        *x = index == 0 ? RIVER_SOUTH_X : index == 1 ? RIVER_NORTH_X : -1000;
+        *y = index == 0 ? RIVER_SOUTH_Y : index == 1 ? RIVER_NORTH_Y : -1000;
+    } else {
+        mangrove_landing(g->level, index, x, y);
+    }
+}
+
 void mangrove_leave(GameState *g) {
     mangrove_store(g);
     mangrove_path(g, 1);
@@ -317,8 +370,10 @@ void mangrove_change_level(GameState *g, int forward) {
     }
     int stage = g->level;
     if (forward && stage == MANGROVE_DEPTH) {
-        if (boss_gate_crossing(g, LOCATION_MANGROVES)) {
-            mangrove_leave(g);
+        if (g->mangrove_defeated || g->debug_passages_unlocked) {
+            eastern_river_enter(g, 0);
+        } else {
+            push_message(g, "Sszareth holds the final launch. Defeat him to reach the river crossing.");
         }
         return;
     }
@@ -336,8 +391,8 @@ void mangrove_change_level(GameState *g, int forward) {
 
 int mangrove_travel(GameState *g, int x, int y) {
     if (g->location == LOCATION_MANGROVE_PATH) {
-        if (x == MANGROVE_GATE_X && y == 0) {
-            town_road_enter(g, LOCATION_DAWNMERE, TOWN_SIDE_SOUTH, 0);
+        if (x == MANGROVE_GATE_X && y == MANGROVE_PATH_H - 1) {
+            town_road_enter(g, LOCATION_DAWNMERE, TOWN_SIDE_NORTH, 0);
             return 1;
         }
         if (x >= MANGROVE_GATE_X - 3 && x <= MANGROVE_GATE_X + 3 && y >= MANGROVE_GATE_Y - 3 && y <= MANGROVE_GATE_Y) {
@@ -346,19 +401,26 @@ int mangrove_travel(GameState *g, int x, int y) {
         }
         return 0;
     }
-    if (g->location != LOCATION_MANGROVES) {
+    if (eastern_river_travel(g, x, y)) {
+        return 1;
+    }
+    if (g->location != LOCATION_MANGROVES && g->location != LOCATION_RIVER_CROSSING) {
         return 0;
     }
-    if (g->mangroves.aboard) {
+    MangroveState *boat = g->location == LOCATION_RIVER_CROSSING ? &g->river_boat : &g->mangroves;
+    if (boat->aboard) {
         if (inside(x, y) && abs(x - g->player.x) + abs(y - g->player.y) == 1 && g->map.tiles[y][x] == TILE_MANGROVE_WATER) {
-            g->mangroves.boat_dx = g->player.last_dx = x - g->player.x;
-            g->mangroves.boat_dy = g->player.last_dy = y - g->player.y;
-            g->mangroves.boat_x = g->player.x = x;
-            g->mangroves.boat_y = g->player.y = y;
+            boat->boat_dx = g->player.last_dx = x - g->player.x;
+            boat->boat_dy = g->player.last_dy = y - g->player.y;
+            boat->boat_x = g->player.x = x;
+            boat->boat_y = g->player.y = y;
             map_mark_explored(&g->map, x, y);
             action_resolve_enemies(g);
         }
         return 1;
+    }
+    if (g->location == LOCATION_RIVER_CROSSING) {
+        return 0;
     }
     if ((x == g->map.stairs_up_x && y == g->map.stairs_up_y) ||
         (x == g->map.stairs_down_x && y == g->map.stairs_down_y)) {
@@ -369,14 +431,15 @@ int mangrove_travel(GameState *g, int x, int y) {
 }
 
 const char *mangrove_hint(const GameState *g) {
-    if (g->location != LOCATION_MANGROVES) {
+    if (g->location != LOCATION_MANGROVES && g->location != LOCATION_RIVER_CROSSING) {
         return NULL;
     }
-    if (g->mangroves.aboard) {
+    const MangroveState *boat = mangrove_boat_state(g);
+    if (boat->aboard) {
         for (int i = 0; i < 4; i++) {
             int x;
             int y;
-            mangrove_landing(g->level, i, &x, &y);
+            boating_landing(g, i, &x, &y);
             if (abs(g->player.x - x) + abs(g->player.y - y) == 1) {
                 return "GO ASHORE";
             }
@@ -384,8 +447,11 @@ const char *mangrove_hint(const GameState *g) {
         return NULL;
     }
     if (visible_tile(g, g->player.x, g->player.y) == TILE_MANGROVE_LANDING &&
-        abs(g->player.x - g->mangroves.boat_x) + abs(g->player.y - g->mangroves.boat_y) == 1) {
+        abs(g->player.x - boat->boat_x) + abs(g->player.y - boat->boat_y) == 1) {
         return "BOARD SKIFF";
+    }
+    if (g->location == LOCATION_RIVER_CROSSING) {
+        return NULL;
     }
     const char *quest = spice_skiff_hint(g);
     if (quest) {
@@ -413,11 +479,12 @@ int mangrove_interact(GameState *g) {
     if (!hint) {
         return 0;
     }
-    if (g->mangroves.aboard) {
+    MangroveState *boat = g->location == LOCATION_RIVER_CROSSING ? &g->river_boat : &g->mangroves;
+    if (boat->aboard) {
         for (int i = 0; i < 4; i++) {
             int x;
             int y;
-            mangrove_landing(g->level, i, &x, &y);
+            boating_landing(g, i, &x, &y);
             if (abs(g->player.x - x) + abs(g->player.y - y) == 1) {
                 int occupied = 0;
                 for (int j = 0; j < g->enemy_count; j++) {
@@ -431,16 +498,17 @@ int mangrove_interact(GameState *g) {
                 g->player.last_dy = y - g->player.y;
                 g->player.x = x;
                 g->player.y = y;
-                g->mangroves.aboard = 0;
+                boat->aboard = 0;
+                eastern_river_docked(g);
                 break;
             }
         }
     } else if (!strcmp(hint, "BOARD SKIFF")) {
-        g->player.x = g->mangroves.boat_x;
-        g->player.y = g->mangroves.boat_y;
-        g->player.last_dx = g->mangroves.boat_dx;
-        g->player.last_dy = g->mangroves.boat_dy;
-        g->mangroves.aboard = 1;
+        g->player.x = boat->boat_x;
+        g->player.y = boat->boat_y;
+        g->player.last_dx = boat->boat_dx;
+        g->player.last_dy = boat->boat_dy;
+        boat->aboard = 1;
     } else {
         containers_interact(g);
     }
@@ -615,9 +683,105 @@ int mangrove_migrate_pilot(GameState *g) {
     return 1;
 }
 
+static void repair_river_record(MangroveState *state) {
+    if (!state->initialized) {
+        return;
+    }
+    Map terrain;
+    mangrove_generate_level(&terrain, state->stage, state->searched);
+    nearest_ground(&terrain, &state->boat_x, &state->boat_y, 1);
+    for (int i = 0; i < state->enemy_count; i++) {
+        Enemy *enemy = &state->enemies[i];
+        if (enemy->active && !map_is_walkable(&terrain, enemy->x, enemy->y)) {
+            nearest_ground(&terrain, &enemy->x, &enemy->y, 0);
+        }
+    }
+    for (int i = 0; i < state->loot_count; i++) {
+        FloorItem *item = &state->loot[i];
+        if (item->active) {
+            nearest_ground(&terrain, &item->x, &item->y, 0);
+            item->underlying_tile = terrain.tiles[item->y][item->x];
+        }
+    }
+}
+
+void mangrove_repair_river_side(GameState *g) {
+    if (g->location == LOCATION_MANGROVES) {
+        mangrove_store(g);
+    }
+    for (int i = 0; i < MANGROVE_DEPTH; i++) {
+        if (i == 0 || i == MANGROVE_DEPTH - 1) {
+            repair_river_record(&g->mangrove_stages[i]);
+        }
+    }
+    repair_river_record(&g->mangroves);
+    if (g->portal_active && g->portal_location == LOCATION_MANGROVES) {
+        const MangroveState *record = &g->mangrove_stages[g->portal_level - 1];
+        Map terrain;
+        mangrove_generate_level(&terrain, g->portal_level, record->searched);
+        nearest_ground(&terrain, &g->portal_x, &g->portal_y, record->aboard);
+        g->portal_origin_tile = terrain.tiles[g->portal_y][g->portal_x];
+    }
+    if (g->location == LOCATION_MANGROVES) {
+        int x = g->player.x;
+        int y = g->player.y;
+        Map terrain;
+        mangrove_generate_level(&terrain, g->level, g->mangroves.searched);
+        nearest_ground(&terrain, &x, &y, g->mangroves.aboard);
+        if (g->mangroves.aboard) {
+            x = g->mangroves.boat_x;
+            y = g->mangroves.boat_y;
+        }
+        load_stage(g, g->level);
+        g->player.x = x;
+        g->player.y = y;
+        if (g->portal_active && g->portal_location == LOCATION_MANGROVES && g->portal_level == g->level) {
+            g->map.tiles[g->portal_y][g->portal_x] = TILE_PORTAL;
+        }
+    }
+    if (g->location == LOCATION_MANGROVE_PATH) {
+        // Reflect the old southbound approach while retaining discovered terrain and drops.
+        Map old = g->map;
+        FloorItem loot[MAX_FLOOR_ITEMS];
+        int count = g->floor_item_count;
+        memcpy(loot, g->floor_items, sizeof(loot));
+        int px = g->player.x;
+        int py = MANGROVE_PATH_H - 1 - g->player.y;
+        mangrove_path(g, 0);
+        for (int y = 0; y < MANGROVE_PATH_H; y++) {
+            for (int x = 0; x < MANGROVE_PATH_W; x++) {
+                if (map_is_explored(&old, x, y)) {
+                    map_mark_explored(&g->map, x, MANGROVE_PATH_H - 1 - y);
+                }
+            }
+        }
+        g->player.x = px;
+        g->player.y = py;
+        if (!map_is_walkable(&g->map, px, py)) {
+            g->player.x = MANGROVE_GATE_X;
+            g->player.y = MANGROVE_GATE_Y + 1;
+        }
+        g->floor_item_count = count;
+        memcpy(g->floor_items, loot, sizeof(loot));
+        for (int i = 0; i < count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active) {
+                item->y = MANGROVE_PATH_H - 1 - item->y;
+                if (!map_is_walkable(&g->map, item->x, item->y)) {
+                    item->x = MANGROVE_GATE_X;
+                    item->y = MANGROVE_GATE_Y + 2;
+                }
+                item->underlying_tile = g->map.tiles[item->y][item->x] == TILE_ITEM ? TILE_TOWN_PATH : g->map.tiles[item->y][item->x];
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+    }
+}
+
 void mangrove_migrate_town(GameState *g) {
     if (g->location == LOCATION_DAWNMERE) {
-        g->map.tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
+        g->map.tiles[TOWN_H - 1][20] = TILE_WALL;
+        g->map.tiles[0][20] = TILE_TOWN_EXIT;
     }
     if (g->location == LOCATION_TOWN_ROAD && (g->road_town == LOCATION_DAWNMERE || g->road_town == LOCATION_TOWN2)) {
         int x;

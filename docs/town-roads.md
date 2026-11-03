@@ -6,10 +6,12 @@ ferry landing, snapped rope and damaged boat mark an impassable river. Walk
 south along the short path to return through Oakhaven's north gate. Boss
 victories never open this crossing. The actual river tiles remain blocked
 across the entire northern boundary. The README's [final atlas](world-map.png)
-shows this local dead end. Other towns and later connections below are legacy,
-provisional context pending later V2 design.
+shows this local dead end. Act 3 adds occupied Dawnmere, its northern marsh waterfront and the opposite-bank
+town of Stillbury. Other later connections remain provisional.
 
-All five towns have dense medieval settlement sprites and safe, signed roads leading to them.
+All five towns have dense medieval settlement sprites and signed roads leading to them.
+Dawnmere contains a persistent occupation encounter until liberated; wanted
+Stillbury has a checkpoint. Their exteriors remain usable retreats.
 Players arriving from a regional approach or Crown Road can enter town or walk
 around it across open grass to another connection; there is no paved ring road. Bypassing town does not visit shops, accept
 quests, heal the player or unlock regional boss roads.
@@ -26,21 +28,27 @@ continuations, without a second gate. Streets and services inside all five towns
 | Town | North | East | South | West |
 | --- | --- | --- | --- | --- |
 | Oakhaven | Northern Rapids / broken ferry (dead end) | Haunted Forest | Oakhaven Dungeon | Goblin Mountains |
-| Stillbury | Swamp / Rosemoor road | Haunted Forest / Oakhaven road | Stonewake Quarry | Sunscar Wastes |
+| Stillbury | Deferred | Deferred | River dock / Saltwind | Deferred |
 | Rosemoor | Frostfell Wastes | Crown Road East / Castle | Swamp / Stillbury road | Ashen Hollow |
 | Ridgeshire | Dragonspine | Ironfang Mines | Mountains / Dawnmere road | Crown Road West / Castle |
-| Dawnmere | Mountains / Ridgeshire road | Stormwatch Headland | Saltwind Marsh | Dungeon / Oakhaven road |
+| Dawnmere | Saltwind Marsh (after liberation) | Deferred | Closed | Haunted Forest / Oakhaven |
 
 The Lich King, Necromancer, Swamp Demon and Goblin King still control their
 regional through roads. Town bypasses connect their existing approaches and
 never cross a locked regional road. Enemy adventures retain their depth,
 encounters, quests and entrance behavior. The castle retains its own grounds.
 
-New characters still start in Oakhaven. Return to Town uses the last town
-actually entered. Passing around a town leaves that destination unchanged.
+New characters still start in Oakhaven. Return to Town uses the last safe town
+actually entered. Occupied Dawnmere and wanted Stillbury do not become anchors;
+liberated Dawnmere supplies potions and arrows at its Alehouse. Passing around a town leaves that destination unchanged.
 Return portals preserve their expedition anchors and physical entrance towns. Narrative
 arrivals, including Tomas's escape-tunnel return, retain their existing events.
 Physical travel along the regional roads uses the new town exteriors.
+
+The Goblin Mountains' western road now enters Sunscar directly. It no longer
+passes through Stillbury. The continuation beyond Sunscar and the remaining
+Stillbury/Act 4 connections will be designed separately. Legacy service and
+region descriptions below record earlier releases, rather than new V2 routes.
 
 ## Saves and artwork
 

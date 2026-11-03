@@ -16,20 +16,20 @@ const TownApproach town_approaches[] = {
     {LOCATION_TOWN, LOCATION_MOUNTAINS, 0, 12},
     {LOCATION_TOWN, LOCATION_COAST, 20, TOWN_H - 1, 1},
     {LOCATION_DAWNMERE, LOCATION_FOREST, 0, 12},
-    {LOCATION_TOWN2, LOCATION_SWAMP, 20, 0},
-    {LOCATION_TOWN2, LOCATION_DESERT, 0, 12},
-    {LOCATION_TOWN2, LOCATION_GLASSDEEP, SOUTH_AREA_GATE_X, TOWN_H - 1},
+    {LOCATION_TOWN2, LOCATION_SWAMP, 20, 0, 1},
+    {LOCATION_TOWN2, LOCATION_DESERT, 0, 12, 1},
+    {LOCATION_TOWN2, LOCATION_GLASSDEEP, SOUTH_AREA_GATE_X, TOWN_H - 1, 1},
     {LOCATION_TOWN3, LOCATION_FROSTFELL, 20, 0},
     {LOCATION_TOWN3, LOCATION_SWAMP, 20, TOWN_H - 1},
     {-1, -1, 0, 0}, // Retired garden route; saved indices remain stable.
-    {LOCATION_TOWN2, LOCATION_MOUNTAINS, TOWN_W - 1, 12},
+    {LOCATION_TOWN2, LOCATION_MOUNTAINS, TOWN_W - 1, 12, 1},
     {LOCATION_TOWN4, LOCATION_DRAGONSPINE, RIDGESHIRE_DRAGON_GATE_X, 0},
     {LOCATION_CASTLE, LOCATION_ASHEN, CASTLE_ASHEN_GATE_X, 0},
     {LOCATION_CASTLE, LOCATION_CATACOMBS, CROWNROAD_X, TOWN_H - 1},
     {-1, -1, 0, 0}, // The dungeon is now local to Oakhaven.
     {-1, -1, 0, 0}, // Northern rapids have no crossing here.
     {-1, -1, 0, 0}, // Retired coastal route 17.
-    {LOCATION_DAWNMERE, LOCATION_STORMWATCH, TOWN_W - 1, 12},
+    {LOCATION_DAWNMERE, LOCATION_STORMWATCH, TOWN_W - 1, 12, 1},
     {LOCATION_TOWN4, LOCATION_IRONFANG, TOWN_W - 1, 12},
     {LOCATION_TOWN3, LOCATION_GIANTS_CROWN, 0, ROSEMOOR_ASHEN_GATE_Y}
 };
@@ -59,6 +59,7 @@ const char *approach_area_name(Location area) {
         case LOCATION_DRAGONSPINE: return "DRAGONSPINE";
         case LOCATION_FROSTFELL: return "FROSTFELL WASTES";
         case LOCATION_DESERT: return "SUNSCAR WASTES";
+        case LOCATION_RIVER_CROSSING: return "RIVER DOCK / SALTWIND";
         case LOCATION_ASHEN: return "ASHEN HOLLOW";
         case LOCATION_GLASSDEEP: return "STONEWAKE QUARRY";
         case LOCATION_CATACOMBS: return "ROYAL CATACOMBS";
@@ -952,7 +953,7 @@ int approach_travel(GameState *g, int x, int y) {
         return 1;
     }
     if (approach_mountain_town_exit(g, &shortcut_x, &shortcut_y) && x == shortcut_x && y == shortcut_y) {
-        game_leave_approach_to_town(g, route->town == LOCATION_TOWN ? LOCATION_TOWN2 : LOCATION_TOWN);
+        game_enter_desert(g);
         return 1;
     }
     if (approach_shortcut_exit(g, &shortcut_x, &shortcut_y) && x == shortcut_x && y == shortcut_y) {

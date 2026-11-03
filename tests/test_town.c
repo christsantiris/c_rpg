@@ -731,8 +731,8 @@ void test_cain_gift(void) {
         strstr(g.dialogue_text, "Rapids block the north") &&
         strstr(g.dialogue_text, "Goblin Mountains lie west, Haunted Forest east") &&
         g.inventory_count == count + 1 && !game_active_quest_count(&g));
-    ASSERT("Cain's guide is not a quest offer and gameplay keys cannot act through it",
-        !game_quest_offer_active(&g) && game_handle_cain_dialogue_key(&g, SDL_SCANCODE_W, 0) &&
+    ASSERT("Cain's guide is not a quest offer and unrelated keys cannot act through it",
+        !game_quest_offer_active(&g) && game_handle_cain_dialogue_key(&g, SDL_SCANCODE_C, 0) &&
         game_handle_cain_dialogue_key(&g, SDL_SCANCODE_2, 1) &&
         strstr(g.dialogue_text, "blacksmith"));
     static GameState loaded;
@@ -740,13 +740,18 @@ void test_cain_gift(void) {
         save_game(&g, 99238) && load_game(&loaded, 99238) &&
         game_cain_dialogue_active(&loaded) && loaded.cain_scroll_given &&
         loaded.inventory_count == count + 1 && strcmp(loaded.dialogue_text, g.dialogue_text) == 0);
-    ASSERT("the loaded guide can switch to portal instructions without repeating the gift",
+    ASSERT("the removed second topic leaves the loaded guide and gift unchanged",
         game_handle_cain_dialogue_key(&loaded, SDL_SCANCODE_2, 0) &&
-        strstr(loaded.dialogue_text, "no portal back") && !strstr(loaded.dialogue_text, "Blacksmith") &&
+        strstr(loaded.dialogue_text, "blacksmith") && !strstr(loaded.dialogue_text, "no portal back") &&
         loaded.inventory_count == count + 1);
     ASSERT("Enter closes Cain's conversation and restores gameplay input",
         game_handle_cain_dialogue_key(&loaded, SDL_SCANCODE_RETURN, 0) &&
         !game_cain_dialogue_active(&loaded) && !game_handle_cain_dialogue_key(&loaded, SDL_SCANCODE_1, 0));
+    game_talk_to_cain(&loaded);
+    ASSERT("walking away closes Cain's dialogue and passes movement through", !game_handle_cain_dialogue_key(&loaded, SDL_SCANCODE_UP, 0) && !loaded.dialogue_active);
+    game_talk_to_cain(&loaded);
+    controls_assign(loaded.key_bindings, CONTROL_MOVE_UP, SDL_SCANCODE_J);
+    ASSERT("walking away also follows remapped movement keys", !game_handle_cain_dialogue_key(&loaded, SDL_SCANCODE_J, 0) && !loaded.dialogue_active);
     remove("saves/savegame_99238.json");
     game_talk_to_cain(&g);
     ASSERT("talking again does not duplicate the gift",

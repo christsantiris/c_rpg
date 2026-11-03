@@ -24,9 +24,11 @@ are active during either alignment.
 | ✅ | Ashen Hollow | Cinder Imp; Ash Hound; Obsidian Guardian; Fire Elemental; Cinder Lord |
 | ✅ | Blackwater Swamp | Giant Rat; Zombie; Bandit; Wraith; Vampire; Swamp Demon |
 | ✅ | Castle of No Return — interior | Oathbound Soldier; Iron Warden; Royal Marksman; Court Hexer; Royal Guard; Vampire; Royal Arcanist; Lord Veyr |
-| ✅ | Crown Road East | Bandit; Blighted Wolf; Royal Guard; Road Archer; Horseman |
+| ✅ | Crown Road East | Bandit; Blighted Wolf |
 | ✅ | Crown Road North | Goblin Scout; Goblin Archer; Goblin Warchief; Goblin Shaman; Hobgoblin Guard; Blighted Wolf |
-| ✅ | Crown Road West | Bandit; Blighted Wolf; Royal Guard; Road Archer; Horseman |
+| ✅ | Crown Road West | Bandit; Blighted Wolf |
+| ✅ | Dawnmere — occupation | Royal Guard; Road Archer; Captain Rusk (named Royal Guard) |
+| ✅ | Stillbury — wanted checkpoint | Royal Guard; Road Archer |
 | ✅ | Dragonspine | Goblin Scout; Goblin Archer; Drake; Stone Giant; Fire Elemental; Red Dragon |
 | ✅ | Dungeon | Skeleton; Zombie; Crypt Bat; Wraith; Crypt Conjurer; Lich King |
 | ✅ | Elderwood Forest | Blighted Wolf; Dark Elf Ranger; Dark Elf Archer; Thorn Dryad; Treefolk; Elderthorn |

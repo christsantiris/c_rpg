@@ -64,12 +64,12 @@ static void riverbank_round_trips(GameState *g, GameState *loaded) {
 static void chapter_one_connections(GameState *g, GameState *loaded) {
     TownApproach route;
     ASSERT("Oakhaven's west road reaches Goblin Mountains", town_road_connection(LOCATION_TOWN, TOWN_SIDE_WEST, &route) && route.area == LOCATION_MOUNTAINS);
-    ASSERT("Stillbury faces the other end of Goblin Mountains", town_road_connection(LOCATION_TOWN2, TOWN_SIDE_EAST, &route) && route.area == LOCATION_MOUNTAINS);
+    ASSERT("Stillbury now faces its river dock rather than Goblin Mountains", !town_road_connection(LOCATION_TOWN2, TOWN_SIDE_EAST, &route) && town_road_connection(LOCATION_TOWN2, TOWN_SIDE_SOUTH, &route) && route.area == LOCATION_RIVER_CROSSING);
     ASSERT("Oakhaven's east road reaches Haunted Forest", town_road_connection(LOCATION_TOWN, TOWN_SIDE_EAST, &route) && route.area == LOCATION_FOREST);
     ASSERT("Dawnmere faces the other end of Haunted Forest", town_road_connection(LOCATION_DAWNMERE, TOWN_SIDE_WEST, &route) && route.area == LOCATION_FOREST);
     ASSERT("Oakhaven's south road reaches its local dungeon", town_road_connection(LOCATION_TOWN, TOWN_SIDE_SOUTH, &route) && route.area == LOCATION_DUNGEON);
     ASSERT("Oakhaven's north gate visits its local bank", town_road_connection(LOCATION_TOWN, TOWN_SIDE_NORTH, &route) && route.area == LOCATION_TOWN);
-    ASSERT("later connections add no provisional northern routes", !town_road_connection(LOCATION_DAWNMERE, TOWN_SIDE_NORTH, &route) && !town_road_connection(LOCATION_TOWN4, TOWN_SIDE_SOUTH, &route));
+    ASSERT("Dawnmere now connects north to Saltwind while other later routes remain deferred", town_road_connection(LOCATION_DAWNMERE, TOWN_SIDE_NORTH, &route) && route.area == LOCATION_MANGROVES && !town_road_connection(LOCATION_TOWN4, TOWN_SIDE_SOUTH, &route));
     game_init(g);
     town_road_enter(g, LOCATION_TOWN, TOWN_SIDE_EAST, 1);
     int blocked = 1;
@@ -156,6 +156,7 @@ void test_town_roads(void) {
         for (int side = 0; side < 4; side++) {
             TownApproach connection;
             game_init(g);
+            g->dawnmere_liberated = 1;
             if (!town_road_connection(towns[town], side, &connection)) {
                 ASSERT("unconnected sides cannot create a town road or reopen a closed gate", !town_road_enter(g, towns[town], side, 0) && g->location == LOCATION_TOWN);
                 continue;
@@ -187,7 +188,7 @@ void test_town_roads(void) {
             ASSERT("leaving any interior gate returns outside the matching side of the town", loaded->location == LOCATION_TOWN_ROAD && loaded->road_town == towns[town] && abs(loaded->player.x - x) + abs(loaded->player.y - y) == 1 && loaded->map.tiles[y][x] == TILE_TOWN_ROAD_ENTRY_NORTH + side);
             town_road_exit(side, &x, &y);
             walk_town_road_to(loaded, x, y);
-            ASSERT("the regional exit resumes the correct approach or Crown Road", loaded->location == (connection.area == LOCATION_MANGROVES ? LOCATION_MANGROVE_PATH : connection.area == LOCATION_CROWNROAD || connection.area == LOCATION_CROWNROAD_WEST ? connection.area : LOCATION_APPROACH) && (loaded->location != LOCATION_APPROACH || (approach_route(loaded)->town == towns[town] && approach_route(loaded)->area == connection.area)));
+            ASSERT("the regional exit resumes the correct approach or Crown Road", loaded->location == (connection.area == LOCATION_RIVER_CROSSING ? LOCATION_RIVER_CROSSING : connection.area == LOCATION_MANGROVES ? LOCATION_MANGROVE_PATH : connection.area == LOCATION_CROWNROAD || connection.area == LOCATION_CROWNROAD_WEST ? connection.area : LOCATION_APPROACH) && (loaded->location != LOCATION_APPROACH || (approach_route(loaded)->town == towns[town] && approach_route(loaded)->area == connection.area)));
             for (int offset = -3; offset <= 3; offset += 6) {
                 town_road_enter(g, towns[town], side, 0);
                 town_road_entrance(side, &x, &y);
@@ -214,7 +215,7 @@ void test_town_roads(void) {
                 int hp = g->player.hp;
                 town_road_exit(onward, &x, &y);
                 walk_town_road_to(g, x, y);
-                ASSERT("the signed road bypasses town to every other connected direction", g->location == (next.area == LOCATION_MANGROVES ? LOCATION_MANGROVE_PATH : next.area == LOCATION_CROWNROAD || next.area == LOCATION_CROWNROAD_WEST ? next.area : LOCATION_APPROACH) && (g->location != LOCATION_APPROACH || approach_route(g)->area == next.area));
+                ASSERT("the signed road bypasses town to every other connected direction", g->location == (next.area == LOCATION_RIVER_CROSSING ? LOCATION_RIVER_CROSSING : next.area == LOCATION_MANGROVES ? LOCATION_MANGROVE_PATH : next.area == LOCATION_CROWNROAD || next.area == LOCATION_CROWNROAD_WEST ? next.area : LOCATION_APPROACH) && (g->location != LOCATION_APPROACH || approach_route(g)->area == next.area));
                 ASSERT("bypassing town neither starts combat nor changes character, dungeon or quest progress", g->player.hp == hp && g->gold == 393 && g->score == 1234 && g->elowen_seals_restored == 3 && g->level_cache[1].enemies[0].hp == 7 && !g->defeated_bosses);
             }
         }

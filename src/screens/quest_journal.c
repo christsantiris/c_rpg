@@ -188,13 +188,30 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
     {
         "Defeat the Goblin King", "Dain",
         "Defeat the Goblin King and search his records for whoever supplies his raids.",
-        "His defeat opens the mountain road west to Stillbury. Continue your adventure there.",
+        "His defeat opens the mountain road west to Sunscar Wastes.",
         {"Defeat the Goblin King"}, "Goblin Mountains", {MOUNTAIN_BOSS_LEVEL}, 0, 0
+    },
+    {
+        "Dawnmere Under Occupation", "Watchkeeper Seren",
+        "Free Dawnmere from the royal garrison. Seren shelters in the Alehouse.",
+        "Liberation reopens its businesses and the northern Saltwind waterfront.",
+        {"Break the western checkpoint", "Break the market squad", "Defeat Captain Rusk"},
+        "Dawnmere", {0, 0, 0}, 100, 0, "500 XP"
+    },
+    {
+        "Passage Through Saltwind", "Watchkeeper Seren",
+        "Reach the river through Saltwind Marsh, north of Dawnmere.",
+        "Board the skiff, paddle across and dock at Stillbury. Enter town to begin Act 4.",
+        {"Defeat Sszareth at the final launch", "Reach Stillbury's river dock"},
+        "Saltwind Marsh", {5, 0}, 0, 0
     }
 
 };
 
 static int quest_state(const GameState *g, int quest) {
+    if (quest == 23 || quest == 24) {
+        return quest == 23 ? g->dawnmere_quest_state : g->saltwind_quest_state;
+    }
     if (quest == 21 || quest == 22) {
         int state = quest == 21 ? g->alder_quest_state : g->dain_quest_state;
         return state == REGIONAL_CHAIN_BOSS_ACTIVE ? 1 : state == REGIONAL_CHAIN_COMPLETE ? 3 : 0;
@@ -264,6 +281,9 @@ static int quest_state(const GameState *g, int quest) {
 }
 
 static int quest_progress(const GameState *g, int quest) {
+    if (quest == 23 || quest == 24) {
+        return quest == 23 ? g->dawnmere_progress : !!g->mangrove_defeated | (g->saltwind_quest_state == 3 ? 2 : 0);
+    }
     if (quest == 21 || quest == 22) {
         return (g->defeated_bosses & (1 << (quest == 21 ? LOCATION_FOREST : LOCATION_MOUNTAINS))) != 0;
     }

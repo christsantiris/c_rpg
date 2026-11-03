@@ -6,21 +6,24 @@ static const RoyalEvidence documents[] = {
     {ROYAL_EVIDENCE_FUNDING, "Royal Payment Records", "Recovered from the Goblin King",
         "Royal Treasury: release gold and weapons to the Goblin King for raids on Oakhaven's caravans. Continue payment while his forces hold the western road closed. By order of the King."},
     {ROYAL_EVIDENCE_PROTECTION, "Royal Writ of Protection", "Recovered from the Necromancer",
-        "By royal command, the Necromancer's work in the eastern forest is under the King's protection. Patrols shall leave his grove undisturbed and permit his servants to pass."}
+        "By royal command, the Necromancer's work in the eastern forest is under the King's protection. Patrols shall leave his grove undisturbed and permit his servants to pass."},
+    {ROYAL_EVIDENCE_CONFISCATION, "Royal Confiscation Orders", "Recovered from Captain Rusk in Dawnmere",
+        "By the King's seal: Dawnmere's refusal of the levies is rebellion. Seize its cargo and detain those who resist. Send goods and prisoners to Stillbury's customs house. Captain Rusk shall hold the river waterfront until relieved."}
 };
 
 int royal_evidence_found(const GameState *g) {
     return ((g->defeated_bosses & (1u << LOCATION_MOUNTAINS)) ? ROYAL_EVIDENCE_FUNDING : 0) |
-        ((g->defeated_bosses & (1u << LOCATION_FOREST)) ? ROYAL_EVIDENCE_PROTECTION : 0);
+        ((g->defeated_bosses & (1u << LOCATION_FOREST)) ? ROYAL_EVIDENCE_PROTECTION : 0) |
+        (g->dawnmere_liberated ? ROYAL_EVIDENCE_CONFISCATION : 0);
 }
 
 int royal_evidence_count(const GameState *g) {
     int found = royal_evidence_found(g);
-    return !!(found & ROYAL_EVIDENCE_FUNDING) + !!(found & ROYAL_EVIDENCE_PROTECTION);
+    return !!(found & ROYAL_EVIDENCE_FUNDING) + !!(found & ROYAL_EVIDENCE_PROTECTION) + !!(found & ROYAL_EVIDENCE_CONFISCATION);
 }
 
 const RoyalEvidence *royal_evidence_document(int id) {
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
         if (documents[i].id == id) {
             return &documents[i];
         }
@@ -30,7 +33,7 @@ const RoyalEvidence *royal_evidence_document(int id) {
 
 const RoyalEvidence *royal_evidence_entry(const GameState *g, int index) {
     int found = royal_evidence_found(g);
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
         if ((found & documents[i].id) && index-- == 0) {
             return &documents[i];
         }
@@ -39,6 +42,9 @@ const RoyalEvidence *royal_evidence_entry(const GameState *g, int index) {
 }
 
 const char *royal_evidence_conclusion(const GameState *g) {
+    if (g->dawnmere_liberated) {
+        return "The King ordered Dawnmere punished. Seized goods and prisoners were sent to Stillbury customs.";
+    }
     if (royal_evidence_count(g) == 2) {
         return "Both parchments bear the King's seal: the Crown funds the raids and protects the Necromancer.";
     }
@@ -50,7 +56,7 @@ int royal_evidence_pending(const GameState *g) {
         return ROYAL_EVIDENCE_NONE;
     }
     int unread = royal_evidence_found(g) & ~g->royal_evidence_seen;
-    return unread & ROYAL_EVIDENCE_FUNDING ? ROYAL_EVIDENCE_FUNDING : unread & ROYAL_EVIDENCE_PROTECTION;
+    return unread & -unread;
 }
 
 int royal_evidence_handle_key(GameState *g, int key, int repeat) {

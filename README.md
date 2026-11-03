@@ -49,13 +49,19 @@ present from the start; its services require a recruited companion.
 
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/world-map.png?v=3b6c4e6693a3)](docs/world-map.png?v=3b6c4e6693a3)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=889e65531b5e)](docs/world-map.png?v=889e65531b5e)
 
-The current V2 focus is Act 1: Oakhaven, Goblin Mountains to its west, Haunted
+The V2 starting region contains Oakhaven, Goblin Mountains to its west, Haunted
 Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
 to a broken ferry landing at Northern Rapids; the river cannot be crossed.
 The river begins in Frostfell's snow and ice, passes Rosemoor and Blackwater
 Swamp, then flows through Northern Rapids to the eastern estuary.
+
+Act 3’s eastern route runs from occupied Dawnmere north into Saltwind Marsh on
+the river bank. Its skiff passage crosses the calm estuary to Stillbury on the
+opposite bank, where Act 4 begins. Stillbury’s former western site and the
+undecided route beyond Sunscar are no longer connected on the atlas.
+
 The rest of the world is shown as provisional context and will be redesigned
 in later steps; later connections remain undecided.
 Rook's Labyrinth is deferred to a later arc and has no current world entrance.

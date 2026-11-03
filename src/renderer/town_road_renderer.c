@@ -6,7 +6,7 @@
 #include "sprites.h"
 #include <stdio.h>
 
-static void route_label(Renderer *r, const Viewport *v, int x, int y, const char *text, int offset) {
+static void route_label(Renderer *r, const GameState *g, const Viewport *v, int x, int y, const char *text, int offset) {
     int width;
     TTF_SizeText(r->font_tiny, text, &width, NULL);
     int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
@@ -26,6 +26,14 @@ static void route_label(Renderer *r, const Viewport *v, int x, int y, const char
         py = bottom;
     }
     SDL_Rect backing = {px - 4, py - 4, width + 8, TTF_FontHeight(r->font_tiny) + 8};
+    // Slide sideways off the Soulstone Warlock so no Oakhaven road label hides him.
+    SDL_Rect warlock = {viewport_to_screen_x(v, SOULSTONE_WARLOCK_X) * TILE_SIZE, viewport_to_screen_y(v, SOULSTONE_WARLOCK_Y) * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+    if (g->road_town == LOCATION_TOWN && SDL_HasIntersection(&backing, &warlock)) {
+        int east = warlock.x + TILE_SIZE + 6;
+        int west = warlock.x - width - 6;
+        px = (px + width / 2 >= warlock.x + TILE_SIZE / 2 && east <= right) || west < 8 ? east : west;
+        backing.x = px - 4;
+    }
     SDL_SetRenderDrawColor(r->sdl, 12, 26, 20, 255);
     SDL_RenderFillRect(r->sdl, &backing);
     SDL_SetRenderDrawColor(r->sdl, 221, 195, 116, 255);
@@ -79,13 +87,13 @@ void draw_town_road(Renderer *r, const GameState *g, const Viewport *v) {
     renderer_draw_text(r, name, destination.x + (destination.w - width) / 2, destination.y - 28, label, r->font_small);
     if (g->road_town == LOCATION_TOWN) {
         if (viewport_is_visible(v, SOULSTONE_RITUAL_X, SOULSTONE_RITUAL_Y)) {
-            route_label(r, v, SOULSTONE_X - 1, SOULSTONE_ART_Y + 5, "SOULSTONE SHRINE", 10);
+            route_label(r, g, v, SOULSTONE_X - 1, SOULSTONE_ART_Y + 5, "SOULSTONE SHRINE", 10);
         }
         if (OAKHAVEN_FERRY_X >= v->cam_x && OAKHAVEN_FERRY_X < v->cam_x + v->tiles_x && g->player.y < TOWN_SPRITE_Y) {
-            route_label(r, v, OAKHAVEN_FERRY_X, OAKHAVEN_FERRY_ART_Y - 1, "N: BROKEN FERRY / NO CROSSING", 0);
+            route_label(r, g, v, OAKHAVEN_FERRY_X, OAKHAVEN_FERRY_ART_Y - 1, "N: BROKEN FERRY / NO CROSSING", 0);
         }
         if (viewport_is_visible(v, OAKHAVEN_FERRY_X, TOWN_SPRITE_Y + 1)) {
-            route_label(r, v, OAKHAVEN_FERRY_X, TOWN_SPRITE_Y + 1, "S: OAKHAVEN", 0);
+            route_label(r, g, v, OAKHAVEN_FERRY_X, TOWN_SPRITE_Y + 1, "S: OAKHAVEN", 0);
         }
     }
     for (int side = 0; side < 4; side++) {
@@ -109,7 +117,7 @@ void draw_town_road(Renderer *r, const GameState *g, const Viewport *v) {
         renderer_draw_text(r, sign, px, py, (SDL_Color){140, 203, 143, 255}, r->font_tiny);
         town_road_exit(side, &x, &y);
         if (viewport_is_visible(v, x, y)) {
-            route_label(r, v, x, y, sign, 0);
+            route_label(r, g, v, x, y, sign, 0);
         }
     }
 }

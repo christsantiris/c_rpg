@@ -197,7 +197,7 @@ static void test_chain(int alder) {
     talk(&game);
     talk(&game);
     ASSERT("the completed chain gives onward directions without another turn-in payment", !game_quest_offer_active(&game) &&
-        strstr(game.dialogue_text, alder ? "Dawnmere" : "Stillbury") && game.gold == gold + (alder ? 70 : 60));
+        strstr(game.dialogue_text, alder ? "Dawnmere" : "Sunscar Wastes") && game.gold == gold + (alder ? 70 : 60));
     ASSERT("the completed chain remains completed after saving", save_game(&game, ADVENTURE_SLOT) && load_game(&loaded, ADVENTURE_SLOT) &&
         (alder ? loaded.alder_quest_state : loaded.dain_quest_state) == REGIONAL_CHAIN_COMPLETE);
 

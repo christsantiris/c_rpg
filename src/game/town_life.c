@@ -139,7 +139,7 @@ int town_life_is_shop(Location location) {
 }
 
 int town_life_near_shopkeeper(const GameState *g) {
-    return town_life_is_shop(g->location) &&
+    return (town_life_is_shop(g->location) || (g->location == LOCATION_ALEHOUSE && g->dawnmere_liberated)) &&
         abs(g->player.x - RESIDENT_X) <= 1 && abs(g->player.y - RESIDENT_Y) <= 1;
 }
 
@@ -162,6 +162,13 @@ int town_life_talk(GameState *g, int greeting) {
     snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "%s", b->speaker);
     snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s",
         b->after && (g->defeated_bosses & b->victory) ? b->after : b->before);
+    if (b->town == LOCATION_TOWN2 && g->royal_reported_actions) {
+        snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s", g->location == LOCATION_BUTCHER ?
+            "My family in Dawnmere says you freed them. Some here still trust the King; I don't trust his customs officers. Keep away from the checkpoint if you can." :
+            "They say you fought the Crown. I sell boots, not rebellion. I'll trade, but don't bring the King's soldiers to my door.");
+    } else if (g->location == LOCATION_ALEHOUSE && !g->dawnmere_liberated) {
+        snprintf(g->dialogue_text, sizeof(g->dialogue_text), "This room shelters the displaced. Seren is near the west tables. Speak with her about the occupation; the other businesses are shuttered.");
+    }
     return 1;
 }
 

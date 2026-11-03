@@ -1,5 +1,6 @@
 #include "town_road.h"
 #include "mangrove.h"
+#include "eastern_arc.h"
 #include "resurrection.h"
 #include <SDL2/SDL.h>
 #include <string.h>
@@ -27,9 +28,19 @@ int town_road_connection(Location town, TownSide side, TownApproach *connection)
         *connection = (TownApproach){town, LOCATION_TOWN, 20, 0};
         return 1;
     }
-    if (town == LOCATION_DAWNMERE && side == TOWN_SIDE_SOUTH) {
-        *connection = (TownApproach){town, LOCATION_MANGROVES, 20, TOWN_H - 1};
+    if (town == LOCATION_DAWNMERE && side == TOWN_SIDE_NORTH) {
+        *connection = (TownApproach){town, LOCATION_MANGROVES, 20, 0};
         return 1;
+    }
+    if (town == LOCATION_TOWN2) {
+        if (side == TOWN_SIDE_SOUTH) {
+            *connection = (TownApproach){town, LOCATION_RIVER_CROSSING, 20, TOWN_H - 1};
+            return 1;
+        }
+        return 0;
+    }
+    if (town == LOCATION_DAWNMERE && side != TOWN_SIDE_WEST) {
+        return 0;
     }
     for (int i = 0; i < town_approach_count; i++) {
         const TownApproach *route = &town_approaches[i];
@@ -115,6 +126,8 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
     if (town_road_index(town) < 0 || side < 0 || side > 3 || !town_road_connection(town, side, &connection)) {
         return 0;
     }
+    eastern_store(g);
+    mangrove_store(g);
     g->road_town = town;
     g->location = LOCATION_TOWN_ROAD;
     g->approach_route = -1;
@@ -150,6 +163,8 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
     char message[MAX_MESSAGE_LEN];
     if (town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
         snprintf(message, sizeof(message), "Soulstone Shrine lies west of the path. North: broken ferry, no crossing. South: Oakhaven.");
+    } else if (town == LOCATION_TOWN2) {
+        snprintf(message, sizeof(message), "Stillbury: follow the dock approach north into town. Return south to the skiff and Saltwind.");
     } else {
         snprintf(message, sizeof(message), "%s: approach the town to enter, or walk around it to another road.", approach_town_name(town));
     }
@@ -229,6 +244,8 @@ int town_road_travel(GameState *g, int x, int y) {
     }
     if (entry) {
         game_enter_town_gate(g, connection.town, connection.gate_x, connection.gate_y);
+    } else if (connection.area == LOCATION_RIVER_CROSSING) {
+        eastern_river_enter(g, 1);
     } else if (connection.area == LOCATION_MANGROVES) {
         mangrove_path(g, 0);
     } else if (connection.area == LOCATION_CROWNROAD || connection.area == LOCATION_CROWNROAD_WEST) {
