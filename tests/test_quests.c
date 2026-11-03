@@ -224,6 +224,8 @@ void test_dain_town_center(void) {
     game_talk_to_dain(&g);
     ASSERT("Dain cannot assign his quest in the Guild", !g.dain_quest_state && !g.dialogue_active);
     game_enter_town_gate(&g, LOCATION_DAWNMERE, 0, 12);
+    // Dismiss the royal checkpoint's arrival challenge.
+    g.dialogue_active = 0;
     ASSERT("Dawnmere's former Dain tile is restored cobblestone", g.location == LOCATION_DAWNMERE &&
         g.map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] == TILE_TOWN_PATH && map_is_walkable(&g.map, DAIN_TOWN_X, DAIN_TOWN_Y));
     game_talk_to_dain(&g);
