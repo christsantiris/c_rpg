@@ -3130,6 +3130,11 @@ static int enemy_is_major_boss(const Enemy *e) {
 
 static int enemy_prefers_range(const Enemy *e);
 
+// Royal archers hold a firing line on the Crown Roads and in occupied towns instead of chasing.
+static int enemy_holds_firing_line(const GameState *g, const Enemy *e) {
+    return e->type == ENEMY_ROAD_ARCHER && (game_is_crownroad(g) || eastern_town_combat(g));
+}
+
 static int enemy_is_support(const Enemy *e) {
     return e->type == ENEMY_CRYPT_CONJURER ||
         e->type == ENEMY_GOBLIN_SHAMAN ||
@@ -3189,8 +3194,7 @@ static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES])
         for (int i = 0; i < g->enemy_count; i++) {
             const Enemy *e = &g->enemies[i];
             if (!e->active || pursuers[i] || enemy_is_major_boss(e) || wilds_conceals(g, e) ||
-                (game_is_crownroad(g) &&
-                e->type == ENEMY_ROAD_ARCHER)) {
+                enemy_holds_firing_line(g, e)) {
                 continue;
             }
             int distance = enemy_distances[e->y][e->x];
@@ -3418,6 +3422,12 @@ static int clear_orthogonal_path(const GameState *g, int shooter_index, const En
         }
     }
     return 1;
+}
+
+// A firing line shoots down clear lanes; town squads also re-form it behind their guards.
+static int enemy_firing_line_acts(const GameState *g, int index, const Enemy *e) {
+    int distance = enemy_distances[e->y][e->x];
+    return clear_orthogonal_path(g, index, e) || (eastern_town_combat(g) && distance > 0 && distance <= ENEMY_NOTICE_DISTANCE);
 }
 
 static int necromancer_revive(GameState *g, int necromancer_index) {
@@ -3859,9 +3869,7 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
             !(dx == 0 && dy == 0);
         int beside_aldric = !enemy_is_major_boss(e) && aldric_beside(g, e->x, e->y);
         if (!enemy_is_major_boss(e) && !adjacent && !beside_aldric && !pursuers[i] &&
-            !(game_is_crownroad(g) &&
-            e->type == ENEMY_ROAD_ARCHER &&
-            clear_orthogonal_path(g, i, e))) {
+            !(enemy_holds_firing_line(g, e) && enemy_firing_line_acts(g, i, e))) {
             continue;
         }
 
@@ -3965,7 +3973,9 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
             continue;
         }
 
-        if (adjacent && g->location == LOCATION_MOUNTAINS && enemy_goblin_frontline(e) && enemy_tactics_move(g, i) > 0) {
+        // Formation front lines step from the center lane to a shoulder so archers can shoot past them.
+        int front_line = (g->location == LOCATION_MOUNTAINS && enemy_goblin_frontline(e)) || (eastern_town_combat(g) && e->type == ENEMY_ROYAL_GUARD);
+        if (adjacent && front_line && enemy_tactics_move(g, i) > 0) {
             e->move_timer++;
             continue;
         }

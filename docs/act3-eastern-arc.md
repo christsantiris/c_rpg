@@ -111,6 +111,9 @@ Completion does not require finding every surviving soldier. Remaining
 garrison troops retreat and do not respawn on later town visits.
 
 Royal Guards form the front line; Road Archers seek useful rear firing lanes.
+As the Crown Road soldiers did, archers hold a firing line instead of taking
+one of the three pursuit slots, which go to the squad's guards. A guard standing
+in the archers' center lane steps to a shoulder rather than striking from it.
 Horsemen are optional at the exterior gate or a suitably wide courtyard.
 Narrow streets break formations naturally. Soldiers receive ordinary movement
 and attack opportunities, with no additional actions for being in formation.
@@ -283,7 +286,7 @@ entrance, plus renderer checks for labels and docking prompts.
   the checkpoint, and the message log names which of these provoked it. Arriving
   at the west gate before any fighting, the Royal Checkpoint explains the martial
   law and orders the player to leave: Y or Esc returns to the road outside the
-  west gate, N forces entry and starts the checkpoint squad's attack. Guards form melee shoulders and archers seek rear firing lanes. Civilians are
+  west gate, N forces entry and starts the checkpoint squad's attack. Guards form melee shoulders and archers hold a rear firing line. Civilians are
   not combat targets. Retiring royal road patrols leaves bandits and wolves there.
 - Dawnmere can be bypassed. The outskirts arrival message, the held waterfront
   gate and the occupied Alehouse host all point around the walls to the Saltwind
