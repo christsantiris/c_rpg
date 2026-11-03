@@ -79,8 +79,7 @@ void shop_draw(Renderer *r, const GameState *g, const ShopScreen *s) {
 
     int cx = r->screen_w / 2;
 
-    const char *title = s->type == SHOP_TYPE_PROVISIONS ? "DAWNMERE PROVISIONS"
-        : s->type == SHOP_TYPE_ALCHEMIST ? "ALCHEMIST"
+    const char *title = s->type == SHOP_TYPE_ALCHEMIST ? "ALCHEMIST"
         : s->type == SHOP_TYPE_BLACKSMITH ? "BLACKSMITH"
         : s->type == SHOP_TYPE_HEALER ? "HEALER"
         : s->type == SHOP_TYPE_FLETCHER ? "FLETCHER"

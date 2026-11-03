@@ -121,8 +121,8 @@ role and remaining encounters of those roads belong to their later redesign.
 - Royal banners and the occupied-state presentation change to a liberated town.
 - Seren returns to the square; townsfolk and existing businesses resume their
   normal roles. The Belt Maker remains Dawnmere's specialist shop.
-- Dawnmere supplies ordinary journey essentials after liberation. It does not
-  duplicate Oakhaven's Goldsmith or Soulstone Shrine.
+- Dawnmere's Alehouse reopens as a gathering place, not a supply shop. The town
+  does not duplicate Oakhaven's Goldsmith or Soulstone Shrine.
 - Award a one-time XP reward and a modest purse of recovered garrison pay.
   Exact amounts need a balance pass; the player should not be paid twice for
   completing the encounter before accepting its quest.
@@ -270,14 +270,19 @@ entrance, plus renderer checks for labels and docking prompts.
 
 ## First-pass implementation notes
 
-- Captain Rusk is a named Royal Guard; three squads engage by proximity or attack.
-  Guards form melee shoulders and archers seek rear firing lanes. Civilians are
+- Captain Rusk is a named Royal Guard. Each of the three squads fields three Royal
+  Guards and two Road Archers; Rusk leads the waterfront command. A squad engages
+  when the player comes within three tiles, strikes one of its soldiers or crosses
+  the checkpoint, and the message log names which of these provoked it. Arriving
+  at the west gate before any fighting, the Royal Checkpoint explains the martial
+  law and warns that it will attack. Guards form melee shoulders and archers seek rear firing lanes. Civilians are
   not combat targets. Retiring royal road patrols leaves bandits and wolves there.
 - Defeating the checkpoint, market squad and Rusk awards 100 gold and 500 XP once,
   completes liberation without a required acceptance/turn-in, and saves his royal
   confiscation orders in Evidence. The surviving command squad withdraws.
 - Seren shelters in the Alehouse while occupied and returns to the square after
-  liberation. Its host then sells health/mana potions and arrows; Corvin's optional
+  liberation. Its host then sells nothing but explains that the King closed the
+  regular river crossing, so Saltwind Marsh is the way over; Corvin's optional
   cargo recovery remains separate. The Belt Maker reopens.
 - Both eastern main quests obey the three-active limit; finished objectives are
   Completed. The passage completes at Stillbury's landing; entering town sets
@@ -288,6 +293,9 @@ entrance, plus renderer checks for labels and docking prompts.
 - Stillbury's authorities challenge known anti-Crown actions. Submitting or
   withdrawing returns to the dock; resisting activates persistent guards. Civilian
   reactions differ; supplies and the boat retreat remain usable.
+- Save version 237 adds two reinforcements to each squad of an older nine-soldier
+  garrison. Wounds and casualties stay with their squads; a broken squad is not
+  refilled, and a reinforcement whose post is taken stands beside it.
 - Save version 236 retains occupation casualties, loot, rewards, quests, reports,
   checkpoint/guard state, river boat, boarding, exploration and Act 4 arrival.
   Previous marsh terrain is repaired without resetting its progress. Local saves

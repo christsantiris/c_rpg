@@ -1924,7 +1924,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 236);
+    cJSON_AddNumberToObject(root, "save_version", 237);
     cJSON_AddItemToObject(root, "eastern_arc", serialize_eastern(g));
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
@@ -7146,6 +7146,10 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 236) {
         eastern_migrate(g);
+    }
+    // Dawnmere's three royal squads grew from three soldiers to five.
+    if (save_version < 237) {
+        eastern_reinforce(g);
     }
     eastern_refresh(g);
     if (!eastern_valid(g)) {

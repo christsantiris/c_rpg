@@ -3,7 +3,9 @@
 
 #include "game.h"
 
-#define DAWNMERE_GARRISON 9
+#define DAWNMERE_SQUAD 5
+#define DAWNMERE_GARRISON (DAWNMERE_SQUAD * 3)
+#define DAWNMERE_RUSK (DAWNMERE_SQUAD * 2)
 #define DAWNMERE_SEREN_X 24
 #define DAWNMERE_SEREN_Y 18
 #define RIVER_SOUTH_X 14
@@ -14,6 +16,7 @@
 int eastern_town_combat(const GameState *g);
 void eastern_init(GameState *g);
 void eastern_migrate(GameState *g);
+void eastern_reinforce(GameState *g);
 void eastern_store(GameState *g);
 void eastern_enter_town(GameState *g);
 void eastern_refresh(GameState *g);

@@ -98,6 +98,84 @@ void eastern_refresh(GameState *g) {
     }
 }
 
+// Each squad holds three guards and two archers; Rusk leads the waterfront command.
+static void spawn_soldier(GameState *g, Enemy *e, int i) {
+    static const int posts[DAWNMERE_GARRISON][2] = {
+        {9, 12}, {10, 13}, {12, 11}, {10, 11}, {13, 13},
+        {20, 12}, {20, 14}, {23, 12}, {18, 13}, {23, 14},
+        {34, 3}, {32, 4}, {37, 3}, {35, 5}, {38, 4}
+    };
+    int archer = i % DAWNMERE_SQUAD == 2 || i % DAWNMERE_SQUAD == 4;
+    game_spawn_enemy(g, e, archer ? ENEMY_ROAD_ARCHER : ENEMY_ROYAL_GUARD, posts[i][0], posts[i][1]);
+    e->boss_aux_x = 0;
+    e->boss_aux_y = i / DAWNMERE_SQUAD + 1;
+    e->max_hp = e->hp = i == DAWNMERE_RUSK ? 115 : archer ? 46 : 68;
+    e->attack = i == DAWNMERE_RUSK ? 19 : 16;
+    e->defense = i == DAWNMERE_RUSK ? 7 : archer ? 3 : 5;
+    e->experience = i == DAWNMERE_RUSK ? 180 : 65;
+    if (i == DAWNMERE_RUSK) {
+        snprintf(e->name, sizeof(e->name), "Captain Rusk");
+    }
+}
+
+static int post_free(const GameState *g, const Map *map, const Enemy *enemies, int index, int live) {
+    const Enemy *e = &enemies[index];
+    if (!map_is_walkable(map, e->x, e->y) || (live && e->x == g->player.x && e->y == g->player.y)) {
+        return 0;
+    }
+    for (int i = 0; i < DAWNMERE_GARRISON; i++) {
+        if (i != index && enemies[i].active && enemies[i].x == e->x && enemies[i].y == e->y) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+// Saves from the nine-soldier garrison keep every survivor and casualty in its squad.
+static void reinforce_roster(GameState *g, const Map *map, Enemy *enemies, int *count, int live) {
+    if (*count != 9) {
+        return;
+    }
+    Enemy old[9];
+    memcpy(old, enemies, sizeof(old));
+    for (int i = 0; i < DAWNMERE_GARRISON; i++) {
+        int squad = i / DAWNMERE_SQUAD;
+        int slot = i % DAWNMERE_SQUAD;
+        if (slot < 3) {
+            enemies[i] = old[squad * 3 + slot];
+            continue;
+        }
+        spawn_soldier(g, &enemies[i], i);
+        enemies[i].active = 0;
+    }
+    for (int i = 0; i < DAWNMERE_GARRISON; i++) {
+        int squad = i / DAWNMERE_SQUAD;
+        Enemy *e = &enemies[i];
+        if (i % DAWNMERE_SQUAD < 3 || !(old[squad * 3].active || old[squad * 3 + 1].active || old[squad * 3 + 2].active)) {
+            continue;
+        }
+        // Reinforcements join a squad still holding its position, beside any occupied post.
+        e->boss_aux_x = old[squad * 3].boss_aux_x;
+        int x = e->x;
+        int y = e->y;
+        for (int d = 0; d < 9 && !e->active; d++) {
+            e->x = x + (d + 4) % 9 % 3 - 1;
+            e->y = y + (d + 4) % 9 / 3 - 1;
+            e->active = post_free(g, map, enemies, i, live);
+        }
+    }
+    *count = DAWNMERE_GARRISON;
+}
+
+void eastern_reinforce(GameState *g) {
+    if (g->location == LOCATION_DAWNMERE) {
+        reinforce_roster(g, &g->map, g->enemies, &g->enemy_count, 1);
+        eastern_store(g);
+    } else if (g->dawnmere_cache.valid) {
+        reinforce_roster(g, &g->dawnmere_cache.map, g->dawnmere_cache.enemies, &g->dawnmere_cache.enemy_count, 0);
+    }
+}
+
 void eastern_enter_town(GameState *g) {
     if (g->location == LOCATION_DAWNMERE) {
         if (g->dawnmere_cache.valid) {
@@ -107,26 +185,13 @@ void eastern_enter_town(GameState *g) {
             g->floor_item_count = g->dawnmere_loot_count;
             memcpy(g->floor_items, g->dawnmere_loot, sizeof(FloorItem) * g->floor_item_count);
         } else if (!g->dawnmere_liberated) {
-            static const int positions[DAWNMERE_GARRISON][2] = {
-                {9, 12}, {10, 13}, {12, 11}, {20, 12}, {20, 14}, {23, 12},
-                {34, 3}, {32, 4}, {37, 3}
-            };
             g->enemy_count = DAWNMERE_GARRISON;
             for (int i = 0; i < DAWNMERE_GARRISON; i++) {
                 Enemy *e = &g->enemies[i];
-                game_spawn_enemy(g, e, i % 3 == 2 ? ENEMY_ROAD_ARCHER : ENEMY_ROYAL_GUARD, positions[i][0], positions[i][1]);
+                spawn_soldier(g, e, i);
                 if (e->x == g->player.x && e->y == g->player.y) {
                     // Old town saves may place the player at a new sentry position.
                     e->y += 2;
-                }
-                e->boss_aux_x = 0;
-                e->boss_aux_y = i / 3 + 1;
-                e->max_hp = e->hp = i == 6 ? 115 : i % 3 == 2 ? 46 : 68;
-                e->attack = i == 6 ? 19 : 16;
-                e->defense = i == 6 ? 7 : i % 3 == 2 ? 3 : 5;
-                e->experience = i == 6 ? 180 : 65;
-                if (i == 6) {
-                    snprintf(e->name, sizeof(e->name), "Captain Rusk");
                 }
             }
         }
@@ -136,7 +201,15 @@ void eastern_enter_town(GameState *g) {
         eastern_refresh(g);
         eastern_store(g);
         push_message(g, g->dawnmere_liberated ? "Dawnmere is free. Seren waits by the square; Saltwind lies north." :
-            "Royal occupation: the west retreat is open. Seren shelters in the Alehouse; restricted streets lie ahead.");
+            "Royal occupation: squads attack anyone who comes near. Seren shelters in the Alehouse; the west road is your retreat.");
+        if (!g->dawnmere_liberated && !g->dawnmere_alerted && g->player.x == 1) {
+            // The checkpoint challenges each arrival at the west gate before any fighting starts.
+            g->dialogue_active = 1;
+            g->dialogue_x = g->enemies[0].x;
+            g->dialogue_y = g->enemies[0].y;
+            snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Royal Checkpoint");
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "Halt! By order of the King, Dawnmere is under martial law for refusing his levies. Its people are rebels, and so is any outsider in its streets. Come near a royal squad or cross this checkpoint and we attack. Go back to the forest road.");
+        }
     }
     if (g->location == LOCATION_TOWN2) {
         eastern_refresh(g);
@@ -157,25 +230,40 @@ void eastern_update(GameState *g) {
     if (g->location != LOCATION_DAWNMERE || g->dawnmere_liberated || g->enemy_count != DAWNMERE_GARRISON) {
         return;
     }
+    static const char *const squads[3] = {"the checkpoint squad", "the market squad", "Captain Rusk's command"};
     int engaged[3] = {0};
+    int struck[3] = {0};
+    int near[3] = {0};
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *e = &g->enemies[i];
-        engaged[i / 3] |= e->boss_aux_x || !e->active || e->hp < e->max_hp ||
-            (e->active && abs(e->x - g->player.x) + abs(e->y - g->player.y) <= 3);
+        int squad = i / DAWNMERE_SQUAD;
+        engaged[squad] |= e->boss_aux_x;
+        struck[squad] |= !e->active || e->hp < e->max_hp;
+        near[squad] |= e->active && abs(e->x - g->player.x) + abs(e->y - g->player.y) <= 3;
+    }
+    // Tell the player what provoked each squad the moment it joins the fight.
+    for (int squad = 0; squad < 3; squad++) {
+        if (!engaged[squad] && (struck[squad] || near[squad])) {
+            char message[MAX_MESSAGE_LEN];
+            snprintf(message, sizeof(message), struck[squad] ? "You attacked %s. Its soldiers fight back!" :
+                "You came too close to %s. Its soldiers attack!", squads[squad]);
+            push_message(g, message);
+        }
+        engaged[squad] |= struck[squad] || near[squad];
     }
     for (int i = 0; i < g->enemy_count; i++) {
-        g->enemies[i].boss_aux_x = engaged[i / 3];
-        if (engaged[i / 3]) {
+        g->enemies[i].boss_aux_x = engaged[i / DAWNMERE_SQUAD];
+        if (engaged[i / DAWNMERE_SQUAD]) {
             g->dawnmere_alerted = 1;
         }
     }
-    int cleared[3] = {1, 1, !g->enemies[6].active};
+    int cleared[3] = {1, 1, !g->enemies[DAWNMERE_RUSK].active};
     for (int i = 0; i < DAWNMERE_GARRISON; i++) {
         if (!g->enemies[i].active || g->enemies[i].hp < g->enemies[i].max_hp) {
             g->dawnmere_alerted = 1;
         }
-        if (i < 6 && g->enemies[i].active) {
-            cleared[i / 3] = 0;
+        if (i < DAWNMERE_RUSK && g->enemies[i].active) {
+            cleared[i / DAWNMERE_SQUAD] = 0;
         }
     }
     for (int group = 0; group < 3; group++) {
@@ -219,11 +307,11 @@ int eastern_move(GameState *g, int x, int y) {
             }
         }
         if (x >= 7 && x <= 13 && y >= 10 && y <= 14) {
-            if (!g->dawnmere_alerted) {
-                push_message(g, "Royal checkpoint: halt! Crossing into the restricted street brings the garrison down on you.");
+            if (!g->enemies[0].boss_aux_x) {
+                push_message(g, "You crossed the royal checkpoint. The checkpoint squad attacks!");
             }
             g->dawnmere_alerted = 1;
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < DAWNMERE_SQUAD; i++) {
                 g->enemies[i].boss_aux_x = 1;
             }
         }

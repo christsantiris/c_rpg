@@ -1118,7 +1118,7 @@ int main(int argc, char **argv) {
                             case CONTROL_TALK: {
                                 if (town_life_near_shopkeeper(&game)) {
                                     game.dialogue_active = 0;
-                                    ShopType type = game.location == LOCATION_ALEHOUSE ? SHOP_TYPE_PROVISIONS : game.location == LOCATION_COBBLER ? SHOP_TYPE_COBBLER : game.location == LOCATION_BELT_MAKER ? SHOP_TYPE_BELT_MAKER :
+                                    ShopType type = game.location == LOCATION_COBBLER ? SHOP_TYPE_COBBLER : game.location == LOCATION_BELT_MAKER ? SHOP_TYPE_BELT_MAKER :
                                         game.location == LOCATION_BLACKSMITH ? SHOP_TYPE_BLACKSMITH : game.location == LOCATION_ALCHEMIST ? SHOP_TYPE_ALCHEMIST : SHOP_TYPE_GOLDSMITH;
                                     shop_init(&shop_screen, type, game.defeated_bosses, game.player.player_class);
                                     screen = SCREEN_SHOP;
