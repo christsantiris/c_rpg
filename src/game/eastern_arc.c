@@ -109,9 +109,9 @@ static void spawn_soldier(GameState *g, Enemy *e, int i) {
     game_spawn_enemy(g, e, archer ? ENEMY_ROAD_ARCHER : ENEMY_ROYAL_GUARD, posts[i][0], posts[i][1]);
     e->boss_aux_x = 0;
     e->boss_aux_y = i / DAWNMERE_SQUAD + 1;
-    e->max_hp = e->hp = i == DAWNMERE_RUSK ? 115 : archer ? 46 : 68;
-    e->attack = i == DAWNMERE_RUSK ? 19 : 16;
-    e->defense = i == DAWNMERE_RUSK ? 7 : archer ? 3 : 5;
+    e->max_hp = e->hp = i == DAWNMERE_RUSK ? 150 : archer ? 50 : 80;
+    e->attack = i == DAWNMERE_RUSK ? 25 : archer ? 20 : 22;
+    e->defense = i == DAWNMERE_RUSK ? 8 : archer ? 3 : 6;
     e->experience = i == DAWNMERE_RUSK ? 180 : 65;
     if (i == DAWNMERE_RUSK) {
         snprintf(e->name, sizeof(e->name), "Captain Rusk");
