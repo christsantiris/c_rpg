@@ -200,6 +200,15 @@ int town_road_depart(GameState *g, int x, int y) {
     return town_road_enter(g, g->location, town_road_side(x, y), 1);
 }
 
+// Occupied Dawnmere's garrison holds the waterfront gate from outside as well.
+static int gate_held(GameState *g, TownSide side) {
+    if (g->road_town != LOCATION_DAWNMERE || side != TOWN_SIDE_NORTH || g->dawnmere_liberated) {
+        return 0;
+    }
+    push_message(g, "The garrison holds the waterfront gate. Walk around to the west gate to enter Dawnmere.");
+    return 1;
+}
+
 int town_road_travel(GameState *g, int x, int y) {
     if (g->location != LOCATION_TOWN_ROAD) {
         return 0;
@@ -232,7 +241,9 @@ int town_road_travel(GameState *g, int x, int y) {
             g->player.x < TOWN_SPRITE_X ? TOWN_SIDE_WEST : TOWN_SIDE_EAST;
         TownApproach connection;
         if (town_road_connection(g->road_town, side, &connection)) {
-            game_enter_town_gate(g, connection.town, connection.gate_x, connection.gate_y);
+            if (!gate_held(g, side)) {
+                game_enter_town_gate(g, connection.town, connection.gate_x, connection.gate_y);
+            }
             return 1;
         }
     }
@@ -245,7 +256,9 @@ int town_road_travel(GameState *g, int x, int y) {
         return 0;
     }
     if (entry) {
-        game_enter_town_gate(g, connection.town, connection.gate_x, connection.gate_y);
+        if (!gate_held(g, side)) {
+            game_enter_town_gate(g, connection.town, connection.gate_x, connection.gate_y);
+        }
     } else if (connection.area == LOCATION_RIVER_CROSSING) {
         eastern_river_enter(g, 1);
     } else if (connection.area == LOCATION_MANGROVES) {

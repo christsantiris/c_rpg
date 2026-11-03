@@ -72,10 +72,13 @@ that every resident shares one political view.
 
 The player arrives through the western gate. A royal checkpoint controls the
 main street; the initial arrival space and retreat to the forest remain usable.
-The gate guard orders the player to turn back from the restricted street. Moving past
-the clearly marked checkpoint or attacking the soldiers starts local combat.
+The gate guard orders the player to leave town and waits for a choice. Leaving
+returns to the road outside the west gate, where the player can backtrack to
+Oakhaven or walk around the town to Saltwind. Forcing a way in starts the
+checkpoint squad's attack; approaching or attacking the other squads draws them
+into the fight.
 
-A short side lane reaches the Alehouse, where Seren and displaced residents
+Inside, a short side lane reaches the Alehouse, where Seren and displaced residents
 have taken shelter. Before liberation this is a meeting place, not a normal
 operating shop. Civilians do not wander into combat or become attack targets.
 
@@ -279,11 +282,13 @@ entrance, plus renderer checks for labels and docking prompts.
   when the player comes within three tiles, strikes one of its soldiers or crosses
   the checkpoint, and the message log names which of these provoked it. Arriving
   at the west gate before any fighting, the Royal Checkpoint explains the martial
-  law and warns that it will attack. Guards form melee shoulders and archers seek rear firing lanes. Civilians are
+  law and orders the player to leave: Y or Esc returns to the road outside the
+  west gate, N forces entry and starts the checkpoint squad's attack. Guards form melee shoulders and archers seek rear firing lanes. Civilians are
   not combat targets. Retiring royal road patrols leaves bandits and wolves there.
 - Dawnmere can be bypassed. The outskirts arrival message, the held waterfront
   gate and the occupied Alehouse host all point around the walls to the Saltwind
-  road, which never alerts the garrison.
+  road, which never alerts the garrison. While occupied, the waterfront gate is
+  closed from outside too, so the challenged west gate is the only way in.
 - Defeating the checkpoint, market squad and Rusk awards 100 gold and 500 XP once,
   completes liberation without a required acceptance/turn-in, and saves his royal
   confiscation orders in Evidence. The surviving command squad withdraws.

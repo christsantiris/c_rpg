@@ -203,12 +203,12 @@ void eastern_enter_town(GameState *g) {
         push_message(g, g->dawnmere_liberated ? "Dawnmere is free. Seren waits by the square; Saltwind lies north." :
             "Royal occupation: squads attack anyone who comes near. Seren shelters in the Alehouse; the west road is your retreat.");
         if (!g->dawnmere_liberated && !g->dawnmere_alerted && g->player.x == 1) {
-            // The checkpoint challenges each arrival at the west gate before any fighting starts.
+            // The checkpoint orders each arrival at the west gate to leave before any fighting starts.
             g->dialogue_active = 1;
             g->dialogue_x = g->enemies[0].x;
             g->dialogue_y = g->enemies[0].y;
             snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Royal Checkpoint");
-            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "Halt! By order of the King, Dawnmere is under martial law for refusing his levies. Its people are rebels, and so is any outsider in its streets. Come near a royal squad or cross this checkpoint and we attack. Go back to the forest road.");
+            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "Halt! By order of the King, Dawnmere is under martial law for refusing his levies. Its people are rebels, and so is any outsider in its streets. Leave town now, or we attack.");
         }
     }
     if (g->location == LOCATION_TOWN2) {
@@ -353,7 +353,29 @@ int eastern_talk(GameState *g) {
     return 1;
 }
 
+int eastern_challenge_active(const GameState *g) {
+    return g->location == LOCATION_DAWNMERE && !g->dawnmere_liberated && !g->dawnmere_alerted && g->dialogue_active &&
+        strcmp(g->dialogue_speaker, "Royal Checkpoint") == 0;
+}
+
 int eastern_handle_key(GameState *g, int key, int repeat) {
+    if (eastern_challenge_active(g)) {
+        if (repeat) {
+            return 1;
+        }
+        if (key == SDL_SCANCODE_N) {
+            g->dialogue_active = 0;
+            g->dawnmere_alerted = 1;
+            for (int i = 0; i < DAWNMERE_SQUAD; i++) {
+                g->enemies[i].boss_aux_x = 1;
+            }
+            push_message(g, "You force your way into Dawnmere. The checkpoint squad attacks!");
+        } else if (key == SDL_SCANCODE_Y || key == SDL_SCANCODE_ESCAPE) {
+            g->dialogue_active = 0;
+            town_road_enter(g, LOCATION_DAWNMERE, TOWN_SIDE_WEST, 1);
+        }
+        return 1;
+    }
     if (!g->stillbury_prompt) {
         return 0;
     }
