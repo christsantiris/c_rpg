@@ -112,7 +112,7 @@ static void spawn_soldier(GameState *g, Enemy *e, int i) {
     e->max_hp = e->hp = i == DAWNMERE_RUSK ? 150 : archer ? 50 : 80;
     e->attack = i == DAWNMERE_RUSK ? 25 : archer ? 20 : 22;
     e->defense = i == DAWNMERE_RUSK ? 8 : archer ? 3 : 6;
-    e->experience = i == DAWNMERE_RUSK ? 180 : 65;
+    e->experience = i == DAWNMERE_RUSK ? 240 : 85;
     if (i == DAWNMERE_RUSK) {
         snprintf(e->name, sizeof(e->name), "Captain Rusk");
     }
