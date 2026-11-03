@@ -23,6 +23,7 @@ void eastern_refresh(GameState *g);
 void eastern_update(GameState *g);
 int eastern_move(GameState *g, int x, int y);
 int eastern_talk(GameState *g);
+int eastern_challenge_active(const GameState *g);
 int eastern_handle_key(GameState *g, int key, int repeat);
 void eastern_river_map(Map *map);
 void eastern_river_enter(GameState *g, int from_town);
