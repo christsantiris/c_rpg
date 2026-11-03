@@ -294,7 +294,7 @@ int eastern_move(GameState *g, int x, int y) {
     }
     if (g->location == LOCATION_DAWNMERE && !g->dawnmere_liberated) {
         if (x == 20 && y == 0) {
-            push_message(g, "The garrison holds the northern waterfront. Liberate Dawnmere to reach Saltwind.");
+            push_message(g, "The garrison holds the northern waterfront. Leave by the west gate and walk around the town to reach Saltwind.");
             return 1;
         }
         if (g->map.tiles[y][x] == TILE_LOCAL_DOOR) {

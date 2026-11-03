@@ -128,7 +128,7 @@ static void occupation(GameState *g, GameState *loaded) {
     g->player.x = 20;
     g->player.y = 1;
     action_resolve_player(g, (Action){ACTION_MOVE, 20, 0});
-    ASSERT("the occupied waterfront visibly blocks actual travel without requiring quest acceptance", g->location == LOCATION_DAWNMERE && g->player.y == 1 && strstr(g->messages[g->message_count - 1], "Liberate"));
+    ASSERT("the occupied waterfront blocks travel and points to the road around town", g->location == LOCATION_DAWNMERE && g->player.y == 1 && strstr(g->messages[g->message_count - 1], "walk around the town"));
     g->player.x = before;
     g->player.y = 12;
     ASSERT("the sheltered Alehouse can be approached before crossing the checkpoint", journey_to(g, 1, 22) && journey_to(g, 28, 22) && journey_to(g, 28, 11) && !g->dawnmere_alerted);
@@ -387,6 +387,19 @@ static void garrison_reinforcement(GameState *g, GameState *loaded) {
     ASSERT("the reinforced garrison round-trips", save_game(loaded, EASTERN_SLOT) && load_game(g, EASTERN_SLOT) && g->enemy_count == DAWNMERE_GARRISON && g->enemies[3].x == blocked->x && g->enemies[3].y == blocked->y);
 }
 
+static void dawnmere_bypass(GameState *g) {
+    game_init(g);
+    town_road_enter(g, LOCATION_DAWNMERE, TOWN_SIDE_WEST, 0);
+    ASSERT("arriving outside occupied Dawnmere offers the road around town", recent_message(g, "walk around the town to the Saltwind road"));
+    int x;
+    int y;
+    town_road_exit(TOWN_SIDE_NORTH, &x, &y);
+    ASSERT("the forest road reaches the marsh approach around occupied Dawnmere without a fight", journey_to(g, x, y) && g->location == LOCATION_MANGROVE_PATH && !g->dawnmere_liberated && !g->dawnmere_alerted && !g->royal_reported_actions);
+    game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
+    ASSERT("the occupied Alehouse can be reached without alerting the garrison", journey_to(g, 1, 22) && journey_to(g, 28, 22) && journey_to(g, 28, 11) && journey_to(g, 28, 10) && g->location == LOCATION_ALEHOUSE && !g->dawnmere_alerted);
+    ASSERT("the occupied Alehouse host points around the walls to Saltwind", journey_to(g, RESIDENT_X, RESIDENT_Y + 1) && town_life_talk(g, 0) && strstr(g->dialogue_text, "closed by order of the King") && strstr(g->dialogue_text, "walk around our walls"));
+}
+
 static void royal_tactics(GameState *g) {
     const int step[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
     for (int side = 0; side < 4; side++) {
@@ -427,6 +440,7 @@ void test_eastern_arc(void) {
     liberation_without_offer(g);
     garrison_warnings(g);
     garrison_reinforcement(g, loaded);
+    dawnmere_bypass(g);
     royal_tactics(g);
     eastern_persistence(g, loaded);
     for (int seed = 0; seed < 4; seed++) {

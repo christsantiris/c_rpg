@@ -165,6 +165,8 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
         snprintf(message, sizeof(message), "Soulstone Shrine lies west of the path. North: broken ferry, no crossing. South: Oakhaven.");
     } else if (town == LOCATION_TOWN2) {
         snprintf(message, sizeof(message), "Stillbury: follow the dock approach north into town. Return south to the skiff and Saltwind.");
+    } else if (town == LOCATION_DAWNMERE && !g->dawnmere_liberated) {
+        snprintf(message, sizeof(message), "Dawnmere is occupied. Enter at the west gate, or walk around the town to the Saltwind road north.");
     } else {
         snprintf(message, sizeof(message), "%s: approach the town to enter, or walk around it to another road.", approach_town_name(town));
     }

@@ -155,7 +155,8 @@ Saltwind is dangerous because local creatures have taken over its abandoned
 landings. Sszareth controls the last one. He is not proposed as another agent
 of the King; the occupation made this neglected route necessary.
 
-Recommended gate: Dawnmere's liberation opens access to the marsh waterfront.
+Dawnmere is optional. Its exterior road leads around the occupied town to the
+marsh approach; liberation also opens the town's north waterfront gate.
 Accepting either main quest is optional. Sszareth's defeat opens the final
 crossing route, while retreat through earlier stages remains available.
 
@@ -226,6 +227,9 @@ to the Act 4 design, not this eastern story proposal.
 - Liberation is a public anti-Crown event. Stillbury's checkpoints demand
   surrender; refusal or resistance leads to hostile troops. Civilian responses
   vary, and some contacts can still help the player.
+- Bypassing occupied Dawnmere leaves no known anti-Crown act, so loyalist
+  Stillbury welcomes the player. Liberating Dawnmere later still makes the
+  player wanted there.
 - The western route can later set the same public-recognition state through
   its own known anti-Crown acts. Possessing secret evidence alone is not an
   automatically reported crime.
@@ -277,6 +281,9 @@ entrance, plus renderer checks for labels and docking prompts.
   at the west gate before any fighting, the Royal Checkpoint explains the martial
   law and warns that it will attack. Guards form melee shoulders and archers seek rear firing lanes. Civilians are
   not combat targets. Retiring royal road patrols leaves bandits and wolves there.
+- Dawnmere can be bypassed. The outskirts arrival message, the held waterfront
+  gate and the occupied Alehouse host all point around the walls to the Saltwind
+  road, which never alerts the garrison.
 - Defeating the checkpoint, market squad and Rusk awards 100 gold and 500 XP once,
   completes liberation without a required acceptance/turn-in, and saves his royal
   confiscation orders in Evidence. The surviving command squad withdraws.
