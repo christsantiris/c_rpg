@@ -10,10 +10,11 @@ The marsh is drawn at the Crown Roads' 1.5× zoom: the camera shows about
 30 × 18 tiles around the player. Venom spit and Sszareth's root charge reach six
 tiles, so they start on screen.
 
-Liberate Dawnmere to open its northern waterfront. Leave through the north
-gate, follow its exterior road north, and enter the mangrove-and-skiff landmark.
+Dawnmere is optional. Walk around the occupied town from the forest road, or
+leave liberated Dawnmere through its north gate, then follow the exterior road
+north and enter the mangrove-and-skiff landmark.
 A new expedition starts at stage 1. Retreat returns south along this approach
-to Dawnmere's north gate. Defeating Sszareth opens stage 5's northern launch
+to Dawnmere's north exterior. Defeating Sszareth opens stage 5's northern launch
 into a playable river reach. Paddle to the opposite landing, dock, then follow
 the bank approach north into Stillbury to begin Act 4. The same skiffs and
 cached stages support the full return journey.

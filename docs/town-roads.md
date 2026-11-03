@@ -31,7 +31,7 @@ continuations, without a second gate. Streets and services inside all five towns
 | Stillbury | Deferred | Deferred | River dock / Saltwind | Deferred |
 | Rosemoor | Frostfell Wastes | Crown Road East / Castle | Swamp / Stillbury road | Ashen Hollow |
 | Ridgeshire | Dragonspine | Ironfang Mines | Mountains / Dawnmere road | Crown Road West / Castle |
-| Dawnmere | Saltwind Marsh (after liberation) | Deferred | Closed | Haunted Forest / Oakhaven |
+| Dawnmere | Saltwind Marsh (town gate after liberation; outskirts always) | Deferred | Closed | Haunted Forest / Oakhaven |
 
 The Lich King, Necromancer, Swamp Demon and Goblin King still control their
 regional through roads. Town bypasses connect their existing approaches and
