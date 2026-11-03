@@ -451,6 +451,48 @@ static void royal_tactics(GameState *g) {
     }
 }
 
+static void place_squad(GameState *g, const int posts[DAWNMERE_SQUAD][2]) {
+    g->enemy_count = DAWNMERE_SQUAD;
+    for (int i = 0; i < DAWNMERE_SQUAD; i++) {
+        g->enemies[i].active = 1;
+        g->enemies[i].hp = g->enemies[i].max_hp;
+        g->enemies[i].x = posts[i][0];
+        g->enemies[i].y = posts[i][1];
+        g->enemies[i].boss_aux_x = 1;
+    }
+}
+
+static void royal_firing_line(GameState *g) {
+    // Slots 2 and 4 are archers, placed nearer the player than the rear guard.
+    const int advance[DAWNMERE_SQUAD][2] = {{26, 11}, {26, 13}, {24, 12}, {30, 12}, {25, 13}};
+    const int contact[DAWNMERE_SQUAD][2] = {{21, 12}, {21, 11}, {24, 12}, {23, 15}, {26, 13}};
+    game_init(g);
+    game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
+    g->dialogue_active = 0;
+    for (int y = 1; y < TOWN_H - 1; y++) {
+        for (int x = 1; x < TOWN_W - 1; x++) {
+            g->map.tiles[y][x] = TILE_TOWN_PATH;
+        }
+    }
+    g->player.x = 20;
+    g->player.y = 12;
+    g->player.hp = g->player.max_hp = 100000;
+    g->dawnmere_alerted = 1;
+    place_squad(g, advance);
+    action_resolve_enemies(g);
+    int advanced = 1;
+    for (int i = 0; i < DAWNMERE_SQUAD; i++) {
+        if (g->enemies[i].type == ENEMY_ROYAL_GUARD) {
+            advanced &= g->enemies[i].x != advance[i][0] || g->enemies[i].y != advance[i][1];
+        }
+    }
+    ASSERT("archers hold a firing line and leave every pursuit slot to the squad's guards", advanced && g->enemies[3].x < 30);
+    place_squad(g, contact);
+    action_resolve_enemies(g);
+    ASSERT("a guard blocking the archers' lane steps to a shoulder instead of striking", g->enemies[0].x == 21 && g->enemies[0].y == 13 && g->enemies[1].x == 21 && g->enemies[1].y == 11);
+    ASSERT("the center lane stays open for the archer behind the guards", g->enemies[2].y == 12 && g->enemies[2].x >= 22);
+}
+
 void test_eastern_arc(void) {
     printf("\nAct 3 eastern arc:\n");
     GameState *g = calloc(1, sizeof(*g));
@@ -462,6 +504,7 @@ void test_eastern_arc(void) {
     garrison_reinforcement(g, loaded);
     dawnmere_bypass(g);
     royal_tactics(g);
+    royal_firing_line(g);
     eastern_persistence(g, loaded);
     for (int seed = 0; seed < 4; seed++) {
         marsh_journey(g, loaded, 9020 + seed);
