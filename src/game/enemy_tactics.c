@@ -1,5 +1,6 @@
 #include "enemy_tactics.h"
 #include "aldric.h"
+#include "eastern_arc.h"
 #include <stdlib.h>
 
 static const int dx[] = {0, 1, 0, -1};
@@ -7,6 +8,14 @@ static const int dy[] = {-1, 0, 1, 0};
 
 int enemy_goblin_frontline(const Enemy *e) {
     return e->type == ENEMY_GOBLIN_SCOUT || e->type == ENEMY_GOBLIN_WARCHIEF || e->type == ENEMY_HOBGOBLIN_GUARD;
+}
+
+static int frontline(const Enemy *e) {
+    return enemy_goblin_frontline(e) || e->type == ENEMY_ROYAL_GUARD;
+}
+
+static int royal(const Enemy *e) {
+    return e->type == ENEMY_ROYAL_GUARD || e->type == ENEMY_ROAD_ARCHER;
 }
 
 static int goblin(const Enemy *e) {
@@ -68,7 +77,7 @@ static int step_to(GameState *g, int index, int x, int y) {
     }
     int head = 0;
     int tail = 0;
-    int keep_range = !enemy_goblin_frontline(e) && e->type != ENEMY_DARK_ELF_GUARD;
+    int keep_range = !frontline(e) && e->type != ENEMY_DARK_ELF_GUARD;
     distance[y][x] = 0;
     queue[tail++] = y * MAP_W + x;
     while (head < tail && distance[e->y][e->x] < 0) {
@@ -117,7 +126,8 @@ static int step_to(GameState *g, int index, int x, int y) {
 
 int enemy_tactics_move(GameState *g, int index) {
     Enemy *e = &g->enemies[index];
-    int formation = g->location == LOCATION_MOUNTAINS && goblin(e);
+    int royal_formation = eastern_town_combat(g) && royal(e);
+    int formation = (g->location == LOCATION_MOUNTAINS && goblin(e)) || royal_formation;
     int flank = g->location == LOCATION_FOREST && dark_elf(e);
     if (!formation && !flank) {
         return -1;
@@ -127,16 +137,17 @@ int enemy_tactics_move(GameState *g, int index) {
     int rank = 0;
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *ally = &g->enemies[i];
-        if (!ally->active || !(formation ? goblin(ally) : dark_elf(ally)) ||
+        if (!ally->active || !(royal_formation ? royal(ally) : formation ? goblin(ally) : dark_elf(ally)) ||
+            (royal_formation && ally->boss_aux_y != e->boss_aux_y) ||
             abs(ally->x - e->x) + abs(ally->y - e->y) > 6) {
             continue;
         }
         members++;
-        if (i < index && (flank || enemy_goblin_frontline(ally) == enemy_goblin_frontline(e))) {
+        if (i < index && (flank || frontline(ally) == frontline(e))) {
             rank++;
         }
         // A rear archer stabilizes a goblin line; a guard anchors the elf feint.
-        if (anchor < 0 || (formation && ally->type == ENEMY_GOBLIN_ARCHER && g->enemies[anchor].type != ENEMY_GOBLIN_ARCHER) ||
+        if (anchor < 0 || (formation && (ally->type == ENEMY_GOBLIN_ARCHER || ally->type == ENEMY_ROAD_ARCHER) && g->enemies[anchor].type != ally->type) ||
             (flank && ally->type == ENEMY_DARK_ELF_GUARD && g->enemies[anchor].type != ENEMY_DARK_ELF_GUARD)) {
             anchor = i;
         }
@@ -158,8 +169,8 @@ int enemy_tactics_move(GameState *g, int index) {
                 return -1;
             }
         }
-        int front = enemy_goblin_frontline(e);
-        int depth = front ? 1 : e->type == ENEMY_GOBLIN_ARCHER ? 3 + rank / 2 : 4;
+        int front = frontline(e);
+        int depth = front ? 1 : (e->type == ENEMY_GOBLIN_ARCHER || e->type == ENEMY_ROAD_ARCHER) ? 3 + rank / 2 : 4;
         if (depth > 6) {
             depth = 6;
         }

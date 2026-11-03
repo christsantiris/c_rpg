@@ -206,7 +206,8 @@ typedef enum {
     LOCATION_COBBLER,
     LOCATION_BELT_MAKER,
     LOCATION_BLACKSMITH,
-    LOCATION_ALCHEMIST
+    LOCATION_ALCHEMIST,
+    LOCATION_RIVER_CROSSING
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the
@@ -293,6 +294,21 @@ typedef struct {
 
 typedef struct {
     Player     player;
+    LevelCache dawnmere_cache;
+    FloorItem dawnmere_loot[MAX_FLOOR_ITEMS];
+    int dawnmere_loot_count;
+    int dawnmere_liberated;
+    int dawnmere_alerted;
+    int dawnmere_progress; // Checkpoint, market squad, commander.
+    int dawnmere_quest_state; // 0 unaccepted, 1 active, 3 completed.
+    int saltwind_quest_state; // 0 unaccepted, 1 active, 3 completed.
+    int royal_reported_actions; // 1: Dawnmere liberation, 2: future public western actions.
+    int act4_arrived;
+    int stillbury_challenge;
+    int stillbury_prompt;
+    int stillbury_guards_initialized;
+    Enemy stillbury_guards[3];
+    MangroveState river_boat;
     GiantsStage giants_crown[GIANTS_DEPTH];
     int giants_crown_defeated;
     int crown_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.

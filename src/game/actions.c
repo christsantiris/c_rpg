@@ -4,6 +4,7 @@
 #include "crownroad_north.h"
 #include "stonewake.h"
 #include "actions.h"
+#include "eastern_arc.h"
 #include "restoration.h"
 #include "game.h"
 #include "mangrove.h"
@@ -1300,7 +1301,7 @@ static void resolve_player_action(GameState *g, Action a) {
         push_message(g, "Disembark before dropping an item on solid ground.");
         return;
     }
-    if (g->location == LOCATION_MANGROVES && g->mangroves.aboard && a.type == ACTION_DROP_ITEM) {
+    if (mangrove_aboard(g) && a.type == ACTION_DROP_ITEM) {
         push_message(g, "Go ashore before setting down an item.");
         return;
     }
@@ -1324,10 +1325,10 @@ static void resolve_player_action(GameState *g, Action a) {
     game_repair_equipment_indices(g);
     if (g->location == LOCATION_TOWN ||
         g->location == LOCATION_TAVERN ||
-        g->location == LOCATION_TOWN2 ||
+        (g->location == LOCATION_TOWN2 && !eastern_town_combat(g)) ||
         g->location == LOCATION_TOWN3 ||
         g->location == LOCATION_TOWN4 ||
-        g->location == LOCATION_DAWNMERE ||
+        (g->location == LOCATION_DAWNMERE && !eastern_town_combat(g)) ||
         g->location == LOCATION_HIGH_PASS ||
         g->location == LOCATION_SWAMP_ROAD ||
         g->location == LOCATION_CASTLE ||
@@ -1845,7 +1846,7 @@ static void resolve_player_action(GameState *g, Action a) {
         }
 
         Spell *sp = &g->player.known_spells[g->player.equipped_spell];
-        if (g->location == LOCATION_MANGROVES && g->mangroves.aboard && sp->id != SPELL_RETURN_TO_TOWN && sp->type != SPELL_TYPE_HEAL) {
+        if (mangrove_aboard(g) && sp->id != SPELL_RETURN_TO_TOWN && sp->type != SPELL_TYPE_HEAL) {
             push_message(g, "Go ashore before using combat spells.");
             return;
         }
@@ -1875,10 +1876,10 @@ static void resolve_player_action(GameState *g, Action a) {
                 return;
             }
             if (g->location == LOCATION_TOWN ||
-                g->location == LOCATION_TOWN2 ||
+                (g->location == LOCATION_TOWN2 && !eastern_town_combat(g)) ||
                 g->location == LOCATION_TOWN3 ||
                 g->location == LOCATION_TOWN4 ||
-                g->location == LOCATION_DAWNMERE ||
+                (g->location == LOCATION_DAWNMERE && !eastern_town_combat(g)) ||
                 g->location == LOCATION_CASTLE ||
                 g->location == LOCATION_TAVERN ||
                 g->location == LOCATION_INN || g->location == LOCATION_HEALER || g->location == LOCATION_WITCH ||
@@ -2130,7 +2131,7 @@ static void resolve_player_action(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_RANGED_ATTACK) {
-        if (g->location == LOCATION_MANGROVES && g->mangroves.aboard) {
+        if (mangrove_aboard(g)) {
             push_message(g, "Go ashore before attacking.");
             return;
         }
@@ -2252,6 +2253,9 @@ static void resolve_player_action(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_MOVE) {
+        if (eastern_move(g, a.target_x, a.target_y)) {
+            return;
+        }
         if (ironfang_move(g, a.target_x, a.target_y)) {
             return;
         }
@@ -2260,7 +2264,7 @@ static void resolve_player_action(GameState *g, Action a) {
         if (boss_gate_bump(g, tx, ty)) {
             return;
         }
-        if (g->location == LOCATION_MANGROVES && g->mangroves.aboard) {
+        if (mangrove_aboard(g)) {
             mangrove_travel(g, tx, ty);
             return;
         }
@@ -2707,8 +2711,7 @@ static void resolve_player_action(GameState *g, Action a) {
                 if (!boss_gate_crossing(g, LOCATION_DESERT)) {
                     return;
                 }
-                game_return_to_approach(g);
-                push_message(g, "You return to Stillbury.");
+                push_message(g, "The western continuation is not yet charted. Return through Sunscar to the eastern mountain road.");
             }
             return;
         }
@@ -2996,6 +2999,7 @@ static void resolve_player_action(GameState *g, Action a) {
 
 // Keep the noncombat escort with the player across every action and transition.
 void action_resolve_player(GameState *g, Action a) {
+    eastern_store(g);
     int old_x = g->player.x;
     int old_y = g->player.y;
     int dx = a.target_x - old_x;
@@ -3005,6 +3009,7 @@ void action_resolve_player(GameState *g, Action a) {
     int route = g->approach_route;
     Location road_town = g->road_town;
     resolve_player_action(g, a);
+    eastern_update(g);
     if (location != g->location || level != g->level || route != g->approach_route || road_town != g->road_town) {
         // Travel handlers return before the ordinary movement-facing update.
         // A doorway or boundary crossing keeps the direction of that step.
@@ -3635,13 +3640,18 @@ static void grave_marshal_turn(GameState *g, int index) {
 }
 
 static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
+    eastern_update(g);
     if (shots) {
         shots->count = 0;
     }
     if (g->player.hp <= 0 || g->game_won || g->castle_prompt || stormbell_prompt_active(g) || g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD) {
         return;
     }
-    if (g->location == LOCATION_MANGROVES && g->mangroves.aboard) {
+    if (mangrove_aboard(g)) {
+        return;
+    }
+    if (g->location == LOCATION_RIVER_CROSSING ||
+        (g->location == LOCATION_DAWNMERE && !g->dawnmere_alerted && !g->dawnmere_liberated)) {
         return;
     }
     if (g->location == LOCATION_IRONFANG) {
@@ -3754,6 +3764,9 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
         }
         Enemy *e = &g->enemies[i];
         if (!e->active) {
+            continue;
+        }
+        if (g->location == LOCATION_DAWNMERE && !g->dawnmere_liberated && !e->boss_aux_x) {
             continue;
         }
         if (e->is_boss && boss_locked) {

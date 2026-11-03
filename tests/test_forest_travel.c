@@ -80,6 +80,7 @@ static void forest_walk_road(GameState *g, int west) {
 static void test_forest_crossing(int dawnmere, int home) {
     srand(809 + dawnmere + home * 2);
     game_init(&forest);
+    forest.dawnmere_liberated = 1;
     if (dawnmere) {
         game_enter_town_gate(&forest, LOCATION_DAWNMERE, 0, 12);
     }

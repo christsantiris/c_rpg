@@ -1,6 +1,7 @@
 #include "coast_exits.h"
 #include "boss_gates.h"
 #include "royal_evidence.h"
+#include "eastern_arc.h"
 #include "giants_crown.h"
 #include "ironfang.h"
 #include "crownroad_north.h"
@@ -596,7 +597,7 @@ void game_spawn_enemy(GameState *g, Enemy *enemy, EnemyType type, int x, int y) 
 }
 
 static int boss_for_level(const GameState *g, EnemyType *type) {
-    if (g->location == LOCATION_GIANTS_CROWN || g->location == LOCATION_CROWNROAD_NORTH || g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_MANGROVES || g->location == LOCATION_MANGROVE_PATH) {
+    if (g->location == LOCATION_GIANTS_CROWN || g->location == LOCATION_CROWNROAD_NORTH || g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_MANGROVES || g->location == LOCATION_RIVER_CROSSING || g->location == LOCATION_MANGROVE_PATH) {
         return 0;
     }
     int boss_level = DUNGEON_DEPTH;
@@ -1445,6 +1446,7 @@ void enemies_spawn(GameState *g) {
 }
 
 void game_init(GameState *g) {
+    eastern_init(g);
     g->loot_container_count = 0;
     memset(g->giants_crown, 0, sizeof(g->giants_crown));
     g->giants_crown_defeated = 0;
@@ -3790,6 +3792,7 @@ void game_enter_frostfell(GameState *g) {
 
 void game_enter_desert(GameState *g) {
     enter_adventure(g, LOCATION_DESERT);
+    g->player.x = g->map.stairs_up_x - 1;
     push_message(g, "Dense patrols roam between sandstone mesas. Use the rocks to break enemy lines of fire.");
     push_message(g, "Press the interact key (A by default) beside an oasis well for water, once per expedition.");
 }
@@ -4002,7 +4005,9 @@ void game_leave_tavern(GameState *g) {
 }
 
 void game_enter_town2(GameState *g) {
-    g->last_town_visited = LOCATION_TOWN2;
+    if (!g->royal_reported_actions) {
+        g->last_town_visited = LOCATION_TOWN2;
+    }
     int spawn_x;
     int spawn_y;
     if (g->location == LOCATION_FOREST && g->level >= 1 && g->level <= FOREST_DEPTH) {
@@ -4025,7 +4030,7 @@ void game_enter_town2(GameState *g) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
-    push_message(g, "You arrive in Stillbury.");
+    eastern_enter_town(g);
 }
 
 void game_enter_forest_road(GameState *g) {
@@ -4112,19 +4117,19 @@ static int crownroad_nearest_open(const GameState *g, const Map *map, const Enem
 static void populate_crownroad(GameState *g, const Map *map, Enemy *roster, int *count, int *cleared) {
     static const EnemyType enemies[CROWNROAD_BASE_ENEMIES] = {
         ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF, ENEMY_BANDIT,
-        ENEMY_ROYAL_GUARD, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
-        ENEMY_ROYAL_GUARD, ENEMY_BANDIT,
-        ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN, ENEMY_ROAD_ARCHER,
-        ENEMY_HORSEMAN, ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN,
-        ENEMY_ROAD_ARCHER,
+        ENEMY_BANDIT, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
+        ENEMY_BANDIT, ENEMY_BANDIT,
+        ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF, ENEMY_BANDIT,
+        ENEMY_BLIGHTED_WOLF, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
+        ENEMY_BANDIT,
         // Second wave, added after the first 15 so older saved roads keep
         // their enemies and gain these on the next visit.
         ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF, ENEMY_BANDIT,
-        ENEMY_ROYAL_GUARD, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
-        ENEMY_ROYAL_GUARD, ENEMY_BANDIT,
-        ENEMY_HORSEMAN, ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN,
-        ENEMY_ROAD_ARCHER, ENEMY_ROAD_ARCHER, ENEMY_HORSEMAN,
-        ENEMY_ROAD_ARCHER
+        ENEMY_BANDIT, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
+        ENEMY_BANDIT, ENEMY_BANDIT,
+        ENEMY_BLIGHTED_WOLF, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
+        ENEMY_BANDIT, ENEMY_BANDIT, ENEMY_BLIGHTED_WOLF,
+        ENEMY_BANDIT
     };
     static const int x[CROWNROAD_BASE_ENEMIES] = {
         17, 23, 14, 24, 17, 25, 16, 23, 23, 20, 17, 20, 23, 20, 17,
@@ -4276,6 +4281,7 @@ void game_enter_guild(GameState *g) {
 }
 
 void town_life_enter(GameState *g, int x, int y) {
+    eastern_store(g);
     const TownBuilding *b = town_life_building(g->location);
     while (b && b->town == g->location && (x != b->x + b->w / 2 || y != b->y + b->h - 1)) {
         b = town_life_next_building(g->location, b);
@@ -4285,6 +4291,7 @@ void town_life_enter(GameState *g, int x, int y) {
     }
     g->location = b->interior;
     town_life_generate(&g->map, g->location, &g->player.x, &g->player.y);
+    eastern_refresh(g);
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->player.poison_turns = 0;
@@ -4319,6 +4326,7 @@ void town_life_leave(GameState *g) {
     g->dialogue_active = 0;
     g->enemy_count = 0;
     g->floor_item_count = 0;
+    eastern_enter_town(g);
 }
 
 void game_enter_workshop(GameState *g) {
@@ -4848,6 +4856,7 @@ void game_leave_inn(GameState *g) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
+    eastern_enter_town(g);
     push_message(g, "You step out of the tavern.");
 }
 
@@ -5418,6 +5427,7 @@ void game_record_temple_enemy_defeated(GameState *g, EnemyType type) {
 
 static void return_to_town(GameState *g, Location destination) {
     Location returning_from = g->location;
+    eastern_store(g);
     giants_store(g);
     northroad_store(g);
     ironfang_store(g);
@@ -5528,10 +5538,13 @@ static void return_to_town(GameState *g, Location destination) {
     }
     g->floor_item_count = 0;
     g->enemy_count = 0;
-    g->player.poison_turns = 0;
-    g->player.frozen_turns = 0;
-    g->player.freeze_recovery = 0;
+    if (!eastern_town_combat(g)) {
+        g->player.poison_turns = 0;
+        g->player.frozen_turns = 0;
+        g->player.freeze_recovery = 0;
+    }
     g->dialogue_active = 0;
+    eastern_enter_town(g);
     game_recover_retired_items(g);
 }
 
@@ -5604,6 +5617,16 @@ void game_return_to_approach(GameState *g) {
         game_leave_catacombs(g);
         return;
     }
+    if (g->location == LOCATION_DESERT) {
+        game_return_to_town(g);
+        approach_enter_region(g, 2);
+        g->player.x = 1;
+        g->player.y = APPROACH_H / 2;
+        g->player.last_dx = 1;
+        g->player.last_dy = 0;
+        push_message(g, "The mountain road returns east to Oakhaven. Sunscar lies west; its onward route awaits a later journey.");
+        return;
+    }
     Location area = g->location;
     int lich_exit = area == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH &&
         (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_DUNGEON)));
@@ -5634,7 +5657,7 @@ void game_return_to_approach(GameState *g) {
         g->player.y = g->map.stairs_up_y;
         g->player.last_dx = 0;
         g->player.last_dy = 1;
-        push_message(g, "The road is open: west to Stillbury, east to Oakhaven.");
+        push_message(g, "The road is open: west to Sunscar Wastes, east to Oakhaven.");
     }
     if (lich_exit && g->location == LOCATION_APPROACH) {
         g->player.x = g->map.stairs_down_x;
@@ -5668,8 +5691,10 @@ void game_leave_approach_to_town(GameState *g, Location town) {
 }
 
 void game_enter_town_gate(GameState *g, Location town, int x, int y) {
+    eastern_store(g);
     return_to_town(g, town);
-    if (town_road_index(town) >= 0) {
+    if (town_road_index(town) >= 0 && !(town == LOCATION_DAWNMERE && !g->dawnmere_liberated) &&
+        !(town == LOCATION_TOWN2 && g->royal_reported_actions)) {
         g->last_town_visited = town;
     }
     g->approach_route = -1;
@@ -5723,7 +5748,7 @@ void game_return_to_town(GameState *g) {
     } else if (g->location == LOCATION_MOUNTAINS) {
         destination = g->mountain_entry_town;
     } else if (g->location == LOCATION_DESERT) {
-        destination = LOCATION_TOWN2;
+        destination = LOCATION_TOWN;
     } else if (g->location == LOCATION_ASHEN) {
         destination = LOCATION_CASTLE;
     } else if (g->location == LOCATION_FROSTFELL || g->location == LOCATION_GIANTS_CROWN) {
@@ -5844,6 +5869,8 @@ void game_open_town_portal(GameState *g) {
         g->location != LOCATION_IRONFANG &&
         g->location != LOCATION_STORMWATCH &&
         g->location != LOCATION_MANGROVES &&
+        g->location != LOCATION_RIVER_CROSSING &&
+        !eastern_town_combat(g) &&
         g->location != LOCATION_ELDERWOOD &&
         g->location != LOCATION_DRAGONSPINE) {
         return;
@@ -5872,6 +5899,11 @@ void game_open_town_portal(GameState *g) {
     g->portal_y = g->player.y;
     g->portal_origin_tile = g->map.tiles[g->player.y][g->player.x];
     g->return_portal_town = town_road_index(g->last_town_visited) >= 0 ? g->last_town_visited : LOCATION_TOWN;
+    if ((g->return_portal_town == LOCATION_DAWNMERE && !g->dawnmere_liberated) ||
+        (g->return_portal_town == LOCATION_TOWN2 && g->royal_reported_actions)) {
+        g->return_portal_town = g->dawnmere_liberated ? LOCATION_DAWNMERE : LOCATION_TOWN;
+        g->last_town_visited = g->return_portal_town;
+    }
     return_to_town(g, g->return_portal_town);
     push_message(g, "You escape to the last town visited. No return portal remains.");
 }
@@ -6026,7 +6058,7 @@ void game_talk_to_bram(GameState *g) {
             "Elowen! You brought my daughter home. Please take 80 gold with my thanks. She will stay here at the Inn; speak to her about what she overheard in the dungeon.");
     } else if (g->elowen_quest_state == ELOWEN_HOME) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Thank you for saving Elowen. She is safe here in Oakhaven's Inn. Speak to her about what she heard the Lich King say.");
+            "Thank you for saving Elowen. She can tell you what she heard. Traders bring more troubling news: Dawnmere refused the Crown's levies, and royal soldiers now occupy its streets. Goods are being confiscated. The road lies beyond the Haunted Forest.");
     } else if (g->elowen_quest_state == ELOWEN_ASSIGNED) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Please bring my daughter Elowen home. The Lich King holds her in the dungeon south of Oakhaven. Defeat him and bring her back to me.");
@@ -6046,7 +6078,7 @@ void game_talk_to_cain(GameState *g) {
             "Read your scroll to learn Return to Town. The spell brings you back to town when danger grows, but gives you no portal back to the place you left.");
     } else if (g->inventory_count >= MAX_INVENTORY) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "I have a Return to Town scroll for you, but your pack is full. Make room, then ask me about Return to Town to collect it.");
+            "I have a Return to Town scroll for you, but your pack is full. Make room, then speak to me again to collect it.");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "Welcome to Oakhaven. Take this Return to Town scroll; read it to learn a way home when danger grows. It brings you back to town, but gives you no portal back to the place you left.");
@@ -6061,7 +6093,7 @@ int game_cain_dialogue_active(const GameState *g) {
         strcmp(g->dialogue_speaker, "Cain") == 0;
 }
 
-// The existing saved dialogue fields retain either topic; no separate page state is needed.
+// The saved dialogue retains the optional town guide without separate page state.
 int game_handle_cain_dialogue_key(GameState *g, int key, int repeat) {
     if (!game_cain_dialogue_active(g)) {
         return 0;
@@ -6074,8 +6106,13 @@ int game_handle_cain_dialogue_key(GameState *g, int key, int repeat) {
     } else if (key == SDL_SCANCODE_1 || key == SDL_SCANCODE_KP_1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "The blacksmith sells weapons and armor; the alchemist has potions and scrolls. Visit the goldsmith for rings and amulets. Walk inside and Talk at the counter. Nessa runs the bakery; speak to Bram at the Inn. Rapids block the north. Goblin Mountains lie west, Haunted Forest east, and the dungeon south.");
-    } else if (key == SDL_SCANCODE_2 || key == SDL_SCANCODE_KP_2) {
-        game_talk_to_cain(g);
+    } else {
+        int control = controls_action_for_key(g->key_bindings, key);
+        if ((control >= CONTROL_MOVE_UP && control <= CONTROL_MOVE_RIGHT) ||
+            key == SDL_SCANCODE_UP || key == SDL_SCANCODE_DOWN || key == SDL_SCANCODE_LEFT || key == SDL_SCANCODE_RIGHT) {
+            g->dialogue_active = 0;
+            return 0;
+        }
     }
     return 1;
 }
@@ -6288,7 +6325,7 @@ static void update_oakhaven_boss_quests(GameState *g) {
     if (g->dain_quest_state >= REGIONAL_CHAIN_BOSS_OFFERED &&
         g->dain_quest_state < REGIONAL_CHAIN_COMPLETE && (g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
         g->dain_quest_state = REGIONAL_CHAIN_COMPLETE;
-        push_message(g, "Completed: Defeat the Goblin King. Continue west to Stillbury to investigate the evil's source.");
+        push_message(g, "Completed: Defeat the Goblin King. Continue west into Sunscar Wastes to investigate the evil's source.");
     }
 }
 
@@ -6305,8 +6342,10 @@ static const QuestOffer quest_offers[] = {
         "Assigned: Giant's Crown. Read stage 2's inscription, find stage 3's seal, and recover the crown from stage 5's royal vault."},
     {WAR_SPEAKER, LOCATION_TOWN_HALL, offsetof(GameState, war_machine_quest_state), 0,
         "Assigned: Break the War Machine. Read Ironfang 2's orders, sink Ironfang 4's weapons, and bring back the Mine Boss's seal."},
-    {"Watchkeeper Seren", LOCATION_DAWNMERE, offsetof(GameState, stormbell_quest_state), 0,
-        "Assigned: The Silent Stormbell. Recover the clapper in Stormwatch 3 and restore the bell in Stormwatch 4."},
+    {"Watchkeeper Seren", LOCATION_ALEHOUSE, offsetof(GameState, dawnmere_quest_state), 0,
+        "Assigned: Dawnmere Under Occupation. Break the checkpoint, market squad and Captain Rusk's command."},
+    {"Watchkeeper Seren", LOCATION_DAWNMERE, offsetof(GameState, saltwind_quest_state), 0,
+        "Assigned: Passage Through Saltwind. Defeat Sszareth, paddle across the river and dock at Stillbury."},
     {"Spice Merchant Corvin", LOCATION_DAWNMERE_MERCHANT, offsetof(GameState, spice_skiff_quest_state), 0,
         "Assigned: The Missing Spice Skiff. Search the stranded skiff on Saltwind 2 and recover its cargo on Saltwind 3."},
     {"Forester Tamsin", LOCATION_TOWN, offsetof(GameState, heartseed_quest_state), 0,
@@ -6517,7 +6556,7 @@ void game_talk_to_dragon_seeker(GameState *g) {
     g->dialogue_y = ILYA_TAVERN_Y;
     if (g->dragon_treasure_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Travel west through the Goblin Mountains to Stillbury. The northern roads beyond lead through Rosemoor and the castle roads to Ridgeshire and Dragonspine. "
+            "Travelers from Ridgeshire speak of treasure in Dragonspine, far to the north. "
             "Bring its fifth-stage golden goblet back here to Oakhaven's Inn for a Potion of Strength.");
     } else if (g->dragon_treasure_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
@@ -6580,11 +6619,11 @@ void game_talk_to_dain(GameState *g) {
             "You have %d of 2 map halves. Find the Archer Map Bearer in Mountains 1 and the Warchief Map Bearer in Mountains 2. Bring both halves back to me at Oakhaven's Inn.", halves);
     } else if (g->dain_quest_state == REGIONAL_CHAIN_COMPLETE) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "%sThe King's seal proves the Crown paid for goblin raids and the western-road blockade. Follow the opened road west to Stillbury to learn why.",
-            royal_evidence_count(g) == 2 ? "The payments match the Necromancer's royal writ. " : "");
+            "%sThe King's seal proves the Crown paid for goblin raids and the western-road blockade. Follow the opened road west to Sunscar Wastes to learn why.",
+            (royal_evidence_found(g) & 3) == 3 ? "The payments match the Necromancer's royal writ. " : "");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "%sThe map marks the goblin fortress stores. Defeat the Goblin King and search his records for who supplies the raids. His fall opens the western road to Stillbury. Continue investigating the evil in our kingdom.",
+            "%sThe map marks the goblin fortress stores. Defeat the Goblin King and search his records for who supplies the raids. His fall opens the western road to Sunscar Wastes. Continue investigating the evil in our kingdom.",
             turned_in ? "The map is whole! Take 60 gold with my thanks. " : "The map is whole, but the Goblin King still rules. ");
     }
 }
@@ -6639,8 +6678,8 @@ void game_talk_to_alder(GameState *g) {
             "You have rescued %d of my 2 rangers. Defeat the spider captors in Forest 1 and 2, then speak to each ranger. Return to me at Oakhaven's Inn when both are safe.", rescued);
     } else if (g->alder_quest_state == REGIONAL_CHAIN_COMPLETE) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "%sThe King's writ ordered patrols to leave the Necromancer's work undisturbed. My rangers were abandoned. Follow the opened road east to Dawnmere to learn why.",
-            royal_evidence_count(g) == 2 ? "Royal funding in the mountains, royal protection here: both records implicate the King. " : "");
+            "%sThe King protected the Necromancer. Now royal soldiers occupy Dawnmere beyond the forest and seize traders' goods. Seek Watchkeeper Seren in its Alehouse. Keep your retreat open; organised troops will hold the streets.",
+            (royal_evidence_found(g) & 3) == 3 ? "Royal funding in the mountains, royal protection here: both records implicate the King. " : "");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "%sMy rangers saw couriers entering the grove. Defeat the Necromancer and search his correspondence for who protects his work. His fall opens the eastern road to Dawnmere. Continue investigating the evil in our kingdom.",
@@ -6854,6 +6893,7 @@ void game_migrate_boss_shortcuts(GameState *g) {
 }
 
 void game_update_level_progress(GameState *g) {
+    eastern_update(g);
     update_oakhaven_boss_quests(g);
     refresh_hunt_progress(g);
     if (g->location < LOCATION_JAIL && (g->defeated_bosses & (1 << g->location))) {

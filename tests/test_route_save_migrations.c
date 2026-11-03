@@ -201,6 +201,7 @@ static void test_mountain_migration(void) {
     original.defeated_bosses = 1 << LOCATION_MOUNTAINS;
     original.enemies[0].active = 0;
     original.mountain_cache[7].enemies[0].active = 0;
+    original.dawnmere_liberated = 1;
     original.last_town_visited = LOCATION_DAWNMERE;
     game_open_town_portal(&original);
     int ok = make_legacy_save(78) && load_game(&loaded, ROUTE_SAVE_SLOT);

@@ -1,6 +1,7 @@
 #include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/town_life.h"
+#include "game/eastern_arc.h"
 #include "../src/game/actions.h"
 #include "../src/game/mangrove.h"
 #include "../src/systems/save_load.h"
@@ -18,7 +19,10 @@ static void start_town(Location town) {
     memset(&game, 0, sizeof(game));
     game.player.player_class = CLASS_WARRIOR;
     game_init(&game);
-    game.location = town;
+    game.dawnmere_liberated = 1;
+    if (town != LOCATION_DAWNMERE) {
+        game.location = town;
+    }
     game.defeated_bosses = (1 << LOCATION_FOREST) | (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_SWAMP);
     if (town == LOCATION_DAWNMERE) {
         game_enter_town_gate(&game, LOCATION_DAWNMERE, 0, 12);
@@ -221,6 +225,12 @@ static void test_accessory_buildings(void) {
         map_mark_explored(&game.map, 20, 12);
         ASSERT("version-227 town saves gain their specialty workshop", save_game(&game, TOWN_LIFE_SLOT) && downgrade_town_save(227) && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.map.tiles[y][x] == TILE_LOCAL_DOOR);
         ASSERT("workshop migration preserves wounds, quests, exploration and stacked accessories", loaded.player.hp == 37 && loaded.gold == 123 && loaded.elowen_quest_state == 1 && map_is_explored(&loaded.map, 20, 12) && loaded.player.x == x && loaded.player.y == y + 1 && loaded.floor_items[0].x == x && loaded.floor_items[1].y == y + 1 && loaded.floor_items[0].item.rarity == ITEM_RARITY_RARE);
+        if (b->town == LOCATION_DAWNMERE) {
+            ASSERT("legacy Dawnmere resumes with an occupied workshop", !loaded.dawnmere_liberated && eastern_move(&loaded, x, y));
+            loaded.dawnmere_liberated = 1;
+            loaded.enemy_count = 0;
+            loaded.dawnmere_cache.valid = 0;
+        }
         ASSERT("migrated workshop doors remain actual transitions", walk_to(&loaded, x, y) && loaded.location == b->interior);
     }
     remove(TOWN_LIFE_PATH);
@@ -390,6 +400,9 @@ void test_town_life(void) {
     action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("the migrated doorstep is walkable and reveals cobblestone after picking up loot", loaded.player.x == 9 &&
         loaded.player.y == 11 && loaded.map.tiles[11][9] == TILE_TOWN_PATH);
+    loaded.dawnmere_liberated = 1;
+    loaded.enemy_count = 0;
+    loaded.dawnmere_cache.valid = 0;
     action_resolve_player(&loaded, (Action){ACTION_MOVE, 9, 10});
     ASSERT("the repaired legacy door enters the merchant instead of remaining decorative", loaded.location == LOCATION_DAWNMERE_MERCHANT);
     remove(TOWN_LIFE_PATH);

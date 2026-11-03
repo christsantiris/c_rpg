@@ -107,6 +107,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "%s", town_life_building(g->location)->label);
     } else if (g->location == LOCATION_TOWN_ROAD) {
         SDL_snprintf(loc, sizeof(loc), "%s ROAD", approach_town_name(g->road_town));
+    } else if (g->location == LOCATION_RIVER_CROSSING) {
+        SDL_snprintf(loc, sizeof(loc), "RIVER CROSSING");
     } else if (g->location == LOCATION_MANGROVES) {
         SDL_snprintf(loc, sizeof(loc), "SALTWIND MARSH %d", g->level);
     } else if (g->location == LOCATION_MANGROVE_PATH) {
@@ -123,7 +125,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     } else if (g->location == LOCATION_TAVERN) {
         SDL_snprintf(loc, sizeof(loc), "INN");
     } else if (g->location == LOCATION_DAWNMERE) {
-        SDL_snprintf(loc, sizeof(loc), "DAWNMERE");
+        SDL_snprintf(loc, sizeof(loc), g->dawnmere_liberated ? "DAWNMERE - FREE" : "DAWNMERE - OCCUPIED");
     } else if (g->location == LOCATION_TOWN2) {
         SDL_snprintf(loc, sizeof(loc), "STILLBURY");
     } else if (g->location == LOCATION_TOWN3) {

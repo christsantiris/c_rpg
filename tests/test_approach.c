@@ -9,6 +9,7 @@
 
 static void approach_town(GameState *g, const TownApproach *route) {
     game_init(g);
+    g->dawnmere_liberated = 1;
     g->location = route->town;
     if (town_road_index(route->town) >= 0) {
         g->last_town_visited = route->town;
@@ -157,6 +158,9 @@ static void test_transition_loot(GameState *g, GameState *loaded, int slot) {
     for (int i = 0; i < 5; i++) {
         for (int end = 0; end < 3; end++) {
             const TownApproach *route = &town_approaches[routes[i]];
+            if (route->unplaced) {
+                continue;
+            }
             if (end == 2 && route->area == LOCATION_DUNGEON) {
                 continue;
             }
@@ -193,7 +197,7 @@ static void test_transition_loot(GameState *g, GameState *loaded, int slot) {
                 loaded->player.y = y == 0 ? 1 : y - 1;
             }
             action_resolve_player(loaded, (Action){ACTION_MOVE, x, y});
-            ASSERT("walking onto a loot-covered transition still enters its actual destination", loaded->location == (end == 1 ? route->area : LOCATION_TOWN_ROAD));
+            ASSERT("walking onto a loot-covered transition still enters its actual destination", loaded->location == (end == 1 ? route->area : end == 2 && route->area == LOCATION_MOUNTAINS ? LOCATION_DESERT : LOCATION_TOWN_ROAD));
         }
     }
 }

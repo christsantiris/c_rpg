@@ -1,6 +1,7 @@
 #include "../game/coast_exits.h"
 #include "../game/boss_gates.h"
 #include "../game/approach.h"
+#include "../game/mangrove.h"
 #include "../game/town_road.h"
 #include "minimap_renderer.h"
 #include "../game/jail.h"
@@ -16,7 +17,7 @@
 #define MINIMAP_PAD   6
 
 void minimap_draw(Renderer *r, const GameState *g) {
-    if (g->location != LOCATION_TOWN_ROAD && g->location != LOCATION_APPROACH && g->location != LOCATION_GIANTS_CROWN && g->location != LOCATION_CROWNROAD_NORTH && g->location != LOCATION_IRONFANG && g->location != LOCATION_STORMWATCH && g->location != LOCATION_MANGROVES && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
+    if (g->location != LOCATION_DAWNMERE && g->location != LOCATION_TOWN2 && g->location != LOCATION_RIVER_CROSSING && g->location != LOCATION_MANGROVE_PATH && g->location != LOCATION_TOWN_ROAD && g->location != LOCATION_APPROACH && g->location != LOCATION_GIANTS_CROWN && g->location != LOCATION_CROWNROAD_NORTH && g->location != LOCATION_IRONFANG && g->location != LOCATION_STORMWATCH && g->location != LOCATION_MANGROVES && g->location != LOCATION_ESCAPE_TUNNEL && g->location != LOCATION_DUNGEON &&
         g->location != LOCATION_FOREST &&
         g->location != LOCATION_MOUNTAINS &&
         g->location != LOCATION_DRAGONSPINE &&
@@ -46,7 +47,15 @@ void minimap_draw(Renderer *r, const GameState *g) {
         map_w = TOWN_ROAD_W;
         map_h = TOWN_ROAD_H;
     }
-    if (g->location == LOCATION_MANGROVES) {
+    if (g->location == LOCATION_DAWNMERE || g->location == LOCATION_TOWN2) {
+        map_w = TOWN_W;
+        map_h = TOWN_H;
+    }
+    if (g->location == LOCATION_MANGROVE_PATH) {
+        map_w = MANGROVE_PATH_W;
+        map_h = MANGROVE_PATH_H;
+    }
+    if (g->location == LOCATION_MANGROVES || g->location == LOCATION_RIVER_CROSSING) {
         map_w = MANGROVE_W;
         map_h = MANGROVE_H;
     }
@@ -134,7 +143,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_APPROACH_TOWN || tile == TILE_APPROACH_AREA || tile == TILE_APPROACH_DUNGEON_TOWN ||
                         tile == TILE_ROAD_GATE_OPEN || tile == TILE_ROAD_GATE_CLOSED || tile == TILE_LABYRINTH_ENTRANCE ||
                         tile == TILE_CROWN_EXIT || tile == TILE_CROWN_SUPPLIES || tile == TILE_IRON_ENTRANCE || tile == TILE_IRON_EXIT || tile == TILE_IRON_LAMP_LIT || tile == TILE_IRON_SWITCH || tile == TILE_IRON_CACHE || tile == TILE_STORM_EXIT || tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_SUPPLIES || tile == TILE_STORM_CRANK ||
-                        tile == TILE_MANGROVE_EXIT || tile == TILE_MANGROVE_LANDING || tile == TILE_MANGROVE_RETURN || tile == TILE_MANGROVE_CACHE ||
+                        tile == TILE_TOWN_EXIT || tile == TILE_MANGROVE_EXIT || tile == TILE_MANGROVE_LANDING || tile == TILE_MANGROVE_RETURN || tile == TILE_MANGROVE_CACHE ||
                         tile == TILE_CASTLE_TRAP_OPEN || tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT || tile == TILE_CASTLE_MUSTER ||
                         tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
                         tile == TILE_ELDERWOOD_ENTRANCE || tile == TILE_ELDERWOOD_EXIT ||
@@ -314,10 +323,11 @@ void minimap_draw(Renderer *r, const GameState *g) {
             SDL_RenderDrawRect(r->sdl, &marker);
         }
     }
-    if (g->location == LOCATION_MANGROVES && g->mangroves.initialized &&
-        map_is_explored(&g->map, g->mangroves.boat_x, g->mangroves.boat_y)) {
+    const MangroveState *boat = mangrove_boat_state(g);
+    if ((g->location == LOCATION_MANGROVES || g->location == LOCATION_RIVER_CROSSING) && boat->initialized &&
+        map_is_explored(&g->map, boat->boat_x, boat->boat_y)) {
         SDL_SetRenderDrawColor(r->sdl, 210, 155, 79, 255);
-        SDL_RenderDrawPoint(r->sdl, ox + g->mangroves.boat_x / MINIMAP_SCALE, oy + g->mangroves.boat_y / MINIMAP_SCALE);
+        SDL_RenderDrawPoint(r->sdl, ox + boat->boat_x / MINIMAP_SCALE, oy + boat->boat_y / MINIMAP_SCALE);
     }
     int quest_x;
     int quest_y;

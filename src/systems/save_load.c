@@ -36,6 +36,7 @@
 #include "../game/resurrection.h"
 #include "../game/spice_skiff.h"
 #include "../game/mangrove.h"
+#include "../game/eastern_arc.h"
 #include "../game/stormwatch.h"
 #include "../game/stormbell.h"
 #include "../game/war_machine.h"
@@ -1500,6 +1501,37 @@ static cJSON *serialize_mangrove(const MangroveState *state) {
     return delta;
 }
 
+static cJSON *serialize_eastern(const GameState *g) {
+    cJSON *arc = cJSON_CreateObject();
+    cJSON_AddNumberToObject(arc, "dawnmere_liberated", g->dawnmere_liberated);
+    cJSON_AddNumberToObject(arc, "dawnmere_alerted", g->dawnmere_alerted);
+    cJSON_AddNumberToObject(arc, "dawnmere_progress", g->dawnmere_progress);
+    cJSON_AddNumberToObject(arc, "dawnmere_quest_state", g->dawnmere_quest_state);
+    cJSON_AddNumberToObject(arc, "saltwind_quest_state", g->saltwind_quest_state);
+    cJSON_AddNumberToObject(arc, "royal_reported_actions", g->royal_reported_actions);
+    cJSON_AddNumberToObject(arc, "act4_arrived", g->act4_arrived);
+    cJSON_AddNumberToObject(arc, "stillbury_challenge", g->stillbury_challenge);
+    cJSON_AddNumberToObject(arc, "stillbury_prompt", g->stillbury_prompt);
+    cJSON_AddNumberToObject(arc, "stillbury_guards_initialized", g->stillbury_guards_initialized);
+    const LevelCache *cache = &g->dawnmere_cache;
+    int active = g->location == LOCATION_DAWNMERE;
+    int valid = active || cache->valid;
+    cJSON_AddNumberToObject(arc, "dawnmere_valid", valid);
+    if (valid) {
+        cJSON_AddItemToObject(arc, "dawnmere_map", serialize_map(active ? &g->map : &cache->map));
+        cJSON_AddItemToObject(arc, "dawnmere_enemies", serialize_enemies(active ? g->enemies : cache->enemies, active ? g->enemy_count : cache->enemy_count));
+        cJSON_AddItemToObject(arc, "dawnmere_loot", serialize_castle_loot(active ? g->floor_items : g->dawnmere_loot, active ? g->floor_item_count : g->dawnmere_loot_count));
+    }
+    const Enemy *guards = g->location == LOCATION_TOWN2 && g->stillbury_guards_initialized ? g->enemies : g->stillbury_guards;
+    cJSON_AddItemToObject(arc, "stillbury_guards", serialize_enemies(guards, g->stillbury_guards_initialized ? 3 : 0));
+    MangroveState river = g->river_boat;
+    if (g->location == LOCATION_RIVER_CROSSING) {
+        mangrove_capture(g, &river);
+    }
+    cJSON_AddItemToObject(arc, "river_boat", serialize_mangrove(&river));
+    return arc;
+}
+
 static cJSON *serialize_giants(const GameState *g) {
     cJSON *array = cJSON_CreateArray();
     for (int n = 0; n < GIANTS_DEPTH; n++) {
@@ -1884,7 +1916,7 @@ static void migrate_stormwatch_road(GameState *g) {
 }
 
 int save_game(const GameState *g, int slot) {
-    if (!containers_valid(g) || !crown_quest_valid(g) || !war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
+    if (!eastern_valid(g) || !containers_valid(g) || !crown_quest_valid(g) || !war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
         return 0;
     }
     if (g->retired_coast_item_count < 0 || g->retired_coast_item_count > RETIRED_LOOT_STAGES * MAX_FLOOR_ITEMS) {
@@ -1892,7 +1924,8 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 235);
+    cJSON_AddNumberToObject(root, "save_version", 236);
+    cJSON_AddItemToObject(root, "eastern_arc", serialize_eastern(g));
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
@@ -1914,7 +1947,9 @@ int save_game(const GameState *g, int slot) {
     stormbell_capture(g, bell_guards);
     cJSON_AddItemToObject(root, "stormbell_guards", serialize_enemies(bell_guards, g->stormbell_phase == 1 ? 2 : g->stormbell_phase ? 3 : 0));
     MangroveState mangrove = g->mangroves;
-    mangrove_capture(g, &mangrove);
+    if (g->location == LOCATION_MANGROVES) {
+        mangrove_capture(g, &mangrove);
+    }
     cJSON_AddItemToObject(root, "mangroves", serialize_mangrove(&mangrove));
     cJSON *stages = cJSON_CreateArray();
     for (int i = 0; i < MANGROVE_DEPTH; i++) {
@@ -2654,6 +2689,97 @@ static int load_mangrove_record(const cJSON *delta, MangroveState *state, int ve
             }
         }
         deserialize_enemies(enemies, state->enemies, &state->enemy_count, AREA_ENEMY_LIMIT);
+    }
+    return 1;
+}
+
+static int load_eastern_enemies(const cJSON *array, Enemy *enemies, int *count, int limit) {
+    if (!cJSON_IsArray(array) || cJSON_GetArraySize(array) > limit) {
+        return 0;
+    }
+    const char *fields[] = {"x", "y", "active", "type", "hp", "max_hp", "attack", "defense", "experience", "move_timer", "frozen_turns", "attack_target_x", "attack_target_y"};
+    for (int i = 0; i < cJSON_GetArraySize(array); i++) {
+        const cJSON *enemy = cJSON_GetArrayItem(array, i);
+        if (!cJSON_IsString(cJSON_GetObjectItem(enemy, "name"))) {
+            return 0;
+        }
+        for (size_t f = 0; f < sizeof(fields) / sizeof(fields[0]); f++) {
+            int value;
+            if (!stormwatch_number(enemy, fields[f], &value)) {
+                return 0;
+            }
+        }
+    }
+    deserialize_enemies(array, enemies, count, limit);
+    return 1;
+}
+
+static int load_eastern(const cJSON *root, GameState *g, int version) {
+    eastern_init(g);
+    if (version < 236) {
+        return 1;
+    }
+    const cJSON *arc = cJSON_GetObjectItem(root, "eastern_arc");
+    if (!stormwatch_number(arc, "dawnmere_liberated", &g->dawnmere_liberated)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "dawnmere_alerted", &g->dawnmere_alerted)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "dawnmere_progress", &g->dawnmere_progress)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "dawnmere_quest_state", &g->dawnmere_quest_state)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "saltwind_quest_state", &g->saltwind_quest_state)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "royal_reported_actions", &g->royal_reported_actions)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "act4_arrived", &g->act4_arrived)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "stillbury_challenge", &g->stillbury_challenge)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "stillbury_prompt", &g->stillbury_prompt)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "stillbury_guards_initialized", &g->stillbury_guards_initialized)) {
+        return 0;
+    }
+    LevelCache *cache = &g->dawnmere_cache;
+    if (!stormwatch_number(arc, "dawnmere_valid", &cache->valid) || cache->valid < 0 || cache->valid > 1) {
+        return 0;
+    }
+    if (cache->valid) {
+        const cJSON *map = cJSON_GetObjectItem(arc, "dawnmere_map");
+        const char *fields[] = {"room_count", "stairs_up_x", "stairs_up_y", "stairs_down_x", "stairs_down_y"};
+        for (int i = 0; i < 5; i++) {
+            int value;
+            if (!stormwatch_number(map, fields[i], &value) || (i == 0 && value != 0)) {
+                return 0;
+            }
+        }
+        const cJSON *tiles = cJSON_GetObjectItem(map, "tiles_b64");
+        const cJSON *explored = cJSON_GetObjectItem(map, "explored_b64");
+        if (!cJSON_IsString(tiles) || !cJSON_IsString(explored) ||
+            strlen(tiles->valuestring) != 4 * ((MAP_W * MAP_H * sizeof(TileType) + 2) / 3) ||
+            strlen(explored->valuestring) != 4 * ((MAP_EXPLORED_BYTES + 2) / 3) ||
+            !load_eastern_enemies(cJSON_GetObjectItem(arc, "dawnmere_enemies"), cache->enemies, &cache->enemy_count, DAWNMERE_GARRISON) ||
+            !deserialize_castle_loot(cJSON_GetObjectItem(arc, "dawnmere_loot"), g->dawnmere_loot, &g->dawnmere_loot_count)) {
+            return 0;
+        }
+        deserialize_map(map, &cache->map);
+        cache->level_cleared = g->dawnmere_liberated;
+    }
+    int count = 0;
+    if (!load_eastern_enemies(cJSON_GetObjectItem(arc, "stillbury_guards"), g->stillbury_guards, &count, 3) ||
+        count != (g->stillbury_guards_initialized ? 3 : 0) ||
+        !load_mangrove_record(cJSON_GetObjectItem(arc, "river_boat"), &g->river_boat, version)) {
+        return 0;
     }
     return 1;
 }
@@ -4135,7 +4261,7 @@ int load_game(GameState *g, int slot) {
 
     cJSON *version_item = cJSON_GetObjectItem(root, "save_version");
     int save_version = version_item ? version_item->valueint : 1;
-    if (!load_giants(root, g, save_version) || !load_northroad(root, g, save_version) || !load_ironfang(root, g, save_version) || !load_stormwatch(root, g, save_version) || !load_mangroves(root, g, save_version)) {
+    if (!load_eastern(root, g, save_version) || !load_giants(root, g, save_version) || !load_northroad(root, g, save_version) || !load_ironfang(root, g, save_version) || !load_stormwatch(root, g, save_version) || !load_mangroves(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -4625,7 +4751,7 @@ int load_game(GameState *g, int slot) {
     g->defeated_bosses = defeated_bosses ? defeated_bosses->valueint : 0;
     const cJSON *evidence_seen = cJSON_GetObjectItem(root, "royal_evidence_seen");
     if (save_version >= 235 && (!cJSON_IsNumber(evidence_seen) || evidence_seen->valuedouble != evidence_seen->valueint ||
-        evidence_seen->valueint < 0 || evidence_seen->valueint > 3 || (evidence_seen->valueint & ~royal_evidence_found(g)))) {
+        evidence_seen->valueint < 0 || evidence_seen->valueint > 7 || (evidence_seen->valueint & ~royal_evidence_found(g)))) {
         cJSON_Delete(root);
         return 0;
     }
@@ -6843,6 +6969,9 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
+    if (save_version < 236) {
+        mangrove_repair_river_side(g);
+    }
     if (!mangrove_state_valid(g) || (g->location == LOCATION_MANGROVE_PATH &&
         (g->player.x < 0 || g->player.x >= MANGROVE_PATH_W || g->player.y < 0 || g->player.y >= MANGROVE_PATH_H))) {
         cJSON_Delete(root);
@@ -7014,6 +7143,14 @@ int load_game(GameState *g, int slot) {
         if (*alchemist == TILE_ALCHEMIST_DOOR) {
             *alchemist = TILE_LOCAL_DOOR;
         }
+    }
+    if (save_version < 236) {
+        eastern_migrate(g);
+    }
+    eastern_refresh(g);
+    if (!eastern_valid(g)) {
+        cJSON_Delete(root);
+        return 0;
     }
     approach_retire_labyrinth(g);
     game_repair_outdoor_entries(g);

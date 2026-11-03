@@ -359,7 +359,8 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
         {"Huntmaster Selene", LOCATION_GUILD, &g->hunt_quest_state},
         {"Forester Tamsin", LOCATION_TOWN, &g->heartseed_quest_state},
         {"Spice Merchant Corvin", LOCATION_DAWNMERE_MERCHANT, &g->spice_skiff_quest_state},
-        {"Watchkeeper Seren", LOCATION_DAWNMERE, &g->stormbell_quest_state},
+        {"Watchkeeper Seren", LOCATION_ALEHOUSE, &g->dawnmere_quest_state},
+        {"Watchkeeper Seren", LOCATION_DAWNMERE, &g->saltwind_quest_state},
         {WAR_SPEAKER, LOCATION_TOWN_HALL, &g->war_machine_quest_state},
         {"Antiquarian Edda", LOCATION_GUILD, &g->crown_quest_state}
     };

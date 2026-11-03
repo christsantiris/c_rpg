@@ -1,4 +1,6 @@
 #include "aldric.h"
+#include "eastern_arc.h"
+#include "mangrove.h"
 #include "combat_feedback.h"
 #include "elowen.h"
 #include "town_road.h"
@@ -12,7 +14,7 @@ static int lich_defeated(const GameState *g) {
 }
 
 int aldric_at(const GameState *g, int x, int y) {
-    return g->aldric_party_state == ALDRIC_FOLLOWING && x == g->aldric_x && y == g->aldric_y;
+    return !mangrove_aboard(g) && g->aldric_party_state == ALDRIC_FOLLOWING && x == g->aldric_x && y == g->aldric_y;
 }
 
 int aldric_beside(const GameState *g, int x, int y) {
@@ -71,8 +73,13 @@ void aldric_follow(GameState *g, int lead_old_x, int lead_old_y) {
     if (g->aldric_party_state != ALDRIC_FOLLOWING) {
         return;
     }
-    if (town_road_index(g->location) >= 0) {
+    if (town_road_index(g->location) >= 0 && !eastern_town_combat(g)) {
         g->aldric_hp = ALDRIC_MAX_HP;
+    }
+    if (mangrove_aboard(g)) {
+        g->aldric_x = g->player.x;
+        g->aldric_y = g->player.y;
+        return;
     }
     int escort = g->elowen_quest_state == ELOWEN_RESCUED &&
         (g->elowen_x != g->player.x || g->elowen_y != g->player.y);
@@ -106,6 +113,9 @@ void aldric_follow(GameState *g, int lead_old_x, int lead_old_y) {
 
 // He strikes a foe beside him, or closes on one threatening the player.
 void aldric_turn(GameState *g) {
+    if (mangrove_aboard(g) || (g->location == LOCATION_DAWNMERE && !g->dawnmere_alerted && !g->dawnmere_liberated)) {
+        return;
+    }
     if (g->aldric_party_state != ALDRIC_FOLLOWING || g->player.hp <= 0 || g->aldric_x < 0) {
         return;
     }

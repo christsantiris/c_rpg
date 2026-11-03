@@ -14,6 +14,7 @@
 #include "../game/war_machine.h"
 #include "../game/crown_quest.h"
 #include "../game/mangrove.h"
+#include "../game/eastern_arc.h"
 #include "../game/coastal_travel.h"
 #include "elderwood_renderer.h"
 #include "../game/elderwood.h"
@@ -622,7 +623,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int bubble_w = viewport_w < 736 ? viewport_w - 16 : 720;
     const char *hint = shortcut ? "Enter to continue" : quest_offer ? "Accept quest? Y: Yes   N: No" : "";
     if (game_cain_dialogue_active(g)) {
-        hint = "1: Tell me about Oakhaven\n2: Return to Town\nEnter / Esc: Close";
+        hint = "1: Tell me about Oakhaven\nEnter / Esc: Close";
     }
     if (war_machine_dialogue(g)) {
         hint = quest_offer ? "Y: Accept   N: Decline\n1: Watchfires   2: Break the War Machine" : "1: Watchfires   2: Break the War Machine";
@@ -789,6 +790,7 @@ float game_camera_zoom(const GameState *g) {
         case LOCATION_IRONFANG:
         case LOCATION_STORMWATCH:
         case LOCATION_GIANTS_CROWN:
+        case LOCATION_RIVER_CROSSING:
         case LOCATION_MANGROVES:
         case LOCATION_ESCAPE_TUNNEL:
         case LOCATION_CASTLE_INTERIOR:
@@ -867,6 +869,7 @@ static int regional_camera(const GameState *g, const Viewport *base, Viewport *o
     int oy = 0;
     switch (g->location) {
         case LOCATION_ELDERWOOD: w = ELDERWOOD_W; h = ELDERWOOD_H; break;
+        case LOCATION_RIVER_CROSSING:
         case LOCATION_MANGROVES: w = MANGROVE_W; h = MANGROVE_H; break;
         case LOCATION_ESCAPE_TUNNEL: w = ESCAPE_TUNNEL_W; h = ESCAPE_TUNNEL_H; break;
         case LOCATION_CASTLE_INTERIOR: w = CASTLE_W; h = CASTLE_H; break;
@@ -2396,7 +2399,7 @@ static void draw_adventure_exits(Renderer *r, const GameState *g, const Viewport
 }
 
 void game_draw(Renderer *r, GameState *g, Viewport *v) {
-    if (g->location == LOCATION_MANGROVES) {
+    if (g->location == LOCATION_MANGROVES || g->location == LOCATION_RIVER_CROSSING) {
         SDL_SetRenderDrawColor(r->sdl, 9, 42, 52, 255);
         SDL_Rect sea = {0, 0, r->screen_w - INFO_PANEL_W, r->tiles_y * TILE_SIZE};
         SDL_RenderFillRect(r->sdl, &sea);
@@ -3517,7 +3520,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_mountain_entrance(r, viewport_to_screen_x(v, g->map.stairs_down_x), viewport_to_screen_y(v, g->map.stairs_down_y));
         int open = boss_gate_open(g, LOCATION_MOUNTAINS);
         if (open || approach_route(g)->town == LOCATION_TOWN2) {
-            draw_town_road_sign(r, viewport_to_screen_x(v, 3), viewport_to_screen_y(v, APPROACH_H / 2 + 2), "STILLBURY");
+            draw_town_road_sign(r, viewport_to_screen_x(v, 3), viewport_to_screen_y(v, APPROACH_H / 2 + 2), "SUNSCAR WASTES");
         }
         if (open || approach_route(g)->town == LOCATION_TOWN) {
             draw_town_road_sign(r, viewport_to_screen_x(v, APPROACH_W - 8), viewport_to_screen_y(v, APPROACH_H / 2 + 2), "OAKHAVEN");
@@ -3613,11 +3616,19 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (g->location == LOCATION_DAWNMERE) {
-        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 21), "SALTWIND MARSH");
+        SDL_Color banner = g->dawnmere_liberated ? (SDL_Color){72, 148, 164, 255} : (SDL_Color){179, 54, 55, 255};
+        const int standards[3][2] = {{7, 14}, {18, 15}, {33, 5}};
+        for (int i = 0; i < 3; i++) {
+            draw_world_prop(r, viewport_to_screen_x(v, standards[i][0]), viewport_to_screen_y(v, standards[i][1]), PROP_BANNER, banner);
+        }
+        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), g->dawnmere_liberated ? "N: SALTWIND MARSH" : "N: WATERFRONT HELD");
         draw_town_road_sign(r, viewport_to_screen_x(v, 2), viewport_to_screen_y(v, 17), "HAUNTED FOREST\nOAKHAVEN");
-        draw_town_road_sign(r, viewport_to_screen_x(v, 31), viewport_to_screen_y(v, 16), "STORMWATCH HEADLAND");
+        draw_town_road_sign(r, viewport_to_screen_x(v, 8), viewport_to_screen_y(v, 15), g->dawnmere_progress & 1 ? "CHECKPOINT CLEARED" : "ROYAL CHECKPOINT");
+        draw_town_road_sign(r, viewport_to_screen_x(v, 20), viewport_to_screen_y(v, 17), g->dawnmere_progress & 2 ? "MARKET CLEARED" : "MARKET GARRISON");
+        draw_town_road_sign(r, viewport_to_screen_x(v, 35), viewport_to_screen_y(v, 6), g->dawnmere_liberated ? "DAWNMERE LIBERATED" : "RUSK'S COMMAND");
     }
     if (g->location == LOCATION_TOWN2) {
+        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 22), "S: RIVER DOCK / SALTWIND");
         draw_witch_hut(r,
             viewport_to_screen_x(v, TOWN_WITCH_X),
             viewport_to_screen_y(v, TOWN_WITCH_Y));
@@ -3708,7 +3719,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     northroad_draw_details(r, g, v);
 
     // Draw enemies
-    if (g->location == LOCATION_GIANTS_CROWN || g->location == LOCATION_CROWNROAD_NORTH || g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_MANGROVES || g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
+    if (eastern_town_combat(g) || g->location == LOCATION_GIANTS_CROWN || g->location == LOCATION_CROWNROAD_NORTH || g->location == LOCATION_IRONFANG || g->location == LOCATION_STORMWATCH || g->location == LOCATION_MANGROVES || g->location == LOCATION_RIVER_CROSSING || g->location == LOCATION_JAIL_ARMORY || g->location == LOCATION_ELDERWOOD || g->location == LOCATION_ESCAPE_TUNNEL || g->location == LOCATION_CASTLE_INTERIOR || g->location == LOCATION_CATACOMBS || g->location == LOCATION_DUNGEON ||
         g->location == LOCATION_FOREST ||
         g->location == LOCATION_MOUNTAINS ||
         g->location == LOCATION_DRAGONSPINE ||
@@ -3844,14 +3855,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     if (g->location == LOCATION_TOWN2) {
         SDL_Color label = {220, 180, 60, 255};
         int width = 0;
-        renderer_draw_text(r, "SUNSCAR WASTES",
-            viewport_to_screen_x(v, 1) * TILE_SIZE,
-            viewport_to_screen_y(v, 12) * TILE_SIZE,
-            area_label_color(LOCATION_DESERT), r->font_tiny);
-        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 21), "STONEWAKE QUARRY");
-        int open = g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP));
-        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3),
-            open ? "BLACKWATER SWAMP\nROSEMOOR" : "BLACKWATER SWAMP");
         TTF_SizeText(r->font_tiny, "HEALER", &width, NULL);
         renderer_draw_text(r, "HEALER",
             viewport_to_screen_x(v, TOWN_HEALER_X) * TILE_SIZE +
@@ -3870,15 +3873,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 (TOWN_INN_W * TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_INN_Y - 1) * TILE_SIZE,
             label, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "GOBLIN MOUNTAINS", &width, NULL);
-        renderer_draw_text(r, "GOBLIN MOUNTAINS",
-            viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
-            viewport_to_screen_y(v, 12) * TILE_SIZE,
-            area_label_color(LOCATION_MOUNTAINS), r->font_tiny);
-        if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_MOUNTAINS))) {
-            draw_town_road_sign(r, viewport_to_screen_x(v, TOWN_W - 8),
-                viewport_to_screen_y(v, 15), "GOBLIN MOUNTAINS\nOAKHAVEN");
-        }
+
     }
 
     if (g->location == LOCATION_TOWN3) {
@@ -4365,7 +4360,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "ELOWEN", sx * TILE_SIZE - 12, (sy - 1) * TILE_SIZE,
             (SDL_Color){182, 214, 232, 255}, r->font_tiny);
     }
-    if (g->aldric_party_state == ALDRIC_FOLLOWING && viewport_is_visible(v, g->aldric_x, g->aldric_y)) {
+    if (!mangrove_aboard(g) && g->aldric_party_state == ALDRIC_FOLLOWING && viewport_is_visible(v, g->aldric_x, g->aldric_y)) {
         int sx = viewport_to_screen_x(v, g->aldric_x);
         int sy = viewport_to_screen_y(v, g->aldric_y);
         int width = 0;
@@ -4407,10 +4402,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     game_player_push_offset(g, SDL_GetTicks(), &player_px, &player_py);
     mangrove_draw_warnings(r, g, v);
     mangrove_draw_boat(r, g, v);
-    draw_player_at(r, player_px, player_py,
-        g->player.player_class, equipped_weapon, off_hand_weapon,
-        equipped_armor, game_equipped_item(g, EQUIPMENT_HELMET),
-        g->player.last_dx, g->player.last_dy);
+    if (!mangrove_aboard(g)) {
+        draw_player_at(r, player_px, player_py,
+            g->player.player_class, equipped_weapon, off_hand_weapon,
+            equipped_armor, game_equipped_item(g, EQUIPMENT_HELMET),
+            g->player.last_dx, g->player.last_dy);
+    }
     if (g->player.poison_turns > 0) {
         draw_icon_poison(r, player_px + 16, player_py + 1);
     }

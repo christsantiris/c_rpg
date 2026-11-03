@@ -19,7 +19,7 @@ static const BossGateRule rules[] = {
     {LOCATION_CASTLE_INTERIOR, BOSS_GATE_INTERNAL, "Castellan / Royal Arcanist / Lord Veyr"},
     {LOCATION_LABYRINTH, BOSS_GATE_NONE, "Minotaur"},
     {LOCATION_GLASSDEEP, BOSS_GATE_NONE, "Quarry Colossus"},
-    {LOCATION_MANGROVES, BOSS_GATE_NONE, "Sszareth"},
+    {LOCATION_MANGROVES, BOSS_GATE_DESTINATION, "Sszareth"},
     {LOCATION_STORMWATCH, BOSS_GATE_NONE, "Tempest Matriarch"},
     {LOCATION_IRONFANG, BOSS_GATE_NONE, "Goblin Mine Boss"},
     {LOCATION_GIANTS_CROWN, BOSS_GATE_NONE, "The Last Jarl"},
@@ -49,6 +49,9 @@ int boss_gate_open(const GameState *g, Location area) {
     if (!rule || rule->policy == BOSS_GATE_NONE || g->debug_passages_unlocked) {
         return 1;
     }
+    if (area == LOCATION_MANGROVES) {
+        return g->mangrove_defeated;
+    }
     if (area == LOCATION_ELDERWOOD) {
         return g->elderwood_defeated;
     }
@@ -69,7 +72,7 @@ static void passage_message(GameState *g, Location area) {
         snprintf(message, sizeof(message), "Passage secured through %s. The road is open in both directions.", approach_area_name(area));
     } else if (approach_route(g) && approach_route(g)->town == LOCATION_TOWN && (area == LOCATION_FOREST || area == LOCATION_MOUNTAINS)) {
         snprintf(message, sizeof(message), "The %s guards hold the road to %s. Defeat %s in %s to force their retreat.",
-            area == LOCATION_FOREST ? "Dark Elf" : "goblin", area == LOCATION_FOREST ? "Dawnmere" : "Stillbury", rule->boss, approach_area_name(area));
+            area == LOCATION_FOREST ? "Dark Elf" : "goblin", area == LOCATION_FOREST ? "Dawnmere" : "Sunscar Wastes", rule->boss, approach_area_name(area));
     } else {
         snprintf(message, sizeof(message), "Passage blocked. Defeat %s in %s to secure this road.", rule->boss, approach_area_name(area));
     }
