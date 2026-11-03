@@ -166,7 +166,7 @@ int town_life_talk(GameState *g, int greeting) {
             "My family in Dawnmere says you freed them. Some here still trust the King; I don't trust his customs officers. Keep away from the checkpoint if you can." :
             "They say you fought the Crown. I sell boots, not rebellion. I'll trade, but don't bring the King's soldiers to my door.");
     } else if (g->location == LOCATION_ALEHOUSE && !g->dawnmere_liberated) {
-        snprintf(g->dialogue_text, sizeof(g->dialogue_text), "This room shelters the displaced. Seren is near the west tables. Speak with her about the occupation; the other businesses are shuttered.");
+        snprintf(g->dialogue_text, sizeof(g->dialogue_text), "This room shelters the displaced. Seren is near the west tables; speak with her about the occupation. Crossing the river? The regular crossing is closed by order of the King. Go through Saltwind Marsh: walk around our walls from the west gate to its road in the north.");
     }
     return 1;
 }
