@@ -220,7 +220,7 @@ void test_approaches(void) {
         free(loaded);
         return;
     }
-    ASSERT("new routes append after reserved connection IDs", town_approach_count == APPROACH_PEAKS_ROAD + 1);
+    ASSERT("new routes append after reserved connection IDs", town_approach_count == APPROACH_PEAKS_NORTH_ROAD + 1);
     for (int unlocked = 0; unlocked < 2; unlocked++) {
         for (int i = 0; i < town_approach_count; i++) {
             const TownApproach *route = &town_approaches[i];
@@ -322,7 +322,7 @@ void test_approaches(void) {
         if ((int)route->area < 0) {
             continue;
         }
-        if (route->area == LOCATION_DUNGEON || route->area == LOCATION_MOUNTAINS || route->area == LOCATION_CATACOMBS || !approach_entrance_rows(route->area)) {
+        if (i == APPROACH_PEAKS_NORTH_ROAD || route->area == LOCATION_DUNGEON || route->area == LOCATION_MOUNTAINS || route->area == LOCATION_CATACOMBS || !approach_entrance_rows(route->area)) {
             continue;
         }
         approach_town(g, route);

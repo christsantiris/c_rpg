@@ -1450,6 +1450,7 @@ void game_init(GameState *g) {
     g->loot_container_count = 0;
     memset(g->giants_crown, 0, sizeof(g->giants_crown));
     g->giants_crown_defeated = 0;
+    g->giants_entry_from_north = 0;
     g->crown_quest_state = 0;
     g->crown_quest_progress = 0;
     g->crown_vault_open = 0;

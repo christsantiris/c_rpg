@@ -2,12 +2,15 @@
 
 **Giant's Crown** is assigned by Antiquarian Edda in Rosemoor's Adventurer's Guild.
 
-Giant's Peaks follows Sunscar Wastes. Just before the Sunscar pyramid, the
-Sunscar road meets a T junction signed **N: GIANT'S PEAKS**. Its branch leaves
+Giant's Peaks follows Sunscar Wastes. Beyond the Sunscar pyramid entrance, the
+desert road turns north, signed **N: GIANT'S PEAKS**. It leaves
 the map's north edge onto the Giant's Peaks road, which climbs from sand into
-grass that grows rocky toward the peaks, and ends at the ruined giant hall.
+grass that grows rocky toward the peaks, passing the ruined giant hall.
 Leaving the first stage, or completing the fifth, returns to that road outside
-the hall; its south end returns to the junction. Rosemoor's west gate no longer
+the southern entrance returns to the desert road. Leaving the northern court
+reaches the road across Giant's Bridge, then bends east to Stillbury's west
+gate. There is no exterior road bypassing the five stages.
+Rosemoor's west gate no longer
 leads here. This optional five-stage region rises from grassy western foothills
 into the frost-covered remains of a giant kingdom.
 
@@ -24,8 +27,21 @@ reach six tiles, so every warned strike starts on screen.
 | 5 | The Jarl's Court | A ruined royal precinct with pillars, flanking approaches, and the Last Jarl |
 
 Southern boundary paths retreat; northern boundary paths advance. Intermediate
-travel and the final departure remain available while enemies and the Last Jarl
-live. The Jarl still guards the quest vault. See [boss gates](boss-gates.md).
+travel and retreat remain available while enemies live. Defeat the Last Jarl to
+leave through the opposite end of the pass and open onward passage permanently.
+The Jarl also guards the quest vault. No quest acceptance is required to fight
+him or open the bridge. See [boss gates](boss-gates.md).
+
+From Stillbury, the bridge itself is freely crossable. The southern trail enters
+the Jarl's Court at stage 5, facing south. Stage geography stays fixed: travelers
+must descend through stages 4, 3, 2 and 1 to reach the Sunscar road. A living
+Jarl blocks that final southern departure, while retreat north to Stillbury
+remains available. From Sunscar, the reverse journey visits stages 1–5 before
+the northern departure. Defeating the Jarl opens either departure, but both
+journeys still cross all five stages.
+
+Save version 239 records the expedition's entry side. Existing saves keep their
+southern entry, cached stages, discoveries, loot, enemy wounds and boss victory.
 
 | Enemy | First stage | Role |
 | --- | --- | --- |

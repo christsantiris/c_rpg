@@ -14,7 +14,10 @@
 #define APPROACH_OPENING 8
 #define APPROACH_SUNSCAR_ROAD 21
 #define APPROACH_PEAKS_ROAD 22
-#define APPROACH_PEAKS_BRANCH_X (APPROACH_W / 2 + 6)
+#define APPROACH_PEAKS_NORTH_ROAD 23
+#define APPROACH_PEAKS_BRANCH_X (APPROACH_W / 2 - 12)
+#define APPROACH_BRIDGE_X (APPROACH_W / 2)
+#define APPROACH_BRIDGE_EXIT_Y 4
 
 typedef struct {
     Location town;
@@ -33,6 +36,8 @@ const char *approach_town_name(Location town);
 int approach_sunscar_road(const GameState *g);
 int approach_peaks_road(const GameState *g);
 int approach_peaks_exit(const GameState *g, int *x, int *y);
+int approach_bridge_exit(const GameState *g, int *x, int *y);
+int approach_bridge_road(const GameState *g);
 const char *approach_origin_name(const TownApproach *route);
 TileType approach_floor(Location area);
 TileType approach_scenery(Location area, int progress);

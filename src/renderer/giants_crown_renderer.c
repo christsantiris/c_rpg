@@ -1,6 +1,7 @@
 #include "giants_crown_renderer.h"
 #include "../game/giants_crown.h"
 #include "../game/crown_quest.h"
+#include "../game/boss_gates.h"
 #include "dungeon_enemy_art.h"
 #include "sprites.h"
 #include "world_props.h"
@@ -28,7 +29,7 @@ void giants_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
             tile == TILE_GIANTS_SNOW ? (SDL_Color){204, 211, 197, 255} : (SDL_Color){89, 98, 62, 255});
     }
     if (tile == TILE_GIANTS_WALL || tile == TILE_GIANTS_CRACK) {
-        if (tile == TILE_GIANTS_WALL && (g->level == 1 || g->level == 3) &&
+        if (g->location == LOCATION_GIANTS_CROWN && tile == TILE_GIANTS_WALL && (g->level == 1 || g->level == 3) &&
             !(g->level == 3 && y == 22 && x >= 22 && x <= 42)) {
             // Outdoor terraces have natural rock faces, distinct from ruined halls.
             box(r, px, py, 24, 24, (SDL_Color){34, 43, 38, 255});
@@ -116,6 +117,13 @@ static void crown_label(Renderer *r, const Viewport *v, const char *text, int x,
     if (px + width > v->tiles_x * TILE_SIZE - 4) {
         px = v->tiles_x * TILE_SIZE - width - 4;
     }
+    if (py < 88) {
+        py = 88;
+    }
+    int bottom = v->tiles_y * TILE_SIZE - TTF_FontHeight(r->font_tiny) - 4;
+    if (py > bottom) {
+        py = bottom;
+    }
     renderer_draw_text(r, text, px + 1, py + 1, (SDL_Color){23, 29, 26, 255}, r->font_tiny);
     renderer_draw_text(r, text, px, py, (SDL_Color){224, 212, 162, 255}, r->font_tiny);
 }
@@ -155,6 +163,17 @@ void giants_draw_details(Renderer *r, const GameState *g, const Viewport *v) {
     crown_details(r, g, v);
     if (g->location != LOCATION_GIANTS_CROWN) {
         return;
+    }
+    if (g->level == 1 || g->level == GIANTS_DEPTH) {
+        int north = g->level == GIANTS_DEPTH;
+        int y = north ? 0 : GIANTS_H - 1;
+        int locked = north != g->giants_entry_from_north && !boss_gate_open(g, LOCATION_GIANTS_CROWN);
+        if (viewport_is_visible(v, 32, y)) {
+            if (locked) {
+                draw_world_prop(r, viewport_to_screen_x(v, 32), viewport_to_screen_y(v, y), PROP_GATE, (SDL_Color){138, 143, 116, 255});
+            }
+            crown_label(r, v, locked ? "PASSAGE BLOCKED: LAST JARL" : north ? "N: GIANT'S BRIDGE / STILLBURY" : "S: SUNSCAR WASTES", 32, y, 48);
+        }
     }
     for (int n = 0; n < g->enemy_count; n++) {
         const Enemy *enemy = &g->enemies[n];

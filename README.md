@@ -49,18 +49,35 @@ present from the start; its services require a recruited companion.
 
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/world-map.png?v=889e65531b5e)](docs/world-map.png?v=889e65531b5e)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=48a97aa41d11)](docs/world-map.png?v=48a97aa41d11)
 
 The V2 starting region contains Oakhaven, Goblin Mountains to its west, Haunted
 Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
 to a broken ferry landing at Northern Rapids; the river cannot be crossed.
-The river begins in Frostfell's snow and ice, passes Rosemoor and Blackwater
-Swamp, then flows through Northern Rapids to the eastern estuary.
+The river begins in Frostfell's snow and ice, passes Rosemoor and Giant's
+Peaks, then flows through Northern Rapids to the eastern estuary. The southern
+coast below the dungeon is open sea.
 
 Act 3’s eastern route runs from occupied Dawnmere north into Saltwind Marsh on
 the river bank. Its skiff passage crosses the calm estuary to Stillbury on the
-opposite bank, where Act 4 begins. Stillbury’s former western site and the
-undecided route beyond Sunscar are no longer connected on the atlas.
+opposite bank, where Act 4 begins.
+
+Act 3's western road runs from the Goblin Mountains west through Sunscar Wastes.
+Leaving Sunscar returns to that desert road. Continue past its entrance and turn
+north toward Giant's Peaks on the river bank. Cross all five stages to reach
+Giant's Bridge, then follow the opposite bank east into Stillbury's west gate.
+Travelers from Stillbury can cross the bridge freely and enter the northern
+Peaks, but must traverse all five stages southward to reach Sunscar. The Last
+Jarl blocks onward passage to the opposite road until defeated; retreat remains
+available. His defeat permanently opens both directions. Both Act 3 routes
+reach the same town to begin Act 4.
+
+On Stillbury's bank, Stonewake Quarry lies between the river and the castle,
+Blackwater Swamp lies east of Stillbury, and Sunken Coast lies among the islands
+north of the estuary. None of the three is connected by road yet.
+Goblin Mountains, Sunscar Wastes and Frostfell now fill the enlarged western
+terrain left by those relocations. This changes the atlas footprint, not the
+number of combat stages.
 
 The rest of the world is shown as provisional context and will be redesigned
 in later steps; later connections remain undecided.
@@ -361,4 +378,6 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
    Roll for stats. Choose a class based on strengths. Ascending armor class chance to hit. 
 - Add paypal/other integration to buy gold
    Add real money feature to buy in-game gold.
+- Refresh documentation
+   - Game guide(s), Readme
 

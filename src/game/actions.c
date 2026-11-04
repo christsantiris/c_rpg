@@ -2711,7 +2711,8 @@ static void resolve_player_action(GameState *g, Action a) {
                 if (!boss_gate_crossing(g, LOCATION_DESERT)) {
                     return;
                 }
-                push_message(g, "The western continuation is not yet charted. Return through Sunscar to the eastern mountain road.");
+                game_return_to_approach(g);
+                push_message(g, "You return to the desert road. Follow it west past Sunscar, then north toward Giant's Peaks.");
             }
             return;
         }

@@ -21,7 +21,7 @@ directions; ordinary enemy respawns never close it again.
 | Saltwind Marsh | Boss-gated destination | Sszareth unlocks the final river launch; retreat and ordinary stage travel remain open |
 | Stormwatch Headland | Free travel | Tempest Matriarch does not seal the final departure |
 | Ironfang Mines | Free travel | Goblin Mine Boss does not seal the final departure |
-| Giant's Peaks | Free travel | The Last Jarl still guards the royal vault and crown |
+| Giant's Peaks | Boss-gated onward departure | The Last Jarl blocks the opposite end of the five-stage pass; retreat and Stillbury's bridge crossing remain available |
 | Sunscar Wastes | Free travel | Desert Pharaoh remains an optional boss |
 | Frostfell Wastes | Free travel | Frost Kraken remains an optional boss |
 | Dragonspine | Free travel | Red Dragon remains an optional boss |
