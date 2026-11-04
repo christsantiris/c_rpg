@@ -140,6 +140,15 @@ static void mountain_crossing(int return_home) {
         action_resolve_player(&mountain, (Action){ACTION_MOVE, mountain.map.stairs_up_x, mountain.map.stairs_up_y});
         ASSERT("Sunscar's real eastern entrance returns to the Sunscar road outside its desert entrance", approach_sunscar_road(&mountain) &&
             mountain.player.x == mountain.map.stairs_down_x && mountain.player.y == mountain.map.stairs_down_y + 1);
+        walk_approach_to(&mountain, APPROACH_PEAKS_BRANCH_X, 0);
+        ASSERT("the T junction before the pyramid leads north onto the Giant's Peaks road", approach_peaks_road(&mountain) && mountain.player.y == APPROACH_H - 2 && mountain.player.last_dy == -1);
+        walk_approach_to(&mountain, mountain.map.stairs_down_x, mountain.map.stairs_down_y);
+        ASSERT("the giant hall enters Giant's Peaks at its first stage", mountain.location == LOCATION_GIANTS_CROWN && mountain.level == 1);
+        action_resolve_player(&mountain, (Action){ACTION_MOVE, mountain.player.x, mountain.player.y + 1});
+        ASSERT("leaving the first stage returns to the Giant's Peaks road outside the hall", approach_peaks_road(&mountain) &&
+            mountain.player.x == mountain.map.stairs_down_x && mountain.player.y == mountain.map.stairs_down_y + 1);
+        walk_approach_to(&mountain, mountain.map.stairs_up_x, mountain.map.stairs_up_y);
+        ASSERT("the Giant's Peaks road returns south to the Sunscar junction", approach_sunscar_road(&mountain) && mountain.player.x == APPROACH_PEAKS_BRANCH_X && mountain.player.y == 1);
         walk_approach_to(&mountain, mountain.map.stairs_up_x, mountain.map.stairs_up_y);
         ASSERT("the Sunscar road's east end returns to the mountain pass", mountain.location == LOCATION_APPROACH && mountain.approach_route == 2 && mountain.player.x == 1 && mountain.player.last_dx == 1);
         mountain_walk_road(&mountain, 0);
