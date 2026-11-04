@@ -328,6 +328,11 @@ static void draw_approach_ground(Renderer *r, const GameState *g, int sx, int sy
         draw_forest_floor(r, sx, sy, x, y);
     } else if (area == LOCATION_ASHEN && progress >= 15) {
         draw_dusted_grass(r, sx, sy, x, y, (progress - 15) / 4, (SDL_Color){92, 88, 84, 255});
+    } else if (approach_peaks_road(g) && progress < 15) {
+        // The Giant's Peaks road leaves the Sunscar junction on sand that gives way to grass.
+        draw_desert_floor(r, sx, sy, x, y);
+    } else if (approach_peaks_road(g) && progress < 40) {
+        draw_dusted_grass(r, sx, sy, x, y, (40 - progress) / 4, (SDL_Color){176, 138, 82, 255});
     } else if ((area == LOCATION_GLASSDEEP || area == LOCATION_GIANTS_CROWN) && progress >= 60) {
         draw_dusted_grass(r, sx, sy, x, y, (progress - 60) / 12, (SDL_Color){158, 148, 124, 255});
     } else if (area == LOCATION_STORMWATCH && progress >= 75) {
@@ -3528,6 +3533,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         if (open || approach_route(g)->town == LOCATION_TOWN) {
             draw_town_road_sign(r, viewport_to_screen_x(v, APPROACH_W - 8), viewport_to_screen_y(v, APPROACH_H / 2 + 2), "OAKHAVEN");
         }
+    }
+
+    if (approach_sunscar_road(g)) {
+        draw_town_road_sign(r, viewport_to_screen_x(v, APPROACH_PEAKS_BRANCH_X + 2), viewport_to_screen_y(v, APPROACH_H / 2 - 4), "N: GIANT'S PEAKS");
     }
 
     if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_FOREST) {

@@ -4,7 +4,8 @@
 #include "game.h"
 
 #define CASTLE_ASHEN_GATE_X 8
-#define GIANTS_APPROACH_ROUTE 20
+// Leaving the peaks returns to the road north of the Sunscar junction.
+#define GIANTS_APPROACH_ROUTE 22
 #define ASHEN_APPROACH_ROUTE 13
 
 const char *giants_stage_name(int level);
