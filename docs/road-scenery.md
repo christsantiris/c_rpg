@@ -26,7 +26,8 @@ checkpoint.
 The Frostfell, Sunscar, Ashen, Stonewake, Giant's Peaks and Stormwatch roads change gradually
 from the town toward the landmark; the landmark's terrain continues beyond it.
 Patches of the next terrain mix into the previous one, except that Frostfell's
-woods end in a single tree line at the frozen ground. Snow, sand, ash or
+woods end in a single tree line at the frozen ground and the Sunscar road's
+mountain rock ends in a single ragged edge at the sandstone. Snow, sand, ash or
 stone first appears as flecks on the grass. Except near Stonewake and Giant's
 Peaks, the ground then turns over completely. That ground is drawn over ordinary road-side grass, so no regional
 floor hazards apply on the road, and boulders are scenery rather than Dragonspine's
