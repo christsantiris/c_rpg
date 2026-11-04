@@ -98,14 +98,15 @@ void eastern_refresh(GameState *g) {
     }
 }
 
-// Each squad holds three guards and two archers; Rusk leads the waterfront command.
+// Each squad holds four guards with archers in slots 2, 4 and 6; Rusk leads the waterfront command.
 static void spawn_soldier(GameState *g, Enemy *e, int i) {
     static const int posts[DAWNMERE_GARRISON][2] = {
-        {9, 12}, {10, 13}, {12, 11}, {10, 11}, {13, 13},
-        {20, 12}, {20, 14}, {23, 12}, {18, 13}, {23, 14},
-        {34, 3}, {32, 4}, {37, 3}, {35, 5}, {38, 4}
+        {9, 12}, {10, 13}, {12, 11}, {10, 11}, {13, 13}, {9, 14}, {14, 12},
+        {20, 12}, {20, 14}, {23, 12}, {18, 13}, {23, 14}, {18, 11}, {24, 13},
+        {34, 3}, {32, 4}, {37, 3}, {35, 5}, {38, 4}, {33, 6}, {36, 2}
     };
-    int archer = i % DAWNMERE_SQUAD == 2 || i % DAWNMERE_SQUAD == 4;
+    int slot = i % DAWNMERE_SQUAD;
+    int archer = slot >= 2 && slot % 2 == 0;
     game_spawn_enemy(g, e, archer ? ENEMY_ROAD_ARCHER : ENEMY_ROYAL_GUARD, posts[i][0], posts[i][1]);
     e->boss_aux_x = 0;
     e->boss_aux_y = i / DAWNMERE_SQUAD + 1;
@@ -131,18 +132,19 @@ static int post_free(const GameState *g, const Map *map, const Enemy *enemies, i
     return 1;
 }
 
-// Saves from the nine-soldier garrison keep every survivor and casualty in its squad.
+// Saves from the nine- and fifteen-soldier garrisons keep every survivor and casualty in its squad.
 static void reinforce_roster(GameState *g, const Map *map, Enemy *enemies, int *count, int live) {
-    if (*count != 9) {
+    if (*count != 9 && *count != 15) {
         return;
     }
-    Enemy old[9];
-    memcpy(old, enemies, sizeof(old));
+    int size = *count / 3;
+    Enemy old[DAWNMERE_GARRISON];
+    memcpy(old, enemies, sizeof(Enemy) * *count);
     for (int i = 0; i < DAWNMERE_GARRISON; i++) {
         int squad = i / DAWNMERE_SQUAD;
         int slot = i % DAWNMERE_SQUAD;
-        if (slot < 3) {
-            enemies[i] = old[squad * 3 + slot];
+        if (slot < size) {
+            enemies[i] = old[squad * size + slot];
             continue;
         }
         spawn_soldier(g, &enemies[i], i);
@@ -151,11 +153,15 @@ static void reinforce_roster(GameState *g, const Map *map, Enemy *enemies, int *
     for (int i = 0; i < DAWNMERE_GARRISON; i++) {
         int squad = i / DAWNMERE_SQUAD;
         Enemy *e = &enemies[i];
-        if (i % DAWNMERE_SQUAD < 3 || !(old[squad * 3].active || old[squad * 3 + 1].active || old[squad * 3 + 2].active)) {
+        int holding = 0;
+        for (int slot = 0; slot < size; slot++) {
+            holding |= old[squad * size + slot].active;
+        }
+        if (i % DAWNMERE_SQUAD < size || !holding) {
             continue;
         }
         // Reinforcements join a squad still holding its position, beside any occupied post.
-        e->boss_aux_x = old[squad * 3].boss_aux_x;
+        e->boss_aux_x = old[squad * size].boss_aux_x;
         int x = e->x;
         int y = e->y;
         for (int d = 0; d < 9 && !e->active; d++) {
@@ -257,18 +263,22 @@ void eastern_update(GameState *g) {
             g->dawnmere_alerted = 1;
         }
     }
-    int cleared[3] = {1, 1, !g->enemies[DAWNMERE_RUSK].active};
+    // Rusk's command fights on after he falls, so every position clears only when its whole squad is down.
+    int cleared[3] = {1, 1, 1};
     for (int i = 0; i < DAWNMERE_GARRISON; i++) {
         if (!g->enemies[i].active || g->enemies[i].hp < g->enemies[i].max_hp) {
             g->dawnmere_alerted = 1;
         }
-        if (i < DAWNMERE_RUSK && g->enemies[i].active) {
+        if (g->enemies[i].active) {
             cleared[i / DAWNMERE_SQUAD] = 0;
         }
     }
+    // Cleared positions are reported in the message bar once; town signs only give directions.
+    static const char *const cleared_messages[3] = {"Checkpoint cleared.", "Market cleared.", "Rusk's command is broken."};
     for (int group = 0; group < 3; group++) {
-        if (cleared[group]) {
+        if (cleared[group] && !(g->dawnmere_progress & 1 << group)) {
             g->dawnmere_progress |= 1 << group;
+            push_message(g, cleared_messages[group]);
         }
     }
     if (g->dawnmere_progress != 7) {
@@ -341,8 +351,8 @@ int eastern_talk(GameState *g) {
     g->dialogue_y = y;
     snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Watchkeeper Seren");
     if (!g->dawnmere_liberated && g->dawnmere_quest_state == 1) {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "Checkpoint: %s. Market: %s. Captain Rusk: %s. Break these three positions to free Dawnmere and reopen its northern waterfront. The forest road remains your retreat.",
-            g->dawnmere_progress & 1 ? "cleared" : "held", g->dawnmere_progress & 2 ? "cleared" : "held", g->dawnmere_progress & 4 ? "defeated" : "in command");
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "Checkpoint: %s. Market: %s. Rusk's command: %s. Break these three positions to free Dawnmere and reopen its northern waterfront. The forest road remains your retreat.",
+            g->dawnmere_progress & 1 ? "cleared" : "held", g->dawnmere_progress & 2 ? "cleared" : "held", g->dawnmere_progress & 4 ? "broken" : "holding");
         return 1;
     }
     const char *text = !g->dawnmere_liberated ?

@@ -3,7 +3,7 @@
 
 #include "game.h"
 
-#define DAWNMERE_SQUAD 5
+#define DAWNMERE_SQUAD 7
 #define DAWNMERE_GARRISON (DAWNMERE_SQUAD * 3)
 #define DAWNMERE_RUSK (DAWNMERE_SQUAD * 2)
 #define DAWNMERE_SEREN_X 24

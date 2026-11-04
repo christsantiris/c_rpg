@@ -34,7 +34,7 @@ after Sunscar remain deferred.
 | News in Oakhaven | Existing NPCs describe confiscations and royal occupation in Dawnmere. | The royal documents from Act 2 connect to an immediate human crisis. |
 | First arrival | Royal banners, a checkpoint and shut businesses introduce occupied Dawnmere. The western retreat stays open. | The player sees how the Crown justifies its actions against alleged rebels. |
 | Local contact | Watchkeeper Seren asks for help from a sheltered room in the Alehouse. | The player learns the occupation's targets and can accept the liberation quest. |
-| Liberation | Defeat the garrison positions and occupying commander. Remaining garrison troops withdraw. | Dawnmere becomes a safe base; the player's intervention becomes public. |
+| Liberation | Defeat the garrison positions and occupying commander. His command fights on after he falls. | Dawnmere becomes a safe base; the player's intervention becomes public. |
 | Onward discovery | The command post contains orders directing seized goods and detainees through Stillbury's customs house. | Stillbury becomes the next place to investigate. |
 | Marsh passage | Seren explains that the normal crossing remains controlled by royal forces. A neglected route through Saltwind offers another way across. | The player has a reason to explore the marsh instead of immediately boarding a town ferry. |
 | Final landing | Defeat Sszareth, who controls the old northern landing and its narrow access channel. | The player can reach the river passage without making Sszareth another royal ally. |
@@ -280,8 +280,8 @@ entrance, plus renderer checks for labels and docking prompts.
 
 ## First-pass implementation notes
 
-- Captain Rusk is a named Royal Guard. Each of the three squads fields three Royal
-  Guards and two Road Archers; Rusk leads the waterfront command. A squad engages
+- Captain Rusk is a named Royal Guard. Each of the three squads fields four Royal
+  Guards and three Road Archers; Rusk leads the waterfront command. A squad engages
   when the player comes within three tiles, strikes one of its soldiers or crosses
   the checkpoint, and the message log names which of these provoked it. Arriving
   at the west gate before any fighting, the Royal Checkpoint explains the martial
@@ -292,9 +292,10 @@ entrance, plus renderer checks for labels and docking prompts.
   gate and the occupied Alehouse host all point around the walls to the Saltwind
   road, which never alerts the garrison. While occupied, the waterfront gate is
   closed from outside too, so the challenged west gate is the only way in.
-- Defeating the checkpoint, market squad and Rusk awards 100 gold and 500 XP once,
-  completes liberation without a required acceptance/turn-in, and saves his royal
-  confiscation orders in Evidence. The surviving command squad withdraws.
+- Defeating the checkpoint, market squad and Rusk's whole command awards 100 gold
+  and 500 XP once, completes liberation without a required acceptance/turn-in, and
+  saves his royal confiscation orders in Evidence. His soldiers fight on after he
+  falls. The message log reports each cleared position once.
 - Seren shelters in the Alehouse while occupied and returns to the square after
   liberation. Its host then sells nothing but explains that the King closed the
   regular river crossing, so Saltwind Marsh is the way over; Corvin's optional
@@ -308,8 +309,8 @@ entrance, plus renderer checks for labels and docking prompts.
 - Stillbury's authorities challenge known anti-Crown actions. Submitting or
   withdrawing returns to the dock; resisting activates persistent guards. Civilian
   reactions differ; supplies and the boat retreat remain usable.
-- Save version 237 adds two reinforcements to each squad of an older nine-soldier
-  garrison. Wounds and casualties stay with their squads; a broken squad is not
+- Save version 238 adds reinforcements to each squad of an older nine- or
+  fifteen-soldier garrison, completing four guards and three archers. Wounds and casualties stay with their squads; a broken squad is not
   refilled, and a reinforcement whose post is taken stands beside it.
 - Save version 236 retains occupation casualties, loot, rewards, quests, reports,
   checkpoint/guard state, river boat, boarding, exploration and Act 4 arrival.
