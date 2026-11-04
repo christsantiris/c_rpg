@@ -178,6 +178,18 @@ static void road_layouts(GameState *g) {
             }
             ASSERT("the Frostfell woods end in one tree line instead of dappling into the frozen ground", line);
         }
+        if (route->area == LOCATION_DESERT) {
+            int edge = 1;
+            for (int y = 1; y < APPROACH_H - 1; y++) {
+                int sandstone = 0;
+                for (int step = 1; step < APPROACH_W - 1; step++) {
+                    TileType tile = g->map.tiles[y][g->map.stairs_up_x ? APPROACH_W - 1 - step : step];
+                    sandstone |= tile == TILE_DESERT_WALL;
+                    edge &= !sandstone || tile != TILE_MOUNTAIN_WALL;
+                }
+            }
+            ASSERT("the Sunscar road's mountain rock ends in one edge instead of scattering squares into the sandstone", edge && tile_count(g, TILE_MOUNTAIN_WALL) > 0);
+        }
         if (route->area == LOCATION_ASHEN) {
             ASSERT("blackened dead trees and then lava-split basalt follow the green woods toward Ashen Hollow",
                 tile_count(g, TILE_FOREST_WALL) > 0 && tile_count(g, TILE_ASHEN_WALL) > 0 && tile_count(g, TILE_ASHEN_LAVA) > 0);
