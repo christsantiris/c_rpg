@@ -2496,6 +2496,14 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 giants_draw_tile(r, g, sx, sy, x, y, tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile);
                 continue;
             }
+            if (approach_bridge_road(g)) {
+                TileType tile = g->map.tiles[y][x];
+                tile = tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile;
+                if (tile == TILE_GIANTS_PAVING || tile == TILE_GIANTS_WALL || tile == TILE_GIANTS_COLUMN) {
+                    giants_draw_tile(r, g, sx, sy, x, y, tile);
+                    continue;
+                }
+            }
             if (g->location == LOCATION_IRONFANG) {
                 TileType tile = g->map.tiles[y][x];
                 ironfang_draw_tile(r, g, sx, sy, x, y, tile == TILE_ITEM ? floor_item_underlay(g, x, y) : tile);
@@ -3572,6 +3580,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
     TownExitStyle entrance_style;
     if (g->location == LOCATION_APPROACH && !northern_approach(g) && approach_route(g) && approach_entrance_rows(approach_route(g)->area) &&
+        !approach_bridge_road(g) &&
         approach_route(g)->area != LOCATION_DUNGEON && approach_route(g)->area != LOCATION_MOUNTAINS &&
         approach_area_style(approach_route(g)->area, &entrance_style)) {
         draw_area_entrance(r, entrance_style, viewport_to_screen_x(v, g->map.stairs_down_x), viewport_to_screen_y(v, g->map.stairs_down_y), approach_entrance_rows(approach_route(g)->area));
@@ -3896,18 +3905,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, TOWN_GUILD_Y - 1) * TILE_SIZE,
             label, r->font_tiny);
         draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), "FROSTFELL WASTES");
-        renderer_draw_text(r, "GIANT'S PEAKS",
-            viewport_to_screen_x(v, 2) * TILE_SIZE + 8,
-            viewport_to_screen_y(v, ROSEMOOR_ASHEN_GATE_Y) * TILE_SIZE,
-            area_label_color(LOCATION_GIANTS_CROWN), r->font_tiny);
         TTF_SizeText(r->font_tiny, "CROWN ROAD EAST", &width, NULL);
         renderer_draw_text(r, "CROWN ROAD EAST",
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
             viewport_to_screen_y(v, TOWN3_CROWN_GATE_Y) * TILE_SIZE,
             area_label_color(LOCATION_CROWNROAD), r->font_tiny);
-        int open = g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP));
-        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, TOWN_H - 4),
-            open ? "BLACKWATER SWAMP\nSTILLBURY" : "BLACKWATER SWAMP");
         TTF_SizeText(r->font_tiny, "APOTHECARY", &width, NULL);
         renderer_draw_text(r, "APOTHECARY",
             viewport_to_screen_x(v, TOWN_APOTHECARY_X) * TILE_SIZE +
@@ -3976,21 +3978,37 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_town_road_sign(r, viewport_to_screen_x(v, sign_x), viewport_to_screen_y(v, sign_y), sign);
                 }
             }
-            for (int end = 0; end < 2; end++) {
+            int ends = approach_bridge_road(g) || approach_sunscar_road(g) ? 3 : 2;
+            for (int end = 0; end < ends; end++) {
                 int x = end ? g->map.stairs_down_x : g->map.stairs_up_x;
                 int y = end ? g->map.stairs_down_y : g->map.stairs_up_y;
                 const char *name = end ? approach_area_name(route->area) : approach_origin_name(route);
+                if (end == 2) {
+                    if (approach_bridge_road(g)) {
+                        x = APPROACH_BRIDGE_X;
+                        y = 8;
+                        name = "GIANT'S BRIDGE";
+                    } else {
+                        approach_peaks_exit(g, &x, &y);
+                        name = "N: GIANT'S PEAKS";
+                    }
+                }
+                if (approach_bridge_road(g) && !end) {
+                    name = "E: STILLBURY";
+                } else if (approach_bridge_road(g) && end == 1) {
+                    name = "S: GIANT'S PEAKS / SUNSCAR";
+                }
                 int width = 0;
                 TTF_SizeText(r->font_tiny, name, &width, NULL);
                 int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
                 int py = viewport_to_screen_y(v, y) * TILE_SIZE - 16;
-                if (end && route->area == LOCATION_MOUNTAINS) {
+                if (end == 1 && route->area == LOCATION_MOUNTAINS) {
                     py -= (APPROACH_MOUNTAIN_ROWS - 1) * TILE_SIZE;
-                } else if (end && (route->area == LOCATION_FOREST || route->area == LOCATION_SWAMP)) {
+                } else if (end == 1 && (route->area == LOCATION_FOREST || route->area == LOCATION_SWAMP)) {
                     py -= 5 * TILE_SIZE;
-                } else if (end && approach_entrance_rows(route->area)) {
+                } else if (end == 1 && approach_entrance_rows(route->area) && !approach_bridge_road(g)) {
                     py -= (approach_entrance_rows(route->area) - 1) * TILE_SIZE;
-                } else if (end && route->area == LOCATION_DUNGEON) {
+                } else if (end == 1 && route->area == LOCATION_DUNGEON) {
                     py -= 2 * TILE_SIZE;
                 } else if (!end) {
                     if (route->gate_y == 0 || route->gate_y == TOWN_H - 1) {

@@ -6,6 +6,7 @@
 #include "stormwatch.h"
 #include "coastal_travel.h"
 #include "boss_gates.h"
+#include "town_road.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -20,7 +21,7 @@ const TownApproach town_approaches[] = {
     {LOCATION_TOWN2, LOCATION_DESERT, 0, 12, 1},
     {LOCATION_TOWN2, LOCATION_GLASSDEEP, SOUTH_AREA_GATE_X, TOWN_H - 1, 1},
     {LOCATION_TOWN3, LOCATION_FROSTFELL, 20, 0},
-    {LOCATION_TOWN3, LOCATION_SWAMP, 20, TOWN_H - 1},
+    {LOCATION_TOWN3, LOCATION_SWAMP, 20, TOWN_H - 1, 1},
     {-1, -1, 0, 0}, // Retired garden route; saved indices remain stable.
     {LOCATION_TOWN2, LOCATION_MOUNTAINS, TOWN_W - 1, 12, 1},
     {LOCATION_TOWN4, LOCATION_DRAGONSPINE, RIDGESHIRE_DRAGON_GATE_X, 0},
@@ -35,7 +36,9 @@ const TownApproach town_approaches[] = {
     // The Sunscar road starts at the Goblin Mountains pass rather than a town gate.
     {LOCATION_TOWN, LOCATION_DESERT, 0, 12, 1},
     // The Giant's Peaks road runs north from the Sunscar road's junction.
-    {LOCATION_TOWN, LOCATION_GIANTS_CROWN, 20, 0, 1}
+    {LOCATION_TOWN, LOCATION_GIANTS_CROWN, 20, 0, 1},
+    // Northern end of the five-stage pass, reached across Giant's Bridge from Stillbury.
+    {LOCATION_TOWN2, LOCATION_GIANTS_CROWN, 0, 12, 1}
 };
 
 // Serialized route 17 remains reserved.
@@ -95,6 +98,19 @@ int approach_peaks_exit(const GameState *g, int *x, int *y) {
     }
     *x = APPROACH_PEAKS_BRANCH_X;
     *y = 0;
+    return 1;
+}
+
+int approach_bridge_road(const GameState *g) {
+    return g->location == LOCATION_APPROACH && g->approach_route == APPROACH_PEAKS_NORTH_ROAD;
+}
+
+int approach_bridge_exit(const GameState *g, int *x, int *y) {
+    if (!approach_bridge_road(g)) {
+        return 0;
+    }
+    *x = APPROACH_W - 1;
+    *y = APPROACH_BRIDGE_EXIT_Y;
     return 1;
 }
 
@@ -558,7 +574,63 @@ TileType approach_coast_ground(int x, int y) {
     return TILE_TOWN_FLOOR;
 }
 
+static void refresh_bridge_road(GameState *g) {
+    // The crossing is free; the Jarl controls passage through the Peaks beyond it.
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            TileType tile = x > 0 && x < APPROACH_W - 1 && y > 0 && y < APPROACH_H - 1 ? TILE_TOWN_FLOOR : TILE_WALL;
+            if (x < APPROACH_W && y >= 8 && y <= 16) {
+                tile = TILE_COAST_DEEP_WATER;
+                if (abs(x - APPROACH_BRIDGE_X) <= 2) {
+                    tile = abs(x - APPROACH_BRIDGE_X) == 2 ? TILE_GIANTS_WALL : TILE_GIANTS_PAVING;
+                }
+            }
+            if (x == APPROACH_BRIDGE_X && y >= APPROACH_BRIDGE_EXIT_Y && y < APPROACH_H) {
+                tile = y >= 8 && y <= 16 ? TILE_GIANTS_PAVING : TILE_TOWN_PATH;
+            }
+            if (y == APPROACH_BRIDGE_EXIT_Y && x >= APPROACH_BRIDGE_X && x < APPROACH_W) {
+                tile = TILE_TOWN_PATH;
+            }
+            g->map.tiles[y][x] = tile;
+        }
+    }
+    g->map.stairs_up_x = APPROACH_W - 1;
+    g->map.stairs_up_y = APPROACH_BRIDGE_EXIT_Y;
+    g->map.stairs_down_x = APPROACH_BRIDGE_X;
+    g->map.stairs_down_y = APPROACH_H - 1;
+    g->map.tiles[APPROACH_BRIDGE_EXIT_Y][APPROACH_W - 1] = TILE_APPROACH_TOWN;
+    g->map.tiles[APPROACH_H - 1][APPROACH_BRIDGE_X] = TILE_APPROACH_AREA;
+    approach_grow_scenery(&g->map, LOCATION_GIANTS_CROWN);
+    g->map.tiles[APPROACH_H - 3][APPROACH_BRIDGE_X - 2] = TILE_GIANTS_COLUMN;
+    g->map.tiles[APPROACH_H - 3][APPROACH_BRIDGE_X + 2] = TILE_GIANTS_COLUMN;
+    if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
+        g->player.x = APPROACH_BRIDGE_X;
+        g->player.y = APPROACH_H - 2;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (!item->active) {
+            continue;
+        }
+        if (!map_is_walkable(&g->map, item->x, item->y)) {
+            item->x = APPROACH_BRIDGE_X;
+            item->y = APPROACH_H - 2;
+        }
+        item->underlying_tile = g->map.tiles[item->y][item->x];
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && !map_is_travel_tile(g->map.tiles[item->y][item->x])) {
+            g->map.tiles[item->y][item->x] = TILE_ITEM;
+        }
+    }
+}
+
 void approach_refresh_entrance(GameState *g) {
+    if (approach_bridge_road(g)) {
+        refresh_bridge_road(g);
+        return;
+    }
     if (northern_approach(g)) {
         return;
     }
@@ -617,7 +689,10 @@ void approach_refresh_entrance(GameState *g) {
     int bx;
     int by;
     if (approach_peaks_exit(g, &bx, &by)) {
-        // Just before the pyramid, a T junction branches north to the Giant's Peaks road.
+        // The desert road passes the pyramid, then turns north toward the Peaks.
+        for (int col = bx; col <= jx; col++) {
+            g->map.tiles[jy][col] = TILE_TOWN_PATH;
+        }
         for (int row = by + 1; row < jy; row++) {
             g->map.tiles[row][bx] = TILE_TOWN_PATH;
         }
@@ -942,6 +1017,10 @@ int approach_enter_region(GameState *g, int index) {
     approach_refresh_swamp(g);
     approach_refresh_entrance(g);
     approach_refresh_fork(g);
+    if (approach_bridge_road(g)) {
+        g->player.x = g->map.stairs_up_x - 1;
+        g->player.y = g->map.stairs_up_y;
+    }
     if (northern_approach(g)) {
         northern_refresh(g);
         g->player.x = NORTH_ROAD_X;
@@ -1026,10 +1105,11 @@ int approach_travel(GameState *g, int x, int y) {
         return 0;
     }
     Location area = route->area;
+    int from_north = approach_bridge_road(g);
     g->location = route->town;
     g->approach_route = -1;
     switch (area) {
-        case LOCATION_GIANTS_CROWN: giants_enter(g, 0); break;
+        case LOCATION_GIANTS_CROWN: giants_enter_from(g, from_north); break;
         case LOCATION_IRONFANG: ironfang_enter(g, 0); break;
         case LOCATION_STORMWATCH: stormwatch_enter(g, 0); break;
         case LOCATION_DUNGEON: game_enter_dungeon(g); break;

@@ -15,6 +15,7 @@ void giants_unpack(const GiantsStage *state, Map *map);
 void giants_capture(const GameState *g, GiantsStage *state);
 void giants_store(GameState *g);
 void giants_enter(GameState *g, int portal);
+void giants_enter_from(GameState *g, int north);
 void giants_leave(GameState *g);
 void giants_change_level(GameState *g, int forward);
 int giants_travel(GameState *g, int x, int y);

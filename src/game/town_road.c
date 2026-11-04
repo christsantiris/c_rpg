@@ -37,6 +37,10 @@ int town_road_connection(Location town, TownSide side, TownApproach *connection)
             *connection = (TownApproach){town, LOCATION_RIVER_CROSSING, 20, TOWN_H - 1};
             return 1;
         }
+        if (side == TOWN_SIDE_WEST) {
+            *connection = (TownApproach){town, LOCATION_GIANTS_CROWN, 0, 12};
+            return 1;
+        }
         return 0;
     }
     if (town == LOCATION_DAWNMERE && side != TOWN_SIDE_WEST) {
@@ -164,7 +168,7 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
     if (town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
         snprintf(message, sizeof(message), "Soulstone Shrine lies west of the path. North: broken ferry, no crossing. South: Oakhaven.");
     } else if (town == LOCATION_TOWN2) {
-        snprintf(message, sizeof(message), "Stillbury: follow the dock approach north into town. Return south to the skiff and Saltwind.");
+        snprintf(message, sizeof(message), "Stillbury: west to Giant's Bridge; south to the skiff and Saltwind. Approach the town to enter.");
     } else if (town == LOCATION_DAWNMERE && !g->dawnmere_liberated) {
         snprintf(message, sizeof(message), "Dawnmere is occupied. Enter at the west gate, or walk around the town to the Saltwind road north.");
     } else {
@@ -261,6 +265,13 @@ int town_road_travel(GameState *g, int x, int y) {
         }
     } else if (connection.area == LOCATION_RIVER_CROSSING) {
         eastern_river_enter(g, 1);
+    } else if (connection.area == LOCATION_GIANTS_CROWN && g->road_town == LOCATION_TOWN2) {
+        approach_enter_region(g, APPROACH_PEAKS_NORTH_ROAD);
+        g->player.x = APPROACH_W - 2;
+        g->player.y = APPROACH_BRIDGE_EXIT_Y;
+        g->player.last_dx = -1;
+        g->player.last_dy = 0;
+        map_mark_explored(&g->map, g->player.x, g->player.y);
     } else if (connection.area == LOCATION_MANGROVES) {
         mangrove_path(g, 0);
     } else if (connection.area == LOCATION_CROWNROAD || connection.area == LOCATION_CROWNROAD_WEST) {

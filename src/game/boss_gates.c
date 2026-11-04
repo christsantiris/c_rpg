@@ -22,7 +22,7 @@ static const BossGateRule rules[] = {
     {LOCATION_MANGROVES, BOSS_GATE_DESTINATION, "Sszareth"},
     {LOCATION_STORMWATCH, BOSS_GATE_NONE, "Tempest Matriarch"},
     {LOCATION_IRONFANG, BOSS_GATE_NONE, "Goblin Mine Boss"},
-    {LOCATION_GIANTS_CROWN, BOSS_GATE_NONE, "The Last Jarl"},
+    {LOCATION_GIANTS_CROWN, BOSS_GATE_DESTINATION, "The Last Jarl"},
     {LOCATION_DESERT, BOSS_GATE_NONE, "Desert Pharaoh"},
     {LOCATION_FROSTFELL, BOSS_GATE_NONE, "Frost Kraken"},
     {LOCATION_DRAGONSPINE, BOSS_GATE_NONE, "Red Dragon"},
@@ -54,6 +54,9 @@ int boss_gate_open(const GameState *g, Location area) {
     }
     if (area == LOCATION_ELDERWOOD) {
         return g->elderwood_defeated;
+    }
+    if (area == LOCATION_GIANTS_CROWN) {
+        return g->giants_crown_defeated;
     }
     // The castle retains its floor-specific checks in castle_travel().
     if (rule->policy == BOSS_GATE_INTERNAL) {

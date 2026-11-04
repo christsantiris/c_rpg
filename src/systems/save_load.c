@@ -1692,10 +1692,14 @@ static int load_northroad(const cJSON *root, GameState *g, int version) {
 static int load_giants(const cJSON *root, GameState *g, int version) {
     memset(g->giants_crown, 0, sizeof(g->giants_crown));
     g->giants_crown_defeated = 0;
+    g->giants_entry_from_north = 0;
     if (version < 203) {
         return 1;
     }
     const cJSON *array = cJSON_GetObjectItem(root, "giants_crown");
+    if (version >= 239 && (!stormwatch_number(root, "giants_entry_from_north", &g->giants_entry_from_north) || g->giants_entry_from_north < 0 || g->giants_entry_from_north > 1)) {
+        return 0;
+    }
     if (!cJSON_IsArray(array) || cJSON_GetArraySize(array) != GIANTS_DEPTH ||
         !stormwatch_number(root, "giants_crown_defeated", &g->giants_crown_defeated)) {
         return 0;
@@ -1924,11 +1928,12 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 238);
+    cJSON_AddNumberToObject(root, "save_version", 239);
     cJSON_AddItemToObject(root, "eastern_arc", serialize_eastern(g));
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
+    cJSON_AddNumberToObject(root, "giants_entry_from_north", g->giants_entry_from_north);
     cJSON_AddNumberToObject(root, "crown_quest_state", g->crown_quest_state);
     cJSON_AddNumberToObject(root, "crown_quest_progress", g->crown_quest_progress);
     cJSON_AddNumberToObject(root, "crown_vault_open", g->crown_vault_open);
@@ -7152,6 +7157,15 @@ int load_game(GameState *g, int slot) {
         eastern_reinforce(g);
     }
     eastern_refresh(g);
+    if (save_version < 239) {
+        // Repair the new western road in place, retaining discovery, loot and character state.
+        if (approach_sunscar_road(g) || approach_peaks_road(g)) {
+            approach_refresh_entrance(g);
+        }
+        if (g->location == LOCATION_TOWN_ROAD && (g->road_town == LOCATION_TOWN2 || g->road_town == LOCATION_TOWN3)) {
+            town_road_migrate(g);
+        }
+    }
     if (!eastern_valid(g)) {
         cJSON_Delete(root);
         return 0;
