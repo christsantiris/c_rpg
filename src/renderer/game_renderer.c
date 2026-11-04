@@ -4403,11 +4403,21 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     game_player_push_offset(g, SDL_GetTicks(), &player_px, &player_py);
     mangrove_draw_warnings(r, g, v);
     mangrove_draw_boat(r, g, v);
-    if (!mangrove_aboard(g)) {
-        draw_player_at(r, player_px, player_py,
-            g->player.player_class, equipped_weapon, off_hand_weapon,
-            equipped_armor, game_equipped_item(g, EQUIPMENT_HELMET),
-            g->player.last_dx, g->player.last_dy);
+    // A paddler sits in the skiff, so the hull hides everything below the waist.
+    int aboard = mangrove_aboard(g);
+    SDL_Rect old_clip;
+    SDL_bool clipped = SDL_RenderIsClipEnabled(r->sdl);
+    SDL_RenderGetClipRect(r->sdl, &old_clip);
+    if (aboard) {
+        SDL_Rect seat = {player_px - TILE_SIZE, player_py - TILE_SIZE, TILE_SIZE * 3, TILE_SIZE + 14};
+        SDL_RenderSetClipRect(r->sdl, &seat);
+    }
+    draw_player_at(r, player_px, player_py - (aboard ? 6 : 0),
+        g->player.player_class, equipped_weapon, off_hand_weapon,
+        equipped_armor, game_equipped_item(g, EQUIPMENT_HELMET),
+        g->player.last_dx, g->player.last_dy);
+    if (aboard) {
+        SDL_RenderSetClipRect(r->sdl, clipped ? &old_clip : NULL);
     }
     if (g->player.poison_turns > 0) {
         draw_icon_poison(r, player_px + 16, player_py + 1);
