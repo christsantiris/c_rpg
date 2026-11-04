@@ -115,9 +115,10 @@ static void occupation(GameState *g, GameState *loaded) {
     ASSERT("occupied Dawnmere has three persistent royal squads and retains Oakhaven as its safe anchor", g->enemy_count == DAWNMERE_GARRISON && !g->dawnmere_liberated && g->last_town_visited == LOCATION_TOWN);
     ASSERT("the west gate checkpoint orders the player to leave before any fighting", eastern_challenge_active(g) && strstr(g->dialogue_text, "martial law") && strstr(g->dialogue_text, "Leave town now") && g->dialogue_x == g->enemies[0].x && g->dialogue_y == g->enemies[0].y);
     for (int i = 0; i < g->enemy_count; i++) {
-        int archer = i % DAWNMERE_SQUAD == 2 || i % DAWNMERE_SQUAD == 4;
+        int slot = i % DAWNMERE_SQUAD;
+        int archer = slot >= 2 && slot % 2 == 0;
         ASSERT("royal soldiers spawn on usable streets outside NPCs and buildings", map_is_walkable(&g->map, g->enemies[i].x, g->enemies[i].y) && g->enemies[i].boss_aux_y == i / DAWNMERE_SQUAD + 1);
-        ASSERT("each squad fields three guards and two archers", g->enemies[i].type == (archer ? ENEMY_ROAD_ARCHER : ENEMY_ROYAL_GUARD));
+        ASSERT("each squad fields four guards and three archers", g->enemies[i].type == (archer ? ENEMY_ROAD_ARCHER : ENEMY_ROYAL_GUARD));
         for (int n = 0; n < i; n++) {
             ASSERT("no two soldiers share a post", g->enemies[n].x != g->enemies[i].x || g->enemies[n].y != g->enemies[i].y);
         }
@@ -155,11 +156,23 @@ static void occupation(GameState *g, GameState *loaded) {
     g->player.experience_next = 1000;
     int gold = g->gold;
     int xp = g->player.experience;
+    for (int i = 0; i < DAWNMERE_SQUAD; i++) {
+        g->enemies[i].active = 0;
+    }
+    eastern_update(g);
+    eastern_update(g);
+    ASSERT("a cleared checkpoint is reported once in the message bar", g->dawnmere_progress == 1 && strcmp(g->messages[g->message_count - 1], "Checkpoint cleared.") == 0 && strcmp(g->messages[g->message_count - 2], "Checkpoint cleared.") != 0);
     for (int i = 0; i <= DAWNMERE_RUSK; i++) {
         g->enemies[i].active = 0;
     }
     eastern_update(g);
-    ASSERT("checkpoint, market and commander complete liberation while surviving final troops withdraw", g->dawnmere_liberated && g->dawnmere_progress == 7 && !g->enemies[DAWNMERE_GARRISON - 1].active && g->dawnmere_quest_state == 3 && g->last_town_visited == LOCATION_DAWNMERE);
+    ASSERT("Rusk's command fights on after he falls instead of withdrawing at once", !g->dawnmere_liberated && g->dawnmere_progress == 3 && g->enemies[DAWNMERE_GARRISON - 1].active);
+    for (int i = DAWNMERE_RUSK; i < DAWNMERE_GARRISON; i++) {
+        g->enemies[i].active = 0;
+    }
+    eastern_update(g);
+    ASSERT("checkpoint, market and the whole command complete liberation", g->dawnmere_liberated && g->dawnmere_progress == 7 && g->dawnmere_quest_state == 3 && g->last_town_visited == LOCATION_DAWNMERE &&
+        recent_message(g, "Rusk's command is broken.") && recent_message(g, "Dawnmere is liberated!"));
     eastern_update(g);
     ASSERT("liberation awards gold and XP only once and frees the active quest slot", g->gold == gold + 100 && g->player.experience == xp + 500 && game_active_quest_count(g) == 2);
     ASSERT("Rusk's royal order enters Evidence without revealing the Royal Arcanist", royal_evidence_pending(g) == ROYAL_EVIDENCE_CONFISCATION && strstr(royal_evidence_document(4)->text, "Stillbury") && !strstr(royal_evidence_document(4)->text, "Arcanist"));
@@ -266,6 +279,8 @@ static int rewrite_eastern_save(int mode) {
             cJSON_SetNumberValue(cJSON_GetObjectItem(arc, "saltwind_quest_state"), 1.5);
         } else if (mode == 5) {
             cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 236);
+        } else if (mode == 6) {
+            cJSON_SetNumberValue(cJSON_GetObjectItem(root, "save_version"), 237);
         } else {
             cJSON *boat = cJSON_GetObjectItem(arc, "river_boat");
             cJSON_SetNumberValue(cJSON_GetObjectItem(boat, "boat_x"), -1);
@@ -330,7 +345,7 @@ static void liberation_without_offer(GameState *g) {
     g->player.defense = 1000;
     g->player.hp = g->player.max_hp = 100000;
     game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
-    for (int i = 0; i <= DAWNMERE_RUSK; i++) {
+    for (int i = 0; i < DAWNMERE_GARRISON; i++) {
         Enemy *enemy = &g->enemies[i];
         int tries = 0;
         while (enemy->active && tries++ < 40) {
@@ -404,6 +419,22 @@ static void garrison_reinforcement(GameState *g, GameState *loaded) {
     ASSERT("reinforcements join holding squads beside an occupied post", blocked->active && map_is_walkable(&loaded->map, blocked->x, blocked->y) && (blocked->x != loaded->player.x || blocked->y != loaded->player.y) &&
         abs(blocked->x - posts[3].x) <= 1 && abs(blocked->y - posts[3].y) <= 1 && loaded->enemies[4].active && loaded->enemies[DAWNMERE_RUSK + 4].active);
     ASSERT("the reinforced garrison round-trips", save_game(loaded, EASTERN_SLOT) && load_game(g, EASTERN_SLOT) && g->enemy_count == DAWNMERE_GARRISON && g->enemies[3].x == blocked->x && g->enemies[3].y == blocked->y);
+    game_init(g);
+    game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
+    memcpy(posts, g->enemies, sizeof(posts));
+    // Rebuild the former five-soldier squads, which shared their first five posts.
+    for (int i = 0; i < 15; i++) {
+        g->enemies[i] = posts[i / 5 * DAWNMERE_SQUAD + i % 5];
+    }
+    g->enemy_count = 15;
+    for (int i = 0; i < 5; i++) {
+        g->enemies[i].active = 0;
+    }
+    g->enemies[6].hp -= 7;
+    g->dawnmere_alerted = 1;
+    ASSERT("a fifteen-soldier occupation save gains the seven-soldier squads", save_game(g, EASTERN_SLOT) && rewrite_eastern_save(6) && load_game(loaded, EASTERN_SLOT) && loaded->enemy_count == DAWNMERE_GARRISON && loaded->dawnmere_cache.enemy_count == DAWNMERE_GARRISON);
+    ASSERT("wounds stay with their squads and only holding squads gain a guard and an archer", loaded->enemies[DAWNMERE_SQUAD + 1].hp == posts[DAWNMERE_SQUAD + 1].max_hp - 7 && !loaded->enemies[5].active && !loaded->enemies[6].active &&
+        loaded->enemies[DAWNMERE_SQUAD + 5].type == ENEMY_ROYAL_GUARD && loaded->enemies[DAWNMERE_SQUAD + 6].type == ENEMY_ROAD_ARCHER && loaded->enemies[DAWNMERE_SQUAD + 6].active && loaded->enemies[DAWNMERE_RUSK + 5].active);
 }
 
 static void dawnmere_bypass(GameState *g) {
@@ -451,9 +482,10 @@ static void royal_tactics(GameState *g) {
     }
 }
 
-static void place_squad(GameState *g, const int posts[DAWNMERE_SQUAD][2]) {
-    g->enemy_count = DAWNMERE_SQUAD;
-    for (int i = 0; i < DAWNMERE_SQUAD; i++) {
+// Firing line scenarios use the first five slots: three guards and two archers.
+static void place_squad(GameState *g, const int posts[5][2]) {
+    g->enemy_count = 5;
+    for (int i = 0; i < 5; i++) {
         g->enemies[i].active = 1;
         g->enemies[i].hp = g->enemies[i].max_hp;
         g->enemies[i].x = posts[i][0];
@@ -464,8 +496,8 @@ static void place_squad(GameState *g, const int posts[DAWNMERE_SQUAD][2]) {
 
 static void royal_firing_line(GameState *g) {
     // Slots 2 and 4 are archers, placed nearer the player than the rear guard.
-    const int advance[DAWNMERE_SQUAD][2] = {{26, 11}, {26, 13}, {24, 12}, {30, 12}, {25, 13}};
-    const int contact[DAWNMERE_SQUAD][2] = {{21, 12}, {21, 11}, {24, 12}, {23, 15}, {26, 13}};
+    const int advance[5][2] = {{26, 11}, {26, 13}, {24, 12}, {30, 12}, {25, 13}};
+    const int contact[5][2] = {{21, 12}, {21, 11}, {24, 12}, {23, 15}, {26, 13}};
     game_init(g);
     game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
     g->dialogue_active = 0;
@@ -481,7 +513,7 @@ static void royal_firing_line(GameState *g) {
     place_squad(g, advance);
     action_resolve_enemies(g);
     int advanced = 1;
-    for (int i = 0; i < DAWNMERE_SQUAD; i++) {
+    for (int i = 0; i < 5; i++) {
         if (g->enemies[i].type == ENEMY_ROYAL_GUARD) {
             advanced &= g->enemies[i].x != advance[i][0] || g->enemies[i].y != advance[i][1];
         }
