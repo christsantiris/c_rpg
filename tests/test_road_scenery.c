@@ -117,8 +117,8 @@ static void sparse_layouts(GameState *g, const TownApproach *route) {
 }
 
 static void road_layouts(GameState *g) {
-    const int routes[] = {0, 4, 14, 5, 9, 2, 11, 12, 19, 8, 6, 13, 1, 7, 18, 20, APPROACH_SUNSCAR_ROAD};
-    for (int i = 0; i < 17; i++) {
+    const int routes[] = {0, 4, 14, 5, 9, 2, 11, 12, 19, 8, 6, 13, 1, 7, 18, 20, APPROACH_SUNSCAR_ROAD, APPROACH_PEAKS_ROAD};
+    for (int i = 0; i < 18; i++) {
         game_init(g);
         approach_enter_region(g, routes[i]);
         const TownApproach *route = approach_route(g);

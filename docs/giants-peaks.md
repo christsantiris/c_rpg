@@ -2,10 +2,14 @@
 
 **Giant's Crown** is assigned by Antiquarian Edda in Rosemoor's Adventurer's Guild.
 
-Leave **Rosemoor through its west gate**, follow the single-tile road through
-grass that grows rocky toward the peaks, and enter the ruined giant hall. This optional five-stage region rises from grassy western
-foothills into the frost-covered remains of a giant kingdom. Ashen Hollow lies
-north of Castle Grounds, reached around the castle's western perimeter.
+Giant's Peaks follows Sunscar Wastes. Just before the Sunscar pyramid, the
+Sunscar road meets a T junction signed **N: GIANT'S PEAKS**. Its branch leaves
+the map's north edge onto the Giant's Peaks road, which climbs from sand into
+grass that grows rocky toward the peaks, and ends at the ruined giant hall.
+Leaving the first stage, or completing the fifth, returns to that road outside
+the hall; its south end returns to the junction. Rosemoor's west gate no longer
+leads here. This optional five-stage region rises from grassy western foothills
+into the frost-covered remains of a giant kingdom.
 
 The peaks are drawn at the Crown Roads' 1.5× zoom: the camera shows about
 30 × 18 tiles around the player. Hill Giant boulders and the Last Jarl's maul

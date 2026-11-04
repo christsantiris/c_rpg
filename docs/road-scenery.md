@@ -21,7 +21,7 @@ checkpoint.
 | Oakhaven ↔ Dawnmere (Dungeon) | Light woodland: clumps of Elderwood trees in open grass |
 | Stillbury to Stonewake Quarry | Open grass gathering stone flecks and a few boulders near the quarry |
 | Dawnmere to Stormwatch Headland | Grass turning to gravel strewn with boulders near the headland |
-| Rosemoor to Giant's Peaks | Open grass gathering stone flecks and a few boulders near the peaks, like Stonewake |
+| Sunscar junction to Giant's Peaks | Sand giving way to grass, then stone flecks and a few boulders near the peaks, like Stonewake |
 
 The Frostfell, Sunscar, Ashen, Stonewake, Giant's Peaks and Stormwatch roads change gradually
 from the town toward the landmark; the landmark's terrain continues beyond it.

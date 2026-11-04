@@ -31,9 +31,11 @@ const TownApproach town_approaches[] = {
     {-1, -1, 0, 0}, // Retired coastal route 17.
     {LOCATION_DAWNMERE, LOCATION_STORMWATCH, TOWN_W - 1, 12, 1},
     {LOCATION_TOWN4, LOCATION_IRONFANG, TOWN_W - 1, 12},
-    {LOCATION_TOWN3, LOCATION_GIANTS_CROWN, 0, ROSEMOOR_ASHEN_GATE_Y},
+    {LOCATION_TOWN3, LOCATION_GIANTS_CROWN, 0, ROSEMOOR_ASHEN_GATE_Y, 1},
     // The Sunscar road starts at the Goblin Mountains pass rather than a town gate.
-    {LOCATION_TOWN, LOCATION_DESERT, 0, 12, 1}
+    {LOCATION_TOWN, LOCATION_DESERT, 0, 12, 1},
+    // The Giant's Peaks road runs north from the Sunscar road's junction.
+    {LOCATION_TOWN, LOCATION_GIANTS_CROWN, 20, 0, 1}
 };
 
 // Serialized route 17 remains reserved.
@@ -76,8 +78,24 @@ int approach_sunscar_road(const GameState *g) {
     return g->location == LOCATION_APPROACH && g->approach_route == APPROACH_SUNSCAR_ROAD;
 }
 
+int approach_peaks_road(const GameState *g) {
+    return g->location == LOCATION_APPROACH && g->approach_route == APPROACH_PEAKS_ROAD;
+}
+
 const char *approach_origin_name(const TownApproach *route) {
+    if (route == &town_approaches[APPROACH_PEAKS_ROAD]) {
+        return "SUNSCAR WASTES";
+    }
     return route == &town_approaches[APPROACH_SUNSCAR_ROAD] ? "GOBLIN MOUNTAINS" : approach_town_name(route->town);
+}
+
+int approach_peaks_exit(const GameState *g, int *x, int *y) {
+    if (!approach_sunscar_road(g)) {
+        return 0;
+    }
+    *x = APPROACH_PEAKS_BRANCH_X;
+    *y = 0;
+    return 1;
 }
 
 const char *approach_town_name(Location town) {
@@ -596,6 +614,15 @@ void approach_refresh_entrance(GameState *g) {
     }
     g->map.tiles[ty][tx] = TILE_APPROACH_TOWN;
     g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] = TILE_APPROACH_AREA;
+    int bx;
+    int by;
+    if (approach_peaks_exit(g, &bx, &by)) {
+        // Just before the pyramid, a T junction branches north to the Giant's Peaks road.
+        for (int row = by + 1; row < jy; row++) {
+            g->map.tiles[row][bx] = TILE_TOWN_PATH;
+        }
+        g->map.tiles[by][bx] = TILE_APPROACH_DUNGEON_TOWN;
+    }
     if (approach_scenery(route->area, 100) != TILE_WALL) {
         approach_grow_scenery(&g->map, route->area);
     }
@@ -941,6 +968,14 @@ int approach_travel(GameState *g, int x, int y) {
     if (!route) {
         return 0;
     }
+    if (g->map.tiles[y][x] == TILE_APPROACH_TOWN && approach_peaks_road(g)) {
+        approach_enter_region(g, APPROACH_SUNSCAR_ROAD);
+        g->player.x = APPROACH_PEAKS_BRANCH_X;
+        g->player.y = 1;
+        g->player.last_dx = 0;
+        g->player.last_dy = 1;
+        return 1;
+    }
     if (g->map.tiles[y][x] == TILE_APPROACH_TOWN && approach_sunscar_road(g)) {
         approach_enter_region(g, 2);
         g->player.x = 1;
@@ -973,6 +1008,10 @@ int approach_travel(GameState *g, int x, int y) {
     }
     if (approach_mountain_town_exit(g, &shortcut_x, &shortcut_y) && x == shortcut_x && y == shortcut_y) {
         approach_enter_region(g, APPROACH_SUNSCAR_ROAD);
+        return 1;
+    }
+    if (approach_peaks_exit(g, &shortcut_x, &shortcut_y) && x == shortcut_x && y == shortcut_y) {
+        approach_enter_region(g, APPROACH_PEAKS_ROAD);
         return 1;
     }
     if (approach_shortcut_exit(g, &shortcut_x, &shortcut_y) && x == shortcut_x && y == shortcut_y) {
