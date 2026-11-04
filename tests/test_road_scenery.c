@@ -117,8 +117,8 @@ static void sparse_layouts(GameState *g, const TownApproach *route) {
 }
 
 static void road_layouts(GameState *g) {
-    const int routes[] = {0, 4, 14, 5, 9, 2, 11, 12, 19, 8, 6, 13, 1, 7, 18, 20};
-    for (int i = 0; i < 16; i++) {
+    const int routes[] = {0, 4, 14, 5, 9, 2, 11, 12, 19, 8, 6, 13, 1, 7, 18, 20, APPROACH_SUNSCAR_ROAD};
+    for (int i = 0; i < 17; i++) {
         game_init(g);
         approach_enter_region(g, routes[i]);
         const TownApproach *route = approach_route(g);
@@ -160,7 +160,8 @@ static void road_layouts(GameState *g) {
             int far_x = vertical ? 8 : g->map.stairs_up_x ? 2 : APPROACH_W - 3;
             int far_y = vertical ? g->map.stairs_up_y ? 2 : APPROACH_H - 3 : 4;
             TileType far = g->map.tiles[far_y][far_x];
-            ASSERT("the road leaves town through green woods", g->map.tiles[near_y][near_x] == TILE_ELDERWOOD_WALL);
+            ASSERT("the road leaves through green woods, or the Sunscar road through mountain rock", g->map.tiles[near_y][near_x] == approach_scenery(route->area, 0) &&
+                approach_scenery(route->area, 0) == (route->area == LOCATION_DESERT ? TILE_MOUNTAIN_WALL : TILE_ELDERWOOD_WALL));
             ASSERT("and reaches its landmark through that region's own terrain", far == approach_scenery(route->area, 100) || far == TILE_ASHEN_LAVA);
             ASSERT("snow, sand and ash are drawn over ordinary road-side grass, without regional floor hazards",
                 tile_count(g, TILE_FROST_FLOOR) == 0 && tile_count(g, TILE_DESERT_FLOOR) == 0 && tile_count(g, TILE_ASHEN_FLOOR) == 0);
