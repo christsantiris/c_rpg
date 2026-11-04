@@ -197,7 +197,8 @@ static void test_transition_loot(GameState *g, GameState *loaded, int slot) {
                 loaded->player.y = y == 0 ? 1 : y - 1;
             }
             action_resolve_player(loaded, (Action){ACTION_MOVE, x, y});
-            ASSERT("walking onto a loot-covered transition still enters its actual destination", loaded->location == (end == 1 ? route->area : end == 2 && route->area == LOCATION_MOUNTAINS ? LOCATION_DESERT : LOCATION_TOWN_ROAD));
+            ASSERT("walking onto a loot-covered transition still enters its actual destination", end == 2 && route->area == LOCATION_MOUNTAINS ? approach_sunscar_road(loaded) :
+                loaded->location == (end == 1 ? route->area : LOCATION_TOWN_ROAD));
         }
     }
 }
@@ -219,7 +220,7 @@ void test_approaches(void) {
         free(loaded);
         return;
     }
-    ASSERT("new routes append after reserved connection IDs", town_approach_count == 21);
+    ASSERT("new routes append after reserved connection IDs", town_approach_count == APPROACH_SUNSCAR_ROAD + 1);
     for (int unlocked = 0; unlocked < 2; unlocked++) {
         for (int i = 0; i < town_approach_count; i++) {
             const TownApproach *route = &town_approaches[i];

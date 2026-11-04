@@ -169,8 +169,11 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             line2 = "FOREST ENTRANCE: ALWAYS LEVEL 1";
         }
         if (approach_mountain_town_exit(g, &x, &y)) {
-            line1 = "WEST: STILLBURY / EAST: OAKHAVEN";
+            line1 = "WEST: SUNSCAR / EAST: OAKHAVEN";
             line2 = "MOUNTAIN ENTRANCE: ALWAYS LEVEL 1";
+        }
+        if (approach_sunscar_road(g)) {
+            line2 = "TURN BACK FOR THE GOBLIN MOUNTAINS";
         }
         if (approach_shortcut_exit(g, &x, &y)) {
             line1 = "STRAIGHT: AREA / LEFT: NEXT TOWN";

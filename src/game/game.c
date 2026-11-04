@@ -5619,12 +5619,12 @@ void game_return_to_approach(GameState *g) {
     }
     if (g->location == LOCATION_DESERT) {
         game_return_to_town(g);
-        approach_enter_region(g, 2);
-        g->player.x = 1;
-        g->player.y = APPROACH_H / 2;
-        g->player.last_dx = 1;
-        g->player.last_dy = 0;
-        push_message(g, "The mountain road returns east to Oakhaven. Sunscar lies west; its onward route awaits a later journey.");
+        approach_enter_region(g, APPROACH_SUNSCAR_ROAD);
+        g->player.x = g->map.stairs_down_x;
+        g->player.y = g->map.stairs_down_y + 1;
+        g->player.last_dx = 0;
+        g->player.last_dy = 1;
+        push_message(g, "You emerge onto the Sunscar road. It returns east to the Goblin Mountains.");
         return;
     }
     Location area = g->location;

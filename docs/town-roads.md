@@ -45,8 +45,9 @@ Return portals preserve their expedition anchors and physical entrance towns. Na
 arrivals, including Tomas's escape-tunnel return, retain their existing events.
 Physical travel along the regional roads uses the new town exteriors.
 
-The Goblin Mountains' western road now enters Sunscar directly. It no longer
-passes through Stillbury. The continuation beyond Sunscar and the remaining
+The Goblin Mountains' western road continues past its pass onto the Sunscar
+road, which ends at the wastes' pyramid entrance. It no longer passes through
+Stillbury. The continuation beyond Sunscar and the remaining
 Stillbury/Act 4 connections will be designed separately. Legacy service and
 region descriptions below record earlier releases, rather than new V2 routes.
 

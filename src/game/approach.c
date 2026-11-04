@@ -31,7 +31,9 @@ const TownApproach town_approaches[] = {
     {-1, -1, 0, 0}, // Retired coastal route 17.
     {LOCATION_DAWNMERE, LOCATION_STORMWATCH, TOWN_W - 1, 12, 1},
     {LOCATION_TOWN4, LOCATION_IRONFANG, TOWN_W - 1, 12},
-    {LOCATION_TOWN3, LOCATION_GIANTS_CROWN, 0, ROSEMOOR_ASHEN_GATE_Y}
+    {LOCATION_TOWN3, LOCATION_GIANTS_CROWN, 0, ROSEMOOR_ASHEN_GATE_Y},
+    // The Sunscar road starts at the Goblin Mountains pass rather than a town gate.
+    {LOCATION_TOWN, LOCATION_DESERT, 0, 12, 1}
 };
 
 // Serialized route 17 remains reserved.
@@ -68,6 +70,14 @@ const char *approach_area_name(Location area) {
         case LOCATION_CROWNROAD_WEST: return "CROWN ROAD WEST";
         default: return "AREA";
     }
+}
+
+int approach_sunscar_road(const GameState *g) {
+    return g->location == LOCATION_APPROACH && g->approach_route == APPROACH_SUNSCAR_ROAD;
+}
+
+const char *approach_origin_name(const TownApproach *route) {
+    return route == &town_approaches[APPROACH_SUNSCAR_ROAD] ? "GOBLIN MOUNTAINS" : approach_town_name(route->town);
 }
 
 const char *approach_town_name(Location town) {
@@ -130,7 +140,7 @@ TileType approach_scenery(Location area, int progress) {
         case LOCATION_ELDERWOOD:
         case LOCATION_CATACOMBS: return TILE_ELDERWOOD_WALL;
         case LOCATION_FROSTFELL: return progress < 65 ? TILE_ELDERWOOD_WALL : TILE_FROST_WALL;
-        case LOCATION_DESERT: return progress < 30 ? TILE_ELDERWOOD_WALL : TILE_DESERT_WALL;
+        case LOCATION_DESERT: return progress < 30 ? TILE_MOUNTAIN_WALL : TILE_DESERT_WALL;
         case LOCATION_ASHEN: return progress < 30 ? TILE_ELDERWOOD_WALL : progress < 65 ? TILE_FOREST_WALL : TILE_ASHEN_WALL;
         default: return TILE_WALL;
     }
@@ -918,7 +928,7 @@ int approach_enter_region(GameState *g, int index) {
     g->player.frozen_turns = 0;
     g->player.freeze_recovery = 0;
     char message[MAX_MESSAGE_LEN];
-    snprintf(message, sizeof(message), "Follow the path to %s. Turn back for %s.", approach_area_name(route->area), approach_town_name(route->town));
+    snprintf(message, sizeof(message), "Follow the path to %s. Turn back for %s.", approach_area_name(route->area), approach_origin_name(route));
     push_message(g, message);
     return 1;
 }
@@ -930,6 +940,15 @@ int approach_travel(GameState *g, int x, int y) {
     const TownApproach *route = approach_route(g);
     if (!route) {
         return 0;
+    }
+    if (g->map.tiles[y][x] == TILE_APPROACH_TOWN && approach_sunscar_road(g)) {
+        approach_enter_region(g, 2);
+        g->player.x = 1;
+        g->player.y = APPROACH_H / 2;
+        g->player.last_dx = 1;
+        g->player.last_dy = 0;
+        push_message(g, "The mountain road returns east to Oakhaven.");
+        return 1;
     }
     if (g->map.tiles[y][x] == TILE_APPROACH_TOWN) {
         game_leave_approach(g);
@@ -953,7 +972,7 @@ int approach_travel(GameState *g, int x, int y) {
         return 1;
     }
     if (approach_mountain_town_exit(g, &shortcut_x, &shortcut_y) && x == shortcut_x && y == shortcut_y) {
-        game_enter_desert(g);
+        approach_enter_region(g, APPROACH_SUNSCAR_ROAD);
         return 1;
     }
     if (approach_shortcut_exit(g, &shortcut_x, &shortcut_y) && x == shortcut_x && y == shortcut_y) {

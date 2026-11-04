@@ -127,13 +127,21 @@ static void mountain_crossing(int return_home) {
     ASSERT("the unlocked road stays one tile wide", mountain.map.tiles[y][mountain.player.x] == TILE_TOWN_PATH && mountain.map.tiles[y + 1][mountain.player.x + 1] == TILE_TOWN_FLOOR);
     ASSERT("the unlocked road and quest progress survive saving", save_game(&mountain, MOUNTAIN_TRAVEL_SLOT) && load_game(&restored, MOUNTAIN_TRAVEL_SLOT) && restored.dain_map_fragments == DAIN_MAP_COMPLETE && approach_mountain_town_exit(&restored, &x, &y));
     mountain = restored;
-    mountain_walk_road(&mountain, return_home ? stillbury : !stillbury);
-    ASSERT("the road permits walking home or onward into Sunscar", mountain.location == (return_home ? home : LOCATION_DESERT));
-    if (!return_home) {
+    if (return_home) {
+        mountain_walk_road(&mountain, stillbury);
+        ASSERT("the road permits walking home", mountain.location == home);
+    } else {
+        walk_approach_to(&mountain, 0, APPROACH_H / 2);
+        ASSERT("the open pass continues west onto the Sunscar road", approach_sunscar_road(&mountain) && mountain.player.x == APPROACH_W - 2 && mountain.player.last_dx == -1);
+        walk_approach_to(&mountain, mountain.map.stairs_down_x, mountain.map.stairs_down_y);
+        ASSERT("the Sunscar road's desert entrance leads into the first stage", mountain.location == LOCATION_DESERT && mountain.level == 1);
         mountain.player.x = mountain.map.stairs_up_x - 1;
         mountain.player.y = mountain.map.stairs_up_y;
         action_resolve_player(&mountain, (Action){ACTION_MOVE, mountain.map.stairs_up_x, mountain.map.stairs_up_y});
-        ASSERT("Sunscar's real eastern entrance returns to the mountain road", mountain.location == LOCATION_APPROACH && mountain.approach_route == 2 && mountain.player.x == 1 && mountain.player.last_dx == 1);
+        ASSERT("Sunscar's real eastern entrance returns to the Sunscar road outside its desert entrance", approach_sunscar_road(&mountain) &&
+            mountain.player.x == mountain.map.stairs_down_x && mountain.player.y == mountain.map.stairs_down_y + 1);
+        walk_approach_to(&mountain, mountain.map.stairs_up_x, mountain.map.stairs_up_y);
+        ASSERT("the Sunscar road's east end returns to the mountain pass", mountain.location == LOCATION_APPROACH && mountain.approach_route == 2 && mountain.player.x == 1 && mountain.player.last_dx == 1);
         mountain_walk_road(&mountain, 0);
     }
     Location target = LOCATION_TOWN;
