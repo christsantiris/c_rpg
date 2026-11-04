@@ -185,8 +185,8 @@ static int scenery_grows(const Map *map, Location area, int x, int y) {
 
 static TileType scenery_at(const Map *map, Location area, int x, int y) {
     int progress = approach_progress(map, x, y);
-    if (area == LOCATION_FROSTFELL) {
-        // The woods end in one ragged tree line where the frozen ground begins.
+    if (area == LOCATION_FROSTFELL || area == LOCATION_DESERT) {
+        // The woods end in one ragged tree line where the frozen ground begins, and mountain rock in one ragged edge at the sandstone.
         int vertical = map->stairs_up_y == 0 || map->stairs_up_y == APPROACH_H - 1;
         progress = road_distance(map, x, y) + (int)(scenery_noise(vertical ? x / 3 : 0, vertical ? 0 : y / 3) % 17u) - 8;
     }
