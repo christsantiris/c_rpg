@@ -16,7 +16,7 @@ checkpoint.
 | Dawnmere ↔ Ridgeshire (Goblin Mountains) | Rock walls and a grassy pass |
 | Ridgeshire to Dragonspine and Ironfang Mines | Rock walls and a grassy pass |
 | Rosemoor to Frostfell Wastes | Green woods up to a ragged tree line, then snowy ice fields with pines; snow settles along the path first |
-| Stillbury to Sunscar Wastes | Green woods, then sandstone outcrops, then sand and mesas with cacti |
+| Goblin Mountains pass to Sunscar Wastes | Rock walls and grass, then sandstone outcrops, then sand and mesas with cacti |
 | Castle Grounds to Ashen Hollow | Green woods, ash on the verge, charred dead trees, then basalt split by lava pools |
 | Oakhaven ↔ Dawnmere (Dungeon) | Light woodland: clumps of Elderwood trees in open grass |
 | Stillbury to Stonewake Quarry | Open grass gathering stone flecks and a few boulders near the quarry |

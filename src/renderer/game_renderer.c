@@ -3970,7 +3970,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             for (int end = 0; end < 2; end++) {
                 int x = end ? g->map.stairs_down_x : g->map.stairs_up_x;
                 int y = end ? g->map.stairs_down_y : g->map.stairs_up_y;
-                const char *name = end ? approach_area_name(route->area) : approach_town_name(route->town);
+                const char *name = end ? approach_area_name(route->area) : approach_origin_name(route);
                 int width = 0;
                 TTF_SizeText(r->font_tiny, name, &width, NULL);
                 int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;

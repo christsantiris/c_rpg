@@ -12,13 +12,14 @@
 #define APPROACH_LABYRINTH_X (APPROACH_W / 2 - 8)
 #define APPROACH_LABYRINTH_Y (APPROACH_H / 2 - 2)
 #define APPROACH_OPENING 8
+#define APPROACH_SUNSCAR_ROAD 21
 
 typedef struct {
     Location town;
     Location area;
     int gate_x;
     int gate_y;
-    int unplaced; // Kept for isolated content/debug travel until its V2 connection is designed.
+    int unplaced; // No town gate leads here: kept for debug travel, or reached from another road.
 } TownApproach;
 
 extern const TownApproach town_approaches[];
@@ -27,6 +28,8 @@ extern const int town_approach_count;
 const TownApproach *approach_route(const GameState *g);
 const char *approach_area_name(Location area);
 const char *approach_town_name(Location town);
+int approach_sunscar_road(const GameState *g);
+const char *approach_origin_name(const TownApproach *route);
 TileType approach_floor(Location area);
 TileType approach_scenery(Location area, int progress);
 TileType approach_ground(Location area);

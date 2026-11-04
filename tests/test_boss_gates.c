@@ -109,7 +109,7 @@ static void town_connections(GameState *g) {
         g->defeated_bosses |= 1 << route->area;
         boss_gate_refresh(g);
         ASSERT("a saved victory opens the same checkpoint without depending on the approach", g->map.tiles[point[0].y][point[0].x] == TILE_ROAD_GATE_OPEN && path(g, ex, ey, 0));
-        ASSERT("walking through the secured checkpoint crosses to the other town exterior", path(g, ex, ey, 1) && (g->location == LOCATION_TOWN_ROAD || g->location == LOCATION_DESERT));
+        ASSERT("walking through the secured checkpoint crosses to the other town exterior", path(g, ex, ey, 1) && (g->location == LOCATION_TOWN_ROAD || approach_sunscar_road(g)));
     }
 }
 
@@ -230,7 +230,7 @@ static void guarded_roads(GameState *g, GameState *loaded) {
             ASSERT("the correct boss victory removes both guards and restores their road tiles", boss_gate_guards(g, guards) == 0 &&
                 map_is_walkable(&g->map, guards[0].x, guards[0].y) && map_is_walkable(&g->map, guards[1].x, guards[1].y));
             int ex = area == LOCATION_FOREST ? APPROACH_W - 1 : 0;
-            ASSERT("the opened road reaches the onward town by actual travel", path(g, ex, APPROACH_H / 2, 1) && (area == LOCATION_FOREST ? g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_DAWNMERE : g->location == LOCATION_DESERT));
+            ASSERT("the opened road reaches the onward town by actual travel", path(g, ex, APPROACH_H / 2, 1) && (area == LOCATION_FOREST ? g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_DAWNMERE : approach_sunscar_road(g)));
         }
     }
     if (save_exists(GATE_SLOT)) {
