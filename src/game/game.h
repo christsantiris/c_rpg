@@ -311,6 +311,7 @@ typedef struct {
     MangroveState river_boat;
     GiantsStage giants_crown[GIANTS_DEPTH];
     int giants_crown_defeated;
+    int giants_entry_from_north;
     int crown_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
     int crown_quest_progress; // Inscription, royal seal, Jarl victory, royal crown.
     int crown_vault_open;

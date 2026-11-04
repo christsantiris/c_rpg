@@ -4,11 +4,12 @@ Once the Goblin King falls, the Goblin Mountains road continues west from its
 pass onto the Sunscar road. That road leaves mountain rock for sandstone
 outcrops, then sand and mesas around a walk-in pyramid entrance; see
 [road scenery](road-scenery.md). Its east end returns to the mountain pass, and
-a T junction just before the pyramid branches north to
+a turn beyond the pyramid entrance continues north to
 [Giant's Peaks](giants-peaks.md). The
 five stages run from east to west; backtracking uses the east edge, and the
 first stage's east exit returns to the road outside the pyramid. The route
-beyond the final stage's west exit is not yet charted. The Desert Pharaoh does
+from the final stage's west exit returns to the same desert road. Continue west
+past the pyramid and north toward Giant's Peaks. The Desert Pharaoh does
 not block the final exit and drops the Sandstorm Staff.
 
 The wastes are drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 ×

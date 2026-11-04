@@ -188,7 +188,8 @@ void test_town_roads(void) {
             ASSERT("leaving any interior gate returns outside the matching side of the town", loaded->location == LOCATION_TOWN_ROAD && loaded->road_town == towns[town] && abs(loaded->player.x - x) + abs(loaded->player.y - y) == 1 && loaded->map.tiles[y][x] == TILE_TOWN_ROAD_ENTRY_NORTH + side);
             town_road_exit(side, &x, &y);
             walk_town_road_to(loaded, x, y);
-            ASSERT("the regional exit resumes the correct approach or Crown Road", loaded->location == (connection.area == LOCATION_RIVER_CROSSING ? LOCATION_RIVER_CROSSING : connection.area == LOCATION_MANGROVES ? LOCATION_MANGROVE_PATH : connection.area == LOCATION_CROWNROAD || connection.area == LOCATION_CROWNROAD_WEST ? connection.area : LOCATION_APPROACH) && (loaded->location != LOCATION_APPROACH || (approach_route(loaded)->town == towns[town] && approach_route(loaded)->area == connection.area)));
+            int bridge = towns[town] == LOCATION_TOWN2 && connection.area == LOCATION_GIANTS_CROWN;
+            ASSERT("the regional exit resumes the correct approach or Crown Road", loaded->location == (connection.area == LOCATION_RIVER_CROSSING ? LOCATION_RIVER_CROSSING : connection.area == LOCATION_MANGROVES ? LOCATION_MANGROVE_PATH : connection.area == LOCATION_CROWNROAD || connection.area == LOCATION_CROWNROAD_WEST ? connection.area : LOCATION_APPROACH) && (loaded->location != LOCATION_APPROACH || (approach_route(loaded)->area == connection.area && (bridge ? approach_bridge_road(loaded) : approach_route(loaded)->town == towns[town]))));
             for (int offset = -3; offset <= 3; offset += 6) {
                 town_road_enter(g, towns[town], side, 0);
                 town_road_entrance(side, &x, &y);

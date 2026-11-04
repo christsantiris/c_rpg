@@ -68,6 +68,13 @@ static void restore_town_tile(GameState *g, int x, int y, TileType tile) {
 }
 
 void eastern_refresh(GameState *g) {
+    if (g->location == LOCATION_TOWN3) {
+        // The Peaks moved south of the river; the swamp's new roads await Act 4.
+        for (int y = 0; y < TOWN_H; y++) {
+            restore_town_tile(g, 0, y, TILE_WALL);
+        }
+        restore_town_tile(g, 20, TOWN_H - 1, TILE_WALL);
+    }
     if (g->location == LOCATION_ALEHOUSE && !g->dawnmere_liberated) {
         g->map.tiles[DAWNMERE_SEREN_Y][DAWNMERE_SEREN_X] = TILE_NPC_SEREN;
     }
@@ -84,6 +91,10 @@ void eastern_refresh(GameState *g) {
                 restore_town_tile(g, x, TOWN_H - 1, TILE_WALL);
             }
             restore_town_tile(g, 20, TOWN_H - 1, TILE_TOWN_EXIT);
+            restore_town_tile(g, 0, 12, TILE_TOWN_EXIT);
+            for (int x = 1; x <= 7; x++) {
+                restore_town_tile(g, x, 12, TILE_TOWN_PATH);
+            }
         }
     }
     if (g->location == LOCATION_DAWNMERE) {
@@ -326,13 +337,15 @@ int eastern_move(GameState *g, int x, int y) {
             }
         }
     }
-    if (g->location == LOCATION_TOWN2 && g->royal_reported_actions && !g->stillbury_challenge && x >= 17 && x <= 23 && y >= 17 && y <= 19) {
+    int west_checkpoint = x >= 5 && x <= 7 && y >= 10 && y <= 14;
+    int south_checkpoint = x >= 17 && x <= 23 && y >= 17 && y <= 19;
+    if (g->location == LOCATION_TOWN2 && g->royal_reported_actions && !g->stillbury_challenge && (west_checkpoint || south_checkpoint)) {
         g->stillbury_prompt = 1;
         g->dialogue_active = 1;
         snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Royal Checkpoint");
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "You are wanted for acts against the Crown. Surrender your passage. Y: submit and return to the dock. N: resist. Esc: withdraw.");
-        g->dialogue_x = 20;
-        g->dialogue_y = 17;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "You are wanted for acts against the Crown. Surrender your passage. Y: submit and return to the gate. N: resist. Esc: withdraw.");
+        g->dialogue_x = west_checkpoint ? 7 : 20;
+        g->dialogue_y = west_checkpoint ? 12 : 17;
         return 1;
     }
     return 0;
@@ -400,15 +413,16 @@ int eastern_handle_key(GameState *g, int key, int repeat) {
             g->stillbury_guards_initialized = 1;
             g->enemy_count = 3;
             for (int i = 0; i < 3; i++) {
-                game_spawn_enemy(g, &g->enemies[i], i == 2 ? ENEMY_ROAD_ARCHER : ENEMY_ROYAL_GUARD, 19 + i, 16 - (i == 2));
+                int west = g->dialogue_x == 7;
+                game_spawn_enemy(g, &g->enemies[i], i == 2 ? ENEMY_ROAD_ARCHER : ENEMY_ROYAL_GUARD, west ? 8 + (i == 2) : 19 + i, west ? 11 + i : 16 - (i == 2));
                 g->enemies[i].boss_aux_y = 1;
             }
             eastern_store(g);
-            push_message(g, "The checkpoint turns hostile. The dock approach remains your retreat.");
+            push_message(g, "The checkpoint turns hostile. The gate behind you remains your retreat.");
         } else {
-            g->player.x = 20;
-            g->player.y = 22;
-            push_message(g, "You withdraw toward the dock. Stillbury remains suspicious.");
+            g->player.x = g->dialogue_x == 7 ? 2 : 20;
+            g->player.y = g->dialogue_x == 7 ? 12 : 22;
+            push_message(g, "You withdraw toward the gate. Stillbury remains suspicious.");
         }
     }
     return 1;
