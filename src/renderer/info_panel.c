@@ -76,6 +76,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     int y  = 10;
     int compact = r->tiles_y * TILE_SIZE < 528;
     int lh = compact ? 12 : 16;
+    int gap = compact ? 4 : 6;
     // On very short windows, keep the encounter warning above the character details.
     int boss_at_top = necromancer && r->tiles_y * TILE_SIZE < 528;
     if (boss_at_top) {
@@ -87,14 +88,14 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     renderer_draw_text(r, "CHARACTER", x, y, label, r->font_tiny);
     y += lh;
     renderer_draw_text(r, g->player.name, x, y, value, r->font_small);
-    y += lh + 6;
+    y += lh + gap;
 
     // Class
     static const char *class_names[3] = { "Warrior", "Mage", "Rogue" };
     renderer_draw_text(r, "CLASS", x, y, label, r->font_tiny);
     y += lh;
     renderer_draw_text(r, class_names[g->player.player_class], x, y, value, r->font_tiny);
-    y += lh + 6;
+    y += lh + gap;
 
     // Location
     renderer_draw_text(r, "LOCATION", x, y, label, r->font_tiny);
@@ -205,7 +206,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), "DUNGEON %d", g->level);
     }
     renderer_draw_text(r, loc, x, y, value, r->font_tiny);
-    y += lh + 6;
+    y += lh + gap;
 
     // HP
     int low_health = game_player_low_health(g);
@@ -241,7 +242,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
             renderer_draw_text(r, frozen_str, icon_x + 10, y, (SDL_Color){168, 228, 255, 255}, r->font_tiny);
         }
     }
-    y += lh + 6;
+    y += lh + gap;
 
     // MP
     renderer_draw_text(r, "MP", x, y, label, r->font_tiny);
@@ -255,7 +256,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(arrows, sizeof(arrows), "%d/%d", g->player.arrows, MAX_ARROWS);
         renderer_draw_text(r, arrows, x + 100, y, g->player.arrows == 0 ? (SDL_Color){240, 72, 60, 255} : value, r->font_tiny);
     }
-    y += lh + 6;
+    y += lh + gap;
 
     // Level and XP
     renderer_draw_text(r, "LEVEL", x, y, label, r->font_tiny);
@@ -264,7 +265,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     SDL_snprintf(lvl_str, sizeof(lvl_str), "%d  (%d/%d)",
         g->player.level, g->player.experience, g->player.experience_next);
     renderer_draw_text(r, lvl_str, x, y, value, r->font_tiny);
-    y += lh + 6;
+    y += lh + gap;
 
     renderer_draw_text(r, "GOLD", x, y, label, r->font_tiny);
     renderer_draw_text(r, "SCORE", x + 100, y, label, r->font_tiny);
@@ -284,16 +285,17 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
             g->dungeon_key_found ? "FOUND" : "SEARCH FLOOR",
             x, y, g->dungeon_key_found ? gold_color : dimmed,
             r->font_tiny);
-        y += lh + 6;
+        y += lh + gap;
     }
     
     renderer_draw_text(r, "EQUIPMENT", x, y, label, r->font_tiny);
     y += lh;
     const Item *strong = game_equipped_item(g, EQUIPMENT_STRONG_HAND);
-    static const char *slots[] = {"STRONG", "WEAK", "HELMET", "ARMOR", "ACC 1", "ACC 2"};
+    static const char *slots[] = {"STRONG", "WEAK", "HELMET", "ARMOR", "ACC 1", "ACC 2", "ACC 3", "ACC 4"};
+    int slot_height = 24;
     for (int i = 0; i < EQUIPMENT_SLOT_COUNT; i++) {
         int sx = x + (i % 2) * 100;
-        int sy = y + (i / 2) * (compact ? 28 : 32);
+        int sy = y + (i / 2) * slot_height;
         EquipmentSlot slot = MAX_INVENTORY + i;
         const Item *item = game_equipped_item(g, slot);
         draw_icon_empty_slot(r, sx, sy);
@@ -308,7 +310,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         }
         renderer_draw_text(r, slots[i], sx + 29, sy + 6, disabled ? dimmed : value, r->font_tiny);
     }
-    y += compact ? 88 : 100;
+    y += ((EQUIPMENT_SLOT_COUNT + 1) / 2) * slot_height + 4;
     renderer_draw_text(r, "EQUIPPED SPELL", x, y, label, r->font_tiny);
     y += lh;
     int spell_index = g->player.equipped_spell;
@@ -327,17 +329,17 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_GetScancodeName(g->key_bindings[CONTROL_DRINK_POTION]),
         g->quick_potion_type == ITEM_POTION_MANA ? "MANA" : "HEALTH", game_quick_potion_count(g));
     renderer_draw_text(r, quick, x, y, game_quick_potion_count(g) ? value : dimmed, r->font_tiny);
-    y += lh + 6;
+    y += lh + gap;
     if (g->aldric_party_state == ALDRIC_DEAD) {
         renderer_draw_text(r, "ALDRIC: DEAD", x, y, health_warning, r->font_tiny);
         y += lh;
         renderer_draw_text(r, "SOULSTONE SHRINE", x, y, dimmed, r->font_tiny);
-        y += lh + 6;
+        y += lh + gap;
     } else if (g->aldric_party_state == ALDRIC_FOLLOWING) {
         char ally[32];
         SDL_snprintf(ally, sizeof(ally), "ALDRIC HP: %d / %d", g->aldric_hp, ALDRIC_MAX_HP);
         renderer_draw_text(r, ally, x, y, g->aldric_hp * 4 <= ALDRIC_MAX_HP ? health_warning : value, r->font_tiny);
-        y += lh + 6;
+        y += lh + gap;
     }
 
     // Key hints

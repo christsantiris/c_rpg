@@ -198,9 +198,12 @@ int jail_recover_gear(GameState *g) {
     }
     g->player.arrows += arrows;
     g->jail_arrows -= arrows;
-    int slots[] = {g->jail_main_hand, g->jail_off_hand, g->jail_extra_slots[0], g->jail_armor, g->jail_extra_slots[1], g->jail_extra_slots[2]};
+    int slots[EQUIPMENT_SLOT_COUNT] = {g->jail_main_hand, g->jail_off_hand, g->jail_extra_slots[0], g->jail_armor};
+    for (int i = 0; i < ACCESSORY_SLOT_COUNT; i++) {
+        slots[4 + i] = g->jail_extra_slots[1 + i];
+    }
     // Restore worn gear directly, even when the bag is full. Revisit unclaimed
-    // bag items after all six slots so accessory constraints see the full set.
+    // bag items after all worn slots so accessory constraints see the full set.
     for (int pass = 0; pass < g->jail_gear_count + EQUIPMENT_SLOT_COUNT; pass++) {
         int index = pass < EQUIPMENT_SLOT_COUNT ? slots[pass] : pass - EQUIPMENT_SLOT_COUNT;
         if (index < 0 || index >= g->jail_gear_count || (g->jail_gear_claimed & (1 << index))) {

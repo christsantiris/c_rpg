@@ -52,6 +52,7 @@ void test_items(void);
 void test_equipment_catalog(void);
 void test_accessory_expansion(void);
 void test_equipment_storage(void);
+void test_accessory_slots(void);
 void test_daggers(void);
 void test_classes(void);
 void test_level_cache_cleared(void);
@@ -193,6 +194,7 @@ int main(void) {
     test_equipment_catalog();
     test_accessory_expansion();
     test_equipment_storage();
+    test_accessory_slots();
     test_daggers();
     printf("\n");
     test_save_load();

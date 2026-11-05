@@ -33,7 +33,7 @@ void inventory_draw(Renderer *r, const GameState *g, const InventoryScreen *s) {
     renderer_draw_text(r, summary, cx - 150, 70, gold, r->font_small);
     renderer_draw_text(r, "BAG", cx - 155, 100, s->equipment_tab ? dimmed : gold, r->font_small);
     renderer_draw_text(r, "EQUIPMENT", cx - 30, 100, s->equipment_tab ? gold : dimmed, r->font_small);
-    renderer_draw_text(r, "TAB SWITCH | 1/2 ACCESSORY", cx + 90, 102, hint, r->font_tiny);
+    renderer_draw_text(r, "TAB SWITCH | 1-4 ACCESSORY", cx + 90, 102, hint, r->font_tiny);
 
     int count = s->equipment_tab ? EQUIPMENT_SLOT_COUNT : g->inventory_count;
     if (!count) {

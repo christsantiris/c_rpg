@@ -1,6 +1,7 @@
 # Weapons, Armor, and Shields
 
-Equipment is class-oriented and uses main-hand, off-hand, and armor slots.
+Equipment uses Strong Hand, Weak Hand, Helmet, Armor and four accessory slots.
+Equipped items are stored separately from the ten-item bag.
 Regular enemies never drop equipment. The Blacksmith and regional
 bosses are the equipment sources.
 
@@ -17,6 +18,10 @@ bosses are the equipment sources.
 - Removing a main weapon also removes a shield because shields require a
   one-handed main weapon.
 - Class restrictions apply in both hand slots and the armor slot.
+- Press `1`–`4` on an accessory in the bag to choose its destination slot.
+- Up to two rings may be worn, including two copies of the same ring. Gauntlets,
+  bracers, amulets, belts and boots each allow only one equipped item per category.
+- Equipped spells occupy their own sidebar section and do not use equipment slots.
 
 An off-hand weapon contributes half its attack bonus, rounded up, and half its
 critical chance and dagger gold rating. Its range, cleave, armor penetration,
@@ -95,7 +100,7 @@ sharpening, equipped bonuses, loot, or quest progress.
 
 Cryptblade remains a legacy/debug weapon with +2 attack and 10% critical
 chance (+3 attack when sharpened). The Lich King now drops the all-class
-**Crypt Ring**, granting +5 maximum HP and +5 maximum MP in either accessory
+**Crypt Ring**, granting +5 maximum HP and +5 maximum MP in any accessory
 slot. The Goblin King drops the Goblin King's Shield; saved copies of his
 retired greatsword are converted to that shield.
 

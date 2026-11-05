@@ -1483,7 +1483,7 @@ void game_init(GameState *g) {
     g->jail_main_hand = -1;
     g->jail_off_hand = -1;
     g->jail_armor = -1;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < JAIL_EXTRA_SLOT_COUNT; i++) {
         g->jail_extra_slots[i] = -1;
     }
     g->jail_supplies_taken = 0;
@@ -1805,7 +1805,7 @@ const Item *game_equipped_item(const GameState *g, EquipmentSlot slot) {
 }
 
 const char *game_equipment_slot_name(EquipmentSlot slot) {
-    static const char *names[] = {"STRONG HAND", "WEAK HAND", "HELMET", "ARMOR", "ACCESSORY 1", "ACCESSORY 2"};
+    static const char *names[] = {"STRONG HAND", "WEAK HAND", "HELMET", "ARMOR", "ACCESSORY 1", "ACCESSORY 2", "ACCESSORY 3", "ACCESSORY 4"};
     return slot >= EQUIPMENT_STRONG_HAND && slot < MAX_CARRIED_ITEMS ? names[slot - MAX_INVENTORY] : "";
 }
 
@@ -1816,7 +1816,7 @@ static void sync_equipment_indices(GameState *g) {
 }
 
 void game_migrate_equipment_storage(GameState *g) {
-    int old[] = {g->equipped_main_hand, g->equipped_off_hand, -1, g->equipped_armor, -1, -1};
+    int old[EQUIPMENT_SLOT_COUNT] = {g->equipped_main_hand, g->equipped_off_hand, -1, g->equipped_armor, -1, -1, -1, -1};
     for (int slot = EQUIPMENT_STRONG_HAND; slot < MAX_CARRIED_ITEMS; slot++) {
         int index = old[slot - MAX_INVENTORY];
         g->inventory[slot] = index >= 0 && index < g->inventory_count ? g->inventory[index] : (Item){0};
@@ -1877,9 +1877,11 @@ static int equipment_accepts(const GameState *g, const Item *item, EquipmentSlot
         case EQUIPMENT_ARMOR:
             return item->type == ITEM_ARMOR;
         case EQUIPMENT_ACCESSORY_1:
-        case EQUIPMENT_ACCESSORY_2: {
+        case EQUIPMENT_ACCESSORY_2:
+        case EQUIPMENT_ACCESSORY_3:
+        case EQUIPMENT_ACCESSORY_4: {
             int count = 0;
-            for (int other = EQUIPMENT_ACCESSORY_1; other <= EQUIPMENT_ACCESSORY_2; other++) {
+            for (int other = EQUIPMENT_ACCESSORY_1; other <= EQUIPMENT_ACCESSORY_4; other++) {
                 const Item *worn = game_equipped_item(g, other);
                 if (other != slot && worn && worn->accessory_family == item->accessory_family) {
                     count++;

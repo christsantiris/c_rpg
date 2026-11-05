@@ -4,6 +4,7 @@
 #define MAX_INVENTORY   10
 #define MAX_FLOOR_ITEMS 20
 #define MAX_BOW_RANGE 7
+#define ACCESSORY_SLOT_COUNT 4
 
 typedef enum {
     ITEM_NONE = 0,
