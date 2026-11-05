@@ -114,14 +114,15 @@ the cache's original snow, ash or hoard ground. Once claimed, selling or
 dropping a mantle cannot generate a replacement. The summit exit still opens
 on the dragon's defeat even if ordinary enemies survive.
 
-See the [native renderer gallery and play-test guide](art-sources/red-dragon-encounter/README.md).
-
 ## The Dragon's Hoard
 
-Ilya waits in **Oakhaven's Tavern**, alongside Elowen and Mara. Press
+In V2, Ilya has left Oakhaven and no one offers this quest until a later act
+places her. Existing quest progress is kept.
+
+Ilya waits in **Oakhaven's Inn**, alongside Elowen and Mara. Press
 `T` beside her to hear the offer, then `Y` to accept **The Dragon's Hoard**. On
 Dragonspine stage 5, find the golden goblet in the dragon's lair, stand on it,
-and press `P` (Pick up). Return to Ilya in the Tavern to trade the goblet for a one-time
+and press `P` (Pick up). Return to Ilya in the Inn to trade the goblet for a one-time
 Potion of Strength and 600 score. Make space in your pack before turning in the
 quest. Drinking the potion permanently raises base attack by 1; it is not sold
 in shops. The quest can still be completed if the Red Dragon was defeated before
@@ -129,9 +130,9 @@ speaking with Ilya.
 
 Her directions lead north through the mountains to Ridgeshire, then north
 through its Dragonspine gate. Save version **102** moves Ilya from saved
-Ridgeshire maps into saved Tavern interiors while preserving the goblet,
+Ridgeshire maps into saved Inn interiors while preserving the goblet,
 quest completion, boss victories, equipment, and money. Overlapping players
-and dropped items move one tile south of her new Tavern position.
+and dropped items move one tile south of her new Inn position.
 
 Save version **136** adds one initialized, serialized mantle-recovery state
 and two compact enemy bitfields for the exact warned cells. Existing enemy

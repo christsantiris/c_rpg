@@ -12,9 +12,67 @@
 
 static void test_dungeon_entry_maps(void);
 
+static void test_manual_dungeon_doors(void) {
+    static GameState g;
+    static GameState loaded;
+    const int dx[] = {0, 1, 0, -1};
+    const int dy[] = {-1, 0, 1, 0};
+    for (int kind = 0; kind < 2; kind++) {
+        for (int side = 0; side < 4; side++) {
+            game_init(&g);
+            g.location = LOCATION_DUNGEON;
+            g.enemy_count = 0;
+            memset(&g.map, 0, sizeof(g.map));
+            g.player.x = 10 - dx[side];
+            g.player.y = 10 - dy[side];
+            g.map.tiles[g.player.y][g.player.x] = TILE_FLOOR;
+            TileType door = kind ? TILE_CRYPT_DOOR : TILE_LOCKED_DOOR;
+            g.map.tiles[10][10] = door;
+            g.dungeon_key_found = kind;
+            g.dungeon_crypt_keys = kind ? 0 : 1;
+            action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
+            ASSERT("a door accepts only its matching key", g.map.tiles[10][10] == door && g.dungeon_key_found == kind && g.dungeon_crypt_keys == (kind ? 0 : 1));
+            g.dungeon_key_found = 1;
+            g.dungeon_crypt_keys = 2;
+            controls_assign(g.key_bindings, CONTROL_MOVE_LEFT, SDL_SCANCODE_K);
+            action_resolve_player(&g, (Action){ACTION_MOVE, 10, 10});
+            ASSERT("bumping a keyed door stops without opening it or consuming keys", g.map.tiles[10][10] == door && g.player.x == 10 - dx[side] && g.player.y == 10 - dy[side] && g.dungeon_key_found == 1 && g.dungeon_crypt_keys == 2);
+            ASSERT("the stopped movement faces the door and names the remapped unlock key", g.player.last_dx == dx[side] && g.player.last_dy == dy[side] && strstr(g.messages[g.message_count - 1], "Press K to unlock"));
+            ASSERT("adjacent locked doors provide the contextual Interact action", game_has_regional_interaction(&g));
+            g.player.frozen_turns = 1;
+            action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
+            ASSERT("being frozen cannot unlock a door or spend its key", g.map.tiles[10][10] == door && g.dungeon_key_found == 1 && g.dungeon_crypt_keys == 2);
+            action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
+            ASSERT("Interact opens from every side and consumes exactly one matching key", g.map.tiles[10][10] == TILE_FLOOR && g.dungeon_key_found == kind && g.dungeon_crypt_keys == (kind ? 1 : 2));
+            ASSERT("unlocking leaves the player outside the door", g.player.x == 10 - dx[side] && g.player.y == 10 - dy[side]);
+            action_resolve_player(&g, (Action){ACTION_MOVE, 10, 10});
+            ASSERT("a separate movement steps through the open door", g.player.x == 10 && g.player.y == 10 && g.dungeon_key_found == kind && g.dungeon_crypt_keys == (kind ? 1 : 2));
+        }
+    }
+    game_init(&g);
+    g.location = LOCATION_DUNGEON;
+    g.enemy_count = 0;
+    memset(&g.map, 0, sizeof(g.map));
+    g.player.x = 10;
+    g.player.y = 10;
+    g.map.tiles[10][10] = TILE_FLOOR;
+    g.map.tiles[10][11] = TILE_LOCKED_DOOR;
+    g.map.tiles[9][10] = TILE_CRYPT_DOOR;
+    g.dungeon_key_found = 1;
+    g.dungeon_crypt_keys = 2;
+    action_resolve_player(&g, (Action){ACTION_MOVE, 11, 10});
+    ASSERT("manual door test save slot is unused", !save_exists(99240));
+    ASSERT("saving before unlocking retains the faced door and both kinds of key", save_game(&g, 99240) && load_game(&loaded, 99240) && loaded.map.tiles[10][11] == TILE_LOCKED_DOOR && loaded.player.last_dx == 1 && loaded.dungeon_key_found == 1 && loaded.dungeon_crypt_keys == 2);
+    action_resolve_player(&loaded, (Action){ACTION_INTERACT, 0, 0});
+    ASSERT("when two doors are adjacent Interact opens the faced one", loaded.map.tiles[10][11] == TILE_FLOOR && loaded.map.tiles[9][10] == TILE_CRYPT_DOOR && loaded.dungeon_key_found == 0 && loaded.dungeon_crypt_keys == 2);
+    ASSERT("opened doors and consumed keys survive save/load", save_game(&loaded, 99240) && load_game(&g, 99240) && g.map.tiles[10][11] == TILE_FLOOR && g.map.tiles[9][10] == TILE_CRYPT_DOOR && g.dungeon_key_found == 0 && g.dungeon_crypt_keys == 2 && g.player.x == 10 && g.player.y == 10);
+    remove("saves/savegame_99240.json");
+}
+
 void test_dungeon(void) {
     printf("Dungeon generation tests:\n");
     test_dungeon_entry_maps();
+    test_manual_dungeon_doors();
 
     srand((unsigned)time(NULL));
 
@@ -134,6 +192,8 @@ void test_dungeon(void) {
     g.player.y = door_y + 1;
     Action unlock = {ACTION_MOVE, door_x, door_y};
     action_resolve_player(&g, unlock);
+    ASSERT("the boss door waits for an explicit unlock action", g.map.tiles[door_y][door_x] == TILE_LOCKED_DOOR && g.dungeon_key_found);
+    action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("dungeon key unlocks boss door",
         g.map.tiles[door_y][door_x] == TILE_FLOOR);
     ASSERT("dungeon key is consumed", g.dungeon_key_found == 0);
@@ -268,6 +328,10 @@ static int dungeon_walk_to(GameState *g, int tx, int ty) {
     }
     while (steps > 0) {
         int cell = queue[--steps];
+        if (g->map.tiles[cell / MAP_W][cell % MAP_W] == TILE_LOCKED_DOOR) {
+            action_resolve_player(g, (Action){ACTION_MOVE, cell % MAP_W, cell / MAP_W});
+            action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
+        }
         action_resolve_player(g, (Action){ACTION_MOVE, cell % MAP_W, cell / MAP_W});
         if (g->player.x != cell % MAP_W || g->player.y != cell / MAP_W) {
             return 0;
@@ -457,8 +521,8 @@ void test_final_dungeon_exit(void) {
     action_resolve_player(&g, a);
     walk_return_approach(&g);
     ASSERT("final exit returns player to town", g.location == LOCATION_TOWN);
-    ASSERT("final exit returns at east OakHaven road",
-        g.player.x == TOWN_W - 2 && g.player.y == 12);
+    ASSERT("final exit returns at south OakHaven road",
+        g.player.x == 20 && g.player.y == TOWN_H - 2);
     ASSERT("walking back to town preserves the last visited dungeon floor",
         g.level == DUNGEON_DEPTH);
     ASSERT("leaving the dungeon preserves surviving enemies and uncleared status",
@@ -914,6 +978,8 @@ void test_stairs_locked(void) {
     g.player.x = door_x - 1;
     g.player.y = door_y;
     action_resolve_player(&g, enter_crypt);
+    ASSERT("carrying a crypt key no longer opens the door on movement", g.map.tiles[door_y][door_x] == TILE_CRYPT_DOOR && g.dungeon_crypt_keys == 1);
+    action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("crypt key opens and is consumed by the door",
         g.map.tiles[door_y][door_x] == TILE_FLOOR &&
         g.dungeon_crypt_keys == 0);
@@ -995,13 +1061,13 @@ static void test_dungeon_entry_maps(void) {
                 map_generate_forest_road(&cache->map);
             }
         }
-        action_resolve_player(g, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+        action_resolve_player(g, (Action){ACTION_MOVE, 20, TOWN_H - 1});
         walk_town_approach(g);
-        ASSERT("OakHaven's east gate enters dungeon rooms with monsters and both stair tiles", g->location == LOCATION_DUNGEON && g->level == 1 && g->map.room_count >= MIN_ROOMS && g->enemy_count > 0 && g->map.tiles[g->map.stairs_up_y][g->map.stairs_up_x] == TILE_STAIRS_UP && g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] == TILE_STAIRS_DOWN);
+        ASSERT("OakHaven's south gate enters dungeon rooms with monsters and both stair tiles", g->location == LOCATION_DUNGEON && g->level == 1 && g->map.room_count >= MIN_ROOMS && g->enemy_count > 0 && g->map.tiles[g->map.stairs_up_y][g->map.stairs_up_x] == TILE_STAIRS_UP && g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] == TILE_STAIRS_DOWN);
         ASSERT("the entered dungeon has a traversable route to its downward stairs", dungeon_tile_reachable(&g->map, g->map.stairs_down_x, g->map.stairs_down_y));
         action_resolve_player(g, (Action){ACTION_ASCEND, 0, 0});
         walk_return_approach(g);
-        ASSERT("the entered dungeon permits immediate retreat to OakHaven's east gate", g->location == LOCATION_TOWN && g->player.x == TOWN_W - 2 && g->player.y == 12);
+        ASSERT("the entered dungeon permits immediate retreat to OakHaven's south gate", g->location == LOCATION_TOWN && g->player.x == 20 && g->player.y == TOWN_H - 2);
     }
     const Location sources[] = {LOCATION_TOWN, LOCATION_TAVERN, LOCATION_INN, LOCATION_GUILD, LOCATION_WORKSHOP, LOCATION_TOWN_HALL, LOCATION_HEALER, LOCATION_WITCH, LOCATION_DAWNMERE, LOCATION_FOREST_ROAD, LOCATION_SWAMP_ROAD, LOCATION_HIGH_PASS};
     for (int visited = 0; visited < 2; visited++) {
@@ -1071,14 +1137,14 @@ static void test_dungeon_entry_maps(void) {
                     ASSERT("the restored active floor keeps its portal at a usable entrance", !loaded->portal_active && loaded->portal_x == loaded->player.x && loaded->portal_y == loaded->player.y && loaded->portal_origin_tile == TILE_STAIRS_UP);
                 } else {
                     ASSERT("a town save drops only the foreign first-floor cache", ok && loaded->location == LOCATION_TOWN && !loaded->level_cache[0].valid);
-                    action_resolve_player(loaded, (Action){ACTION_MOVE, TOWN_W - 1, 12});
+                    action_resolve_player(loaded, (Action){ACTION_MOVE, 20, TOWN_H - 1});
                     walk_town_approach(loaded);
                 }
                 Map repaired = loaded->map;
                 ASSERT("the repaired dungeon survives saving and loading without changing its layout", save_game(loaded, 99151) && load_game(g, 99151) && memcmp(repaired.tiles, g->map.tiles, sizeof(repaired.tiles)) == 0);
                 action_resolve_player(g, (Action){ACTION_ASCEND, 0, 0});
                 walk_return_approach(g);
-                ASSERT("a repaired saved dungeon has a working exit back to OakHaven", g->location == LOCATION_TOWN && g->player.x == TOWN_W - 2);
+                ASSERT("a repaired saved dungeon has a working exit back to OakHaven", g->location == LOCATION_TOWN && g->player.x == 20);
                 remove("saves/savegame_99151.json");
             }
         }
@@ -1443,7 +1509,7 @@ void test_dungeon_return_stairs_migration(void) {
             walk_return_approach(&g);
         }
         ASSERT("stairs-up returns to Oakhaven only after the Lich is defeated, even with loot on the stairs",
-            open ? g.location == LOCATION_TOWN && g.player.x == TOWN_W - 2 && g.player.y == 12
+            open ? g.location == LOCATION_TOWN && g.player.x == 20 && g.player.y == TOWN_H - 2
             : g.location == LOCATION_DUNGEON && g.level == DUNGEON_DEPTH);
     }
 
@@ -1567,14 +1633,14 @@ void test_lich_minions(void) {
     // Model an old cache with no guards while the player is in town.
     g.level_cache[DUNGEON_DEPTH - 1].enemy_count = legacy_count;
     ASSERT("legacy town fixture saves", save_old_dungeon(&g, 107));
-    ASSERT("old town save gains Bram", load_game(&loaded, 99151) &&
-        loaded.map.tiles[TOWN_BRAM_Y][TOWN_BRAM_X] == TILE_NPC_BRAM);
-    ASSERT("town migration keeps the player and dropped potion on the adjoining cobblestone",
-        loaded.player.x == TOWN_BRAM_X && loaded.player.y == TOWN_BRAM_Y + 1 &&
+    ASSERT("old town save does not recreate the retired square Bram", load_game(&loaded, 99151) &&
+        loaded.map.tiles[TOWN_BRAM_Y][TOWN_BRAM_X] == TILE_ITEM);
+    ASSERT("loading the town preserves the player and dropped potion on their original cobblestone",
+        loaded.player.x == TOWN_BRAM_X && loaded.player.y == TOWN_BRAM_Y &&
         loaded.floor_items[0].active && loaded.floor_items[0].item.type == ITEM_POTION_HEALTH &&
-        loaded.floor_items[0].x == TOWN_BRAM_X && loaded.floor_items[0].y == TOWN_BRAM_Y + 1 &&
+        loaded.floor_items[0].x == TOWN_BRAM_X && loaded.floor_items[0].y == TOWN_BRAM_Y &&
         loaded.floor_items[0].underlying_tile == TILE_TOWN_PATH &&
-        loaded.map.tiles[TOWN_BRAM_Y + 1][TOWN_BRAM_X] == TILE_ITEM);
+        loaded.map.tiles[TOWN_BRAM_Y][TOWN_BRAM_X] == TILE_ITEM);
     ASSERT("town save migration adds cached guards without changing the active town or its enemies",
         loaded.location == LOCATION_TOWN && loaded.level == g.level &&
         loaded.enemy_count == g.enemy_count && lich_guard_count(

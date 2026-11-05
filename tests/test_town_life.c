@@ -1,6 +1,7 @@
 #include "expedition_fixture.h"
 #include "test_utils.h"
 #include "../src/game/town_life.h"
+#include "game/eastern_arc.h"
 #include "../src/game/actions.h"
 #include "../src/game/mangrove.h"
 #include "../src/systems/save_load.h"
@@ -18,7 +19,10 @@ static void start_town(Location town) {
     memset(&game, 0, sizeof(game));
     game.player.player_class = CLASS_WARRIOR;
     game_init(&game);
-    game.location = town;
+    game.dawnmere_liberated = 1;
+    if (town != LOCATION_DAWNMERE) {
+        game.location = town;
+    }
     game.defeated_bosses = (1 << LOCATION_FOREST) | (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_SWAMP);
     if (town == LOCATION_DAWNMERE) {
         game_enter_town_gate(&game, LOCATION_DAWNMERE, 0, 12);
@@ -115,64 +119,6 @@ static int downgrade_town_save(int version) {
     return 1;
 }
 
-static void test_alehouse(void) {
-    start_town(LOCATION_DAWNMERE);
-    const TownBuilding *b = town_life_building(LOCATION_ALEHOUSE);
-    int x = b->x + b->w / 2;
-    int y = b->y + b->h - 1;
-    ASSERT("Dawnmere has separate reachable Alehouse and merchant doors", b->town == LOCATION_DAWNMERE &&
-        town_life_building(LOCATION_DAWNMERE)->interior == LOCATION_DAWNMERE_MERCHANT &&
-        game.map.tiles[y][x] == TILE_LOCAL_DOOR && all_walkable_connected(&game.map, 20, 12));
-    ASSERT("Dain leaves the whole cobblestone plaza intact", game.map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] == TILE_TOWN_PATH);
-    game.player.x = 20;
-    game.player.y = 12;
-    for (int step = 21; step <= x; step++) {
-        action_resolve_player(&game, (Action){ACTION_MOVE, step, 12});
-    }
-    for (int step = 11; step >= y; step--) {
-        action_resolve_player(&game, (Action){ACTION_MOVE, x, step});
-    }
-    ASSERT("walking from the plaza selects the Alehouse rather than the merchant", game.location == LOCATION_ALEHOUSE &&
-        !game.enemy_count && !game.dialogue_active && game.map.tiles[DAIN_ALEHOUSE_Y][DAIN_ALEHOUSE_X] == TILE_NPC_DAIN &&
-        all_walkable_connected(&game.map, game.player.x, game.player.y));
-    game.player.x = DAIN_ALEHOUSE_X;
-    game.player.y = DAIN_ALEHOUSE_Y + 1;
-    ASSERT("Dain can be offered his quest through Alehouse Talk", town_life_talk(&game, 0) && game_quest_offer_active(&game));
-    game_handle_quest_offer_key(&game, SDL_SCANCODE_Y, 0);
-    game.dain_map_fragments = 5;
-    ASSERT("Alehouse saving retains Dain, quest progress and cask shelves", save_game(&game, TOWN_LIFE_SLOT) &&
-        load_game(&loaded, TOWN_LIFE_SLOT) && loaded.location == LOCATION_ALEHOUSE && loaded.dain_quest_state == 1 &&
-        loaded.dain_map_fragments == 5 && loaded.map.tiles[7][9] == TILE_TAVERN_TABLE);
-    loaded.player.x = 20;
-    loaded.player.y = 21;
-    action_resolve_player(&loaded, (Action){ACTION_MOVE, 20, 22});
-    ASSERT("the Alehouse returns to its own doorstep with quests intact", loaded.location == LOCATION_DAWNMERE &&
-        loaded.player.x == x && loaded.player.y == y + 1 && loaded.dain_map_fragments == 5);
-    start_town(LOCATION_DAWNMERE);
-    // An old town save can contain both the player and stacked loot in the new lot.
-    game.player.x = b->x;
-    game.player.y = b->y;
-    game.floor_item_count = 3;
-    for (int i = 0; i < 2; i++) {
-        game.floor_items[i] = (FloorItem){.active = 1, .x = b->x, .y = b->y,
-            .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_health_potion()};
-    }
-    game.floor_items[2] = (FloorItem){.active = 1, .x = DAIN_TOWN_X, .y = DAIN_TOWN_Y,
-        .underlying_tile = TILE_NPC_DAIN, .item = item_make_health_potion()};
-    game.map.tiles[b->y][b->x] = TILE_ITEM;
-    game.map.tiles[DAIN_TOWN_Y][DAIN_TOWN_X] = TILE_ITEM;
-    game.dain_quest_state = 2;
-    game.dain_map_fragments = 7;
-    map_mark_explored(&game.map, 3, 3);
-    ASSERT("old saves gain the Alehouse without losing player or stacked loot", save_game(&game, TOWN_LIFE_SLOT) &&
-        downgrade_town_save(214) && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.player.x == x && loaded.player.y == y + 1 &&
-        loaded.floor_items[0].x == x && loaded.floor_items[1].x == x && loaded.floor_items[0].y == y + 1 &&
-        loaded.floor_items[1].y == y + 1 && loaded.floor_items[2].active &&
-        loaded.floor_items[2].underlying_tile == TILE_TOWN_PATH && loaded.dain_quest_state == 2 &&
-        loaded.dain_map_fragments == 7 && loaded.gold == 123 && loaded.score == 456 && map_is_explored(&loaded.map, 3, 3));
-    remove(TOWN_LIFE_PATH);
-}
-
 static int walk_to(GameState *g, int tx, int ty) {
     int previous[MAP_W * MAP_H];
     int queue[MAP_W * MAP_H];
@@ -222,8 +168,8 @@ static void test_goldsmith(void) {
         start_town(LOCATION_TOWN);
         ASSERT("Goldsmith preserves all Oakhaven paths and gate approaches", all_walkable_connected(&game.map, 20, 12));
         ASSERT("walking from the plaza actually enters the Goldsmith", walk_to(&game, x, y) && game.location == LOCATION_GOLDSMITH);
-        ASSERT("Goldsmith counter can be approached through real movement", walk_to(&game, RESIDENT_X, RESIDENT_Y + 1) && town_life_near_goldsmith(&game));
-        ASSERT("Goldsmith interior and inventory survive save/load", save_game(&game, TOWN_LIFE_SLOT) && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.location == LOCATION_GOLDSMITH && town_life_near_goldsmith(&loaded));
+        ASSERT("Goldsmith counter can be approached through real movement", walk_to(&game, RESIDENT_X, RESIDENT_Y + 1) && town_life_near_shopkeeper(&game));
+        ASSERT("Goldsmith interior and inventory survive save/load", save_game(&game, TOWN_LIFE_SLOT) && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.location == LOCATION_GOLDSMITH && town_life_near_shopkeeper(&loaded));
         ASSERT("Goldsmith exit actually returns to its Oakhaven doorstep", walk_to(&loaded, 20, 22) && loaded.location == LOCATION_TOWN && loaded.player.x == x && loaded.player.y == y + 1);
     }
     start_town(LOCATION_TOWN);
@@ -258,7 +204,7 @@ static void test_accessory_buildings(void) {
             start_town(b->town);
             ASSERT("accessory workshops preserve all town paths and gate approaches", all_walkable_connected(&game.map, game.player.x, game.player.y));
             ASSERT("walking from town enters the intended accessory workshop", walk_to(&game, x, y) && game.location == b->interior);
-            ASSERT("the shop counter is reachable through real movement", walk_to(&game, RESIDENT_X, RESIDENT_Y + 1) && (i == 0 ? town_life_near_cobbler(&game) : town_life_near_belt_maker(&game)));
+            ASSERT("the shop counter is reachable through real movement", walk_to(&game, RESIDENT_X, RESIDENT_Y + 1) && town_life_near_shopkeeper(&game));
             ASSERT("accessory workshop interiors survive save/load", save_game(&game, TOWN_LIFE_SLOT) && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.location == b->interior);
             ASSERT("the workshop exit actually returns to the correct town doorstep", walk_to(&loaded, 20, 22) && loaded.location == b->town && loaded.player.x == x && loaded.player.y == y + 1);
         }
@@ -279,7 +225,47 @@ static void test_accessory_buildings(void) {
         map_mark_explored(&game.map, 20, 12);
         ASSERT("version-227 town saves gain their specialty workshop", save_game(&game, TOWN_LIFE_SLOT) && downgrade_town_save(227) && load_game(&loaded, TOWN_LIFE_SLOT) && loaded.map.tiles[y][x] == TILE_LOCAL_DOOR);
         ASSERT("workshop migration preserves wounds, quests, exploration and stacked accessories", loaded.player.hp == 37 && loaded.gold == 123 && loaded.elowen_quest_state == 1 && map_is_explored(&loaded.map, 20, 12) && loaded.player.x == x && loaded.player.y == y + 1 && loaded.floor_items[0].x == x && loaded.floor_items[1].y == y + 1 && loaded.floor_items[0].item.rarity == ITEM_RARITY_RARE);
+        if (b->town == LOCATION_DAWNMERE) {
+            ASSERT("legacy Dawnmere resumes with an occupied workshop", !loaded.dawnmere_liberated && eastern_move(&loaded, x, y));
+            loaded.dawnmere_liberated = 1;
+            loaded.enemy_count = 0;
+            loaded.dawnmere_cache.valid = 0;
+        }
         ASSERT("migrated workshop doors remain actual transitions", walk_to(&loaded, x, y) && loaded.location == b->interior);
+    }
+    remove(TOWN_LIFE_PATH);
+}
+
+static void test_oakhaven_shops(void) {
+    printf("Oakhaven walk-in shop tests:\n");
+    const Location interiors[] = {LOCATION_BLACKSMITH, LOCATION_ALCHEMIST};
+    const TileType bodies[] = {TILE_SHOP_BLACKSMITH, TILE_SHOP_ALCHEMIST};
+    const TileType old_doors[] = {TILE_BLACKSMITH_DOOR, TILE_ALCHEMIST_DOOR};
+    for (int i = 0; i < 2; i++) {
+        const TownBuilding *b = town_life_building(interiors[i]);
+        int x = b->x + b->w / 2;
+        int y = b->y + b->h - 1;
+        start_town(LOCATION_TOWN);
+        ASSERT("Oakhaven keeps the shop's exterior art and solid walls", b->own_exterior &&
+            game.map.tiles[b->y][b->x] == bodies[i] && !map_is_walkable(&game.map, b->x, b->y));
+        ASSERT("the shop door is a walk-in entrance", game.map.tiles[y][x] == TILE_LOCAL_DOOR &&
+            all_walkable_connected(&game.map, game.player.x, game.player.y));
+        ASSERT("walking through the door enters the shop", walk_to(&game, x, y) && game.location == interiors[i] &&
+            town_life_is_shop(game.location));
+        ASSERT("the shopkeeper's counter is reachable through real movement", walk_to(&game, RESIDENT_X, RESIDENT_Y + 1) &&
+            town_life_near_shopkeeper(&game));
+        game.player.x = 20;
+        game.player.y = 21;
+        ASSERT("the shop opens only beside the shopkeeper", !town_life_near_shopkeeper(&game));
+        ASSERT("the shop interior survives save/load", save_game(&game, TOWN_LIFE_SLOT) && load_game(&loaded, TOWN_LIFE_SLOT) &&
+            loaded.location == interiors[i]);
+        ASSERT("the shop exit returns to Oakhaven's doorstep", walk_to(&loaded, 20, 22) && loaded.location == LOCATION_TOWN &&
+            loaded.player.x == x && loaded.player.y == y + 1);
+        start_town(LOCATION_TOWN);
+        game.map.tiles[y][x] = old_doors[i];
+        ASSERT("older Oakhaven saves gain the walk-in door", save_game(&game, TOWN_LIFE_SLOT) && downgrade_town_save(232) &&
+            load_game(&loaded, TOWN_LIFE_SLOT) && loaded.map.tiles[y][x] == TILE_LOCAL_DOOR && loaded.gold == 123);
+        ASSERT("the upgraded door is an actual transition", walk_to(&loaded, x, y) && loaded.location == interiors[i]);
     }
     remove(TOWN_LIFE_PATH);
 }
@@ -287,7 +273,7 @@ static void test_accessory_buildings(void) {
 void test_town_life(void) {
     test_accessory_buildings();
     test_goldsmith();
-    test_alehouse();
+    test_oakhaven_shops();
     printf("Town resident building tests:\n");
     const Location towns[5] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN4, LOCATION_TOWN3, LOCATION_DAWNMERE};
     for (int i = 0; i < 5; i++) {
@@ -414,6 +400,9 @@ void test_town_life(void) {
     action_resolve_player(&loaded, (Action){ACTION_PICK_UP, 0, 0});
     ASSERT("the migrated doorstep is walkable and reveals cobblestone after picking up loot", loaded.player.x == 9 &&
         loaded.player.y == 11 && loaded.map.tiles[11][9] == TILE_TOWN_PATH);
+    loaded.dawnmere_liberated = 1;
+    loaded.enemy_count = 0;
+    loaded.dawnmere_cache.valid = 0;
     action_resolve_player(&loaded, (Action){ACTION_MOVE, 9, 10});
     ASSERT("the repaired legacy door enters the merchant instead of remaining decorative", loaded.location == LOCATION_DAWNMERE_MERCHANT);
     remove(TOWN_LIFE_PATH);

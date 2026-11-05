@@ -22,7 +22,8 @@ static const TownBuilding buildings[] = {
         "SPICE MERCHANT", "Spice Merchant Corvin",
         spice_skiff_offer, NULL},
     {LOCATION_DAWNMERE, LOCATION_ALEHOUSE, 25, 5, 7, 6, 4, 0,
-        "ALEHOUSE", "Dain", NULL, NULL},
+        "ALEHOUSE", "Alehouse Host",
+        "Welcome back to the Alehouse. Crossing the river? The regular crossing is closed by order of the King. Your only way over is through Saltwind Marsh, north of town.", NULL},
     {LOCATION_TOWN, LOCATION_GOLDSMITH, 25, 17, 5, 4, 5, 0,
         "GOLDSMITH", "Goldsmith Iven",
         "Welcome! I buy and sell rings and amulets. Approach my counter and Talk to browse the jewelry.", NULL},
@@ -31,7 +32,13 @@ static const TownBuilding buildings[] = {
         "Welcome! I buy and sell boots. Approach my counter and Talk to browse my stock.", NULL},
     {LOCATION_DAWNMERE, LOCATION_BELT_MAKER, 7, 17, 5, 4, 7, 0,
         "BELT MAKER", "Belt Maker Torren",
-        "Welcome! I buy and sell belts. Approach my counter and Talk to browse my stock.", NULL}
+        "Welcome! I buy and sell belts. Approach my counter and Talk to browse my stock.", NULL},
+    {LOCATION_TOWN, LOCATION_BLACKSMITH, TOWN_BLACKSMITH_X, TOWN_BLACKSMITH_Y, 5, 4, 8, 0,
+        "BLACKSMITH", "Blacksmith Joran",
+        "Welcome to the forge! I buy and sell weapons and armor. Approach my counter and Talk to browse my stock.", NULL, 1},
+    {LOCATION_TOWN, LOCATION_ALCHEMIST, TOWN_ALCHEMIST_X, TOWN_ALCHEMIST_Y, 5, 4, 9, 0,
+        "ALCHEMIST", "Alchemist Wren",
+        "Welcome! I sell potions and scrolls for the road. Approach my counter and Talk to browse my shelves.", NULL, 1}
 };
 
 const TownBuilding *town_life_building(Location location) {
@@ -88,7 +95,9 @@ static void place_building(Map *map, Location town, const TownBuilding *b) {
 
 void town_life_place(Map *map, Location town) {
     for (const TownBuilding *b = town_life_building(town); b && b->town == town; b = town_life_next_building(town, b)) {
-        place_building(map, town, b);
+        if (!b->own_exterior) {
+            place_building(map, town, b);
+        }
     }
 }
 
@@ -120,34 +129,22 @@ void town_life_generate(Map *map, Location interior, int *sx, int *sy) {
             map->tiles[12][x] = TILE_TAVERN_TABLE;
             map->tiles[12][x + 16] = TILE_TAVERN_TABLE;
         }
-        map->tiles[DAIN_ALEHOUSE_Y][DAIN_ALEHOUSE_X] = TILE_NPC_DAIN;
-    } else {
-        map->tiles[RESIDENT_Y][RESIDENT_X] = TILE_NPC_RESIDENT;
     }
+    map->tiles[RESIDENT_Y][RESIDENT_X] = TILE_NPC_RESIDENT;
 }
 
-int town_life_near_goldsmith(const GameState *g) {
-    return g->location == LOCATION_GOLDSMITH &&
-        abs(g->player.x - RESIDENT_X) <= 1 && abs(g->player.y - RESIDENT_Y) <= 1;
+int town_life_is_shop(Location location) {
+    return location == LOCATION_GOLDSMITH || location == LOCATION_COBBLER || location == LOCATION_BELT_MAKER ||
+        location == LOCATION_BLACKSMITH || location == LOCATION_ALCHEMIST;
 }
 
-int town_life_near_cobbler(const GameState *g) {
-    return g->location == LOCATION_COBBLER &&
-        abs(g->player.x - RESIDENT_X) <= 1 && abs(g->player.y - RESIDENT_Y) <= 1;
-}
-
-int town_life_near_belt_maker(const GameState *g) {
-    return g->location == LOCATION_BELT_MAKER &&
-        abs(g->player.x - RESIDENT_X) <= 1 && abs(g->player.y - RESIDENT_Y) <= 1;
+int town_life_near_shopkeeper(const GameState *g) {
+    return town_life_is_shop(g->location) && abs(g->player.x - RESIDENT_X) <= 1 && abs(g->player.y - RESIDENT_Y) <= 1;
 }
 
 int town_life_talk(GameState *g, int greeting) {
-    if (g->location == LOCATION_ALEHOUSE) {
-        if (greeting || abs(g->player.x - DAIN_ALEHOUSE_X) > 1 || abs(g->player.y - DAIN_ALEHOUSE_Y) > 1) {
-            return 0;
-        }
-        game_talk_to_dain(g);
-        return 1;
+    if (g->location == LOCATION_ALEHOUSE && greeting) {
+        return 0;
     }
     const TownBuilding *b = town_life_building(g->location);
     if (!b || b->interior != g->location ||
@@ -164,6 +161,13 @@ int town_life_talk(GameState *g, int greeting) {
     snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "%s", b->speaker);
     snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s",
         b->after && (g->defeated_bosses & b->victory) ? b->after : b->before);
+    if (b->town == LOCATION_TOWN2 && g->royal_reported_actions) {
+        snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s", g->location == LOCATION_BUTCHER ?
+            "My family in Dawnmere says you freed them. Some here still trust the King; I don't trust his customs officers. Keep away from the checkpoint if you can." :
+            "They say you fought the Crown. I sell boots, not rebellion. I'll trade, but don't bring the King's soldiers to my door.");
+    } else if (g->location == LOCATION_ALEHOUSE && !g->dawnmere_liberated) {
+        snprintf(g->dialogue_text, sizeof(g->dialogue_text), "This room shelters the displaced. Seren is near the west tables; speak with her about the occupation. Crossing the river? The regular crossing is closed by order of the King. Go through Saltwind Marsh: walk around our walls from the west gate to its road in the north.");
+    }
     return 1;
 }
 
@@ -200,6 +204,8 @@ static void migrate_building(GameState *g, const TownBuilding *b) {
 
 void town_life_migrate(GameState *g) {
     for (const TownBuilding *b = town_life_building(g->location); b && b->town == g->location; b = town_life_next_building(g->location, b)) {
-        migrate_building(g, b);
+        if (!b->own_exterior) {
+            migrate_building(g, b);
+        }
     }
 }

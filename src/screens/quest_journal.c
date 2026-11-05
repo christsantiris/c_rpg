@@ -1,7 +1,10 @@
+#include "../game/western_arc.h"
 #include "quest_journal.h"
+#include "../game/royal_evidence.h"
 #include <SDL2/SDL.h>
 #include "../game/catacombs.h"
 #include "../game/jail.h"
+#include "../game/elowen.h"
 #include "../game/heartseed.h"
 #include "../game/spice_skiff.h"
 #include "../game/stormbell.h"
@@ -24,32 +27,30 @@ typedef struct {
 
 static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
     {
-        "The Broken Seals", "Elowen",
-        "Restore three guarded seals in Oakhaven's dungeon.",
-        "Return and speak to Elowen in Oakhaven's Tavern.",
-        {"Repair burial seal", "Repair burial seal", "Repair burial seal"},
-        "Dungeon", {2, 3, 4}, 40, 300
+        "Save Elowen", "Bram",
+        "Defeat the Lich King and free Bram's daughter from Oakhaven's dungeon.",
+        "Elowen follows you. Speak to Bram in Oakhaven's Inn to reunite them and claim your reward.",
+        {"Defeat the Lich King and free Elowen"},
+        "Dungeon", {DUNGEON_DEPTH}, ELOWEN_REWARD_GOLD, 0
     },
     {
         "Recover the Treasure Map", "Dain",
-        "Recover the three Goblin Map Bearer fragments.",
-        "Return and speak to Dain in Dawnmere's Alehouse.",
-        {"Defeat Archer Map Bearer", "Defeat Warchief Map Bearer",
-            "Defeat Shaman Map Bearer"},
-        "Goblin Mountains", {2, 3, 4}, 60, 400
+        "Recover two treasure-map halves from the Goblin Map Bearers.",
+        "Return and speak to Dain in Oakhaven's Inn.",
+        {"Recover first half from Archer", "Recover second half from Warchief"},
+        "Goblin Mountains", {1, 2}, 60, 400
     },
     {
-        "The Lost Wardens", "Alder",
-        "Defeat the captors and rescue three lost wardens.",
-        "Return and speak to Alder in Stillbury's Inn.",
-        {"Rescue forest warden", "Rescue forest warden",
-            "Rescue forest warden"},
-        "Haunted Forest", {2, 3, 4}, 70, 500
+        "The Lost Rangers", "Alder",
+        "Defeat the spider captors and free two lost rangers.",
+        "Return and speak to Alder in Oakhaven's Inn.",
+        {"Free first ranger from spiders", "Free second ranger from spiders"},
+        "Haunted Forest", {1, 2}, 70, 500
     },
     {
         "Relight the Drowned Beacons", "Mara",
         "Lower the tides and relight three guarded beacons.",
-        "Return and speak to Mara in Oakhaven's Tavern.",
+        "Return and speak to Mara in Oakhaven's Inn.",
         {"Light drowned beacon", "Light drowned beacon",
             "Light drowned beacon"},
         "Sunken Coast", {2, 3, 4}, 80, 600
@@ -63,31 +64,24 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
     },
     {
         "The Ivory Rook", "Rook",
-        "Find the labyrinth on the road from Oakhaven to Stillbury; light five runes and defeat the Minotaur.",
-        "Return the ivory rook to Rook in Oakhaven's Tavern.",
+        "Find the labyrinth on the road from Oakhaven to Dawnmere; light five runes and defeat the Minotaur.",
+        "Return the ivory rook to Rook in Oakhaven's Inn.",
         {"Recover the ivory rook", "", ""},
         "Rook's Labyrinth", {5, 0, 0}, ROOK_QUEST_REWARD, 500
     },
     {
-        "Bring Mira Home", "Bram",
-        "Defeat Mira's vampire captor in the swamp and speak to her.",
-        "Return and speak to Bram in Stillbury's Inn.",
-        {"Rescue Mira", "", ""},
-        "Blackwater Swamp", {SWAMP_RESCUE_LEVEL, 0, 0}, 80, 600
-    },
-    {
         "The Dragon's Hoard", "Ilya",
         "Recover the golden goblet from Dragonspine's fifth stage.",
-        "Return and speak to Ilya in Oakhaven's Tavern.",
+        "Return and speak to Ilya in Oakhaven's Inn.",
         {"Recover the golden goblet", "", ""},
         "Dragonspine", {5, 0, 0}, 0, 600, "Potion of Strength"
     },
     {
-        "The Lost Magic Lamp", "Zara",
-        "Recover a magic lamp from Sunscar Wastes.",
-        "Return and speak to Zara in Stillbury's Inn.",
-        {"Recover the magic lamp", "", ""},
-        "Sunscar Wastes", {DESERT_LAMP_LEVEL, 0, 0}, 80, 600
+        "The King's Tribute", "Zara",
+        "Recover confiscated goods and proof of the King's tribute to the Pharaoh.",
+        "Return to Zara at the caravan camp outside Sunscar for your reward.",
+        {"Reclaim the royal convoy's cargo", "Recover the Pharaoh's agreement"},
+        "Sunscar Wastes", {2, 5}, TRIBUTE_GOLD, 0, "500 XP"
     },
     {
         "Reclaim the Emberforge", "Steward Hadrin",
@@ -100,7 +94,7 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
     {
         "The Silent Expedition", "Quartermaster Brenna",
         "Recover the journal and rescue Surveyor Fen.",
-        "Return and speak to Brenna in Stillbury's Inn.",
+        "Return and speak to Brenna in Stillbury's Tavern.",
         {"Recover the expedition journal", "Rescue Surveyor Fen", ""},
         "Frostfell Wastes", {FROSTFELL_JOURNAL_LEVEL, FROSTFELL_SURVIVOR_LEVEL, 0},
         FROSTFELL_REWARD_GOLD, FROSTFELL_REWARD_SCORE
@@ -180,47 +174,90 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Ironfang Mines", {2, 4, 5, 0}, WAR_REWARD_GOLD, WAR_REWARD_SCORE
     },
     {
-        "Giant's Crown", "Antiquarian Edda",
-        "Read stage 2's inscription; find stage 3's western seal chamber.",
-        "Use the seal at stage 5's western vault after the Jarl falls; return to Edda.",
-        {"Read the royal inscription", "Recover the royal seal", "Defeat the Last Jarl", "Recover the royal crown"},
-        "Giant's Peaks", {2, 3, 5, 5}, CROWN_REWARD_GOLD, CROWN_REWARD_SCORE, "Stoneguard Shield"
+        "Giant's Crown", "Historian Liora",
+        "Recover the crown directly from the Last Jarl in Giant's Peaks 5.",
+        "Deliver it to Edda beside Giant's Bridge, outside Stillbury's checkpoint.",
+        {"Recover the Last Jarl's crown"},
+        "Giant's Peaks", {5}, CROWN_REWARD_GOLD, CROWN_REWARD_SCORE, "Stoneguard Shield"
+    },
+    {
+        "Defeat the Necromancer", "Alder",
+        "Defeat the Necromancer and search his correspondence for whoever protects his work.",
+        "His defeat opens the forest road east to Dawnmere. Continue your adventure there.",
+        {"Defeat the Necromancer"}, "Haunted Forest", {FOREST_BOSS_LEVEL}, 0, 0
+    },
+    {
+        "Defeat the Goblin King", "Dain",
+        "Defeat the Goblin King and search his records for whoever supplies his raids.",
+        "His defeat opens the mountain road west to Sunscar Wastes.",
+        {"Defeat the Goblin King"}, "Goblin Mountains", {MOUNTAIN_BOSS_LEVEL}, 0, 0
+    },
+    {
+        "Dawnmere Under Occupation", "Watchkeeper Seren",
+        "Free Dawnmere from the royal garrison. Seren shelters in the Alehouse.",
+        "Liberation reopens its businesses and the northern Saltwind waterfront.",
+        {"Break the western checkpoint", "Break the market squad", "Defeat Captain Rusk"},
+        "Dawnmere", {0, 0, 0}, 100, 0, "500 XP"
+    },
+    {
+        "Passage Through Saltwind", "Watchkeeper Seren",
+        "Reach the river through Saltwind Marsh, north of Dawnmere.",
+        "Board the skiff, paddle across and dock at Stillbury. Enter town to begin Act 4.",
+        {"Defeat Sszareth at the final launch", "Reach Stillbury's river dock"},
+        "Saltwind Marsh", {5, 0}, 0, 0
+    },
+    {
+        "Break the Jarl's Blockade", "Caravan Scout Garran",
+        "The Last Jarl holds the road to Stillbury under a royal charter.",
+        "Defeat him to open Giant's Bridge. Completion is immediate; no camp return is needed.",
+        {"Defeat the Last Jarl"}, "Giant's Peaks", {5}, 0, 0
     }
+
 };
 
 static int quest_state(const GameState *g, int quest) {
-    if (quest == 21) {
-        return g->crown_quest_state;
+    if (quest == 25) {
+        return g->jarl_quest_state;
+    }
+    if (quest == 23 || quest == 24) {
+        return quest == 23 ? g->dawnmere_quest_state : g->saltwind_quest_state;
+    }
+    if (quest == 21 || quest == 22) {
+        int state = quest == 21 ? g->alder_quest_state : g->dain_quest_state;
+        return state == REGIONAL_CHAIN_BOSS_ACTIVE ? 1 : state == REGIONAL_CHAIN_COMPLETE ? 3 : 0;
     }
     if (quest == 20) {
-        return g->war_machine_quest_state;
+        return g->crown_quest_state;
     }
     if (quest == 19) {
-        return g->stormbell_quest_state;
+        return g->war_machine_quest_state;
     }
     if (quest == 18) {
-        return g->spice_skiff_quest_state;
+        return g->stormbell_quest_state;
     }
     if (quest == 17) {
-        return g->heartseed_quest_state;
+        return g->spice_skiff_quest_state;
     }
     if (quest == 16) {
-        return g->jail_gear_state;
+        return g->heartseed_quest_state;
     }
     if (quest == 15) {
-        return g->hunt_quest_state;
+        return g->jail_gear_state;
     }
     if (quest == 14) {
+        return g->hunt_quest_state;
+    }
+    if (quest == 13) {
         return g->watchfire_quest_state;
     }
     if (quest == 0) {
         return g->elowen_quest_state;
     }
     if (quest == 1) {
-        return g->dain_quest_state;
+        return g->dain_quest_state > 3 ? 3 : g->dain_quest_state;
     }
     if (quest == 2) {
-        return g->alder_quest_state;
+        return g->alder_quest_state > 3 ? 3 : g->alder_quest_state;
     }
     if (quest == 3) {
         return g->mara_quest_state;
@@ -232,57 +269,63 @@ static int quest_state(const GameState *g, int quest) {
         return g->rook_quest_state;
     }
     if (quest == 6) {
-        return g->innkeeper_quest_state;
-    }
-    if (quest == 7) {
         return g->dragon_treasure_quest_state;
     }
-    if (quest == 8) {
-        return g->sunscar_lamp_quest_state;
+    if (quest == 7) {
+        return g->tribute_quest_state;
     }
-    if (quest == 9) {
+    if (quest == 8) {
         return g->emberforge_quest_state;
     }
-    if (quest == 10) {
+    if (quest == 9) {
         return g->frostfell_quest_state;
     }
-    if (quest == 11) {
+    if (quest == 10) {
         return g->glassdeep_quest_state;
     }
 
-    if (quest == 12) {
+    if (quest == 11) {
         return g->catacombs_quest_state;
     }
     return g->jail_quest_state == 3 ? 3 : g->jail_quest_state == 2 ? 1 : 0;
 }
 
 static int quest_progress(const GameState *g, int quest) {
-    if (quest == 21) {
-        return g->crown_quest_progress;
+    if (quest == 25) {
+        return g->giants_crown_defeated;
+    }
+    if (quest == 23 || quest == 24) {
+        return quest == 23 ? g->dawnmere_progress : !!g->mangrove_defeated | (g->saltwind_quest_state == 3 ? 2 : 0);
+    }
+    if (quest == 21 || quest == 22) {
+        return (g->defeated_bosses & (1 << (quest == 21 ? LOCATION_FOREST : LOCATION_MOUNTAINS))) != 0;
     }
     if (quest == 20) {
-        return g->war_machine_progress;
+        return !!(g->crown_quest_progress & CROWN_TAKEN);
     }
     if (quest == 19) {
-        return g->stormbell_progress;
+        return g->war_machine_progress;
     }
     if (quest == 18) {
-        return g->spice_skiff_progress;
+        return g->stormbell_progress;
     }
     if (quest == 17) {
-        return g->heartseed_progress;
+        return g->spice_skiff_progress;
     }
     if (quest == 16) {
-        return g->jail_gear_state == 3;
+        return g->heartseed_progress;
     }
     if (quest == 15) {
-        return g->hunt_quest_progress;
+        return g->jail_gear_state == 3;
     }
     if (quest == 14) {
+        return g->hunt_quest_progress;
+    }
+    if (quest == 13) {
         return g->watchfire_quest_progress;
     }
     if (quest == 0) {
-        return g->elowen_seals_restored;
+        return g->elowen_quest_state >= ELOWEN_RESCUED;
     }
     if (quest == 1) {
         return g->dain_map_fragments;
@@ -300,25 +343,22 @@ static int quest_progress(const GameState *g, int quest) {
         return g->rook_quest_state >= 2;
     }
     if (quest == 6) {
-        return g->innkeeper_quest_state >= 2;
-    }
-    if (quest == 7) {
         return g->dragon_treasure_quest_state >= 2;
     }
-    if (quest == 8) {
-        return g->sunscar_lamp_quest_state >= 2;
+    if (quest == 7) {
+        return g->tribute_progress;
     }
-    if (quest == 9) {
+    if (quest == 8) {
         return g->emberforge_progress;
     }
-    if (quest == 10) {
+    if (quest == 9) {
         return g->frostfell_quest_progress;
     }
-    if (quest == 11) {
+    if (quest == 10) {
         return g->glassdeep_quest_progress;
     }
 
-    if (quest == 12) {
+    if (quest == 11) {
         return g->catacombs_quest_progress;
     }
     return g->jail_quest_state == 3 ? 3 : g->location == LOCATION_ESCAPE_TUNNEL ? 1 : 0;
@@ -337,6 +377,9 @@ void quest_journal_init(QuestJournalScreen *screen) {
 }
 
 int quest_journal_count(const GameState *g, QuestJournalTab tab) {
+    if (tab == QUEST_TAB_EVIDENCE) {
+        return royal_evidence_count(g);
+    }
     if (tab == QUEST_TAB_BOSSES) {
         return JOURNAL_BOSS_COUNT;
     }
@@ -375,7 +418,7 @@ int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entr
 }
 
 int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, QuestJournalEntry *entry) {
-    if (tab == QUEST_TAB_BOSSES) {
+    if (tab == QUEST_TAB_BOSSES || tab == QUEST_TAB_EVIDENCE) {
         return 0;
     }
     int visible_index = 0;
@@ -393,6 +436,16 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         entry->giver = definition->giver;
         entry->summary_line_1 = definition->summary_line_1;
         entry->summary_line_2 = definition->summary_line_2;
+        if (quest == 0) {
+            entry->summary_line_2 = state == ELOWEN_HOME ? "Elowen is home at Oakhaven's Inn. Bram's reward has been collected." :
+                state == ELOWEN_RESCUED ? definition->summary_line_2 : "Bram waits at Oakhaven's Inn. Rescue Elowen from the Lich King.";
+        }
+        if (state == 3 && (quest == 21 || quest == 22)) {
+            entry->summary_line_1 = quest == 21 ? "The Necromancer's royal writ bears the King's seal, granting protection to his work." :
+                "The Goblin King's payment records bear the King's seal, funding raids and the western-road blockade.";
+            entry->summary_line_2 = quest == 21 ? "Read it in Evidence. The road east to Dawnmere is open; no Inn return is required." :
+                "Read it in Evidence. The road west to Sunscar is open. Dain can introduce you to Zara; no Inn return is required.";
+        }
         entry->area = definition->area;
         entry->objective_count = definition->stages[3] ? 4 : definition->stages[2] ? 3 : definition->stages[1] ? 2 : 1;
         entry->reward_gold = definition->reward_gold;

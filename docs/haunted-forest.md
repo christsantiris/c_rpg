@@ -1,19 +1,26 @@
 # Haunted Forest
 
 The Haunted Forest is a **five-level adventure** beside a straight, one-tile
-cobblestone road between **Oakhaven (east)** and **Stillbury (west)**. The road
-cuts through dense haunted woods, with a narrow grass verge and a clearing at
+cobblestone road between **Oakhaven (west)** and **Dawnmere (east)**. The road
+cuts through dense green woodland, with a narrow grass verge and a clearing at
 its town end. A large haunted-tree entrance stands in a clearing north of that road. Leaving either town first
 enters the safe approach; entering the forest always starts at **Forest 1**.
-Its interior never plays backward from Stillbury. Ordinary backtracking within
+Its interior starts at stage one from either town. Ordinary backtracking within
 an expedition remains available.
+
+Walking north through the approach doorway arrives on Forest 1's south edge,
+still facing north. Every later entrance is opposite the previous stage's exit:
+east to west, north to south, and south to north. Retreat and cached-stage
+revisits preserve the crossing direction and continue along the arrival trail.
+Existing saved stages receive an entrance-trail repair without regenerating
+their clearings, enemies, exploration or quest state.
 
 The forest is drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 ×
 18 tiles around the player. The Necromancer acts within twelve tiles; the camera leans toward him to keep him on screen as his warned spirit bolts and root lanes begin.
 
 The Necromancer occupies **Forest 5**. Defeat him, collect his reward, and use
-the normal grove exit to emerge onto the road. Walk **west to Stillbury** or
-**east to Oakhaven**. Victory permanently opens the through road. There is no
+the normal grove exit to emerge onto the road. Walk **west to Oakhaven** or
+**east to Dawnmere**. Victory permanently opens the through road. There is no
 forest shortcut marker, boss branch, or shortcut confirmation menu.
 
 Forest maps use rounded clearings connected by wandering trails with loops
@@ -31,8 +38,10 @@ either direction. Defeating every regular enemy is never required.
 | 5 | Necromancer's Grove | Trails narrowing into the final boss grove | 8 |
 
 Difficulty controls the regular enemy roster, enemy count, and trap count.
-Clearing dimensions vary when a stage is first generated. Completing other
-regions can strengthen enemy rosters through the existing region-order scaling.
+Clearing dimensions vary when a stage is first generated. The forest uses the
+post-dungeon [outward difficulty band](difficulty-scaling.md#act-2-outward-band): its
+enemies are tougher than the dungeon's from stage 1 and do not change with the
+order in which bosses are defeated.
 Travel score is awarded on first visits to stages from either direction.
 
 ## Enemy Roles
@@ -43,10 +52,21 @@ Travel score is awarded on first visits to stages from either direction.
 - **Dark Elf Archer:** archer that fires along an unobstructed row or column.
 - **Dark Elf Ranger:** bow skirmisher that fires every third turn and repositions after shooting.
 - **Forest Troll:** high-health bruiser that moves every other turn.
+- **Dark Elf Guard:** armored melee protector for nearby archers, with the same
+  base 36 HP, 11 attack, 7 defense and 44 experience as a Hobgoblin Guard.
+  Guards join the encounters from stage 2 and remain in the deeper forest
+  roster.
+
+Nearby Dark Elves coordinate in groups. A Guard presses the front while
+Archers and Rangers seek separate firing lanes around the player, routing
+around trees and allies. Bow units keep their distance and existing shot
+cadences; Rangers retain their movement after shooting. If a flank cannot be
+reached, ordinary pursuit and ranged behavior take over. Lone elves keep
+their existing behavior. Trees and chokepoints can deny a crossfire.
 
 ## Central Encounter and Shortcuts
 
-The Necromancer waits in the stage-4 grove and remains dormant until the
+The Necromancer waits in the stage-5 grove and remains dormant until the
 player enters it or damages him from range. He stays in the grove and blocks
 crossing while alive, but permits retreat toward the expedition's entry town.
 His health, attack, defense and experience reward retain their existing scaling.
@@ -93,25 +113,43 @@ a replacement. The reward does not depend on consecrating the graves.
 Defeating him reveals the normal grove exit, even with ordinary enemies still
 alive. Use it when ready to leave: the return point is on the safe town road.
 The entrance sprite and road occupy the same coordinates from either town;
-travel direction stays west toward Stillbury and east toward Oakhaven.
+V2 travel runs west toward Oakhaven and east toward Dawnmere.
 
 Return to Town is a one-way escape to the last town actually visited. It leaves
 no return portal. Physical re-entry uses the normal forest entrance.
 
-## Forest Quest
+## Forest Quest Chain
 
-Speak to Alder with `T` in **Stillbury's Inn** to accept **The Lost Wardens**.
-Return to him there for 70 gold and 500 score once all three wardens are rescued.
-The quest places captives in guarded groves on **Forest 2, 3 and 4**. Both
-entrances encounter all three before the level-5 Necromancer. Their hunting
-parties are led by a Giant Spider, Dark Elf Archer and Forest Troll. Defeat or evade
-the guards, then stand beside a warden and press `T` to rescue them. A full
-level clear is never required. Accepting the quest starts a fresh forest
-expedition while preserving a previously defeated Necromancer and open road.
-Retreat through Forest 1, use Return to Town, or defeat the Necromancer and
-walk west along the road to return to Alder.
+Alder appears in **Oakhaven's Inn after the Lich King's defeat**. He offers
+**The Lost Rangers**: free one ranger on **Forest 1** and one on **Forest 2**.
+Each is held by three Giant Spiders named **Spider Captor**. Defeat those
+captors and press `T` beside the ranger; clearing ordinary enemies is optional.
+Rescued rangers do not respawn. Return to Alder for **70 gold and 500 score**
+once, without needing to venture beyond the second stage.
+
+He next offers **Defeat the Necromancer**, explaining that victory opens the
+road east to Dawnmere to investigate why evil creatures descended on the
+kingdom. Accept or decline it at the Inn; accepted hunts count toward the
+three active quests and preserve the rescues and expedition. The boss remains
+on **Forest 5** and is reachable without either quest or any NPC dialogue.
+Victory completes the follow-up immediately, with no extra Inn turn-in. Earlier
+boss victories count when the rangers are turned in. Existing boss loot remains
+available; the follow-up adds no extra NPC payment.
+
+The boss's defeat also reveals a **Royal Writ of Protection** bearing the
+King's seal: patrols were ordered to leave the Necromancer's work undisturbed.
+It appears even without Alder's quests and remains readable in **Q → Evidence**.
+An optional return to Alder connects this protection to his abandoned rangers;
+if the goblin payment records were also found, he recognizes the corroboration.
+No extra turn-in, quest slot or inventory item is required. See
+[the story payoff](act2-story-payoff-plan.md).
+
+The V2 chain's two ranger bits and later boss-hunt states use the existing
+serialized quest fields. Save version 230 records the expanded state values.
 
 ## Save Compatibility
+
+The V2 geography uses fresh saves; the notes below describe earlier V1 migrations.
 
 Save version **172** moves the old level-4 boss to level 5, old level 5 to level
 4, and merges the former outer trails into levels 2 and 3. Occupied and
@@ -133,17 +171,15 @@ restarts with a visible warning. Previous victories stay defeated; only a known,
 currently dropped legacy cloak is treated as unclaimed. New saves store cloak
 claim state and both finite-wave flags, including when the player is elsewhere.
 
-Renderer captures and focused play-testing notes are in
-[the Necromancer encounter gallery](art-sources/necromancer-encounter/README.md).
 
 
 ## Labyrinth on the entrance road
 
-Rook's Labyrinth now stands beside the forest sprite, outside Stillbury on the
-shared road to Oakhaven. Its gate is visible but sealed until Rook assigns
-The Ivory Rook in Oakhaven's Tavern. Both town approaches reach it before forest
+Rook's Labyrinth stands beside the forest sprite on the shared road between
+Oakhaven and Dawnmere. Its gate is visible but sealed until Rook assigns
+The Ivory Rook in Oakhaven's Inn. Both town approaches reach it before forest
 victory. Leaving the labyrinth returns to that approach, preserving the town
 used; the Necromancer still controls the through road between towns.
 
-The woodland has cool, muted foliage, crooked bare trunks and dark clearings.
-Its tangled canopy gives way to the larger, healthier trees of adjacent Elderwood.
+The woodland has dense green crowns, brown trunks, moss and shaded clearings,
+restoring the earlier forest appearance. Elderwood keeps its distinct living-forest palette.

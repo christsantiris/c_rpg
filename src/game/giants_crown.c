@@ -1,3 +1,4 @@
+#include "western_arc.h"
 #include "boss_gates.h"
 #include "containers.h"
 #include "giants_crown.h"
@@ -249,10 +250,11 @@ static void load_stage(GameState *g, int refresh) {
     game_update_level_progress(g);
 }
 
-void giants_enter(GameState *g, int portal) {
+static void enter_giants(GameState *g, int portal, int north) {
     g->location = LOCATION_GIANTS_CROWN;
     g->approach_route = -1;
     if (!portal) {
+        g->giants_entry_from_north = north;
         for (int n = 0; n < GIANTS_DEPTH; n++) {
             if (g->giants_crown[n].valid) {
                 g->level = n + 1;
@@ -260,12 +262,12 @@ void giants_enter(GameState *g, int portal) {
             }
         }
     }
-    g->level = portal ? g->portal_level : 1;
+    g->level = portal ? g->portal_level : north ? GIANTS_DEPTH : 1;
     load_stage(g, 0);
     g->player.x = portal ? g->portal_x : 32;
-    g->player.y = portal ? g->portal_y : GIANTS_H - 2;
+    g->player.y = portal ? g->portal_y : north ? 1 : GIANTS_H - 2;
     g->player.last_dx = 0;
-    g->player.last_dy = -1;
+    g->player.last_dy = north ? 1 : -1;
     g->dialogue_active = 0;
     if (g->portal_location == LOCATION_GIANTS_CROWN) {
         g->portal_active = 0;
@@ -275,12 +277,24 @@ void giants_enter(GameState *g, int portal) {
     push_message(g, "Leave the amber warnings before a strike. A clears cracked walls or searches stone coffers.");
 }
 
-void giants_leave(GameState *g) {
+void giants_enter(GameState *g, int portal) {
+    enter_giants(g, portal, portal ? g->giants_entry_from_north : 0);
+}
+
+void giants_enter_from(GameState *g, int north) {
+    enter_giants(g, 0, north);
+}
+
+static void leave_giants(GameState *g, int north) {
     giants_store(g);
-    approach_enter_region(g, GIANTS_APPROACH_ROUTE);
+    approach_enter_region(g, north ? APPROACH_PEAKS_NORTH_ROAD : GIANTS_APPROACH_ROUTE);
     g->player.x = g->map.stairs_down_x;
-    g->player.y = g->map.stairs_down_y + 1;
+    g->player.y = g->map.stairs_down_y + (north ? -1 : 1);
     map_mark_explored(&g->map, g->player.x, g->player.y);
+}
+
+void giants_leave(GameState *g) {
+    leave_giants(g, g->giants_entry_from_north);
 }
 
 void giants_change_level(GameState *g, int forward) {
@@ -288,10 +302,10 @@ void giants_change_level(GameState *g, int forward) {
         return;
     }
     if ((!forward && g->level == 1) || (forward && g->level == GIANTS_DEPTH)) {
-        if (forward && !boss_gate_crossing(g, LOCATION_GIANTS_CROWN)) {
+        if (forward != g->giants_entry_from_north && !boss_gate_crossing(g, LOCATION_GIANTS_CROWN)) {
             return;
         }
-        giants_leave(g);
+        leave_giants(g, forward);
         return;
     }
     giants_store(g);
@@ -443,9 +457,10 @@ void giants_defeat(GameState *g) {
         g->giants_crown_defeated = 1;
         g->gold += 200;
         g->score += 2200;
-        push_message(g, "The Last Jarl falls. You recover 200 gold.");
+        push_message(g, "The Last Jarl falls. You recover 200 gold. The pass between Sunscar and Stillbury is open.");
     }
     crown_quest_sync(g);
+    western_update(g);
 }
 
 static int valid_stage(const GiantsStage *state) {
@@ -479,7 +494,7 @@ static int valid_stage(const GiantsStage *state) {
 }
 
 int giants_valid(const GameState *g) {
-    if (g->giants_crown_defeated < 0 || g->giants_crown_defeated > 1) {
+    if (g->giants_crown_defeated < 0 || g->giants_crown_defeated > 1 || g->giants_entry_from_north < 0 || g->giants_entry_from_north > 1) {
         return 0;
     }
     for (int n = 0; n < GIANTS_DEPTH; n++) {

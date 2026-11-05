@@ -10,23 +10,24 @@ checkpoint.
 
 | Road | Scenery |
 | --- | --- |
-| Oakhaven ↔ Stillbury (Haunted Forest) | Haunted trees and grass verges |
-| Oakhaven ↔ Castle Grounds (northern road) | Elderwood trees, matching Crown Road North; opens at both ends |
-| Stillbury ↔ Rosemoor (Blackwater Swamp) | Bog and dead trees; mud verges |
-| Dawnmere ↔ Ridgeshire (Goblin Mountains) | Rock walls and a grassy pass |
+| Oakhaven ↔ Dawnmere (Haunted Forest) | Haunted trees and grass verges |
+| Oakhaven ↔ Goblin Mountains ↔ Sunscar | Rock walls and a grassy pass |
+| Blackwater Swamp on the north bank (roads deferred) | Bog and dead trees; mud verges remain in legacy approaches |
 | Ridgeshire to Dragonspine and Ironfang Mines | Rock walls and a grassy pass |
 | Rosemoor to Frostfell Wastes | Green woods up to a ragged tree line, then snowy ice fields with pines; snow settles along the path first |
-| Stillbury to Sunscar Wastes | Green woods, then sandstone outcrops, then sand and mesas with cacti |
+| Goblin Mountains pass to Sunscar Wastes | Rock walls and grass, then sandstone outcrops, then sand and mesas with cacti |
 | Castle Grounds to Ashen Hollow | Green woods, ash on the verge, charred dead trees, then basalt split by lava pools |
-| Oakhaven ↔ Dawnmere (Dungeon) | Light woodland: clumps of Elderwood trees in open grass |
-| Stillbury to Stonewake Quarry | Open grass gathering stone flecks and a few boulders near the quarry |
+| Oakhaven to its local Dungeon | Light woodland: clumps of Elderwood trees in open grass |
+| Stonewake Quarry on the north bank (road deferred) | Open grass gathering stone flecks and a few boulders near the quarry |
 | Dawnmere to Stormwatch Headland | Grass turning to gravel strewn with boulders near the headland |
-| Rosemoor to Giant's Peaks | Open grass gathering stone flecks and a few boulders near the peaks, like Stonewake |
+| Sunscar junction to Giant's Peaks | Sand giving way to grass, then stone flecks and a few boulders near the peaks, like Stonewake |
+| Giant's Peaks northern exit ↔ Giant's Bridge ↔ Stillbury | Stone trail, giant masonry bridge over the river, and a road along the opposite bank |
 
 The Frostfell, Sunscar, Ashen, Stonewake, Giant's Peaks and Stormwatch roads change gradually
 from the town toward the landmark; the landmark's terrain continues beyond it.
 Patches of the next terrain mix into the previous one, except that Frostfell's
-woods end in a single tree line at the frozen ground. Snow, sand, ash or
+woods end in a single tree line at the frozen ground and the Sunscar road's
+mountain rock ends in a single ragged edge at the sandstone. Snow, sand, ash or
 stone first appears as flecks on the grass. Except near Stonewake and Giant's
 Peaks, the ground then turns over completely. That ground is drawn over ordinary road-side grass, so no regional
 floor hazards apply on the road, and boulders are scenery rather than Dragonspine's

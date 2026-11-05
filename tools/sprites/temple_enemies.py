@@ -7,7 +7,7 @@ from PIL import Image
 from pixelkit import save_sprite
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / 'docs/art-sources/enemy-batch-15/source.png'
+SOURCE = ROOT / 'tools/sprites/sources/temple-enemies.png'
 DEST = ROOT / 'assets/images/temple-enemies.bmp'
 CELL = 48
 # Source rectangles isolate all ten identities and the broken Guardian pose.

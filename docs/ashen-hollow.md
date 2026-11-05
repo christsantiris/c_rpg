@@ -141,7 +141,7 @@ health, deaths, exploration, quest progress, loot and portal destinations.
 Previously defeated Lords stay defeated and retain their original potion drops;
 migration never grants repeat rewards. Return portals ward threatening landing
 signatures and clear lingering heat on the landing cell without advancing other
-arena clocks. See the [native renderer gallery and play-test guide](art-sources/cinder-lord-encounter/README.md).
+arena clocks.
 
 ## Reclaim the Emberforge
 

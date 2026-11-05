@@ -4,9 +4,34 @@ The castle dungeon is a short undead region linking Oakhaven and Dawnmere. The H
 Goblin Mountains, and Sunken Coast maintain their own progression rather than
 extending dungeon depth.
 
+## Act 2 Outward Band
+
+Haunted Forest and Goblin Mountains share one fixed difficulty band and ignore
+region order: defeating the Lich King or the other outward boss never changes
+their enemies. Regular enemies gain 10% HP, 4 attack and 1 defense and use the
+roster two steps deeper than their stage difficulty, so the first stage
+already mixes Giant Spiders and Dark Elf Archers, or Goblin Warchiefs, with the
+lighter creatures. Their bosses keep base stats: the Necromancer has 165 HP,
+18 attack and 6 defense, and the Goblin King 180 HP, 20 attack and 8 defense.
+The small player-level adjustment below still applies. Enemy count and traps
+still follow each stage's own difficulty.
+
+These are parallel post-dungeon adventures. Their first two stages support a
+short quest expedition and return to Oakhaven; deeper stages lead to optional
+boss hunts. Earlier exploration remains possible. Enemy formations, flanking,
+equipment, supplies and retreat matter alongside character level.
+
+The [combat and balance review](act2-combat/README.md) retains this numerical
+band and adds tactical behavior. Controlled encounters support prepared solo
+builds for all three classes. Earlier autoplay completion percentages are not
+reliable full-expedition evidence: that simulator supplied extra starting
+items, bypassed terrain interactions and did not test normal prepared Rogue
+equipment. Human playtesting of the complete quest loops remains necessary.
+
 ## Region Order Scaling
 
-New enemies scale from the number of **other** regional bosses defeated. This
+Other regions scale new enemies from the number of **other** regional bosses
+defeated, including Haunted Forest and Goblin Mountains victories. This
 order tier ranges from 0 for the first region to 3 for the fourth. Each region
 keeps its own progression and encounter count; the tier changes
 enemy strength when a floor is generated, not on every player level-up.
@@ -49,7 +74,7 @@ The Lich King begins inside a sealed, single-entrance chamber behind a locked
 door. No regular enemy can spawn in that room, and the Lich remains completely
 dormant until the player unlocks the door and enters the chamber. A golden key
 is always visible at the center of the penultimate room. Stand on the key and
-press `P` to collect it; walking into the locked door then consumes the key and
+press `P` to collect it; pressing Interact (`A` by default) beside the locked door consumes the key and
 opens the boss room. The player does not need to clear every regular enemy.
 
 Cain gives each character one Scroll: Return to Town after the player speaks
@@ -118,7 +143,8 @@ is `attack - defense`, with a minimum of 1.
 The Lich King is spawned before regular enemies, reserving its place under the
 enemy cap. Once engaged, it holds position in the chamber and launches a
 necrotic bolt every other turn, with a visible warning on its recovery turn.
-It guarantees the Warrior-only Cryptblade. Rewards for other regional bosses
+It guarantees the all-class Crypt Ring (+5 maximum HP and +5 maximum MP).
+Rewards for other regional bosses
 are listed in [Weapons, Armor, and Shields](weapons.md).
 
 ## Traps and Maps

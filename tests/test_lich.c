@@ -232,13 +232,23 @@ static void test_rewards(void) {
     int victories = 1;
     for (int method = 0; method < 5; method++) {
         kill_with(method);
-        int blades = 0;
+        int rings = 0;
         for (int i = 0; i < game.floor_item_count; i++) {
-            blades += game.floor_items[i].active && strcmp(game.floor_items[i].item.name, "Cryptblade") == 0;
+            rings += game.floor_items[i].active && strcmp(game.floor_items[i].item.name, "Crypt Ring") == 0;
         }
-        victories &= !game.enemies[0].active && blades == 1 && game.lich_reward_state == 1 && (game.defeated_bosses & (1 << LOCATION_DUNGEON));
+        victories &= !game.enemies[0].active && rings == 1 && game.lich_reward_state == 1 && (game.defeated_bosses & (1 << LOCATION_DUNGEON));
     }
-    ASSERT("melee, bow, Magic Arrow, Fireball and Frost Bolt each guarantee one Cryptblade", victories);
+    ASSERT("melee, bow, Magic Arrow, Fireball and Frost Bolt each guarantee one Crypt Ring", victories);
+    int saved = save_game(&game, 99176) && load_game(&loaded, 99176);
+    int saved_rings = 0;
+    for (int i = 0; i < loaded.floor_item_count; i++) {
+        const Item *item = &loaded.floor_items[i].item;
+        saved_rings += loaded.floor_items[i].active && strcmp(item->name, "Crypt Ring") == 0 &&
+            item->accessory_family == ACCESSORY_FAMILY_RING && item->max_hp_bonus == 5 && item->max_mp_bonus == 5;
+    }
+    ASSERT("the unclaimed floor ring and its exact bonuses survive save/load without a duplicate reliquary", saved &&
+        saved_rings == 1 && loaded.lich_reward_state == 1);
+    remove("saves/savegame_99176.json");
     Enemy *e = setup();
     game.player.x = e->x - 1;
     game.player.y = e->y;
@@ -265,7 +275,10 @@ static void test_rewards(void) {
     game.inventory_count--;
     int reward_score = game.score;
     action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
-    ASSERT("reliquary pickup grants original Cryptblade and marks it claimed", game.lich_reward_state == 2 && strcmp(game.inventory[MAX_INVENTORY - 1].name, "Cryptblade") == 0 && game.inventory[MAX_INVENTORY - 1].attack_bonus == 2 && game.score == reward_score + game.inventory[MAX_INVENTORY - 1].value);
+    ASSERT("reliquary pickup grants the Crypt Ring and marks it claimed", game.lich_reward_state == 2 &&
+        strcmp(game.inventory[MAX_INVENTORY - 1].name, "Crypt Ring") == 0 &&
+        game.inventory[MAX_INVENTORY - 1].max_hp_bonus == 5 && game.inventory[MAX_INVENTORY - 1].max_mp_bonus == 5 &&
+        game.score == reward_score + game.inventory[MAX_INVENTORY - 1].value);
     lich_restore_reward(&game);
     ASSERT("claiming cannot recreate a second reward", !find_tile(TILE_LICH_RELIQUARY, &x, &y));
     kill_with(0);
@@ -282,6 +295,48 @@ static void test_rewards(void) {
     int xp = game.player.experience;
     action_resolve_player(&game, (Action){ACTION_MOVE, 23, 15});
     ASSERT("summoned skeleton grants neither loot nor experience", !game.enemies[1].active && game.floor_item_count == 0 && game.player.experience == xp);
+}
+
+static void test_crypt_ring_equipment(void) {
+    for (int player_class = CLASS_WARRIOR; player_class <= CLASS_ROGUE; player_class++) {
+        for (EquipmentSlot slot = EQUIPMENT_ACCESSORY_1; slot <= EQUIPMENT_ACCESSORY_2; slot++) {
+            memset(&game, 0, sizeof(game));
+            game.player.player_class = player_class;
+            game_init(&game);
+            int hp = game.player.max_hp;
+            int mp = game.player.max_mp;
+            int attack = game.player.attack;
+            int defense = game.player.defense;
+            game.player.hp -= 2;
+            game.player.mp -= 2;
+            game.defeated_bosses = 1 << LOCATION_DUNGEON;
+            game.lich_reward_state = 2;
+            game.inventory[0] = item_make_crypt_ring();
+            game.inventory_count = 1;
+            ASSERT("every class can equip the Crypt Ring in either accessory slot", game_equip_item(&game, 0, slot) &&
+                game.inventory_count == 0 && game.player.max_hp == hp + 5 && game.player.max_mp == mp + 5 &&
+                game.player.hp == hp - 2 && game.player.mp == mp - 2 &&
+                game.player.attack == attack && game.player.defense == defense);
+            game.inventory[0] = item_make_ring_of_vigor();
+            game.inventory_count = 1;
+            EquipmentSlot other = slot == EQUIPMENT_ACCESSORY_1 ? EQUIPMENT_ACCESSORY_2 : EQUIPMENT_ACCESSORY_1;
+            ASSERT("a second ring can be worn alongside the Crypt Ring", game_equip_item(&game, 0, other) &&
+                game.player.max_hp == hp + 15 && game.player.max_mp == mp + 5 && game_equipment_valid(&game));
+            int saved = save_game(&game, 99176) && load_game(&loaded, 99176);
+            const Item *ring = game_equipped_item(&loaded, slot);
+            ASSERT("equipped ring identity, bonuses, wounds and claimed reward survive save/load", saved && ring &&
+                strcmp(ring->name, "Crypt Ring") == 0 && ring->accessory_family == ACCESSORY_FAMILY_RING &&
+                ring->class_mask == ITEM_CLASS_ALL && ring->max_hp_bonus == 5 && ring->max_mp_bonus == 5 &&
+                loaded.player.max_hp == hp + 15 && loaded.player.max_mp == mp + 5 &&
+                loaded.player.hp == hp - 2 && loaded.player.mp == mp - 2 && loaded.lich_reward_state == 2);
+            game = loaded;
+            ASSERT("removing a saved Crypt Ring removes only its five HP and MP", game_unequip_item(&game, slot) &&
+                game.player.max_hp == hp + 10 && game.player.max_mp == mp &&
+                game.player.hp == hp - 2 && game.player.mp == mp - 2 &&
+                game.inventory_count == 1 && strcmp(game.inventory[0].name, "Crypt Ring") == 0);
+        }
+    }
+    remove("saves/savegame_99176.json");
 }
 
 static void test_persistence(void) {
@@ -346,7 +401,7 @@ static void test_travel_and_capacity(void) {
     for (int i = 0; i < game.enemy_count; i++) {
         living |= game.enemies[i].active && game.enemies[i].type == ENEMY_LICH_KING;
     }
-    ASSERT("fresh expedition restores unclaimed Cryptblade without respawning the Lich", !living && game.lich_reward_state == 1);
+    ASSERT("fresh expedition restores unclaimed Crypt Ring without respawning the Lich", !living && game.lich_reward_state == 1);
     // The new generated arena has different coordinates; scan the whole map.
     int cache = 0;
     for (int y = 0; y < MAP_H; y++) {
@@ -500,6 +555,7 @@ void test_lich(void) {
     test_patterns();
     test_seals();
     test_rewards();
+    test_crypt_ring_equipment();
     test_persistence();
     test_travel_and_capacity();
     test_migration_and_layouts();

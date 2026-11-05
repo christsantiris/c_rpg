@@ -1,3 +1,4 @@
+#include "game/western_arc.h"
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +13,11 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 });
 #endif
 #include "renderer/renderer.h"
+#include "game/elowen.h"
+#include "game/aldric.h"
+#include "game/royal_evidence.h"
+#include "game/eastern_arc.h"
+#include "renderer/royal_evidence_renderer.h"
 #include "renderer/viewport.h"
 #include "renderer/landing_renderer.h"
 #include "renderer/game_over_renderer.h"
@@ -24,7 +30,9 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/jail.h"
 #include "game/heartseed.h"
 #include "game/town_life.h"
+#include "game/town_road.h"
 #include "game/restoration.h"
+#include "game/resurrection.h"
 #include "game/approach.h"
 #include "game/map.h"
 #include "screens/landing.h"
@@ -120,9 +128,22 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
         g->map.tiles[action.target_y][action.target_x] != TILE_TOWN_EXIT) {
         return 0;
     }
+    if (g->location == LOCATION_TOWN) {
+        TownApproach route;
+        if (!town_road_connection(g->location, town_road_side(action.target_x, action.target_y), &route)) {
+            return 0;
+        }
+        // Follow Oakhaven's playable connections rather than the former compass layout.
+        switch (route.area) {
+            case LOCATION_TOWN: *style = TOWN_EXIT_RAPIDS; return 1;
+            case LOCATION_FOREST: *style = TOWN_EXIT_FOREST; return 1;
+            case LOCATION_MOUNTAINS: *style = TOWN_EXIT_MOUNTAINS; return 1;
+            case LOCATION_DUNGEON: *style = TOWN_EXIT_DUNGEON; return 1;
+            default: return 0;
+        }
+    }
     if (g->location == LOCATION_DAWNMERE) {
-        *style = action.target_y == 0 ? TOWN_EXIT_MOUNTAINS :
-            action.target_x == TOWN_W - 1 || action.target_y == TOWN_H - 1 ? TOWN_EXIT_ROAD : TOWN_EXIT_DUNGEON;
+        *style = action.target_y == 0 ? TOWN_EXIT_ROAD : TOWN_EXIT_FOREST;
         return 1;
     }
     if (g->location == LOCATION_TOWN3 || g->location == LOCATION_CASTLE) {
@@ -170,7 +191,7 @@ static int town_entry_style(const GameState *g, Action action, TownExitStyle *st
     }
     if (action.target_y == TOWN_H - 1) {
         if (g->location == LOCATION_TOWN2) {
-            *style = TOWN_EXIT_GLASSDEEP;
+            *style = TOWN_EXIT_ROAD;
             return 1;
         }
         *style = g->location == LOCATION_TOWN4 ?
@@ -751,6 +772,26 @@ int main(int argc, char **argv) {
                         break;
                     }
                     int sc = event.key.keysym.scancode;
+                    if (screen == SCREEN_PLAYING && (western_handle_key(&game, sc, event.key.repeat) || eastern_handle_key(&game, sc, event.key.repeat) || royal_evidence_handle_key(&game, sc, event.key.repeat))) {
+                        break;
+                    }
+                    if (screen == SCREEN_PLAYING && game_handle_cain_dialogue_key(&game, sc, event.key.repeat)) {
+                        break;
+                    }
+                    if (screen == SCREEN_PLAYING) {
+                        int was_dead = game.aldric_party_state == ALDRIC_DEAD;
+                        int ritual = resurrection_handle_key(&game, sc, event.key.repeat);
+                        if (ritual) {
+                            if (was_dead && game.aldric_party_state == ALDRIC_FOLLOWING) {
+                                sfx_play_heal();
+                            }
+                            if (ritual == 2) {
+                                action_resolve_enemies_with_projectiles(&game, &enemy_shots);
+                                enemy_shots_started_at = SDL_GetTicks();
+                            }
+                            break;
+                        }
+                    }
                     if (screen == SCREEN_PLAYING) {
                         int hp_before = game.player.hp;
                         int mp_before = game.player.mp;
@@ -768,6 +809,9 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (screen == SCREEN_PLAYING && game_handle_quest_offer_key(&game, sc, event.key.repeat)) {
+                        break;
+                    }
+                    if (screen == SCREEN_PLAYING && aldric_handle_key(&game, sc, event.key.repeat)) {
                         break;
                     }
                     if (screen == SCREEN_PLAYING && game_handle_glassdeep_prompt_key(&game, sc, event.key.repeat)) {
@@ -1073,16 +1117,18 @@ int main(int argc, char **argv) {
                                 screen = SCREEN_HELP;
                                 break;
                             case CONTROL_TALK: {
-                                if (town_life_near_goldsmith(&game) || town_life_near_cobbler(&game) || town_life_near_belt_maker(&game)) {
+                                if (town_life_near_shopkeeper(&game)) {
                                     game.dialogue_active = 0;
-                                    shop_init(&shop_screen, game.location == LOCATION_COBBLER ? SHOP_TYPE_COBBLER : game.location == LOCATION_BELT_MAKER ? SHOP_TYPE_BELT_MAKER : SHOP_TYPE_GOLDSMITH, game.defeated_bosses, game.player.player_class);
+                                    ShopType type = game.location == LOCATION_COBBLER ? SHOP_TYPE_COBBLER : game.location == LOCATION_BELT_MAKER ? SHOP_TYPE_BELT_MAKER :
+                                        game.location == LOCATION_BLACKSMITH ? SHOP_TYPE_BLACKSMITH : game.location == LOCATION_ALCHEMIST ? SHOP_TYPE_ALCHEMIST : SHOP_TYPE_GOLDSMITH;
+                                    shop_init(&shop_screen, type, game.defeated_bosses, game.player.player_class);
                                     screen = SCREEN_SHOP;
                                     break;
                                 }
-                                if (restoration_talk(&game) || town_life_talk(&game, 0)) {
+                                if (eastern_talk(&game) || resurrection_talk(&game) || restoration_talk(&game) || town_life_talk(&game, 0)) {
                                     break;
                                 }
-                                if (crown_quest_talk(&game) || stormbell_talk(&game) || heartseed_talk(&game) || jail_talk_nearby(&game)) {
+                                if (western_talk(&game) || crown_quest_talk(&game) || stormbell_talk(&game) || heartseed_talk(&game) || jail_talk_nearby(&game)) {
                                     break;
                                 }
                                 if (game_workshop_near_smith(&game)) {
@@ -1127,10 +1173,6 @@ int main(int argc, char **argv) {
                                             game_talk_to_rook(&game);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
-                                            TILE_NPC_INNKEEPER) {
-                                            game_talk_to_innkeeper(&game);
-                                            found = 1;
-                                        } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_CAIN) {
                                             game_talk_to_cain(&game);
                                             found = 1;
@@ -1138,7 +1180,7 @@ int main(int argc, char **argv) {
                                             game_talk_to_bram(&game);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] == TILE_NPC_ALDRIC) {
-                                            game_talk_to_aldric(&game);
+                                            aldric_talk(&game, tx, ty);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ROWAN) {
@@ -1193,13 +1235,18 @@ int main(int argc, char **argv) {
                                             game_rescue_forest_warden(&game,
                                                 tx, ty);
                                             found = 1;
-                                        } else if (game.map.tiles[ty][tx] ==
-                                            TILE_SWAMP_DAUGHTER) {
-                                            game_rescue_innkeeper_daughter(&game,
-                                                tx, ty);
-                                            found = 1;
                                         }
                                     }
+                                }
+                                if (!found && game.elowen_quest_state == ELOWEN_RESCUED &&
+                                    abs(game.elowen_x - px) <= 1 && abs(game.elowen_y - py) <= 1) {
+                                    game_talk_to_elowen(&game);
+                                    found = 1;
+                                }
+                                if (!found && game.aldric_party_state == ALDRIC_FOLLOWING &&
+                                    abs(game.aldric_x - px) <= 1 && abs(game.aldric_y - py) <= 1) {
+                                    aldric_talk(&game, game.aldric_x, game.aldric_y);
+                                    found = 1;
                                 }
                                 if (!found) {
                                     push_message(&game,
@@ -1253,6 +1300,9 @@ int main(int argc, char **argv) {
                                 game.trail_count = 0;
                                 game.trail_frames = 0;
                             }
+                            int shrine_cast = a.type == ACTION_CAST_SPELL && game.player.frozen_turns == 0 && game.player.equipped_spell >= 0 &&
+                                game.player.equipped_spell < game.player.known_spell_count &&
+                                game.player.known_spells[game.player.equipped_spell].id == SPELL_RESURRECTION;
                             action_resolve_player(&game, a);
                             if (a.type == ACTION_MOVE &&
                                 !was_at_harbor_entrance &&
@@ -1286,7 +1336,7 @@ int main(int argc, char **argv) {
                             } else if (slide_started) {
                                 // Creatures act once the glide has played out.
                                 player_slide_animating = 1;
-                            } else {
+                            } else if (!shrine_cast) {
                                 action_resolve_enemies_with_projectiles(&game, &enemy_shots);
                                 enemy_shots_started_at = SDL_GetTicks();
                             }
@@ -1311,7 +1361,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || restoration_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (western_convoy_prompt(&game) || game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
                         break;
                     }
 
@@ -1570,8 +1620,9 @@ int main(int argc, char **argv) {
         }
         int wind_paused = screen != SCREEN_PLAYING || player_projectile_animating || player_slide_animating ||
             entry_gate.active || enemy_shots.count > 0 || !(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) ||
+            game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) ||
             game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) ||
-            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || restoration_prompt_active(&game);
+            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game);
         if (update_stormwatch_clock(&game, &wind_clock, SDL_GetTicks(), wind_paused)) {
             viewport_center_on(&viewport, game.player.x, game.player.y);
             needs_redraw = 1;
@@ -1595,7 +1646,7 @@ int main(int argc, char **argv) {
 
         // Update music based on screen and location
         game_refresh_debug_passages(&game);
-        int traveling = game.location == LOCATION_MANGROVE_PATH || game.location == LOCATION_TOWN_ROAD || game.location == LOCATION_APPROACH ||
+        int traveling = game.location == LOCATION_RIVER_CROSSING || game.location == LOCATION_MANGROVE_PATH || game.location == LOCATION_TOWN_ROAD || game.location == LOCATION_APPROACH ||
             game.location == LOCATION_FOREST_ROAD || game.location == LOCATION_HIGH_PASS ||
             game.location == LOCATION_SWAMP_ROAD || game.location == LOCATION_CROWNROAD ||
             game.location == LOCATION_CROWNROAD_WEST;
@@ -1611,6 +1662,7 @@ int main(int argc, char **argv) {
             game.location == LOCATION_INN || game.location == LOCATION_HEALER || game.location == LOCATION_WITCH ||
             game.location == LOCATION_GUILD ||
             game.location == LOCATION_ISLAND || town_life_is_interior(game.location);
+        is_town = is_town && !eastern_town_combat(&game);
         int in_town2 = game.location == LOCATION_TOWN2 ||
             game.location == LOCATION_INN || game.location == LOCATION_HEALER || game.location == LOCATION_WITCH || game.location == LOCATION_BUTCHER;
         int in_town3 = game.location == LOCATION_TOWN3 ||
@@ -1655,6 +1707,14 @@ int main(int argc, char **argv) {
             game_draw(&renderer, view, &viewport);
             game_draw_enemy_projectiles(&renderer, &game, &enemy_shots, &viewport,
                 SDL_GetTicks() - enemy_shots_started_at);
+            if (!player_projectile_animating && !player_slide_animating && !entry_gate.active && enemy_shots.count == 0) {
+                int id = royal_evidence_pending(&game);
+                int width = renderer.screen_w - 32 < 900 ? renderer.screen_w - 32 : 900;
+                int height = renderer.screen_h - 32 < 480 ? renderer.screen_h - 32 : 480;
+                royal_evidence_draw(&renderer, &game, royal_evidence_document(id),
+                    (SDL_Rect){(renderer.screen_w - width) / 2, (renderer.screen_h - height) / 2, width, height},
+                    "ENTER / SPACE / ESC: KEEP IN JOURNAL");
+            }
         } else if (screen == SCREEN_GAME_OVER) {
             game_over_draw(&renderer, &game);
         } else if (screen == SCREEN_HELP) {

@@ -7,7 +7,7 @@ from PIL import Image
 from pixelkit import save_sprite
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "docs/art-sources/frost-kraken/source.png"
+SOURCE = ROOT / "tools/sprites/sources/frost-kraken.png"
 DEST = ROOT / "assets/images/frost-kraken.bmp"
 SIZE = 96
 

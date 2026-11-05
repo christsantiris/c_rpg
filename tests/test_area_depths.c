@@ -108,9 +108,8 @@ static void test_dungeon_migration(void) {
         ASSERT("the old dungeon's removed cache slots are invalidated",
             !loaded.level_cache[5].valid && !loaded.level_cache[6].valid && !loaded.level_cache[7].valid);
         if (old == 3 || old == 5 || old == 7) {
-            ASSERT("new seal placement preserves loot covering its position",
-                loaded.floor_items[0].underlying_tile ==
-                    (old == 3 ? TILE_BROKEN_BURIAL_SEAL : TILE_RESTORED_BURIAL_SEAL));
+            ASSERT("retiring the seal quest preserves loot without adding new objective tiles",
+                loaded.floor_items[0].underlying_tile == game.floor_items[0].underlying_tile);
         }
         int stage = loaded.level;
         ASSERT("migrated dungeon progress remains stable after resaving",
@@ -240,9 +239,9 @@ void test_area_depths(void) {
     game.temple_treasure_state = 1;
     game.rook_quest_state = 1;
     QuestJournalEntry entry;
-    ASSERT("the dungeon journal lists seals on floors two through four",
+    ASSERT("the rescue journal points to the Lich King on floor five",
         quest_journal_get_entry(&game, QUEST_TAB_ACTIVE, 0, &entry) &&
-        entry.stages[0] == 2 && entry.stages[1] == 3 && entry.stages[2] == 4);
+        entry.stages[0] == DUNGEON_DEPTH && entry.objective_count == 1);
     ASSERT("the temple and labyrinth journal objectives point to level five",
         quest_journal_get_entry(&game, QUEST_TAB_ACTIVE, 1, &entry) && entry.stages[0] == 5 &&
         quest_journal_get_entry(&game, QUEST_TAB_ACTIVE, 2, &entry) && entry.stages[0] == 5);

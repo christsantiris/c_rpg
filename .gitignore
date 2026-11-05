@@ -10,4 +10,7 @@ castle.iconset/
 castle.icns
 __pycache__/
 /.emsdk
+.venv/
+.emsdk/
+
 

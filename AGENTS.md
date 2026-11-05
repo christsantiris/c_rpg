@@ -142,6 +142,10 @@ This is a permanent dungeon and area creation requirement.
 - Every playable stage must have its intended entrance, retreat route and onward
   exit or final objective. Outdoor exits belong at the actual map boundary;
   indoor transitions must follow that area's established stair/door rules.
+- Preserve travel direction across transitions. An outdoor exit must connect to
+  the opposite boundary of the next stage (north exit to south entrance, and so
+  on), with a usable inward path. Crossing a doorway or boundary must retain the
+  direction of the crossing step, including retreat and cached-stage revisits.
 - Validate the actual transition tile and the continuous route to it, not just
   the saved stair/approach coordinates. A reachable coordinate without a working
   transition does not pass validation.
@@ -159,3 +163,25 @@ This is a permanent dungeon and area creation requirement.
   save version. Repair in place, preserving exploration, enemies and wounds,
   loot, equipment, quests and boss victories. Back up local saves before bulk
   migration. Verify an existing affected save in the actual renderer.
+
+## 12. README contains the main world map
+
+`docs/world-map.png` is the permanent final world map asset.
+README's embedded map and click-through link must always use this file.
+Publish each finished map revision by replacing its contents; do not switch
+README to a regional preview, draft or revision-specific image filename.
+Update the image URL's `v` query value to the first 12 characters of the final
+file's SHA-256 checksum after replacement so previews request the new image.
+
+The world map displayed in `README.md` is the game's main world map. Every
+geography change must update that displayed map in the same change set,
+including region and town placement, terrain barriers, entrances, roads and
+travel connections. A separate regional preview or design document does not
+satisfy this requirement.
+
+Inspect the actual image linked and embedded in README against the approved
+geography and playable routes before reporting completion. Remove retired
+connections, preserve unrelated geography, and leave undecided connections
+undrawn.
+When later acts are deferred, mark their geography as provisional rather than
+treating their existing depiction as approved V2 design.

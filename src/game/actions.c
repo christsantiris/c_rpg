@@ -1,9 +1,11 @@
+#include "western_arc.h"
 #include "coast_exits.h"
 #include "giants_crown.h"
 #include "ironfang.h"
 #include "crownroad_north.h"
 #include "stonewake.h"
 #include "actions.h"
+#include "eastern_arc.h"
 #include "restoration.h"
 #include "game.h"
 #include "mangrove.h"
@@ -14,6 +16,8 @@
 #include "heartseed.h"
 #include "castle.h"
 #include "lich.h"
+#include "elowen.h"
+#include "aldric.h"
 #include "necromancer.h"
 #include "goblin_king.h"
 #include "drowned_queen.h"
@@ -34,6 +38,9 @@
 #include "regional_terrain.h"
 #include "landscapes.h"
 #include "wilds.h"
+#include "enemy_tactics.h"
+#include "resurrection.h"
+#include <SDL2/SDL.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -46,10 +53,6 @@
 #endif
 
 static int abs_int(int n) { return n < 0 ? -n : n; }
-
-static int enemy_is_vampire_captor(const Enemy *e) {
-    return e->type == ENEMY_VAMPIRE && strcmp(e->name, "Vampire Captor") == 0;
-}
 
 static Action make_move_or_attack(int tx, int ty) {
     Action a;
@@ -82,6 +85,9 @@ void push_message_kind(GameState *g, const char *msg, MessageKind kind) {
 
 static void mark_item_tile(GameState *g, int x, int y) {
     TileType tile = g->map.tiles[y][x];
+    if (map_is_travel_tile(tile)) {
+        return;
+    }
     if (tile == TILE_CROWN_EXIT || (tile >= TILE_IRON_FLOOR && tile <= TILE_IRON_EXIT) || tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_EXIT || tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN) {
         return;
     }
@@ -136,7 +142,7 @@ static void finish_floor_pickup(GameState *g, FloorItem *picked) {
         red_dragon_restore_reward(g);
     }
     minotaur_record_pickup(g, &picked->item);
-    if (strcmp(picked->item.name, "Cryptblade") == 0 && g->lich_reward_state == 1) {
+    if ((strcmp(picked->item.name, "Crypt Ring") == 0 || strcmp(picked->item.name, "Cryptblade") == 0) && g->lich_reward_state == 1) {
         g->lich_reward_state = 2;
         lich_restore_reward(g);
     }
@@ -190,7 +196,7 @@ Item boss_equipment_reward(EnemyType type) {
         case ENEMY_DESERT_PHARAOH:
             return item_make_sandstorm_staff();
         case ENEMY_LICH_KING:
-            return item_make_cryptblade();
+            return item_make_crypt_ring();
         case ENEMY_FOREST_NECROMANCER:
             return item_make_necromancer_cloak();
         case ENEMY_MOUNTAIN_GOBLIN_KING:
@@ -240,6 +246,7 @@ static int enemy_score(EnemyType type) {
         case ENEMY_ELDERTHORN: return 0; // Awarded once by elderwood_defeat.
         case ENEMY_DARK_ELF_ARCHER: return 48;
         case ENEMY_DARK_ELF_RANGER: return 70;
+        case ENEMY_DARK_ELF_GUARD: return 70;
         case ENEMY_FOREST_TROLL: return 80;
         case ENEMY_FOREST_NECROMANCER: return 1100;
         case ENEMY_GOBLIN_SCOUT: return 18;
@@ -385,6 +392,9 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             g->defeated_bosses |= 1 << g->location;
         }
         game_record_temple_enemy_defeated(g, type);
+        if (type == ENEMY_LICH_KING) {
+            elowen_rescue(g);
+        }
 
         if (type == ENEMY_CINDER_LORD) {
             push_message(g, "The Cinder Lord falls. The path to Rosemoor opens!");
@@ -434,6 +444,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_GIANT_SPIDER: gold = 4 + rand() % 6; break;
         case ENEMY_DARK_ELF_ARCHER: gold = 7 + rand() % 8; break;
         case ENEMY_DARK_ELF_RANGER: gold = 10 + rand() % 10; break;
+        case ENEMY_DARK_ELF_GUARD: gold = 10 + rand() % 10; break;
         case ENEMY_FOREST_TROLL: gold = 12 + rand() % 12; break;
         case ENEMY_FOREST_NECROMANCER: gold = 50; break;
         case ENEMY_GOBLIN_SCOUT: gold = 3 + rand() % 5; break;
@@ -737,7 +748,7 @@ static const Item *equipped_armor(const GameState *g) {
     return &g->inventory[g->equipped_armor];
 }
 
-static int equipped_spell_cost(const GameState *g, const Spell *spell) {
+int action_spell_mp_cost(const GameState *g, const Spell *spell) {
     const Item *armor = equipped_armor(g);
     if (spell->mp_cost == 0) {
         return spell->mp_cost;
@@ -953,7 +964,53 @@ static int mountain_obstacle(TileType tile) {
         tile == TILE_MOUNTAIN_CHASM;
 }
 
+int game_locked_door_target(const GameState *g, int *x, int *y) {
+    if (g->location != LOCATION_DUNGEON) {
+        return 0;
+    }
+    const int dx[] = {g->player.last_dx, 0, 1, 0, -1};
+    const int dy[] = {g->player.last_dy, -1, 0, 1, 0};
+    for (int i = 0; i < 5; i++) {
+        if (abs(dx[i]) + abs(dy[i]) != 1) {
+            continue;
+        }
+        int nx = g->player.x + dx[i];
+        int ny = g->player.y + dy[i];
+        if (nx >= 0 && nx < MAP_W && ny >= 0 && ny < MAP_H &&
+            (g->map.tiles[ny][nx] == TILE_LOCKED_DOOR || g->map.tiles[ny][nx] == TILE_CRYPT_DOOR)) {
+            *x = nx;
+            *y = ny;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int dungeon_door_has_key(const GameState *g, TileType tile) {
+    return tile == TILE_LOCKED_DOOR ? g->dungeon_key_found : g->dungeon_crypt_keys > 0;
+}
+
+static void dungeon_door_hint(GameState *g, TileType tile) {
+    if (!dungeon_door_has_key(g, tile)) {
+        push_message(g, tile == TILE_LOCKED_DOOR ? "The Lich King's door is locked. Find its golden key." : "The crypt is locked. Find its key.");
+        return;
+    }
+    char message[MAX_MESSAGE_LEN];
+    snprintf(message, sizeof(message), "Press %s to unlock the %s.",
+        SDL_GetScancodeName((SDL_Scancode)g->key_bindings[CONTROL_MOVE_LEFT]),
+        tile == TILE_LOCKED_DOOR ? "Lich King's door" : "crypt door");
+    push_message(g, message);
+}
+
 int game_has_regional_interaction(const GameState *g) {
+    if (western_hint(g)) {
+        return 1;
+    }
+    int door_x;
+    int door_y;
+    if (game_locked_door_target(g, &door_x, &door_y)) {
+        return 1;
+    }
     if (boss_gate_hint(g)) {
         return 1;
     }
@@ -1230,7 +1287,7 @@ static void tick_player_poison(GameState *g) {
     }
 }
 
-void action_resolve_player(GameState *g, Action a) {
+static void resolve_player_action(GameState *g, Action a) {
     if (g->location == LOCATION_CROWNROAD_NORTH && (a.type == ACTION_ASCEND || a.type == ACTION_DESCEND)) {
         push_message(g, "Follow the road north to Castle Grounds or south to the Catacombs approach.");
         return;
@@ -1248,7 +1305,7 @@ void action_resolve_player(GameState *g, Action a) {
         push_message(g, "Disembark before dropping an item on solid ground.");
         return;
     }
-    if (g->location == LOCATION_MANGROVES && g->mangroves.aboard && a.type == ACTION_DROP_ITEM) {
+    if (mangrove_aboard(g) && a.type == ACTION_DROP_ITEM) {
         push_message(g, "Go ashore before setting down an item.");
         return;
     }
@@ -1272,10 +1329,10 @@ void action_resolve_player(GameState *g, Action a) {
     game_repair_equipment_indices(g);
     if (g->location == LOCATION_TOWN ||
         g->location == LOCATION_TAVERN ||
-        g->location == LOCATION_TOWN2 ||
+        (g->location == LOCATION_TOWN2 && !eastern_town_combat(g)) ||
         g->location == LOCATION_TOWN3 ||
         g->location == LOCATION_TOWN4 ||
-        g->location == LOCATION_DAWNMERE ||
+        (g->location == LOCATION_DAWNMERE && !eastern_town_combat(g)) ||
         g->location == LOCATION_HIGH_PASS ||
         g->location == LOCATION_SWAMP_ROAD ||
         g->location == LOCATION_CASTLE ||
@@ -1377,7 +1434,7 @@ void action_resolve_player(GameState *g, Action a) {
             if (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_DUNGEON))) {
                 g->score += g->level * 100;
                 game_return_to_approach(g);
-                push_message(g, "The road leads west to Oakhaven and east to Dawnmere.");
+                push_message(g, "The stairs lead to the path north to Oakhaven.");
             } else {
                 push_message(g, "The Lich King seals these stairs.");
             }
@@ -1407,11 +1464,31 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_INTERACT) {
+        int door_x;
+        int door_y;
+        if (game_locked_door_target(g, &door_x, &door_y)) {
+            TileType door = g->map.tiles[door_y][door_x];
+            if (!dungeon_door_has_key(g, door)) {
+                dungeon_door_hint(g, door);
+                return;
+            }
+            if (door == TILE_LOCKED_DOOR) {
+                g->dungeon_key_found = 0;
+            } else {
+                g->dungeon_crypt_keys--;
+            }
+            g->map.tiles[door_y][door_x] = TILE_FLOOR;
+            push_message(g, door == TILE_LOCKED_DOOR ? "The dungeon key unlocks the door!" : "The crypt key unlocks the door!");
+            return;
+        }
         if (boss_gate_interact(g)) {
             return;
         }
         if (northroad_interact(g)) {
             action_resolve_enemies(g);
+            return;
+        }
+        if (western_interact(g)) {
             return;
         }
         if (giants_interact(g)) {
@@ -1504,25 +1581,6 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
         TileType tile = g->map.tiles[g->player.y][g->player.x];
-        if (tile == TILE_BROKEN_BURIAL_SEAL) {
-            if (g->elowen_quest_state != 1) {
-                push_message(g, "A shattered burial seal lies here.");
-                return;
-            }
-            int seal_index = g->level - 2;
-            if (seal_index < 0 || seal_index >= 3) {
-                return;
-            }
-            g->elowen_seals_restored |= 1 << seal_index;
-            g->map.tiles[g->player.y][g->player.x] =
-                TILE_RESTORED_BURIAL_SEAL;
-            push_message(g, "Burial seal restored.");
-            if ((g->elowen_seals_restored & 7) == 7) {
-                g->elowen_quest_state = 2;
-                push_message(g, "All seals restored. Return to Elowen in Oakhaven's Tavern.");
-            }
-            return;
-        }
         if (tile == TILE_COAST_BEACON_UNLIT) {
             game_light_coast_beacon(g, g->player.x, g->player.y);
             return;
@@ -1541,10 +1599,6 @@ void action_resolve_player(GameState *g, Action a) {
 
     if (a.type == ACTION_PICK_UP) {
         if (containers_pickup(g)) {
-            return;
-        }
-        if (g->map.tiles[g->player.y][g->player.x] == TILE_DESERT_LAMP) {
-            game_collect_desert_lamp(g);
             return;
         }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_DRAGON_TREASURE) {
@@ -1658,6 +1712,10 @@ void action_resolve_player(GameState *g, Action a) {
                 push_message(g, "Your class cannot learn that spell");
                 return;
             }
+            if (item->spell_id == SPELL_RESURRECTION && (g->player.player_class != CLASS_MAGE || g->player.level < RESURRECTION_LEVEL)) {
+                push_message(g, "Resurrection requires Mage level 10. Keep the scroll until you are ready.");
+                return;
+            }
             for (int i = 0; i < g->player.known_spell_count; i++) {
                 if (g->player.known_spells[i].id == item->spell_id) {
                     push_message(g, "Already know that spell");
@@ -1677,6 +1735,7 @@ void action_resolve_player(GameState *g, Action a) {
                     learned = spell_make_frost_bolt();
                     break;
                 case SPELL_TELEPORT: learned = spell_make_teleport(); break;
+                case SPELL_RESURRECTION: learned = spell_make_resurrection(); break;
                 case SPELL_RETURN_TO_TOWN:
                     learned = spell_make_return_to_town();
                     break;
@@ -1715,9 +1774,26 @@ void action_resolve_player(GameState *g, Action a) {
         } else if (incoming.type == ITEM_HELMET) {
             slot = EQUIPMENT_HELMET;
         } else if (incoming.type == ITEM_ACCESSORY) {
-            slot = a.target_y == 2 ? EQUIPMENT_ACCESSORY_2 : EQUIPMENT_ACCESSORY_1;
-            if (!a.target_y && game_equipped_item(g, slot) && !game_equipped_item(g, EQUIPMENT_ACCESSORY_2)) {
-                slot = EQUIPMENT_ACCESSORY_2;
+            slot = EQUIPMENT_ACCESSORY_1;
+            if (a.target_y >= 1 && a.target_y <= ACCESSORY_SLOT_COUNT) {
+                slot += a.target_y - 1;
+            } else if (!a.target_y) {
+                // Upgrade the same non-ring category in place; otherwise fill an empty slot.
+                int empty = -1;
+                for (int other = EQUIPMENT_ACCESSORY_1; other <= EQUIPMENT_ACCESSORY_4; other++) {
+                    const Item *worn = game_equipped_item(g, other);
+                    if (worn && incoming.accessory_family != ACCESSORY_FAMILY_RING && worn->accessory_family == incoming.accessory_family) {
+                        slot = other;
+                        empty = -1;
+                        break;
+                    }
+                    if (!worn && empty < 0) {
+                        empty = other;
+                    }
+                }
+                if (empty >= 0) {
+                    slot = empty;
+                }
             }
         }
         if (!game_equip_item(g, idx, slot)) {
@@ -1790,12 +1866,17 @@ void action_resolve_player(GameState *g, Action a) {
         }
 
         Spell *sp = &g->player.known_spells[g->player.equipped_spell];
-        if (g->location == LOCATION_MANGROVES && g->mangroves.aboard && sp->id != SPELL_RETURN_TO_TOWN && sp->type != SPELL_TYPE_HEAL) {
+        if (mangrove_aboard(g) && sp->id != SPELL_RETURN_TO_TOWN && sp->type != SPELL_TYPE_HEAL) {
             push_message(g, "Go ashore before using combat spells.");
             return;
         }
         int spell_power = equipped_spell_power(g);
-        int mana_cost = equipped_spell_cost(g, sp);
+        int mana_cost = action_spell_mp_cost(g, sp);
+
+        if (sp->id == SPELL_RESURRECTION) {
+            resurrection_offer_spell(g);
+            return;
+        }
 
         if (g->player.mp < mana_cost) {
             push_message(g, "Not enough MP!");
@@ -1815,10 +1896,10 @@ void action_resolve_player(GameState *g, Action a) {
                 return;
             }
             if (g->location == LOCATION_TOWN ||
-                g->location == LOCATION_TOWN2 ||
+                (g->location == LOCATION_TOWN2 && !eastern_town_combat(g)) ||
                 g->location == LOCATION_TOWN3 ||
                 g->location == LOCATION_TOWN4 ||
-                g->location == LOCATION_DAWNMERE ||
+                (g->location == LOCATION_DAWNMERE && !eastern_town_combat(g)) ||
                 g->location == LOCATION_CASTLE ||
                 g->location == LOCATION_TAVERN ||
                 g->location == LOCATION_INN || g->location == LOCATION_HEALER || g->location == LOCATION_WITCH ||
@@ -1973,7 +2054,7 @@ void action_resolve_player(GameState *g, Action a) {
                             snprintf(msg, sizeof(msg), "%s killed %s!",
                                 sp->name, e->name);
                         } else if (sp->id == SPELL_FROST_BOLT &&
-                            (enemy_is_vampire_captor(e) || e->type == ENEMY_ICE_GOLEM ||
+                            (e->type == ENEMY_ICE_GOLEM ||
                             e->type == ENEMY_FALLEN_SUN_GUARDIAN ||
                             e->type == ENEMY_FROST_KRAKEN)) {
                             e->frozen_turns = 0;
@@ -2070,7 +2151,7 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_RANGED_ATTACK) {
-        if (g->location == LOCATION_MANGROVES && g->mangroves.aboard) {
+        if (mangrove_aboard(g)) {
             push_message(g, "Go ashore before attacking.");
             return;
         }
@@ -2192,6 +2273,9 @@ void action_resolve_player(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_MOVE) {
+        if (eastern_move(g, a.target_x, a.target_y)) {
+            return;
+        }
         if (ironfang_move(g, a.target_x, a.target_y)) {
             return;
         }
@@ -2200,7 +2284,7 @@ void action_resolve_player(GameState *g, Action a) {
         if (boss_gate_bump(g, tx, ty)) {
             return;
         }
-        if (g->location == LOCATION_MANGROVES && g->mangroves.aboard) {
+        if (mangrove_aboard(g)) {
             mangrove_travel(g, tx, ty);
             return;
         }
@@ -2648,7 +2732,7 @@ void action_resolve_player(GameState *g, Action a) {
                     return;
                 }
                 game_return_to_approach(g);
-                push_message(g, "You return to Stillbury.");
+                push_message(g, "You return to the desert road. Follow it west past Sunscar, then north toward Giant's Peaks.");
             }
             return;
         }
@@ -2794,24 +2878,11 @@ void action_resolve_player(GameState *g, Action a) {
             return;
         }
 
-        if (g->map.tiles[ty][tx] == TILE_LOCKED_DOOR) {
-            if (!g->dungeon_key_found) {
-                push_message(g, "The Lich King's door is locked.");
-                return;
-            }
-            g->dungeon_key_found = 0;
-            g->map.tiles[ty][tx] = TILE_FLOOR;
-            push_message(g, "The dungeon key unlocks the door!");
-        }
-
-        if (g->map.tiles[ty][tx] == TILE_CRYPT_DOOR) {
-            if (g->dungeon_crypt_keys < 1) {
-                push_message(g, "The crypt is locked. Find its key.");
-                return;
-            }
-            g->dungeon_crypt_keys--;
-            g->map.tiles[ty][tx] = TILE_FLOOR;
-            push_message(g, "The crypt key unlocks the door!");
+        if (g->map.tiles[ty][tx] == TILE_LOCKED_DOOR || g->map.tiles[ty][tx] == TILE_CRYPT_DOOR) {
+            g->player.last_dx = tx - g->player.x;
+            g->player.last_dy = ty - g->player.y;
+            dungeon_door_hint(g, g->map.tiles[ty][tx]);
+            return;
         }
 
         if (g->location == LOCATION_COAST &&
@@ -2947,6 +3018,41 @@ void action_resolve_player(GameState *g, Action a) {
     }
 }
 
+// Keep the noncombat escort with the player across every action and transition.
+void action_resolve_player(GameState *g, Action a) {
+    eastern_store(g);
+    int old_x = g->player.x;
+    int old_y = g->player.y;
+    int dx = a.target_x - old_x;
+    int dy = a.target_y - old_y;
+    Location location = g->location;
+    int level = g->level;
+    int route = g->approach_route;
+    Location road_town = g->road_town;
+    resolve_player_action(g, a);
+    eastern_update(g);
+    western_update(g);
+    if (location != g->location || level != g->level || route != g->approach_route || road_town != g->road_town) {
+        // Travel handlers return before the ordinary movement-facing update.
+        // A doorway or boundary crossing keeps the direction of that step.
+        if (a.type == ACTION_MOVE && abs(dx) + abs(dy) == 1) {
+            g->player.last_dx = dx;
+            g->player.last_dy = dy;
+        }
+        g->elowen_x = -1;
+        g->elowen_y = -1;
+        g->aldric_x = -1;
+        g->aldric_y = -1;
+        old_x = -1;
+        old_y = -1;
+    }
+    int escort = g->elowen_quest_state == ELOWEN_RESCUED;
+    int lead_old_x = escort ? g->elowen_x : old_x;
+    int lead_old_y = escort ? g->elowen_y : old_y;
+    elowen_follow(g, old_x, old_y);
+    aldric_follow(g, lead_old_x, lead_old_y);
+}
+
 int action_use_inventory_item(GameState *g, int index, EnemyProjectiles *shots) {
     if (index < 0 || index >= g->inventory_count) {
         return 0;
@@ -2977,7 +3083,7 @@ int action_drink_quick_potion(GameState *g, EnemyProjectiles *shots) {
 }
 
 static int enemy_position_occupied(const GameState *g, int skip, int x, int y) {
-    if (jail_prisoner_at(g, x, y)) {
+    if (jail_prisoner_at(g, x, y) || aldric_at(g, x, y)) {
         return 1;
     }
     for (int i = 0; i < g->enemy_count; i++) {
@@ -3035,7 +3141,6 @@ static void build_enemy_distance_map(const GameState *g) {
 
 static int enemy_is_major_boss(const Enemy *e) {
     return e->is_boss ||
-        (enemy_is_vampire_captor(e) && e->hp < e->max_hp) ||
         e->type == ENEMY_LICH_KING ||
         e->type == ENEMY_FOREST_NECROMANCER ||
         e->type == ENEMY_MOUNTAIN_GOBLIN_KING ||
@@ -3047,6 +3152,11 @@ static int enemy_is_major_boss(const Enemy *e) {
 
 static int enemy_prefers_range(const Enemy *e);
 
+// Royal archers hold a firing line on the Crown Roads and in occupied towns instead of chasing.
+static int enemy_holds_firing_line(const GameState *g, const Enemy *e) {
+    return e->type == ENEMY_ROAD_ARCHER && (game_is_crownroad(g) || eastern_town_combat(g) || western_convoy_enemy(g, e));
+}
+
 static int enemy_is_support(const Enemy *e) {
     return e->type == ENEMY_CRYPT_CONJURER ||
         e->type == ENEMY_GOBLIN_SHAMAN ||
@@ -3055,6 +3165,7 @@ static int enemy_is_support(const Enemy *e) {
 
 static int enemy_is_protector(const Enemy *e) {
     return e->type == ENEMY_BONE_SENTINEL || e->type == ENEMY_HOBGOBLIN_GUARD ||
+        e->type == ENEMY_DARK_ELF_GUARD ||
         e->type == ENEMY_HORSEMAN ||
         e->type == ENEMY_ANIMATED_STATUE ||
         e->type == ENEMY_VINEBOUND_GUARDIAN ||
@@ -3105,8 +3216,7 @@ static void select_enemy_pursuers(const GameState *g, int pursuers[MAX_ENEMIES])
         for (int i = 0; i < g->enemy_count; i++) {
             const Enemy *e = &g->enemies[i];
             if (!e->active || pursuers[i] || enemy_is_major_boss(e) || wilds_conceals(g, e) ||
-                (game_is_crownroad(g) &&
-                e->type == ENEMY_ROAD_ARCHER)) {
+                enemy_holds_firing_line(g, e)) {
                 continue;
             }
             int distance = enemy_distances[e->y][e->x];
@@ -3336,6 +3446,12 @@ static int clear_orthogonal_path(const GameState *g, int shooter_index, const En
     return 1;
 }
 
+// A firing line shoots down clear lanes; town squads also re-form it behind their guards.
+static int enemy_firing_line_acts(const GameState *g, int index, const Enemy *e) {
+    int distance = enemy_distances[e->y][e->x];
+    return clear_orthogonal_path(g, index, e) || (eastern_town_combat(g) && distance > 0 && distance <= ENEMY_NOTICE_DISTANCE);
+}
+
 static int necromancer_revive(GameState *g, int necromancer_index) {
     Enemy *caster = &g->enemies[necromancer_index];
     if (g->location == LOCATION_CATACOMBS) {
@@ -3365,6 +3481,9 @@ static int necromancer_revive(GameState *g, int necromancer_index) {
 }
 
 static int enemy_blocks_line_of_sight(const GameState *g, int shooter_index, int x, int y) {
+    if (aldric_at(g, x, y)) {
+        return 1;
+    }
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *other = &g->enemies[i];
         if (i == shooter_index || !other->active) {
@@ -3552,14 +3671,20 @@ static void grave_marshal_turn(GameState *g, int index) {
     }
 }
 
-void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots) {
+static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
+    eastern_update(g);
+    western_update(g);
     if (shots) {
         shots->count = 0;
     }
-    if (g->player.hp <= 0 || g->game_won || g->castle_prompt || stormbell_prompt_active(g) || g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD) {
+    if (g->player.hp <= 0 || g->game_won || g->castle_prompt || western_convoy_prompt(g) || stormbell_prompt_active(g) || g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD) {
         return;
     }
-    if (g->location == LOCATION_MANGROVES && g->mangroves.aboard) {
+    if (mangrove_aboard(g)) {
+        return;
+    }
+    if (g->location == LOCATION_RIVER_CROSSING ||
+        (g->location == LOCATION_DAWNMERE && !g->dawnmere_alerted && !g->dawnmere_liberated)) {
         return;
     }
     if (g->location == LOCATION_IRONFANG) {
@@ -3674,6 +3799,12 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         if (!e->active) {
             continue;
         }
+        if (western_convoy_enemy(g, e) && !e->boss_aux_x) {
+            continue;
+        }
+        if (g->location == LOCATION_DAWNMERE && !g->dawnmere_liberated && !e->boss_aux_x) {
+            continue;
+        }
         if (e->is_boss && boss_locked) {
             continue;
         }
@@ -3762,10 +3893,9 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         int dy = g->player.y - e->y;
         int adjacent = abs_int(dx) <= 1 && abs_int(dy) <= 1 &&
             !(dx == 0 && dy == 0);
-        if (!enemy_is_major_boss(e) && !adjacent && !pursuers[i] &&
-            !(game_is_crownroad(g) &&
-            e->type == ENEMY_ROAD_ARCHER &&
-            clear_orthogonal_path(g, i, e))) {
+        int beside_aldric = !enemy_is_major_boss(e) && aldric_beside(g, e->x, e->y);
+        if (!enemy_is_major_boss(e) && !adjacent && !beside_aldric && !pursuers[i] &&
+            !(enemy_holds_firing_line(g, e) && enemy_firing_line_acts(g, i, e))) {
             continue;
         }
 
@@ -3869,6 +3999,13 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             continue;
         }
 
+        // Formation front lines step from the center lane to a shoulder so archers can shoot past them.
+        int front_line = (g->location == LOCATION_MOUNTAINS && enemy_goblin_frontline(e)) || ((eastern_town_combat(g) || western_convoy_enemy(g, e)) && e->type == ENEMY_ROYAL_GUARD);
+        if (adjacent && front_line && enemy_tactics_move(g, i) > 0) {
+            e->move_timer++;
+            continue;
+        }
+
         // Adjacent to player — melee attack
         if (adjacent) {
                 int defense = g->player.defense;
@@ -3912,7 +4049,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         e->move_timer++;
 
         if ((e->type == ENEMY_FIRE_ELEMENTAL || e->type == ENEMY_DJINN ||
-            e->type == ENEMY_CINDER_IMP || enemy_is_vampire_captor(e)) &&
+            e->type == ENEMY_CINDER_IMP) &&
             e->move_timer % 2 == 0 &&
             clear_orthogonal_path(g, i, e)) {
             int dmg = e->attack - g->player.defense / 2;
@@ -3922,8 +4059,7 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             dmg = apply_enemy_ranged_damage(g, i, e, dmg, shots);
             if (dmg > 0) {
                 char msg[MAX_MESSAGE_LEN];
-                const char *attack = enemy_is_vampire_captor(e) ? "Vampire blood bolt" :
-                    e->type == ENEMY_CINDER_IMP ? "Imp firebolt" :
+                const char *attack = e->type == ENEMY_CINDER_IMP ? "Imp firebolt" :
                     (e->type == ENEMY_DJINN ? "Djinn magic bolt" : "Elemental flame");
                 snprintf(msg, sizeof(msg), "%s: %d dmg", attack, dmg);
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
@@ -4044,7 +4180,9 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
             snprintf(msg, sizeof(msg), "%s: %d dmg", e->type == ENEMY_THORN_DRYAD ? "Thorn volley" : "Dark Elf arrow", dmg);
             push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
             if (e->type == ENEMY_DARK_ELF_RANGER) {
-                enemy_move_to_flank(g, i);
+                if (enemy_tactics_move(g, i) < 0) {
+                    enemy_move_to_flank(g, i);
+                }
             }
             continue;
         }
@@ -4063,6 +4201,16 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
                 push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
                 continue;
             }
+        }
+
+        // Ranged and support roles act before defending themselves in melee.
+        if (beside_aldric) {
+            aldric_take_hit(g, e);
+            continue;
+        }
+
+        if (enemy_tactics_move(g, i) >= 0) {
+            continue;
         }
 
         if (enemy_is_support(e) && enemy_has_nearby_ally(g, i, 4)) {
@@ -4115,4 +4263,39 @@ void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *sho
         }
     }
     stormbell_turn(g);
+}
+
+// Aldric strikes with the player's melee damage rules; his kills reward the player.
+void action_aldric_strike(GameState *g, Enemy *e) {
+    int dmg = ALDRIC_ATTACK - stormwatch_defense(e, g->aldric_x, g->aldric_y);
+    if (dmg < 1) {
+        dmg = 1;
+    }
+    dmg = northroad_weapon_damage(g, e, dmg);
+    dmg = catacombs_enemy_damage(g, e, dmg);
+    dmg = castle_enemy_damage(g, e, dmg);
+    dmg = lich_enemy_damage(g, e, dmg);
+    dmg = sun_guardian_enemy_damage(g, e, dmg);
+    e->hp -= dmg;
+    combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, dmg);
+    char msg[MAX_MESSAGE_LEN];
+    if (e->hp <= 0) {
+        e->active = 0;
+        drop_loot(g, e, 0);
+        player_gain_xp(g, e->experience);
+        game_update_level_progress(g);
+        snprintf(msg, sizeof(msg), "Aldric killed %s!", e->name);
+    } else {
+        snprintf(msg, sizeof(msg), "Aldric hit %s: %d dmg", e->name, dmg);
+    }
+    push_message(g, msg);
+}
+
+void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots) {
+    if (!g->game_won && g->location != LOCATION_APPROACH && g->location != LOCATION_TOWN_ROAD) {
+        aldric_turn(g);
+    }
+    resolve_enemy_actions(g, shots);
+    elowen_follow(g, -1, -1);
+    aldric_follow(g, -1, -1);
 }

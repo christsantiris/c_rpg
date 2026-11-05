@@ -1,6 +1,7 @@
 # Weapons, Armor, and Shields
 
-Equipment is class-oriented and uses main-hand, off-hand, and armor slots.
+Equipment uses Strong Hand, Weak Hand, Helmet, Armor and four accessory slots.
+Equipped items are stored separately from the ten-item bag.
 Regular enemies never drop equipment. The Blacksmith and regional
 bosses are the equipment sources.
 
@@ -17,6 +18,10 @@ bosses are the equipment sources.
 - Removing a main weapon also removes a shield because shields require a
   one-handed main weapon.
 - Class restrictions apply in both hand slots and the armor slot.
+- Press `1`–`4` on an accessory in the bag to choose its destination slot.
+- Up to two rings may be worn, including two copies of the same ring. Gauntlets,
+  bracers, amulets, belts and boots each allow only one equipped item per category.
+- Equipped spells occupy their own sidebar section and do not use equipment slots.
 
 An off-hand weapon contributes half its attack bonus, rounded up, and half its
 critical chance and dagger gold rating. Its range, cleave, armor penetration,
@@ -71,7 +76,7 @@ Sword also has a ranged attack.
 | Smuggled Dagger | +3 | One | All | Quest | 90 | 25% critical chance; +25% gold drop rating; Royal Dungeon escape weapon |
 | Short Sword | +3 | One | Warrior, Rogue | 1 | 40 | — |
 | Staff | +4 | Two | Mage | 1 | 60 | +2 spell power, +10 maximum MP |
-| Cryptblade | +2 | One | Warrior | Boss | 350 | 10% critical chance; Lich King reward |
+| Cryptblade | +2 | One | Warrior | Legacy | 350 | 10% critical chance; former Lich King reward |
 | Demonic Sword | +6 | One | All | Boss | 180 | Range 2 with `F`; Swamp Demon reward |
 | Long Sword | +6 | One | Warrior | 2 | 180 | — |
 | Runed Staff | +6 | Two | Mage | 2 | 300 | +4 spell power, +20 maximum MP, 5% cheaper spells |
@@ -93,11 +98,11 @@ half their rating to the main hand's rating. Spells, arrows, and environmental
 kills receive no dagger bonus. Existing daggers migrate without losing
 sharpening, equipped bonuses, loot, or quest progress.
 
-The Cryptblade's +2 attack and 10% critical chance make it an early Lich King
-reward with room for later upgrades. Its one-handed grip permits a shield or
-off-hand weapon. Existing saves update its attack while preserving sharpening
-(+3 attack when sharpened). The Goblin King drops the Goblin King's Shield;
-saved copies of his retired greatsword are converted to that shield.
+Cryptblade remains a legacy/debug weapon with +2 attack and 10% critical
+chance (+3 attack when sharpened). The Lich King now drops the all-class
+**Crypt Ring**, granting +5 maximum HP and +5 maximum MP in any accessory
+slot. The Goblin King drops the Goblin King's Shield; saved copies of his
+retired greatsword are converted to that shield.
 
 ### Ranged bows
 
@@ -197,7 +202,7 @@ Each of the five regional bosses guarantees a fixed thematic item:
 
 | Boss | Reward |
 | --- | --- |
-| Lich King | Cryptblade |
+| Lich King | Crypt Ring (+5 max HP, +5 max MP; all-class accessory) |
 | Necromancer | Necromancer's Cloak |
 | Goblin King | Goblin King's Shield |
 | Drowned Queen | Tidecaller Robes |

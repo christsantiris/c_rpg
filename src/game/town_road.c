@@ -1,5 +1,8 @@
 #include "town_road.h"
 #include "mangrove.h"
+#include "eastern_arc.h"
+#include "resurrection.h"
+#include <SDL2/SDL.h>
 #include <string.h>
 
 static const int dx[4] = {0, 1, 0, -1};
@@ -20,13 +23,32 @@ TownSide town_road_side(int x, int y) {
 }
 
 int town_road_connection(Location town, TownSide side, TownApproach *connection) {
-    if (town == LOCATION_DAWNMERE && side == TOWN_SIDE_SOUTH) {
-        *connection = (TownApproach){town, LOCATION_MANGROVES, 20, TOWN_H - 1};
+    if (town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
+        // A local riverbank visit, with no connection across the river.
+        *connection = (TownApproach){town, LOCATION_TOWN, 20, 0};
         return 1;
+    }
+    if (town == LOCATION_DAWNMERE && side == TOWN_SIDE_NORTH) {
+        *connection = (TownApproach){town, LOCATION_MANGROVES, 20, 0};
+        return 1;
+    }
+    if (town == LOCATION_TOWN2) {
+        if (side == TOWN_SIDE_SOUTH) {
+            *connection = (TownApproach){town, LOCATION_RIVER_CROSSING, 20, TOWN_H - 1};
+            return 1;
+        }
+        if (side == TOWN_SIDE_WEST) {
+            *connection = (TownApproach){town, LOCATION_GIANTS_CROWN, 0, 12};
+            return 1;
+        }
+        return 0;
+    }
+    if (town == LOCATION_DAWNMERE && side != TOWN_SIDE_WEST) {
+        return 0;
     }
     for (int i = 0; i < town_approach_count; i++) {
         const TownApproach *route = &town_approaches[i];
-        if (route->town == town && town_road_side(route->gate_x, route->gate_y) == side) {
+        if (!route->unplaced && route->town == town && town_road_side(route->gate_x, route->gate_y) == side) {
             *connection = *route;
             return 1;
         }
@@ -66,6 +88,14 @@ static void generate_town_road(GameState *g) {
             g->map.tiles[y][x] = TILE_WALL;
         }
     }
+    if (g->road_town == LOCATION_TOWN) {
+        // The river spans the whole northern boundary; no bridge or ford exists here.
+        for (int y = 0; y <= OAKHAVEN_RIVER_EDGE; y++) {
+            for (int x = 0; x < TOWN_ROAD_W; x++) {
+                g->map.tiles[y][x] = TILE_COAST_DEEP_WATER;
+            }
+        }
+    }
     for (int side = 0; side < 4; side++) {
         TownApproach connection;
         if (!town_road_connection(g->road_town, side, &connection)) {
@@ -75,6 +105,13 @@ static void generate_town_road(GameState *g) {
         int y;
         town_road_entrance(side, &x, &y);
         g->map.tiles[y][x] = TILE_TOWN_ROAD_ENTRY_NORTH + side;
+        if (g->road_town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
+            for (int bank_y = y - 1; bank_y >= OAKHAVEN_FERRY_Y; bank_y--) {
+                g->map.tiles[bank_y][x] = TILE_TOWN_PATH;
+            }
+            g->map.tiles[OAKHAVEN_FERRY_Y][x] = TILE_BROKEN_FERRY;
+            continue;
+        }
         int ex;
         int ey;
         town_road_exit(side, &ex, &ey);
@@ -85,6 +122,7 @@ static void generate_town_road(GameState *g) {
         }
         g->map.tiles[ey][ex] = TILE_TOWN_ROAD_EXIT_NORTH + side;
     }
+    resurrection_place(g);
 }
 
 int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
@@ -92,6 +130,8 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
     if (town_road_index(town) < 0 || side < 0 || side > 3 || !town_road_connection(town, side, &connection)) {
         return 0;
     }
+    eastern_store(g);
+    mangrove_store(g);
     g->road_town = town;
     g->location = LOCATION_TOWN_ROAD;
     g->approach_route = -1;
@@ -106,6 +146,10 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
         town_road_entrance(side, &g->player.x, &g->player.y);
         g->player.x += dx[side];
         g->player.y += dy[side];
+    } else if (town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
+        // A local return lands on dry bank, never in the boundary's white water.
+        g->player.x = OAKHAVEN_FERRY_X;
+        g->player.y = OAKHAVEN_FERRY_Y;
     } else {
         town_road_exit(side, &g->player.x, &g->player.y);
         g->player.x -= dx[side];
@@ -114,8 +158,22 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
     g->player.last_dx = departing ? dx[side] : -dx[side];
     g->player.last_dy = departing ? dy[side] : -dy[side];
     map_mark_explored(&g->map, g->player.x, g->player.y);
+    if (town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
+        int x;
+        int y;
+        town_road_entrance(side, &x, &y);
+        map_mark_explored(&g->map, x, y);
+    }
     char message[MAX_MESSAGE_LEN];
-    snprintf(message, sizeof(message), "%s: approach the town to enter, or walk around it to another road.", approach_town_name(town));
+    if (town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
+        snprintf(message, sizeof(message), "Soulstone Shrine lies west of the path. North: broken ferry, no crossing. South: Oakhaven.");
+    } else if (town == LOCATION_TOWN2) {
+        snprintf(message, sizeof(message), "Stillbury: west to Giant's Bridge; south to the skiff and Saltwind. Approach the town to enter.");
+    } else if (town == LOCATION_DAWNMERE && !g->dawnmere_liberated) {
+        snprintf(message, sizeof(message), "Dawnmere is occupied. Enter at the west gate, or walk around the town to the Saltwind road north.");
+    } else {
+        snprintf(message, sizeof(message), "%s: approach the town to enter, or walk around it to another road.", approach_town_name(town));
+    }
     push_message(g, message);
     return 1;
 }
@@ -146,11 +204,36 @@ int town_road_depart(GameState *g, int x, int y) {
     return town_road_enter(g, g->location, town_road_side(x, y), 1);
 }
 
+// Occupied Dawnmere's garrison holds the waterfront gate from outside as well.
+static int gate_held(GameState *g, TownSide side) {
+    if (g->road_town != LOCATION_DAWNMERE || side != TOWN_SIDE_NORTH || g->dawnmere_liberated) {
+        return 0;
+    }
+    push_message(g, "The garrison holds the waterfront gate. Walk around to the west gate to enter Dawnmere.");
+    return 1;
+}
+
 int town_road_travel(GameState *g, int x, int y) {
     if (g->location != LOCATION_TOWN_ROAD) {
         return 0;
     }
     TileType tile = g->map.tiles[y][x];
+    if (g->road_town == LOCATION_TOWN) {
+        if (tile == TILE_COAST_DEEP_WATER && y <= OAKHAVEN_RIVER_EDGE) {
+            push_message(g, "The rapids are impassable. The ferry is broken; there is no crossing here.");
+            return 1;
+        }
+        if (tile == TILE_BROKEN_FERRY) {
+            map_mark_explored(&g->map, x, y);
+            push_message(g, "Broken Ferry: snapped rope, shattered hull. Return south to Oakhaven.");
+        }
+        if (tile == TILE_SOULSTONE_RITUAL) {
+            char message[MAX_MESSAGE_LEN];
+            snprintf(message, sizeof(message), "Ritual circle: equip Resurrection and press %s. Talk to the warlock for paid resurrection.",
+                SDL_GetScancodeName(g->key_bindings[CONTROL_CAST_SPELL]));
+            push_message(g, message);
+        }
+    }
     int entry = tile >= TILE_TOWN_ROAD_ENTRY_NORTH && tile <= TILE_TOWN_ROAD_ENTRY_WEST;
     int exit = tile >= TILE_TOWN_ROAD_EXIT_NORTH && tile <= TILE_TOWN_ROAD_EXIT_WEST;
     // Touching a connected side enters the sprite. Center markers retain
@@ -162,7 +245,9 @@ int town_road_travel(GameState *g, int x, int y) {
             g->player.x < TOWN_SPRITE_X ? TOWN_SIDE_WEST : TOWN_SIDE_EAST;
         TownApproach connection;
         if (town_road_connection(g->road_town, side, &connection)) {
-            game_enter_town_gate(g, connection.town, connection.gate_x, connection.gate_y);
+            if (!gate_held(g, side)) {
+                game_enter_town_gate(g, connection.town, connection.gate_x, connection.gate_y);
+            }
             return 1;
         }
     }
@@ -175,7 +260,18 @@ int town_road_travel(GameState *g, int x, int y) {
         return 0;
     }
     if (entry) {
-        game_enter_town_gate(g, connection.town, connection.gate_x, connection.gate_y);
+        if (!gate_held(g, side)) {
+            game_enter_town_gate(g, connection.town, connection.gate_x, connection.gate_y);
+        }
+    } else if (connection.area == LOCATION_RIVER_CROSSING) {
+        eastern_river_enter(g, 1);
+    } else if (connection.area == LOCATION_GIANTS_CROWN && g->road_town == LOCATION_TOWN2) {
+        approach_enter_region(g, APPROACH_PEAKS_NORTH_ROAD);
+        g->player.x = APPROACH_W - 2;
+        g->player.y = APPROACH_BRIDGE_EXIT_Y;
+        g->player.last_dx = -1;
+        g->player.last_dy = 0;
+        map_mark_explored(&g->map, g->player.x, g->player.y);
     } else if (connection.area == LOCATION_MANGROVES) {
         mangrove_path(g, 0);
     } else if (connection.area == LOCATION_CROWNROAD || connection.area == LOCATION_CROWNROAD_WEST) {
@@ -189,4 +285,35 @@ int town_road_travel(GameState *g, int x, int y) {
         }
     }
     return 1;
+}
+
+static void preserve_marker(GameState *g, int x, int y, TileType tile) {
+    g->map.tiles[y][x] = tile;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && item->x == x && item->y == y) {
+            item->underlying_tile = tile;
+            if (!map_is_travel_tile(tile) && tile != TILE_TOWN_EXIT) {
+                g->map.tiles[y][x] = TILE_ITEM;
+            }
+        }
+    }
+}
+
+// Refresh just the new local route in saved Oakhaven maps, retaining other tiles and exploration.
+void town_road_refresh_oakhaven(GameState *g) {
+    if (g->location == LOCATION_TOWN) {
+        for (int x = 18; x <= 22; x++) {
+            preserve_marker(g, x, 0, TILE_TOWN_EXIT);
+        }
+    } else if (g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_TOWN) {
+        int x;
+        int y;
+        town_road_entrance(TOWN_SIDE_NORTH, &x, &y);
+        preserve_marker(g, x, y, TILE_TOWN_ROAD_ENTRY_NORTH);
+        for (int bank_y = y - 1; bank_y >= OAKHAVEN_FERRY_Y; bank_y--) {
+            preserve_marker(g, x, bank_y, bank_y == OAKHAVEN_FERRY_Y ? TILE_BROKEN_FERRY : TILE_TOWN_PATH);
+        }
+        resurrection_place(g);
+    }
 }

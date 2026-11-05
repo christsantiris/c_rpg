@@ -89,9 +89,7 @@ Travel, including the final departure, remains open while the boss lives;
 leaving awards no boss victory or rewards. Shutters and wind retain their normal
 behavior. See [boss gates](boss-gates.md).
 
-See the [approved design](stormwatch-headland-proposal.md),
-[native renderer captures](art-sources/stormwatch/README.md), and
-[atlas placement](art-sources/stormwatch/atlas-edit.md).
+See the [approved design](stormwatch-headland-proposal.md).
 
 ## The Silent Stormbell
 

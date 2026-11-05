@@ -1,5 +1,7 @@
+#include "../game/western_arc.h"
 #include "../game/coast_exits.h"
 #include "../game/boss_gates.h"
+#include "../game/royal_evidence.h"
 #include "../game/giants_crown.h"
 #include "../game/ironfang.h"
 #include "../game/crownroad_north.h"
@@ -31,8 +33,11 @@
 #include "../game/elderwood.h"
 #include "../game/catacombs.h"
 #include "../game/heartseed.h"
+#include "../game/aldric.h"
+#include "../game/resurrection.h"
 #include "../game/spice_skiff.h"
 #include "../game/mangrove.h"
+#include "../game/eastern_arc.h"
 #include "../game/stormwatch.h"
 #include "../game/stormbell.h"
 #include "../game/war_machine.h"
@@ -1247,6 +1252,23 @@ static int load_containers(const cJSON *root, GameState *g, int version) {
     return containers_valid(g);
 }
 
+static int load_western(const cJSON *root, GameState *g, int version) {
+    western_init(g);
+    if (version < 240) {
+        return 1;
+    }
+    const char *names[] = {"tribute_quest_state", "tribute_progress", "jarl_quest_state", "zara_at_camp"};
+    int *fields[] = {&g->tribute_quest_state, &g->tribute_progress, &g->jarl_quest_state, &g->zara_at_camp};
+    for (int i = 0; i < 4; i++) {
+        const cJSON *value = cJSON_GetObjectItem(root, names[i]);
+        if (!cJSON_IsNumber(value) || value->valuedouble != value->valueint) {
+            return 0;
+        }
+        *fields[i] = value->valueint;
+    }
+    return western_valid(g);
+}
+
 static int load_crown_quest(const cJSON *root, GameState *g, int version) {
     g->crown_quest_state = 0;
     g->crown_quest_progress = 0;
@@ -1357,7 +1379,7 @@ static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
     g->jail_main_hand = -1;
     g->jail_off_hand = -1;
     g->jail_armor = -1;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < JAIL_EXTRA_SLOT_COUNT; i++) {
         g->jail_extra_slots[i] = -1;
     }
     g->jail_supplies_taken = 0;
@@ -1418,10 +1440,13 @@ static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
     }
     if (version >= 224) {
         const cJSON *slots = cJSON_GetObjectItem(root, "jail_extra_slots");
-        if (!cJSON_IsArray(slots) || cJSON_GetArraySize(slots) != 3) {
+        int count = cJSON_GetArraySize(slots);
+        int expected = version < 241 ? 3 : JAIL_EXTRA_SLOT_COUNT;
+        // Historical testing saves can already carry the appended empty slots.
+        if (!cJSON_IsArray(slots) || (count != expected && !(version < 241 && count == JAIL_EXTRA_SLOT_COUNT))) {
             return 0;
         }
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < count; i++) {
             const cJSON *value = cJSON_GetArrayItem(slots, i);
             if (!cJSON_IsNumber(value) || value->valueint < -1 || value->valueint >= g->jail_gear_count) {
                 return 0;
@@ -1495,6 +1520,37 @@ static cJSON *serialize_mangrove(const MangroveState *state) {
     cJSON_AddItemToObject(delta, "loot", serialize_castle_loot(state->loot, state->loot_count));
     cJSON_AddItemToObject(delta, "enemies", serialize_enemies(state->enemies, state->enemy_count));
     return delta;
+}
+
+static cJSON *serialize_eastern(const GameState *g) {
+    cJSON *arc = cJSON_CreateObject();
+    cJSON_AddNumberToObject(arc, "dawnmere_liberated", g->dawnmere_liberated);
+    cJSON_AddNumberToObject(arc, "dawnmere_alerted", g->dawnmere_alerted);
+    cJSON_AddNumberToObject(arc, "dawnmere_progress", g->dawnmere_progress);
+    cJSON_AddNumberToObject(arc, "dawnmere_quest_state", g->dawnmere_quest_state);
+    cJSON_AddNumberToObject(arc, "saltwind_quest_state", g->saltwind_quest_state);
+    cJSON_AddNumberToObject(arc, "royal_reported_actions", g->royal_reported_actions);
+    cJSON_AddNumberToObject(arc, "act4_arrived", g->act4_arrived);
+    cJSON_AddNumberToObject(arc, "stillbury_challenge", g->stillbury_challenge);
+    cJSON_AddNumberToObject(arc, "stillbury_prompt", g->stillbury_prompt);
+    cJSON_AddNumberToObject(arc, "stillbury_guards_initialized", g->stillbury_guards_initialized);
+    const LevelCache *cache = &g->dawnmere_cache;
+    int active = g->location == LOCATION_DAWNMERE;
+    int valid = active || cache->valid;
+    cJSON_AddNumberToObject(arc, "dawnmere_valid", valid);
+    if (valid) {
+        cJSON_AddItemToObject(arc, "dawnmere_map", serialize_map(active ? &g->map : &cache->map));
+        cJSON_AddItemToObject(arc, "dawnmere_enemies", serialize_enemies(active ? g->enemies : cache->enemies, active ? g->enemy_count : cache->enemy_count));
+        cJSON_AddItemToObject(arc, "dawnmere_loot", serialize_castle_loot(active ? g->floor_items : g->dawnmere_loot, active ? g->floor_item_count : g->dawnmere_loot_count));
+    }
+    const Enemy *guards = g->location == LOCATION_TOWN2 && g->stillbury_guards_initialized ? g->enemies : g->stillbury_guards;
+    cJSON_AddItemToObject(arc, "stillbury_guards", serialize_enemies(guards, g->stillbury_guards_initialized ? 3 : 0));
+    MangroveState river = g->river_boat;
+    if (g->location == LOCATION_RIVER_CROSSING) {
+        mangrove_capture(g, &river);
+    }
+    cJSON_AddItemToObject(arc, "river_boat", serialize_mangrove(&river));
+    return arc;
 }
 
 static cJSON *serialize_giants(const GameState *g) {
@@ -1657,10 +1713,14 @@ static int load_northroad(const cJSON *root, GameState *g, int version) {
 static int load_giants(const cJSON *root, GameState *g, int version) {
     memset(g->giants_crown, 0, sizeof(g->giants_crown));
     g->giants_crown_defeated = 0;
+    g->giants_entry_from_north = 0;
     if (version < 203) {
         return 1;
     }
     const cJSON *array = cJSON_GetObjectItem(root, "giants_crown");
+    if (version >= 239 && (!stormwatch_number(root, "giants_entry_from_north", &g->giants_entry_from_north) || g->giants_entry_from_north < 0 || g->giants_entry_from_north > 1)) {
+        return 0;
+    }
     if (!cJSON_IsArray(array) || cJSON_GetArraySize(array) != GIANTS_DEPTH ||
         !stormwatch_number(root, "giants_crown_defeated", &g->giants_crown_defeated)) {
         return 0;
@@ -1881,7 +1941,7 @@ static void migrate_stormwatch_road(GameState *g) {
 }
 
 int save_game(const GameState *g, int slot) {
-    if (!containers_valid(g) || !crown_quest_valid(g) || !war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
+    if (!western_valid(g) || !eastern_valid(g) || !containers_valid(g) || !crown_quest_valid(g) || !war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
         return 0;
     }
     if (g->retired_coast_item_count < 0 || g->retired_coast_item_count > RETIRED_LOOT_STAGES * MAX_FLOOR_ITEMS) {
@@ -1889,10 +1949,16 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 228);
+    cJSON_AddNumberToObject(root, "save_version", 241);
+    cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
+    cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
+    cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
+    cJSON_AddNumberToObject(root, "zara_at_camp", g->zara_at_camp);
+    cJSON_AddItemToObject(root, "eastern_arc", serialize_eastern(g));
     cJSON_AddItemToObject(root, "loot_containers", serialize_containers(g));
     cJSON_AddItemToObject(root, "giants_crown", serialize_giants(g));
     cJSON_AddNumberToObject(root, "giants_crown_defeated", g->giants_crown_defeated);
+    cJSON_AddNumberToObject(root, "giants_entry_from_north", g->giants_entry_from_north);
     cJSON_AddNumberToObject(root, "crown_quest_state", g->crown_quest_state);
     cJSON_AddNumberToObject(root, "crown_quest_progress", g->crown_quest_progress);
     cJSON_AddNumberToObject(root, "crown_vault_open", g->crown_vault_open);
@@ -1911,7 +1977,9 @@ int save_game(const GameState *g, int slot) {
     stormbell_capture(g, bell_guards);
     cJSON_AddItemToObject(root, "stormbell_guards", serialize_enemies(bell_guards, g->stormbell_phase == 1 ? 2 : g->stormbell_phase ? 3 : 0));
     MangroveState mangrove = g->mangroves;
-    mangrove_capture(g, &mangrove);
+    if (g->location == LOCATION_MANGROVES) {
+        mangrove_capture(g, &mangrove);
+    }
     cJSON_AddItemToObject(root, "mangroves", serialize_mangrove(&mangrove));
     cJSON *stages = cJSON_CreateArray();
     for (int i = 0; i < MANGROVE_DEPTH; i++) {
@@ -1944,7 +2012,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "jail_off_hand", g->jail_off_hand);
     cJSON_AddNumberToObject(root, "jail_armor", g->jail_armor);
     cJSON *extra_slots = cJSON_CreateArray();
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < JAIL_EXTRA_SLOT_COUNT; i++) {
         cJSON_AddItemToArray(extra_slots, cJSON_CreateNumber(g->jail_extra_slots[i]));
     }
     cJSON_AddItemToObject(root, "jail_extra_slots", extra_slots);
@@ -2107,10 +2175,19 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "portal_y",          g->portal_y);
     cJSON_AddNumberToObject(root, "portal_origin_tile", g->portal_origin_tile);
     cJSON_AddNumberToObject(root, "defeated_bosses", g->defeated_bosses);
+    cJSON_AddNumberToObject(root, "royal_evidence_seen", g->royal_evidence_seen);
     cJSON_AddNumberToObject(root, "elowen_quest_state",
         g->elowen_quest_state);
+    cJSON_AddNumberToObject(root, "elowen_x", g->elowen_x);
+    cJSON_AddNumberToObject(root, "elowen_y", g->elowen_y);
     cJSON_AddNumberToObject(root, "elowen_seals_restored",
         g->elowen_seals_restored);
+    cJSON_AddNumberToObject(root, "aldric_party_state", g->aldric_party_state);
+    cJSON_AddNumberToObject(root, "aldric_x", g->aldric_x);
+    cJSON_AddNumberToObject(root, "aldric_y", g->aldric_y);
+    cJSON_AddNumberToObject(root, "aldric_hp", g->aldric_hp);
+    cJSON_AddNumberToObject(root, "aldric_recruited", g->aldric_recruited);
+    cJSON_AddNumberToObject(root, "resurrection_prompt", g->resurrection_prompt);
     cJSON_AddNumberToObject(root, "dain_quest_state", g->dain_quest_state);
     cJSON_AddNumberToObject(root, "dain_map_fragments",
         g->dain_map_fragments);
@@ -2125,7 +2202,6 @@ int save_game(const GameState *g, int slot) {
         g->island_travel_unlocked);
     cJSON_AddNumberToObject(root, "dragon_treasure_quest_state",
         g->dragon_treasure_quest_state);
-    cJSON_AddNumberToObject(root, "sunscar_lamp_quest_state", g->sunscar_lamp_quest_state);
     cJSON_AddNumberToObject(root, "emberforge_quest_state", g->emberforge_quest_state);
     cJSON_AddNumberToObject(root, "emberforge_progress", g->emberforge_progress);
     cJSON_AddNumberToObject(root, "emberforge_encounters", g->emberforge_encounters);
@@ -2646,6 +2722,97 @@ static int load_mangrove_record(const cJSON *delta, MangroveState *state, int ve
     return 1;
 }
 
+static int load_eastern_enemies(const cJSON *array, Enemy *enemies, int *count, int limit) {
+    if (!cJSON_IsArray(array) || cJSON_GetArraySize(array) > limit) {
+        return 0;
+    }
+    const char *fields[] = {"x", "y", "active", "type", "hp", "max_hp", "attack", "defense", "experience", "move_timer", "frozen_turns", "attack_target_x", "attack_target_y"};
+    for (int i = 0; i < cJSON_GetArraySize(array); i++) {
+        const cJSON *enemy = cJSON_GetArrayItem(array, i);
+        if (!cJSON_IsString(cJSON_GetObjectItem(enemy, "name"))) {
+            return 0;
+        }
+        for (size_t f = 0; f < sizeof(fields) / sizeof(fields[0]); f++) {
+            int value;
+            if (!stormwatch_number(enemy, fields[f], &value)) {
+                return 0;
+            }
+        }
+    }
+    deserialize_enemies(array, enemies, count, limit);
+    return 1;
+}
+
+static int load_eastern(const cJSON *root, GameState *g, int version) {
+    eastern_init(g);
+    if (version < 236) {
+        return 1;
+    }
+    const cJSON *arc = cJSON_GetObjectItem(root, "eastern_arc");
+    if (!stormwatch_number(arc, "dawnmere_liberated", &g->dawnmere_liberated)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "dawnmere_alerted", &g->dawnmere_alerted)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "dawnmere_progress", &g->dawnmere_progress)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "dawnmere_quest_state", &g->dawnmere_quest_state)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "saltwind_quest_state", &g->saltwind_quest_state)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "royal_reported_actions", &g->royal_reported_actions)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "act4_arrived", &g->act4_arrived)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "stillbury_challenge", &g->stillbury_challenge)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "stillbury_prompt", &g->stillbury_prompt)) {
+        return 0;
+    }
+    if (!stormwatch_number(arc, "stillbury_guards_initialized", &g->stillbury_guards_initialized)) {
+        return 0;
+    }
+    LevelCache *cache = &g->dawnmere_cache;
+    if (!stormwatch_number(arc, "dawnmere_valid", &cache->valid) || cache->valid < 0 || cache->valid > 1) {
+        return 0;
+    }
+    if (cache->valid) {
+        const cJSON *map = cJSON_GetObjectItem(arc, "dawnmere_map");
+        const char *fields[] = {"room_count", "stairs_up_x", "stairs_up_y", "stairs_down_x", "stairs_down_y"};
+        for (int i = 0; i < 5; i++) {
+            int value;
+            if (!stormwatch_number(map, fields[i], &value) || (i == 0 && value != 0)) {
+                return 0;
+            }
+        }
+        const cJSON *tiles = cJSON_GetObjectItem(map, "tiles_b64");
+        const cJSON *explored = cJSON_GetObjectItem(map, "explored_b64");
+        if (!cJSON_IsString(tiles) || !cJSON_IsString(explored) ||
+            strlen(tiles->valuestring) != 4 * ((MAP_W * MAP_H * sizeof(TileType) + 2) / 3) ||
+            strlen(explored->valuestring) != 4 * ((MAP_EXPLORED_BYTES + 2) / 3) ||
+            !load_eastern_enemies(cJSON_GetObjectItem(arc, "dawnmere_enemies"), cache->enemies, &cache->enemy_count, DAWNMERE_GARRISON) ||
+            !deserialize_castle_loot(cJSON_GetObjectItem(arc, "dawnmere_loot"), g->dawnmere_loot, &g->dawnmere_loot_count)) {
+            return 0;
+        }
+        deserialize_map(map, &cache->map);
+        cache->level_cleared = g->dawnmere_liberated;
+    }
+    int count = 0;
+    if (!load_eastern_enemies(cJSON_GetObjectItem(arc, "stillbury_guards"), g->stillbury_guards, &count, 3) ||
+        count != (g->stillbury_guards_initialized ? 3 : 0) ||
+        !load_mangrove_record(cJSON_GetObjectItem(arc, "river_boat"), &g->river_boat, version)) {
+        return 0;
+    }
+    return 1;
+}
+
 static int load_mangroves(const cJSON *root, GameState *g, int version) {
     g->mangroves = (MangroveState){0};
     memset(g->mangrove_stages, 0, sizeof(g->mangrove_stages));
@@ -3081,9 +3248,6 @@ static void migrate_testing_save(cJSON *root, int version) {
         if (!cJSON_GetObjectItem(root, "swamp_portal_town")) {
             cJSON_AddNumberToObject(root, "swamp_portal_town", LOCATION_TOWN2);
         }
-    }
-    if (version < 76 && !cJSON_GetObjectItem(root, "sunscar_lamp_quest_state")) {
-        cJSON_AddNumberToObject(root, "sunscar_lamp_quest_state", 0);
     }
     if (version < 73) {
         cJSON *player = cJSON_GetObjectItem(root, "player");
@@ -3905,6 +4069,28 @@ static void migrate_quest_giver_locations(GameState *g) {
     }
 }
 
+// V2 retires Rook, Mara and Ilya from Oakhaven's Inn and Tamsin from its square.
+static void retire_oakhaven_cast(GameState *g) {
+    const char *speakers[] = {"Rook", "Mara", "Ilya", "Forester Tamsin"};
+    for (int i = 0; i < 4; i++) {
+        if (strcmp(g->dialogue_speaker, speakers[i]) == 0) {
+            g->dialogue_active = 0;
+        }
+    }
+    if (g->location == LOCATION_TAVERN) {
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                TileType tile = g->map.tiles[y][x];
+                if (tile == TILE_NPC_ROOK || tile == TILE_NPC_MARA || tile == TILE_NPC_DRAGON_SEEKER) {
+                    g->map.tiles[y][x] = TILE_TAVERN_FLOOR;
+                }
+            }
+        }
+    } else if (g->location == LOCATION_TOWN && g->map.tiles[TAMSIN_Y][TAMSIN_X] == TILE_NPC_TAMSIN) {
+        g->map.tiles[TAMSIN_Y][TAMSIN_X] = TILE_TOWN_FLOOR;
+    }
+}
+
 static void migrate_rook_location(GameState *g) {
     if (strcmp(g->dialogue_speaker, "Rook") == 0) {
         g->dialogue_active = 0;
@@ -4101,7 +4287,7 @@ int load_game(GameState *g, int slot) {
 
     cJSON *version_item = cJSON_GetObjectItem(root, "save_version");
     int save_version = version_item ? version_item->valueint : 1;
-    if (!load_giants(root, g, save_version) || !load_northroad(root, g, save_version) || !load_ironfang(root, g, save_version) || !load_stormwatch(root, g, save_version) || !load_mangroves(root, g, save_version)) {
+    if (!load_eastern(root, g, save_version) || !load_giants(root, g, save_version) || !load_northroad(root, g, save_version) || !load_ironfang(root, g, save_version) || !load_stormwatch(root, g, save_version) || !load_mangroves(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -4150,7 +4336,7 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
-    if (!load_containers(root, g, save_version) || !elderwood_load(root, g, save_version) || !load_heartseed(root, g, save_version) || !load_spice_skiff(root, g, save_version) || !load_stormbell(root, g, save_version) || !load_war_machine(root, g, save_version) || !load_crown_quest(root, g, save_version)) {
+    if (!load_western(root, g, save_version) || !load_containers(root, g, save_version) || !elderwood_load(root, g, save_version) || !load_heartseed(root, g, save_version) || !load_spice_skiff(root, g, save_version) || !load_stormbell(root, g, save_version) || !load_war_machine(root, g, save_version) || !load_crown_quest(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -4163,7 +4349,6 @@ int load_game(GameState *g, int slot) {
     cJSON *freeze_recovery = cJSON_GetObjectItem(player, "freeze_recovery");
     cJSON *kraken_bow_unclaimed = cJSON_GetObjectItem(root, "kraken_bow_unclaimed");
     cJSON *sandstorm_staff_unclaimed = cJSON_GetObjectItem(root, "sandstorm_staff_unclaimed");
-    cJSON *lamp_quest = cJSON_GetObjectItem(root, "sunscar_lamp_quest_state");
     cJSON *forest_entry = cJSON_GetObjectItem(root, "forest_entry_town");
     cJSON *forest_portal = cJSON_GetObjectItem(root, "forest_portal_town");
     cJSON *swamp_entry = cJSON_GetObjectItem(root, "swamp_entry_town");
@@ -4171,7 +4356,7 @@ int load_game(GameState *g, int slot) {
     cJSON *mountain_entry = cJSON_GetObjectItem(root, "mountain_entry_town");
     cJSON *mountain_portal = cJSON_GetObjectItem(root, "mountain_portal_town");
     if (!cJSON_IsNumber(freeze_recovery) || !cJSON_IsNumber(kraken_bow_unclaimed) ||
-        !cJSON_IsNumber(sandstorm_staff_unclaimed) || !cJSON_IsNumber(lamp_quest) ||
+        !cJSON_IsNumber(sandstorm_staff_unclaimed) ||
         !cJSON_IsNumber(forest_entry) || !cJSON_IsNumber(forest_portal) ||
         !cJSON_IsNumber(swamp_entry) || !cJSON_IsNumber(swamp_portal) ||
         !cJSON_IsNumber(mountain_entry) || !cJSON_IsNumber(mountain_portal)) {
@@ -4181,7 +4366,6 @@ int load_game(GameState *g, int slot) {
     g->player.freeze_recovery = freeze_recovery->valueint;
     g->kraken_bow_unclaimed = kraken_bow_unclaimed->valueint;
     g->sandstorm_staff_unclaimed = sandstorm_staff_unclaimed->valueint;
-    g->sunscar_lamp_quest_state = lamp_quest->valueint;
     cJSON *emberforge_quest = cJSON_GetObjectItem(root, "emberforge_quest_state");
     cJSON *emberforge_progress = cJSON_GetObjectItem(root, "emberforge_progress");
     cJSON *emberforge_encounters = cJSON_GetObjectItem(root, "emberforge_encounters");
@@ -4305,12 +4489,12 @@ int load_game(GameState *g, int slot) {
     g->swamp_portal_town = swamp_portal->valueint;
     g->mountain_entry_town = mountain_entry->valueint;
     g->mountain_portal_town = mountain_portal->valueint;
-    if ((g->forest_entry_town != LOCATION_TOWN && g->forest_entry_town != LOCATION_TOWN2) ||
-        (g->forest_portal_town != LOCATION_TOWN && g->forest_portal_town != LOCATION_TOWN2) ||
+    if ((g->forest_entry_town != LOCATION_TOWN && g->forest_entry_town != LOCATION_DAWNMERE && g->forest_entry_town != LOCATION_TOWN2) ||
+        (g->forest_portal_town != LOCATION_TOWN && g->forest_portal_town != LOCATION_DAWNMERE && g->forest_portal_town != LOCATION_TOWN2) ||
         (g->swamp_entry_town != LOCATION_TOWN2 && g->swamp_entry_town != LOCATION_TOWN3) ||
         (g->swamp_portal_town != LOCATION_TOWN2 && g->swamp_portal_town != LOCATION_TOWN3) ||
-        (g->mountain_entry_town != LOCATION_DAWNMERE && g->mountain_entry_town != LOCATION_TOWN4 && (save_version >= 171 || g->mountain_entry_town != LOCATION_TOWN)) ||
-        (g->mountain_portal_town != LOCATION_DAWNMERE && g->mountain_portal_town != LOCATION_TOWN4 && (save_version >= 171 || g->mountain_portal_town != LOCATION_TOWN))) {
+        (g->mountain_entry_town != LOCATION_TOWN && g->mountain_entry_town != LOCATION_TOWN2 && g->mountain_entry_town != LOCATION_DAWNMERE && g->mountain_entry_town != LOCATION_TOWN4) ||
+        (g->mountain_portal_town != LOCATION_TOWN && g->mountain_portal_town != LOCATION_TOWN2 && g->mountain_portal_town != LOCATION_DAWNMERE && g->mountain_portal_town != LOCATION_TOWN4)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -4395,7 +4579,7 @@ int load_game(GameState *g, int slot) {
     g->labyrinth_entry_town = labyrinth_town ? labyrinth_town->valueint : LOCATION_TOWN2;
     if ((save_version >= 176 && !cJSON_IsNumber(labyrinth_town)) ||
         (labyrinth_town && (!cJSON_IsNumber(labyrinth_town) || labyrinth_town->valuedouble != labyrinth_town->valueint)) ||
-        (g->labyrinth_entry_town != LOCATION_TOWN && g->labyrinth_entry_town != LOCATION_TOWN2)) {
+        (g->labyrinth_entry_town != LOCATION_TOWN && g->labyrinth_entry_town != LOCATION_DAWNMERE && g->labyrinth_entry_town != LOCATION_TOWN2)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -4589,9 +4773,47 @@ int load_game(GameState *g, int slot) {
     g->portal_origin_tile = portal_origin_tile
         ? portal_origin_tile->valueint : TILE_FLOOR;
     g->defeated_bosses = defeated_bosses ? defeated_bosses->valueint : 0;
+    const cJSON *evidence_seen = cJSON_GetObjectItem(root, "royal_evidence_seen");
+    if (save_version >= 235 && (!cJSON_IsNumber(evidence_seen) || evidence_seen->valuedouble != evidence_seen->valueint ||
+        evidence_seen->valueint < 0 || evidence_seen->valueint > 31 || (evidence_seen->valueint & ~royal_evidence_found(g)))) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->royal_evidence_seen = save_version >= 235 ? evidence_seen->valueint : 0;
     g->elowen_quest_state = elowen_quest ? elowen_quest->valueint : 0;
+    cJSON *elowen_x = cJSON_GetObjectItem(root, "elowen_x");
+    cJSON *elowen_y = cJSON_GetObjectItem(root, "elowen_y");
+    g->elowen_x = elowen_x ? elowen_x->valueint : -1;
+    g->elowen_y = elowen_y ? elowen_y->valueint : -1;
     g->elowen_seals_restored = elowen_seals ? elowen_seals->valueint :
         (legacy_altars ? legacy_altars->valueint : 0);
+    cJSON *aldric_state = cJSON_GetObjectItem(root, "aldric_party_state");
+    cJSON *aldric_x = cJSON_GetObjectItem(root, "aldric_x");
+    cJSON *aldric_y = cJSON_GetObjectItem(root, "aldric_y");
+    g->aldric_party_state = aldric_state ? aldric_state->valueint : ALDRIC_WAITING;
+    g->aldric_x = aldric_x ? aldric_x->valueint : -1;
+    g->aldric_y = aldric_y ? aldric_y->valueint : -1;
+    cJSON *aldric_hp = cJSON_GetObjectItem(root, "aldric_hp");
+    g->aldric_hp = aldric_hp ? aldric_hp->valueint : ALDRIC_MAX_HP;
+    cJSON *recruited = cJSON_GetObjectItem(root, "aldric_recruited");
+    if (save_version >= 234 && (!cJSON_IsNumber(recruited) || recruited->valuedouble != recruited->valueint ||
+        recruited->valueint < 0 || recruited->valueint > 1)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->aldric_recruited = (recruited && recruited->valueint) || g->aldric_party_state != ALDRIC_WAITING;
+    cJSON *ritual = cJSON_GetObjectItem(root, "resurrection_prompt");
+    if (save_version >= 234 && (!cJSON_IsNumber(ritual) || ritual->valuedouble != ritual->valueint ||
+        ritual->valueint < RESURRECTION_NONE || ritual->valueint > RESURRECTION_SPELL_CONFIRM)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    g->resurrection_prompt = ritual ? ritual->valueint : RESURRECTION_NONE;
+    if (g->aldric_party_state == ALDRIC_DEAD) {
+        g->aldric_hp = 0;
+        g->aldric_x = -1;
+        g->aldric_y = -1;
+    }
     g->dain_quest_state = dain_quest ? dain_quest->valueint : 0;
     g->dain_map_fragments = dain_fragments ? dain_fragments->valueint :
         (legacy_dain_targets ? legacy_dain_targets->valueint : 0);
@@ -6253,20 +6475,6 @@ int load_game(GameState *g, int slot) {
             g->dialogue_active = 0;
         }
     }
-    if (save_version < 104 && g->location == LOCATION_TAVERN) {
-        if (g->player.x == ELOWEN_TAVERN_X && g->player.y == ELOWEN_TAVERN_Y) {
-            g->player.y++;
-        }
-        for (int i = 0; i < g->floor_item_count; i++) {
-            FloorItem *item = &g->floor_items[i];
-            if (item->active && item->x == ELOWEN_TAVERN_X && item->y == ELOWEN_TAVERN_Y) {
-                item->y++;
-                item->underlying_tile = TILE_TAVERN_FLOOR;
-                g->map.tiles[item->y][item->x] = TILE_ITEM;
-            }
-        }
-        map_place_tavern_elowen(&g->map);
-    }
     // Version 105 moves Mara to Oakhaven and Liora to Stillbury without resetting quests.
     if (save_version < 105 && (g->location == LOCATION_TAVERN || g->location == LOCATION_TOWN_HALL)) {
         TileType removed = g->location == LOCATION_TAVERN ? 206 : TILE_NPC_MARA;
@@ -6316,20 +6524,6 @@ int load_game(GameState *g, int slot) {
         }
     }
     if (save_version < 108) {
-        if (g->location == LOCATION_TOWN) {
-            if (g->player.x == TOWN_BRAM_X && g->player.y == TOWN_BRAM_Y) {
-                g->player.y++;
-            }
-            for (int i = 0; i < g->floor_item_count; i++) {
-                FloorItem *item = &g->floor_items[i];
-                if (item->active && item->x == TOWN_BRAM_X && item->y == TOWN_BRAM_Y) {
-                    item->y++;
-                    item->underlying_tile = TILE_TOWN_PATH;
-                    g->map.tiles[item->y][item->x] = TILE_ITEM;
-                }
-            }
-            g->map.tiles[TOWN_BRAM_Y][TOWN_BRAM_X] = TILE_NPC_BRAM;
-        }
         migrate_lich_minions(g);
     }
     if (save_version < 109) {
@@ -6799,6 +6993,9 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
+    if (save_version < 236) {
+        mangrove_repair_river_side(g);
+    }
     if (!mangrove_state_valid(g) || (g->location == LOCATION_MANGROVE_PATH &&
         (g->player.x < 0 || g->player.x >= MANGROVE_PATH_W || g->player.y < 0 || g->player.y >= MANGROVE_PATH_H))) {
         cJSON_Delete(root);
@@ -6922,11 +7119,13 @@ int load_game(GameState *g, int slot) {
         FloorItem worn[MAX_FLOOR_ITEMS] = {0};
         int count = 0;
         const cJSON *equipment = cJSON_GetObjectItem(root, "equipment");
-        if (!cJSON_IsArray(equipment) || cJSON_GetArraySize(equipment) != EQUIPMENT_SLOT_COUNT) {
+        int slots = cJSON_GetArraySize(equipment);
+        int expected = save_version < 241 ? 6 : EQUIPMENT_SLOT_COUNT;
+        if (!cJSON_IsArray(equipment) || (slots != expected && !(save_version < 241 && slots == EQUIPMENT_SLOT_COUNT))) {
             cJSON_Delete(root);
             return 0;
         }
-        for (int i = 0; i < EQUIPMENT_SLOT_COUNT; i++) {
+        for (int i = 0; i < slots; i++) {
             if (!stored_item_valid(cJSON_GetArrayItem(equipment, i))) {
                 cJSON_Delete(root);
                 return 0;
@@ -6952,6 +7151,64 @@ int load_game(GameState *g, int slot) {
     }
     if (save_version < 228 && (g->location == LOCATION_TOWN2 || g->location == LOCATION_DAWNMERE)) {
         town_life_migrate(g);
+    }
+    // Saves from before recruitment still show Aldric in Oakhaven's square after the Lich.
+    if (save_version < 231) {
+        aldric_place(g);
+    }
+    if (save_version < 232) {
+        retire_oakhaven_cast(g);
+    }
+    // Oakhaven's Blacksmith and Alchemist doors now lead into walk-in interiors.
+    if (save_version < 233 && g->location == LOCATION_TOWN) {
+        TileType *smithy = &g->map.tiles[TOWN_BLACKSMITH_Y + 3][TOWN_BLACKSMITH_X + 2];
+        TileType *alchemist = &g->map.tiles[TOWN_ALCHEMIST_Y + 3][TOWN_ALCHEMIST_X + 2];
+        if (*smithy == TILE_BLACKSMITH_DOOR) {
+            *smithy = TILE_LOCAL_DOOR;
+        }
+        if (*alchemist == TILE_ALCHEMIST_DOOR) {
+            *alchemist = TILE_LOCAL_DOOR;
+        }
+    }
+    if (save_version < 236) {
+        eastern_migrate(g);
+    }
+    // Dawnmere's three royal squads grew from three soldiers to five, then to seven.
+    if (save_version < 238) {
+        eastern_reinforce(g);
+    }
+    eastern_refresh(g);
+    if (save_version < 239) {
+        // Repair the new western road in place, retaining discovery, loot and character state.
+        if (approach_sunscar_road(g) || approach_peaks_road(g)) {
+            approach_refresh_entrance(g);
+        }
+        if (g->location == LOCATION_TOWN_ROAD && (g->road_town == LOCATION_TOWN2 || g->road_town == LOCATION_TOWN3)) {
+            town_road_migrate(g);
+        }
+    }
+    if (!eastern_valid(g)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    western_migrate(g);
+    if (!western_valid(g)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    approach_retire_labyrinth(g);
+    game_repair_outdoor_entries(g);
+    town_road_refresh_oakhaven(g);
+    aldric_place(g);
+    if (save_version < 234 && g->aldric_party_state == ALDRIC_DEAD && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0) {
+        g->dialogue_active = 0;
+    }
+    if (!resurrection_prompt_active(g)) {
+        g->resurrection_prompt = RESURRECTION_NONE;
+    }
+    if (save_version < 240) {
+        // Earlier victories gain journal evidence without interrupting a resumed adventure.
+        g->royal_evidence_seen = royal_evidence_found(g);
     }
     game_recover_retired_items(g);
     cJSON_Delete(root);

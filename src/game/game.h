@@ -35,7 +35,18 @@
 
 #define DAIN_FRAGMENT_ARCHER 1
 #define DAIN_FRAGMENT_WARCHIEF 2
-#define DAIN_FRAGMENT_SHAMAN 4
+#define DAIN_FRAGMENT_SHAMAN 4 // Reserved historical third fragment.
+#define DAIN_MAP_COMPLETE (DAIN_FRAGMENT_ARCHER | DAIN_FRAGMENT_WARCHIEF)
+
+#define ALDER_RANGER_STAGE_1 1
+#define ALDER_RANGER_STAGE_2 2
+#define ALDER_RESCUE_COMPLETE (ALDER_RANGER_STAGE_1 | ALDER_RANGER_STAGE_2)
+#define ALDER_CAPTOR_NAME "Spider Captor"
+
+// Both Chapter 1 regional chains share these states after their first turn-in.
+#define REGIONAL_CHAIN_BOSS_OFFERED 3
+#define REGIONAL_CHAIN_BOSS_ACTIVE 4
+#define REGIONAL_CHAIN_COMPLETE 5
 
 #define ALDER_WARDEN_STAGE_2 1
 #define ALDER_WARDEN_STAGE_3 2
@@ -57,10 +68,13 @@ typedef enum {
     EQUIPMENT_ARMOR,
     EQUIPMENT_ACCESSORY_1,
     EQUIPMENT_ACCESSORY_2,
+    EQUIPMENT_ACCESSORY_3,
+    EQUIPMENT_ACCESSORY_4,
     MAX_CARRIED_ITEMS
 } EquipmentSlot;
 
-#define EQUIPMENT_SLOT_COUNT 6
+#define EQUIPMENT_SLOT_COUNT (4 + ACCESSORY_SLOT_COUNT)
+#define JAIL_EXTRA_SLOT_COUNT (1 + ACCESSORY_SLOT_COUNT)
 
 // Picks the message bar colour for a message.
 typedef enum {
@@ -144,12 +158,12 @@ typedef enum {
     LOCATION_FOREST,
     LOCATION_MOUNTAINS,
     LOCATION_COAST,
-    LOCATION_TAVERN,
+    LOCATION_TAVERN, // Oakhaven Inn; retain the historical serialized identifier.
     LOCATION_ISLAND,
     LOCATION_TEMPLE,
     LOCATION_LABYRINTH,
     LOCATION_TOWN2,
-    LOCATION_INN,
+    LOCATION_INN, // Stillbury Tavern; retain the historical serialized identifier.
     LOCATION_FOREST_ROAD,
     LOCATION_SWAMP,
     LOCATION_HIGH_PASS,
@@ -193,7 +207,10 @@ typedef enum {
     LOCATION_ALEHOUSE,
     LOCATION_GOLDSMITH,
     LOCATION_COBBLER,
-    LOCATION_BELT_MAKER
+    LOCATION_BELT_MAKER,
+    LOCATION_BLACKSMITH,
+    LOCATION_ALCHEMIST,
+    LOCATION_RIVER_CROSSING
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the
@@ -280,10 +297,30 @@ typedef struct {
 
 typedef struct {
     Player     player;
+    LevelCache dawnmere_cache;
+    FloorItem dawnmere_loot[MAX_FLOOR_ITEMS];
+    int dawnmere_loot_count;
+    int dawnmere_liberated;
+    int dawnmere_alerted;
+    int dawnmere_progress; // Checkpoint, market squad, commander.
+    int dawnmere_quest_state; // 0 unaccepted, 1 active, 3 completed.
+    int saltwind_quest_state; // 0 unaccepted, 1 active, 3 completed.
+    int royal_reported_actions; // 1: Dawnmere liberation, 2: attacking the royal tribute convoy.
+    int tribute_quest_state; // 0 unaccepted, 1 active, 2 completed/reward pending, 3 rewarded.
+    int tribute_progress; // 1: confiscated cargo recovered, 2: Pharaoh's agreement recovered.
+    int jarl_quest_state; // 0 unaccepted, 1 active, 3 completed on the Jarl's defeat.
+    int zara_at_camp; // Zara travels from Oakhaven's Inn to the Sunscar caravan camp.
+    int act4_arrived;
+    int stillbury_challenge;
+    int stillbury_prompt;
+    int stillbury_guards_initialized;
+    Enemy stillbury_guards[3];
+    MangroveState river_boat;
     GiantsStage giants_crown[GIANTS_DEPTH];
     int giants_crown_defeated;
+    int giants_entry_from_north;
     int crown_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
-    int crown_quest_progress; // Inscription, royal seal, Jarl victory, royal crown.
+    int crown_quest_progress; // Legacy inscription/seal bits, Jarl victory, crown recovered directly.
     int crown_vault_open;
     int crown_reward_state; // 0 unearned, 1 reserved with Edda, 2 claimed.
     IronfangStage ironfang[IRON_DEPTH];
@@ -347,7 +384,7 @@ typedef struct {
     int prisoner_x;
     int prisoner_y;
     Item jail_gear[MAX_CARRIED_ITEMS];
-    int jail_extra_slots[3]; // Helmet, Accessory 1, Accessory 2 evidence indices.
+    int jail_extra_slots[JAIL_EXTRA_SLOT_COUNT]; // Helmet followed by each accessory slot's evidence index.
     int jail_gear_count;
     int jail_gear_claimed;
     int jail_gear_state; // 0: none taken, 1: recover gear, 3: recovered.
@@ -403,7 +440,7 @@ typedef struct {
     int       gold;
     Location labyrinth_entry_town;
     int       rook_quest_state;
-    int       innkeeper_quest_state;
+    int innkeeper_quest_state; // Retired Mira quest; reserved for historical save data.
     int       rook_labyrinth_switches;
     int       rook_quest_completions;
     FloorItem floor_items[MAX_FLOOR_ITEMS];
@@ -431,6 +468,7 @@ typedef struct {
     int portal_x, portal_y;
     TileType portal_origin_tile;
     int defeated_bosses;
+    int royal_evidence_seen;
     int kraken_bow_unclaimed;
     int sandstorm_staff_unclaimed;
     int prism_sovereign_reward_pending; // Bits: 1 Prismweave Robes, 2 Strength Potion.
@@ -439,18 +477,25 @@ typedef struct {
     int red_dragon_reward_state; // 0: not earned, 1: unclaimed mantle, 2: claimed.
     int cinder_lord_reward_pending; // Bits: 1 Embercleaver, 2 Strength Potion.
     int desert_pharaoh_reward_state; // 0: not earned, 1: unclaimed, 2: claimed.
-    int elowen_quest_state;
-    int elowen_seals_restored;
-    int dain_quest_state;
+    int elowen_quest_state; // 0 missing, 1 assigned, 2 rescued/following, 3 reunited.
+    int elowen_x;
+    int elowen_y;
+    int elowen_seals_restored; // Reserved historical Broken Seals progress.
+    int aldric_party_state; // 0 waiting in Oakhaven, 1 following, 2 dead until resurrected.
+    int aldric_x;
+    int aldric_y;
+    int aldric_hp;
+    int aldric_recruited;
+    int resurrection_prompt;
+    int dain_quest_state; // 0 offer, 1 halves, 2 turn-in, 3 boss offer, 4 boss active, 5 complete.
     int dain_map_fragments;
-    int alder_quest_state;
+    int alder_quest_state; // 0 offer, 1 rangers, 2 turn-in, 3 boss offer, 4 boss active, 5 complete.
     int alder_wardens_rescued;
     int mara_quest_state;
     int mara_beacons_lit;
     int cain_scroll_given;
     int island_travel_unlocked;
     int dragon_treasure_quest_state;
-    int sunscar_lamp_quest_state;
     int emberforge_quest_state;
     int emberforge_progress;
     int emberforge_encounters;
@@ -483,6 +528,7 @@ typedef struct {
 } GameState;
 
 void game_init(GameState *g);
+int action_spell_mp_cost(const GameState *g, const Spell *spell);
 void game_spawn_enemy(GameState *g, Enemy *enemy, EnemyType type, int x, int y);
 int game_quest_offer_active(const GameState *g);
 int game_active_quest_count(const GameState *g);
@@ -494,8 +540,10 @@ int game_shortcut_prompt_active(const GameState *g);
 int game_handle_shortcut_prompt_key(GameState *g, int key, int repeat);
 void game_migrate_boss_shortcuts(GameState *g);
 int game_has_regional_interaction(const GameState *g);
+int game_locked_door_target(const GameState *g, int *x, int *y);
 void game_move_player(GameState *g, int dx, int dy);
 void game_descend(GameState *g);
+void game_repair_outdoor_entries(GameState *g);
 void game_ascend(GameState *g);
 void enemies_spawn(GameState *g);
 Enemy *game_spawn_marshal_guard(GameState *g, int x, int y, int boss_index);
@@ -570,9 +618,6 @@ int game_sharpen_weapon(GameState *g, int index);
 int game_workshop_item_index(const GameState *g, int row);
 void game_leave_guild(GameState *g);
 void game_talk_to_guild_seeker(GameState *g);
-void game_collect_desert_lamp(GameState *g);
-void game_talk_to_innkeeper(GameState *g);
-void game_rescue_innkeeper_daughter(GameState *g, int x, int y);
 void game_enter_labyrinth(GameState *g);
 void game_leave_labyrinth(GameState *g);
 int game_labyrinth_is_open(const GameState *g);
@@ -599,6 +644,7 @@ int game_set_quick_potion(GameState *g, int index);
 int game_quick_potion_count(const GameState *g);
 void action_resolve_enemies(GameState *g);
 void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots);
+void action_aldric_strike(GameState *g, Enemy *e);
 int kraken_tile_threatened(const GameState *g, const Enemy *e, int x, int y);
 
 void player_gain_xp(GameState *g, int xp);
@@ -621,8 +667,9 @@ void game_talk_to_mara(GameState *g);
 void game_talk_to_oswin(GameState *g);
 void game_talk_to_rook(GameState *g);
 void game_talk_to_cain(GameState *g);
+int game_cain_dialogue_active(const GameState *g);
+int game_handle_cain_dialogue_key(GameState *g, int key, int repeat);
 void game_talk_to_bram(GameState *g);
-void game_talk_to_aldric(GameState *g);
 void game_talk_to_rowan(GameState *g);
 void game_talk_to_dragon_seeker(GameState *g);
 void game_talk_to_royal_guard(GameState *g, int x, int y);

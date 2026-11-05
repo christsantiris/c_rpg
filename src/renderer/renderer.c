@@ -39,6 +39,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->harbor_texture = load_sprite_texture(sdl, "assets/images/harbor.bmp");
     r->healer_texture = load_sprite_texture(sdl, "assets/images/healer.bmp");
     r->witch_texture = load_sprite_texture(sdl, "assets/images/witch-hut.bmp");
+    r->soulstone_shrine_texture = load_sprite_texture(sdl, "assets/images/soulstone-shrine.bmp");
     r->labyrinth_texture = load_sprite_texture(sdl,
         "assets/images/labyrinth-entrance.bmp");
     r->dungeon_entrance_texture = load_sprite_texture(sdl, "assets/images/dungeon-entrance.bmp");
@@ -49,6 +50,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->stonewake_workshop_texture = load_sprite_texture(sdl, "assets/images/stonewake-workshop.bmp");
     r->stonewake_crane_texture = load_sprite_texture(sdl, "assets/images/stonewake-crane.bmp");
     r->stonewake_prop_texture = load_sprite_texture(sdl, "assets/images/stonewake-props.bmp");
+    r->caravan_camp_texture = load_sprite_texture(sdl, "assets/images/caravan-camp.bmp");
     r->crown_quest_texture = load_sprite_texture(sdl, "assets/images/crown-quest-props.bmp");
     r->war_machine_texture = load_sprite_texture(sdl, "assets/images/war-machine-props.bmp");
     r->ironfang_boss_texture = load_sprite_texture(sdl, "assets/images/ironfang-boss.bmp");
@@ -86,6 +88,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->loot_chest_texture = load_sprite_texture(sdl, "assets/images/loot-chests.bmp");
     r->road_checkpoint_texture = load_sprite_texture(sdl, "assets/images/road-checkpoints.bmp");
     r->road_bank_texture = load_sprite_texture(sdl, "assets/images/road-banks.bmp");
+    r->broken_ferry_texture = load_sprite_texture(sdl, "assets/images/broken-ferry.bmp");
     r->castle_texture = load_sprite_texture(sdl, "assets/images/castle-of-no-return.bmp");
     r->apothecary_texture = load_sprite_texture(sdl, "assets/images/apothecary.bmp");
     r->guild_texture = load_sprite_texture(sdl, "assets/images/adventurers-guild.bmp");
@@ -104,6 +107,14 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     };
     for (int i = 0; i < LOCAL_BUILDING_TEXTURE_COUNT; i++) {
         r->local_building_textures[i] = load_sprite_texture(sdl, local_paths[i]);
+    }
+    const char *oakhaven_paths[OAKHAVEN_SHOP_TEXTURE_COUNT] = {
+        "assets/images/oakhaven-bakery.bmp",
+        "assets/images/oakhaven-goldsmith.bmp",
+        "assets/images/oakhaven-blacksmith.bmp"
+    };
+    for (int i = 0; i < OAKHAVEN_SHOP_TEXTURE_COUNT; i++) {
+        r->oakhaven_shop_textures[i] = load_sprite_texture(sdl, oakhaven_paths[i]);
     }
     r->alehouse_cask_texture = load_sprite_texture(sdl, "assets/images/alehouse-cask.bmp");
     r->island_texture = load_sprite_texture(sdl, "assets/images/island-sprites.bmp");
@@ -134,6 +145,10 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
 }
 
 void renderer_free(Renderer *r) {
+    if (r->soulstone_shrine_texture) {
+        SDL_DestroyTexture(r->soulstone_shrine_texture);
+        r->soulstone_shrine_texture = NULL;
+    }
     SDL_DestroyTexture(r->stonewake_enemy_texture);
     SDL_DestroyTexture(r->stonewake_workshop_texture);
     r->stonewake_workshop_texture = NULL;
@@ -144,6 +159,8 @@ void renderer_free(Renderer *r) {
     r->stonewake_prop_texture = NULL;
     SDL_DestroyTexture(r->ironfang_boss_texture);
     SDL_DestroyTexture(r->war_machine_texture);
+    SDL_DestroyTexture(r->caravan_camp_texture);
+    r->caravan_camp_texture = NULL;
     SDL_DestroyTexture(r->crown_quest_texture);
     r->crown_quest_texture = NULL;
     r->war_machine_texture = NULL;
@@ -176,6 +193,8 @@ void renderer_free(Renderer *r) {
     r->road_checkpoint_texture = NULL;
     SDL_DestroyTexture(r->road_bank_texture);
     r->road_bank_texture = NULL;
+    SDL_DestroyTexture(r->broken_ferry_texture);
+    r->broken_ferry_texture = NULL;
     SDL_DestroyTexture(r->alehouse_cask_texture);
     r->alehouse_cask_texture = NULL;
     for (int i = 0; i < LOCAL_BUILDING_TEXTURE_COUNT; i++) {
@@ -183,6 +202,10 @@ void renderer_free(Renderer *r) {
             SDL_DestroyTexture(r->local_building_textures[i]);
             r->local_building_textures[i] = NULL;
         }
+    }
+    for (int i = 0; i < OAKHAVEN_SHOP_TEXTURE_COUNT; i++) {
+        SDL_DestroyTexture(r->oakhaven_shop_textures[i]);
+        r->oakhaven_shop_textures[i] = NULL;
     }
     if (r->castle_enemy_texture) {
         SDL_DestroyTexture(r->castle_enemy_texture);

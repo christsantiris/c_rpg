@@ -91,4 +91,13 @@ void boss_gate_draw(Renderer *r, const GameState *g, const Viewport *v) {
             renderer_draw_text(r, text, left, y - 66, color, r->font_tiny);
         }
     }
+    RoadCheckpoint guards[2];
+    int guard_count = boss_gate_guards(g, guards);
+    for (int i = 0; i < guard_count; i++) {
+        RoadCheckpoint guard = guards[i];
+        if (viewport_is_visible(v, guard.x, guard.y) && map_is_explored(&g->map, guard.x, guard.y)) {
+            draw_enemy(r, viewport_to_screen_x(v, guard.x), viewport_to_screen_y(v, guard.y),
+                guard.area == LOCATION_FOREST ? ENEMY_DARK_ELF_GUARD : ENEMY_HOBGOBLIN_GUARD);
+        }
+    }
 }

@@ -123,8 +123,7 @@ and reward claims in active and cached floors. Existing queued blasts retain
 their timing and small footprint, even at low health. Migration never rebuilds
 the map or resets player position, enemies, loot, exploration, traps or castle
 progress. A historical victory reserves the new Vestments once without
-repeating gold, XP or the boss fight. See the
-[Arcanist renderer review and play testing](art-sources/royal-arcanist-encounter/README.md).
+repeating gold, XP or the boss fight.
 
 The Gatehouse's east portcullis begins closed; its south portcullis begins open.
 Each lever changes only its own approach. The throne floor repeats this setup.
@@ -217,8 +216,7 @@ the trophy without another fight or score bonus.
 Hall of Fame records now store the trophy per ranked run and retain a permanent
 earned flag even if a victory does not reach the top ten. The application records
 that history on victory before leaving the ending. Legacy score rows preserve
-their names/scores and receive no invented victory status. See the
-[Veyr renderer review and play testing](art-sources/lord-veyr-encounter/README.md).
+their names/scores and receive no invented victory status.
 
 ## Progression
 
@@ -298,12 +296,6 @@ An SDL software-rendering check verifies sprite loading and attack overlays.
 Enemy statistics and encounter pacing still need hands-on balance feedback.
 
 ## Review artwork
-
-- [Regular enemies](art-sources/castle-review/castle-enemies.png)
-- [Minibosses and Veyr phases](art-sources/castle-review/castle-bosses.png)
-- [Interior room themes](art-sources/castle-review/castle-interiors.png)
-- [Generation prompts](art-sources/castle-review/prompts.md)
-
 The interior review board predates the reordered floors: its Iron Keep and
 Crown Chapel panels correspond to floors 2 and 4; Forsaken Court and Archives
 correspond to floors 3 and 5. Gameplay uses native tile rendering with these themes.

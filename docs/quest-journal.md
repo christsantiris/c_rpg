@@ -5,32 +5,63 @@ mountain, forest, and coast quests, Nahla's Ruined Temple quest, and Rook's
 one-time labyrinth
 quest after they are accepted.
 
-Elowen assigns **The Broken Seals** in **Oakhaven's Tavern**. Its objectives remain
-on Oakhaven's dungeon floors 2, 3, and 4. Return to her in the Tavern for 40 gold
-and 300 score.
+Bram offers **Save Elowen** in **Oakhaven's Inn**. Defeating the Lich on floor 5
+frees her automatically, including without accepting the quest or with a full
+journal. The rescue appears in **Completed** immediately; its return reminder
+directs the player to reunite her with Bram for **80 gold once**. Elowen follows
+safely until that conversation and then becomes a permanent Inn resident.
 
-Dain assigns **Recover the Treasure Map** in **Dawnmere's Alehouse**.
-Enter its south mountain gate.
-The Archer, Warchief, and Shaman Map Bearers occupy levels **2, 3, and 4** before
-the level-5 Goblin King. Return to Dain in Dawnmere's Alehouse for 60 gold and 400 score.
+After the Lich King's defeat, **Dain and Alder arrive at Oakhaven's Inn**.
+Dain's **Recover the Treasure Map** collects two halves on **Mountains 1 and 2**;
+Alder's **The Lost Rangers** frees two spider-held rangers on **Forest 1 and 2**.
+Return to the Inn after the second objective: Dain pays 60 gold and 400 score,
+and Alder pays 70 gold and 500 score, each once. Accepting either first part
+preserves explored stages; its encounters appear on revisiting stages 1 and 2.
 
-Alder assigns **The Lost Wardens** in **Stillbury's Inn**. Enter Stillbury's
-east forest gate and rescue the wardens on levels **2, 3, and 4** before the
-level-5 Necromancer. Return to Alder for 70 gold and 500 score, awarded once.
+Each turn-in unlocks a separate boss follow-up: **Defeat the Goblin King** or
+**Defeat the Necromancer**. These can be accepted or declined and use the same
+three active slots. The completed first part remains in Completed. Boss victory
+finishes the follow-up immediately; its entry points onward to Stillbury or
+Dawnmere and requires no second Inn turn-in. A boss defeated earlier receives
+credit when the first part is turned in. Physical boss access never depends on
+NPC conversations or quest acceptance.
 
-Mara assigns **Relight the Drowned Beacons** in **Oakhaven's Tavern**.
+The **Evidence** tab follows Bosses. Defeating the Goblin King reveals royal
+payment records funding his raids and the western-road blockade. Defeating
+the Necromancer reveals a royal writ protecting his work. Both parchments show
+the King's seal, and finding both strengthens the journal's conclusion. The
+new documents do not reveal who is behind the King's actions.
+
+Each parchment appears after the killing turn and its animations finish.
+Press **Enter / Space / Esc** to keep it in the journal and resume play;
+closing the page uses no turn. While the page is open, movement and combat
+commands are held. Press **Q**, change to **Evidence** with **Tab / Left /
+Right**, then use **Up / Down** to reread discovered documents. Journal key
+remapping still applies. Missing documents are not shown in advance.
+
+Evidence requires no accepted quest, spare active slot, bag space, floor loot
+space or additional Inn return. Each boss opens its own onward road regardless
+of which document is found first or whether the other boss has been defeated.
+Evidence and acknowledgment persist through save/load. Older boss victories
+gain their journal records without a new popup on loading.
+
+Mara, Ilya and Rook have left Oakhaven in V2; their journal entries keep any
+existing progress, but no one offers these quests until a later act.
+
+Mara assigns **Relight the Drowned Beacons** in **Oakhaven's Inn**.
 The beacons remain on Sunken Coast stages 2, 3, and 4. Return to her in the
-Tavern for 80 gold and 600 score; her location change preserves existing
+Inn for 80 gold and 600 score; her location change preserves existing
 quest progress.
 
-Ilya assigns **The Dragon's Hoard** in **Oakhaven's Tavern**. Its objective
+Ilya assigns **The Dragon's Hoard** in **Oakhaven's Inn**. Its objective
 remains the golden goblet on Dragonspine stage 5, beyond Ridgeshire's north
-gate. Return to Ilya in the Tavern for one Potion of Strength and 600 score.
+gate. Return to Ilya in the Inn for one Potion of Strength and 600 score.
 
-Zara's **The Lost Magic Lamp** quest also appears after accepting it inside
-Stillbury's Inn. Recover the lamp from Sunscar Wastes stage 4,
-then return to Zara for 80 gold and 600 score. Pickup moves the quest to
-Completed with its reward pending; speak to Zara to collect it.
+Zara's **The King's Tribute** tracks Sunscar 2's confiscated cargo and the
+Pharaoh's agreement on stage 5. Both are required. The quest moves to Completed
+before the camp reward is collected. Garran's Jarl quest completes on the boss's
+defeat; Liora's crown quest waits in Completed for delivery to Edda outside
+Stillbury. The lamp quest is retired. See [western quests](act3-western.md).
 
 Town Hall quest, **Reclaim the Emberforge**, tracks recovery of its mechanism
 on Ashen Hollow stage 2 and repair of its furnace on stage 4. Return to Steward
@@ -44,9 +75,9 @@ the watchfires in any order and return for **180 gold and 1,400 score**.
 Completed objectives remain recorded after claiming the reward.
 
 Brenna's **The Silent Expedition** appears after talking to her in Stillbury's
-Inn. It tracks the expedition journal on Frostfell stage 2 and Surveyor Fen's
+Tavern. It tracks the expedition journal on Frostfell stage 2 and Surveyor Fen's
 rescue on stage 4. Recover the journal with `A`, then defeat Fen's captors and
-speak to him with `T`. Return to Brenna in Stillbury's Inn for 100 gold and 800 score. The Polar
+speak to him with `T`. Return to Brenna in Stillbury's Tavern for 100 gold and 800 score. The Polar
 Kraken is optional, and both completed objectives remain in the journal after
 collecting the reward.
 
@@ -90,7 +121,7 @@ Quests move to **Completed** as soon as their objectives are finished, freeing
 an active slot immediately. If an NPC reward still needs to be collected, the
 entry shows **COMPLETED - REWARD PENDING** and retains the return instructions.
 Collecting that reward keeps the quest in Completed. Use Tab or Left/Right
-to cycle through **Active → Completed → Bosses**.
+to cycle through **Active → Completed → Bosses → Evidence**.
 
 **Guide Tomas Home** and **Recover Your Equipment** remain visible in Active
 when needed, but do not consume optional slots. A full journal cannot prevent
@@ -119,9 +150,7 @@ from the original quest giver, except Tomas's escort reward, awarded on arrival.
 Boss victories are recorded immediately and
 remain complete during later expeditions.
 
-To playtest capacity, accept Elowen, Mara, and Rook's quests in Oakhaven's
-Tavern, then speak to Ilya. Her offer should explain the full capacity and Y
-must leave it unaccepted. Finish an active quest's objectives and check that
-it moves to Completed, then accept Ilya's offer before claiming the pending reward.
-An existing save above the limit should retain every quest and display its
-actual count; Tomas must still reveal the escape hatch at full capacity.
+Act 1's quest givers offer at most two optional quests at a time, so a new V2
+character cannot reach the limit yet; automated tests cover it. An existing
+save above the limit should retain every quest and display its actual count;
+Tomas must still reveal the escape hatch at full capacity.

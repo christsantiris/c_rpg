@@ -91,6 +91,14 @@ Item item_make_ring_of_vigor(void) {
     return item_make_accessory(ACCESSORY_FAMILY_RING, 1);
 }
 
+Item item_make_crypt_ring(void) {
+    Item item = make_accessory("Crypt Ring", ACCESSORY_FAMILY_RING, 80);
+    item.rarity = ITEM_RARITY_UNCOMMON;
+    item.max_hp_bonus = 5;
+    item.max_mp_bonus = 5;
+    return item;
+}
+
 Item item_make_copper_amulet(void) {
     return item_make_accessory(ACCESSORY_FAMILY_AMULET, 1);
 }
@@ -1213,4 +1221,16 @@ Item item_make_scroll_teleport(void) {
     it.class_mask = ITEM_CLASS_MAGE;
     it.rarity = ITEM_RARITY_RARE;
     return it;
+}
+
+Item item_make_scroll_resurrection(void) {
+    Item item = {0};
+    item.active = 1;
+    item.type = ITEM_SCROLL;
+    strncpy(item.name, "Scroll: Resurrection", sizeof(item.name) - 1);
+    item.spell_id = SPELL_RESURRECTION;
+    item.value = 200;
+    item.class_mask = ITEM_CLASS_MAGE;
+    item.rarity = ITEM_RARITY_RARE;
+    return item;
 }

@@ -1,12 +1,14 @@
 # Approved enemy rosters by area
 
-All 24 area rosters are approved. The game defines **94 active enemy types**.
+All 24 area rosters are approved. The game defines **95 active enemy types**.
 Named quest, hunt and summoned enemies reuse these types rather than adding
 separate definitions. Retired numeric IDs are reserved and migrated in save/load;
 existing actors retain their wounds, deaths, quest identities and progress.
 
 Dark Elf Archers hold firing lanes. Dark Elf Rangers use a slower bow cadence
-and reposition after shooting. Goblin Warchiefs are armored melee attackers.
+and reposition after shooting. Dark Elf Guards are armored melee protectors
+with the same base power as Hobgoblin Guards: 36 HP, 11 attack, 7 defense and
+44 experience. Goblin Warchiefs are armored melee attackers.
 The castle Vampire replaces the former armory miniboss while retaining its
 stair unlock and reserved equipment reward.
 
@@ -22,17 +24,19 @@ are active during either alignment.
 | ✅ | Ashen Hollow | Cinder Imp; Ash Hound; Obsidian Guardian; Fire Elemental; Cinder Lord |
 | ✅ | Blackwater Swamp | Giant Rat; Zombie; Bandit; Wraith; Vampire; Swamp Demon |
 | ✅ | Castle of No Return — interior | Oathbound Soldier; Iron Warden; Royal Marksman; Court Hexer; Royal Guard; Vampire; Royal Arcanist; Lord Veyr |
-| ✅ | Crown Road East | Bandit; Blighted Wolf; Royal Guard; Road Archer; Horseman |
+| ✅ | Crown Road East | Bandit; Blighted Wolf |
 | ✅ | Crown Road North | Goblin Scout; Goblin Archer; Goblin Warchief; Goblin Shaman; Hobgoblin Guard; Blighted Wolf |
-| ✅ | Crown Road West | Bandit; Blighted Wolf; Royal Guard; Road Archer; Horseman |
+| ✅ | Crown Road West | Bandit; Blighted Wolf |
+| ✅ | Dawnmere — occupation | Royal Guard; Road Archer; Captain Rusk (named Royal Guard) |
+| ✅ | Stillbury — wanted checkpoint | Royal Guard; Road Archer |
 | ✅ | Dragonspine | Goblin Scout; Goblin Archer; Drake; Stone Giant; Fire Elemental; Red Dragon |
 | ✅ | Dungeon | Skeleton; Zombie; Crypt Bat; Wraith; Crypt Conjurer; Lich King |
 | ✅ | Elderwood Forest | Blighted Wolf; Dark Elf Ranger; Dark Elf Archer; Thorn Dryad; Treefolk; Elderthorn |
 | ✅ | Escape Tunnel | Giant Rat; Giant Spider; Bandit (Tunnel Smuggler); Hobgoblin Guard (Smuggler Bodyguard); Road Archer (Smuggler Archer) |
 | ✅ | Frostfell | Blighted Wolf; Frost Archer; Yeti; Frost Wraith; Ice Golem; Frost Giant; Frost Kraken |
 | ✅ | Giant’s Peaks | Ogre; Cave Troll; Hill Giant; Stone Giant; Stone Troll; Frost Giant; The Last Jarl |
-| ✅ | Goblin Mountains | Goblin Scout; Goblin Archer; Goblin Warchief; Giant Spider; Cave Troll; Hobgoblin Guard; Goblin Shaman; Goblin King |
-| ✅ | Haunted Forest | Pixie; Blighted Wolf; Giant Spider; Dark Elf Archer; Dark Elf Ranger; Forest Troll; Necromancer |
+| ✅ | Goblin Mountains | Goblin Scout; Goblin Archer; Giant Spider; Goblin Warchief; Goblin Shaman; Cave Troll; Hobgoblin Guard; Goblin King |
+| ✅ | Haunted Forest | Pixie; Blighted Wolf; Giant Spider; Dark Elf Archer; Dark Elf Ranger; Forest Troll; Dark Elf Guard; Necromancer |
 | ✅ | Ironfang Mines | Goblin Scout; Goblin Archer; Goblin Warchief; Giant Spider; Cave Troll; Hobgoblin Guard; Goblin Shaman; Goblin Mine Boss (stage 5) |
 | ✅ | Rook’s Labyrinth | Skeleton; Giant Spider; Animated Statue; Minotaur |
 | ✅ | Royal Catacombs | Crypt Bat; Wraith; Crypt Conjurer; Vampire; Ancient Skeleton; Bone Sentinel; Grave Marshal |
@@ -54,8 +58,8 @@ These labels can appear instead of a type's ordinary name. They are not extra
 | Lich Guard | Dungeon 5 |
 | Lich Shade | Dungeon 5, summoned by the Lich King |
 | Grove Revenant | Haunted Forest 5, raised by the Necromancer |
-| Map Bearer | Goblin Mountains 2, 3 and 4 |
-| Vampire Captor | Blackwater Swamp 3 |
+| Map Bearer | Goblin Mountains 1 and 2 |
+| Spider Captor | Haunted Forest 1 and 2 |
 | Tunnel Smuggler | Escape Tunnel |
 | Smuggler Bodyguard | Escape Tunnel, deeper section |
 | Smuggler Archer | Escape Tunnel, deeper section |

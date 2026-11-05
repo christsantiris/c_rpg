@@ -73,7 +73,7 @@ Headland. Ridgeshire's eastern road leads into Ironfang Mines within the mountai
 - Normal dungeon retreat returns to the approach for the entrance used.
   Physical retreat remembers that entrance town. Return-to-town spells use the
   last town actually visited and leave no return portal.
-- Preserve the Lich encounter, keys, burial-seal quest, rewards, exploration,
+- Preserve the Lich encounter, keys, Save Elowen rescue, rewards, exploration,
   caches, loot confirmation, and repeat-expedition behavior.
 
 ## Dawnmere and the relocated mountains
@@ -130,7 +130,7 @@ actual renderer. Confirm the two castle routes each have three travel legs.
 
 Rook's Labyrinth now stands beside the Haunted Forest entrance on the shared
 Oakhaven–Stillbury road. The gate is sealed until Rook assigns his quest in
-Oakhaven's Tavern; both approaches can reach it before the forest boss falls.
+Oakhaven's Inn; both approaches can reach it before the forest boss falls.
 Its maze content is unchanged, and physical exits return to the approach used.
 The illustrated world map includes this entrance and all five towns.
 

@@ -4,6 +4,7 @@
 #define MAX_INVENTORY   10
 #define MAX_FLOOR_ITEMS 20
 #define MAX_BOW_RANGE 7
+#define ACCESSORY_SLOT_COUNT 4
 
 typedef enum {
     ITEM_NONE = 0,
@@ -172,6 +173,7 @@ Item item_make_accessory(AccessoryFamily family, int tier);
 Item item_make_leather_gauntlets(void);
 Item item_make_leather_bracers(void);
 Item item_make_ring_of_vigor(void);
+Item item_make_crypt_ring(void);
 Item item_make_copper_amulet(void);
 int item_accessory_limit(const Item *item);
 int item_is_jewelry(const Item *item);
@@ -188,6 +190,7 @@ Item item_make_fireball_tome(void);
 Item item_make_heal_tome(void);
 Item item_make_scroll_frost_bolt(void);
 Item item_make_scroll_teleport(void);
+Item item_make_scroll_resurrection(void);
 
 Item item_make_rusty_sword(void);
 Item item_make_short_sword(void);

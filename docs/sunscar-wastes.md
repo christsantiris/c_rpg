@@ -1,10 +1,16 @@
 # Sunscar Wastes
 
-Stillbury's west gate enters Sunscar Wastes. Its approach road leaves green woods
-for sandstone outcrops, then sand and mesas around the entrance; see
-[road scenery](road-scenery.md). The five stages run from east to west; backtracking uses the east edge. The first stage's east exit and the final
-stage's west exit return to Stillbury. The Desert Pharaoh does not block the final exit
-and drops the Sandstorm Staff.
+Once the Goblin King falls, the Goblin Mountains road continues west from its
+pass onto the Sunscar road. That road leaves mountain rock for sandstone
+outcrops, then sand and mesas around a walk-in pyramid entrance; see
+[road scenery](road-scenery.md). Its east end returns to the mountain pass, and
+a turn beyond the pyramid entrance continues north to
+[Giant's Peaks](giants-peaks.md). The
+five stages run from east to west; backtracking uses the east edge, and the
+first stage's east exit returns to the road outside the pyramid. The route
+from the final stage's west exit returns to the same desert road. Continue west
+past the pyramid and north toward Giant's Peaks. The Desert Pharaoh does
+not block the final exit and drops the Sandstorm Staff.
 
 The wastes are drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 ×
 18 tiles around the player. The Desert Pharaoh acts within twelve tiles; the camera leans toward it to keep it on screen as its telegraphed beams begin.
@@ -56,8 +62,7 @@ faces and eroded corners. Scattered spires and boulders retain their varied
 shapes, while tall and barrel cacti form small stands. Curved dune ridges cross
 tile boundaries on the open sand, with occasional pebbles and dry scrub.
 These details stay fixed when moving, revisiting, or loading. Existing saved
-maps retain their progress during the layout migration. See
-the [renderer comparisons](art-sources/sunscar/README.md).
+maps retain their progress during the layout migration.
 
 Blowing sand and a light amber haze animate across the play area, including while
 standing still. The sandstorm is visual and does not affect combat or movement.
@@ -105,21 +110,22 @@ wind, storm sequence, freeze, recovery, obelisks, patch clocks and loot underlay
 in active and cached maps. Older saves migrate in place: obsolete Pharaoh attack
 timers reset, while health, deaths, exploration, quest objects and portal
 destinations remain intact. The existing unclaimed-staff flag preserves reward
-availability after an old victory. See the
-[native renderer gallery and play-test guide](art-sources/desert-pharaoh-encounter/README.md).
+availability after an old victory.
 
-## The Lost Magic Lamp
+## The King's Tribute
 
-Enter Stillbury's Inn. Approach Zara and press `T` to hear her offer, then `Y`
-to accept her quest. Travel to Sunscar through Stillbury's west gate and find
-the golden magic lamp in the last clearing of stage 4. Stand on it and press
-`P` (Pick Up) to recover it, then return to Zara in the Inn.
+Dain directs the player to Zara in Oakhaven's Inn after the Goblin King's defeat.
+Zara moves to the roadside caravan camp on the first visit to the Sunscar road.
+She assigns **The King's Tribute** and pays **200 gold and 500 XP** there after
+both the confiscated convoy cargo (stage 2) and the Pharaoh's agreement (stage 5)
+are recovered. The final Sunscar exit returns to this camp, avoiding an Oakhaven
+reward hike. The magic-lamp quest and its old hand-in are retired.
 
-The one-time reward is **80 gold and 600 score**. The lamp uses quest state rather
-than inventory space, so a full pack does not prevent recovery. The journal
-tracks the objective and marks it ready to return after pickup.
+Attacking the convoy is optional and is reported to Stillbury. Its seven named
+royal escorts retain wounds and casualties across expeditions; they do not attack
+until provoked. Interact beside the cargo to challenge them or move along, then
+recover it after the escort is defeated. Defeating the Pharaoh alone leaves the
+quest incomplete and creates no new public Crown offense.
 
-Accepting the quest preserves existing desert exploration, enemies, and portals.
-The quest works after the Pharaoh has been defeated. Saving preserves the Inn,
-quest progress, and reward completion; older testing saves start with the quest
-unassigned.
+See [the three western quests](act3-western.md) for assignment, rewards,
+Crown standing and the onward journey through Giant's Peaks.

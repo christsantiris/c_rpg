@@ -7,6 +7,95 @@
 
 #define TOWN_ROAD_TEST_SLOT 99231
 
+static void riverbank_round_trips(GameState *g, GameState *loaded) {
+    for (int seed = 0; seed < 8; seed++) {
+        game_init(g);
+        srand(8300 + seed);
+        g->defeated_bosses = seed % 2 ? 1u << LOCATION_DUNGEON : 0u;
+        game_enter_town_gate(g, LOCATION_TOWN, 20, 0);
+        g->gold = 393;
+        g->player.hp -= 3;
+        int hp = g->player.hp;
+        // The whole journey uses actual movement through the boundary gate.
+        action_resolve_player(g, (Action){ACTION_MOVE, 20, 0});
+        ASSERT("north gate leads to the riverbank before and after the Lich", g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_TOWN && g->player.x == OAKHAVEN_FERRY_X && g->player.y == TOWN_SPRITE_Y - 1);
+        walk_town_road_to(g, OAKHAVEN_FERRY_X, OAKHAVEN_FERRY_Y);
+        ASSERT("the continuous north path reaches the actual ferry landmark", g->location == LOCATION_TOWN_ROAD && g->player.y == OAKHAVEN_FERRY_Y && g->map.tiles[g->player.y][g->player.x] == TILE_BROKEN_FERRY && map_is_explored(&g->map, g->player.x, g->player.y));
+        action_resolve_player(g, (Action){ACTION_MOVE, OAKHAVEN_FERRY_X, OAKHAVEN_RIVER_EDGE + 1});
+        int blocked = 1;
+        for (int x = 1; x < TOWN_ROAD_W - 1; x++) {
+            walk_town_road_to(g, x, OAKHAVEN_RIVER_EDGE + 1);
+            action_resolve_player(g, (Action){ACTION_MOVE, x, OAKHAVEN_RIVER_EDGE});
+            blocked &= g->location == LOCATION_TOWN_ROAD && g->player.x == x && g->player.y == OAKHAVEN_RIVER_EDGE + 1;
+        }
+        for (int y = 0; y <= OAKHAVEN_RIVER_EDGE; y++) {
+            for (int x = 0; x < TOWN_ROAD_W; x++) {
+                blocked &= g->map.tiles[y][x] == TILE_COAST_DEEP_WATER && !map_is_walkable(&g->map, x, y);
+            }
+        }
+        ASSERT("every accessible shore tile rejects a real crossing and the full river stays continuous", blocked);
+        walk_town_road_to(g, OAKHAVEN_FERRY_X, OAKHAVEN_FERRY_Y);
+        int item = g->inventory_count;
+        g->inventory[g->inventory_count++] = item_make_health_potion();
+        action_resolve_player(g, (Action){ACTION_DROP_ITEM, item, 0});
+        ASSERT("dropped loot preserves the ferry marker", g->map.tiles[OAKHAVEN_FERRY_Y][OAKHAVEN_FERRY_X] == TILE_BROKEN_FERRY && g->floor_items[0].active);
+        ASSERT("saving on the riverbank preserves the route, discovery, loot and character", save_game(g, TOWN_ROAD_TEST_SLOT) && load_game(loaded, TOWN_ROAD_TEST_SLOT) && loaded->location == LOCATION_TOWN_ROAD && loaded->player.y == OAKHAVEN_FERRY_Y && loaded->player.hp == hp && loaded->gold == 393 && loaded->defeated_bosses == g->defeated_bosses && loaded->floor_items[0].active && loaded->floor_items[0].underlying_tile == TILE_BROKEN_FERRY && map_is_explored(&loaded->map, OAKHAVEN_FERRY_X, OAKHAVEN_FERRY_Y));
+        walk_town_road_to(loaded, OAKHAVEN_FERRY_X, TOWN_SPRITE_Y);
+        ASSERT("the saved return marker actually re-enters Oakhaven beside its north gate", loaded->location == LOCATION_TOWN && loaded->player.x == 20 && loaded->player.y == 1 && loaded->player.last_dy == 1 && loaded->gold == 393 && loaded->player.hp == hp);
+    }
+    // Restore just the new cells in an earlier V2 map, preserving surrounding state.
+    game_init(g);
+    game_enter_town_gate(g, LOCATION_TOWN, 20, 0);
+    g->map.tiles[0][20] = TILE_WALL;
+    g->map.tiles[4][19] = TILE_ITEM;
+    g->floor_item_count = 1;
+    g->floor_items[0] = (FloorItem){.active = 1, .x = 19, .y = 4, .underlying_tile = TILE_TOWN_FLOOR, .item = item_make_health_potion()};
+    map_mark_explored(&g->map, 19, 4);
+    ASSERT("an existing Oakhaven save regains only the north gate and retains nearby loot", save_game(g, TOWN_ROAD_TEST_SLOT) && load_game(loaded, TOWN_ROAD_TEST_SLOT) && loaded->map.tiles[0][20] == TILE_TOWN_EXIT && loaded->map.tiles[4][19] == TILE_ITEM && loaded->floor_items[0].active && map_is_explored(&loaded->map, 19, 4));
+    action_resolve_player(loaded, (Action){ACTION_MOVE, 20, 0});
+    ASSERT("the restored boundary gate performs real travel", loaded->location == LOCATION_TOWN_ROAD);
+    loaded->map.tiles[TOWN_SPRITE_Y][OAKHAVEN_FERRY_X] = TILE_WALL;
+    loaded->map.tiles[OAKHAVEN_FERRY_Y][OAKHAVEN_FERRY_X] = TILE_TOWN_FLOOR;
+    ASSERT("an existing exterior save regains its dry-bank marker and return entrance", save_game(loaded, TOWN_ROAD_TEST_SLOT) && load_game(g, TOWN_ROAD_TEST_SLOT) && g->map.tiles[OAKHAVEN_FERRY_Y][OAKHAVEN_FERRY_X] == TILE_BROKEN_FERRY && g->map.tiles[TOWN_SPRITE_Y][OAKHAVEN_FERRY_X] == TILE_TOWN_ROAD_ENTRY_NORTH);
+    walk_town_road_to(g, OAKHAVEN_FERRY_X, TOWN_SPRITE_Y);
+    ASSERT("a restored exterior returns through its actual town transition", g->location == LOCATION_TOWN && g->player.y == 1);
+}
+
+static void chapter_one_connections(GameState *g, GameState *loaded) {
+    TownApproach route;
+    ASSERT("Oakhaven's west road reaches Goblin Mountains", town_road_connection(LOCATION_TOWN, TOWN_SIDE_WEST, &route) && route.area == LOCATION_MOUNTAINS);
+    ASSERT("Stillbury now faces its river dock rather than Goblin Mountains", !town_road_connection(LOCATION_TOWN2, TOWN_SIDE_EAST, &route) && town_road_connection(LOCATION_TOWN2, TOWN_SIDE_SOUTH, &route) && route.area == LOCATION_RIVER_CROSSING);
+    ASSERT("Oakhaven's east road reaches Haunted Forest", town_road_connection(LOCATION_TOWN, TOWN_SIDE_EAST, &route) && route.area == LOCATION_FOREST);
+    ASSERT("Dawnmere faces the other end of Haunted Forest", town_road_connection(LOCATION_DAWNMERE, TOWN_SIDE_WEST, &route) && route.area == LOCATION_FOREST);
+    ASSERT("Oakhaven's south road reaches its local dungeon", town_road_connection(LOCATION_TOWN, TOWN_SIDE_SOUTH, &route) && route.area == LOCATION_DUNGEON);
+    ASSERT("Oakhaven's north gate visits its local bank", town_road_connection(LOCATION_TOWN, TOWN_SIDE_NORTH, &route) && route.area == LOCATION_TOWN);
+    ASSERT("Dawnmere now connects north to Saltwind while other later routes remain deferred", town_road_connection(LOCATION_DAWNMERE, TOWN_SIDE_NORTH, &route) && route.area == LOCATION_MANGROVES && !town_road_connection(LOCATION_TOWN4, TOWN_SIDE_SOUTH, &route));
+    game_init(g);
+    town_road_enter(g, LOCATION_TOWN, TOWN_SIDE_EAST, 1);
+    int blocked = 1;
+    for (int x = 0; x < TOWN_ROAD_W; x++) {
+        for (int y = 0; y <= 10; y++) {
+            blocked &= !map_is_walkable(&g->map, x, y);
+        }
+    }
+    g->player.x = TOWN_ROAD_W / 2;
+    g->player.y = 11;
+    action_resolve_player(g, (Action){ACTION_MOVE, g->player.x, 10});
+    ASSERT("a continuous river blocks the whole northern boundary and rejects a real crossing attempt", blocked && g->location == LOCATION_TOWN_ROAD && g->player.y == 11);
+    town_road_exit(TOWN_SIDE_EAST, &g->player.x, &g->player.y);
+    int x = g->player.x;
+    int y = g->player.y;
+    int item = g->inventory_count;
+    g->inventory[g->inventory_count++] = item_make_health_potion();
+    action_resolve_player(g, (Action){ACTION_DROP_ITEM, item, 0});
+    ASSERT("loot does not hide a town exterior's regional exit", g->map.tiles[y][x] == TILE_TOWN_ROAD_EXIT_EAST && g->floor_items[0].active);
+    ASSERT("fresh V2 saves keep a loot-covered exterior exit usable", save_game(g, TOWN_ROAD_TEST_SLOT) && load_game(loaded, TOWN_ROAD_TEST_SLOT) && loaded->map.tiles[y][x] == TILE_TOWN_ROAD_EXIT_EAST);
+    loaded->player.x = x - 1;
+    action_resolve_player(loaded, (Action){ACTION_MOVE, x, y});
+    ASSERT("the saved loot-covered east road actually enters Haunted Forest's approach", loaded->location == LOCATION_APPROACH && approach_route(loaded)->area == LOCATION_FOREST);
+
+}
+
 static int rewrite_road_save(GameState *g, int version, int town) {
     if (!save_game(g, TOWN_ROAD_TEST_SLOT)) {
         return 0;
@@ -60,14 +149,20 @@ void test_town_roads(void) {
         free(loaded);
         return;
     }
+    chapter_one_connections(g, loaded);
+    riverbank_round_trips(g, loaded);
     const Location towns[TOWN_ROAD_COUNT] = {LOCATION_TOWN, LOCATION_TOWN2, LOCATION_TOWN3, LOCATION_TOWN4, LOCATION_DAWNMERE};
     for (int town = 0; town < TOWN_ROAD_COUNT; town++) {
         for (int side = 0; side < 4; side++) {
             TownApproach connection;
             game_init(g);
+            g->dawnmere_liberated = 1;
             if (!town_road_connection(towns[town], side, &connection)) {
                 ASSERT("unconnected sides cannot create a town road or reopen a closed gate", !town_road_enter(g, towns[town], side, 0) && g->location == LOCATION_TOWN);
                 continue;
+            }
+            if (connection.area == LOCATION_TOWN) {
+                continue; // The local bank has a dedicated round-trip test below.
             }
             g->gold = 393;
             g->score = 1234;
@@ -93,7 +188,8 @@ void test_town_roads(void) {
             ASSERT("leaving any interior gate returns outside the matching side of the town", loaded->location == LOCATION_TOWN_ROAD && loaded->road_town == towns[town] && abs(loaded->player.x - x) + abs(loaded->player.y - y) == 1 && loaded->map.tiles[y][x] == TILE_TOWN_ROAD_ENTRY_NORTH + side);
             town_road_exit(side, &x, &y);
             walk_town_road_to(loaded, x, y);
-            ASSERT("the regional exit resumes the correct approach or Crown Road", loaded->location == (connection.area == LOCATION_MANGROVES ? LOCATION_MANGROVE_PATH : connection.area == LOCATION_CROWNROAD || connection.area == LOCATION_CROWNROAD_WEST ? connection.area : LOCATION_APPROACH) && (loaded->location != LOCATION_APPROACH || (approach_route(loaded)->town == towns[town] && approach_route(loaded)->area == connection.area)));
+            int bridge = towns[town] == LOCATION_TOWN2 && connection.area == LOCATION_GIANTS_CROWN;
+            ASSERT("the regional exit resumes the correct approach or Crown Road", loaded->location == (connection.area == LOCATION_RIVER_CROSSING ? LOCATION_RIVER_CROSSING : connection.area == LOCATION_MANGROVES ? LOCATION_MANGROVE_PATH : connection.area == LOCATION_CROWNROAD || connection.area == LOCATION_CROWNROAD_WEST ? connection.area : LOCATION_APPROACH) && (loaded->location != LOCATION_APPROACH || (approach_route(loaded)->area == connection.area && (bridge ? approach_bridge_road(loaded) : approach_route(loaded)->town == towns[town]))));
             for (int offset = -3; offset <= 3; offset += 6) {
                 town_road_enter(g, towns[town], side, 0);
                 town_road_entrance(side, &x, &y);
@@ -107,7 +203,7 @@ void test_town_roads(void) {
             }
             for (int onward = 0; onward < 4; onward++) {
                 TownApproach next;
-                if (onward == side || !town_road_connection(towns[town], onward, &next)) {
+                if (onward == side || !town_road_connection(towns[town], onward, &next) || next.area == LOCATION_TOWN) {
                     continue;
                 }
                 town_road_enter(g, towns[town], side, 0);
@@ -120,7 +216,7 @@ void test_town_roads(void) {
                 int hp = g->player.hp;
                 town_road_exit(onward, &x, &y);
                 walk_town_road_to(g, x, y);
-                ASSERT("the signed road bypasses town to every other connected direction", g->location == (next.area == LOCATION_MANGROVES ? LOCATION_MANGROVE_PATH : next.area == LOCATION_CROWNROAD || next.area == LOCATION_CROWNROAD_WEST ? next.area : LOCATION_APPROACH) && (g->location != LOCATION_APPROACH || approach_route(g)->area == next.area));
+                ASSERT("the signed road bypasses town to every other connected direction", g->location == (next.area == LOCATION_RIVER_CROSSING ? LOCATION_RIVER_CROSSING : next.area == LOCATION_MANGROVES ? LOCATION_MANGROVE_PATH : next.area == LOCATION_CROWNROAD || next.area == LOCATION_CROWNROAD_WEST ? next.area : LOCATION_APPROACH) && (g->location != LOCATION_APPROACH || approach_route(g)->area == next.area));
                 ASSERT("bypassing town neither starts combat nor changes character, dungeon or quest progress", g->player.hp == hp && g->gold == 393 && g->score == 1234 && g->elowen_seals_restored == 3 && g->level_cache[1].enemies[0].hp == 7 && !g->defeated_bosses);
             }
         }
@@ -132,7 +228,7 @@ void test_town_roads(void) {
     town_road_exit(TOWN_SIDE_EAST, &x, &y);
     walk_town_road_to(g, x, y);
     ASSERT("bypassing Oakhaven does not unlock the Lich road", g->location == LOCATION_APPROACH && !approach_dungeon_town_exit(g, &x, &y));
-    for (int town = 0; town < TOWN_ROAD_COUNT; town++) {
+    for (int town = 1; town < TOWN_ROAD_COUNT; town++) {
         game_init(g);
         game_enter_town_gate(g, towns[town], 0, 12);
         g->gold = 393;

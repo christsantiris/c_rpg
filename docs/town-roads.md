@@ -1,6 +1,17 @@
 # Towns beside the regional roads
 
-All five towns have dense medieval settlement sprites and safe, signed roads leading to them.
+Oakhaven has a safe riverbank visit through its north gate as well as its three Act 1 adventure roads.
+The north gate leads to the **south bank of Northern Rapids**, where a broken
+ferry landing, snapped rope and damaged boat mark an impassable river. Walk
+south along the short path to return through Oakhaven's north gate. Boss
+victories never open this crossing. The actual river tiles remain blocked
+across the entire northern boundary. The README's [final atlas](world-map.png)
+shows this local dead end. Act 3 adds occupied Dawnmere, its northern marsh waterfront and the opposite-bank
+town of Stillbury. Other later connections remain provisional.
+
+All five towns have dense medieval settlement sprites and signed roads leading to them.
+Dawnmere contains a persistent occupation encounter until liberated; wanted
+Stillbury has a checkpoint. Their exteriors remain usable retreats.
 Players arriving from a regional approach or Crown Road can enter town or walk
 around it across open grass to another connection; there is no paved ring road. Bypassing town does not visit shops, accept
 quests, heal the player or unlock regional boss roads.
@@ -16,22 +27,29 @@ continuations, without a second gate. Streets and services inside all five towns
 
 | Town | North | East | South | West |
 | --- | --- | --- | --- | --- |
-| Oakhaven | Elderwood / Catacombs / Castle road | Dungeon / Dawnmere road | Sunken Coast | Haunted Forest / Stillbury road |
-| Stillbury | Swamp / Rosemoor road | Haunted Forest / Oakhaven road | Stonewake Quarry | Sunscar Wastes |
+| Oakhaven | Northern Rapids / broken ferry (dead end) | Haunted Forest | Oakhaven Dungeon | Goblin Mountains |
+| Stillbury | Deferred | Deferred | River dock / Saltwind | Deferred |
 | Rosemoor | Frostfell Wastes | Crown Road East / Castle | Swamp / Stillbury road | Ashen Hollow |
 | Ridgeshire | Dragonspine | Ironfang Mines | Mountains / Dawnmere road | Crown Road West / Castle |
-| Dawnmere | Mountains / Ridgeshire road | Stormwatch Headland | Saltwind Marsh | Dungeon / Oakhaven road |
+| Dawnmere | Saltwind Marsh (town gate after liberation; outskirts always) | Deferred | Closed | Haunted Forest / Oakhaven |
 
 The Lich King, Necromancer, Swamp Demon and Goblin King still control their
 regional through roads. Town bypasses connect their existing approaches and
 never cross a locked regional road. Enemy adventures retain their depth,
 encounters, quests and entrance behavior. The castle retains its own grounds.
 
-New characters still start in Oakhaven. Return to Town uses the last town
-actually entered. Passing around a town leaves that destination unchanged.
+New characters still start in Oakhaven. Return to Town uses the last safe town
+actually entered. Occupied Dawnmere and wanted Stillbury do not become anchors;
+liberated Dawnmere becomes one. Passing around a town leaves that destination unchanged.
 Return portals preserve their expedition anchors and physical entrance towns. Narrative
 arrivals, including Tomas's escape-tunnel return, retain their existing events.
 Physical travel along the regional roads uses the new town exteriors.
+
+The Goblin Mountains' western road continues past its pass onto the Sunscar
+road, which ends at the wastes' pyramid entrance. It no longer passes through
+Stillbury. The continuation beyond Sunscar and the remaining
+Stillbury/Act 4 connections will be designed separately. Legacy service and
+region descriptions below record earlier releases, rather than new V2 routes.
 
 ## Saves and artwork
 
@@ -58,9 +76,11 @@ default to normal locks; loading them through the launcher enables the override.
 Artwork uses the established pixelkit textures, timber framing, tiled roofs,
 stonework and doorway details at native resolution. A rounded curtain wall,
 projecting towers and clustered houses follow the user's medieval hill-town
-reference. See the [five-town sprite comparison and renderer previews](art-sources/town-exteriors/README.md).
+reference.
 
-The northern Oakhaven road has two independent boss gates: Elderthorn and the Grave Marshal. Both apply equally from the castle side; see [boss gates](boss-gates.md).
+The former northern through road from Oakhaven is disconnected in V2. Its
+legacy Elderthorn and Grave Marshal gates remain part of later-region code;
+see [boss gates](boss-gates.md). They do not create a crossing at the rapids.
 See [Elderwood](elderwood-forest.md) for travel and save migration details.
 
 Save version 189 retires Pirate Coast and Corvin's treasure quest. Saves from
@@ -94,8 +114,6 @@ Dropped items keep their correct ground beneath them, including items on the
 new path, and exploration, quests and return portals survive. Saves inside the
 shop retain the interior, player position and dialogue. Regression tests walk
 through all five resident buildings and cover version 192's broken merchant.
-See the [renderer captures](art-sources/saltwind/README.md) and
-[atlas acceptance checks](art-sources/world-map/README.md).
 
 Save version 192 restores Glassdeep Caverns south of Stillbury and
 [Saltwind Marsh](saltwind-marsh.md) south of Dawnmere. The marsh retains all five

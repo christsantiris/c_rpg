@@ -8,6 +8,7 @@
 #include "../game/landscapes.h"
 #include "../game/castle.h"
 #include "../game/approach.h"
+#include "../game/town_road.h"
 #include "sprites.h"
 #include "world_props.h"
 #include "info_panel.h"
@@ -142,6 +143,11 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         title = floor_name;
         line1 = "WALK INTO THE TOWN TO VISIT";
         line2 = "FOLLOW THE ROAD TO CONTINUE";
+        if (g->road_town == LOCATION_TOWN && g->player.y < TOWN_SPRITE_Y) {
+            title = "NORTHERN RAPIDS";
+            line1 = "BROKEN FERRY - NO CROSSING";
+            line2 = "FOLLOW SOUTH PATH TO OAKHAVEN";
+        }
     } else if (g->location == LOCATION_APPROACH) {
         const TownApproach *route = approach_route(g);
         snprintf(floor_name, sizeof(floor_name), "%s APPROACH", route ? approach_area_name(route->area) : "AREA");
@@ -159,12 +165,19 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             line2 = "SWAMP ENTRANCE: ALWAYS LEVEL 1";
         }
         if (approach_forest_town_exit(g, &x, &y)) {
-            line1 = "WEST: STILLBURY / EAST: OAKHAVEN";
+            line1 = "WEST: OAKHAVEN / EAST: DAWNMERE";
             line2 = "FOREST ENTRANCE: ALWAYS LEVEL 1";
         }
         if (approach_mountain_town_exit(g, &x, &y)) {
-            line1 = "NORTH: RIDGESHIRE / SOUTH: DAWNMERE";
+            line1 = "WEST: SUNSCAR / EAST: OAKHAVEN";
             line2 = "MOUNTAIN ENTRANCE: ALWAYS LEVEL 1";
+        }
+        if (approach_sunscar_road(g)) {
+            line1 = "WEST: SUNSCAR / NORTH: GIANT'S PEAKS";
+            line2 = "TURN BACK FOR THE GOBLIN MOUNTAINS";
+        }
+        if (approach_peaks_road(g)) {
+            line2 = "TURN BACK FOR THE SUNSCAR ROAD";
         }
         if (approach_shortcut_exit(g, &x, &y)) {
             line1 = "STRAIGHT: AREA / LEFT: NEXT TOWN";
@@ -177,7 +190,7 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         }
         if (northern_approach(g)) {
             title = "NORTHERN ROAD";
-            line1 = "NORTH: CASTLE / SOUTH: OAKHAVEN";
+            line1 = "NORTH: CASTLE / SOUTH: RAPIDS";
             snprintf(status, sizeof(status), "ELDERWOOD: %s / CATACOMBS: %s",
                 boss_gate_open(g, LOCATION_ELDERWOOD) ? "OPEN" : "CLOSED",
                 boss_gate_open(g, LOCATION_CATACOMBS) ? "OPEN" : "CLOSED");

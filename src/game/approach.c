@@ -1,3 +1,4 @@
+#include "western_arc.h"
 #include "giants_crown.h"
 #include "ironfang.h"
 #include "approach.h"
@@ -6,33 +7,39 @@
 #include "stormwatch.h"
 #include "coastal_travel.h"
 #include "boss_gates.h"
+#include "town_road.h"
 #include <stdlib.h>
 #include <string.h>
 
 // Save files store these indices. Append new routes without reordering them.
 const TownApproach town_approaches[] = {
-    {LOCATION_TOWN, LOCATION_FOREST, 0, 12},
-    {LOCATION_TOWN, LOCATION_DUNGEON, TOWN_W - 1, 12},
-    // Route 2 moved from Oakhaven to Dawnmere; version 171 migrates old saves.
-    {LOCATION_DAWNMERE, LOCATION_MOUNTAINS, 20, 0},
-    {LOCATION_TOWN, LOCATION_COAST, 20, TOWN_H - 1},
-    {LOCATION_TOWN2, LOCATION_FOREST, TOWN_W - 1, 12},
-    {LOCATION_TOWN2, LOCATION_SWAMP, 20, 0},
-    {LOCATION_TOWN2, LOCATION_DESERT, 0, 12},
-    {LOCATION_TOWN2, LOCATION_GLASSDEEP, SOUTH_AREA_GATE_X, TOWN_H - 1},
+    {LOCATION_TOWN, LOCATION_FOREST, TOWN_W - 1, 12},
+    {LOCATION_TOWN, LOCATION_DUNGEON, 20, TOWN_H - 1},
+    {LOCATION_TOWN, LOCATION_MOUNTAINS, 0, 12},
+    {LOCATION_TOWN, LOCATION_COAST, 20, TOWN_H - 1, 1},
+    {LOCATION_DAWNMERE, LOCATION_FOREST, 0, 12},
+    {LOCATION_TOWN2, LOCATION_SWAMP, 20, 0, 1},
+    {LOCATION_TOWN2, LOCATION_DESERT, 0, 12, 1},
+    {LOCATION_TOWN2, LOCATION_GLASSDEEP, SOUTH_AREA_GATE_X, TOWN_H - 1, 1},
     {LOCATION_TOWN3, LOCATION_FROSTFELL, 20, 0},
-    {LOCATION_TOWN3, LOCATION_SWAMP, 20, TOWN_H - 1},
+    {LOCATION_TOWN3, LOCATION_SWAMP, 20, TOWN_H - 1, 1},
     {-1, -1, 0, 0}, // Retired garden route; saved indices remain stable.
-    {LOCATION_TOWN4, LOCATION_MOUNTAINS, 20, TOWN_H - 1},
+    {LOCATION_TOWN2, LOCATION_MOUNTAINS, TOWN_W - 1, 12, 1},
     {LOCATION_TOWN4, LOCATION_DRAGONSPINE, RIDGESHIRE_DRAGON_GATE_X, 0},
     {LOCATION_CASTLE, LOCATION_ASHEN, CASTLE_ASHEN_GATE_X, 0},
     {LOCATION_CASTLE, LOCATION_CATACOMBS, CROWNROAD_X, TOWN_H - 1},
-    {LOCATION_DAWNMERE, LOCATION_DUNGEON, 0, 12},
-    {LOCATION_TOWN, LOCATION_ELDERWOOD, 20, 0},
+    {-1, -1, 0, 0}, // The dungeon is now local to Oakhaven.
+    {-1, -1, 0, 0}, // Northern rapids have no crossing here.
     {-1, -1, 0, 0}, // Retired coastal route 17.
-    {LOCATION_DAWNMERE, LOCATION_STORMWATCH, TOWN_W - 1, 12},
+    {LOCATION_DAWNMERE, LOCATION_STORMWATCH, TOWN_W - 1, 12, 1},
     {LOCATION_TOWN4, LOCATION_IRONFANG, TOWN_W - 1, 12},
-    {LOCATION_TOWN3, LOCATION_GIANTS_CROWN, 0, ROSEMOOR_ASHEN_GATE_Y}
+    {LOCATION_TOWN3, LOCATION_GIANTS_CROWN, 0, ROSEMOOR_ASHEN_GATE_Y, 1},
+    // The Sunscar road starts at the Goblin Mountains pass rather than a town gate.
+    {LOCATION_TOWN, LOCATION_DESERT, 0, 12, 1},
+    // The Giant's Peaks road runs north from the Sunscar road's junction.
+    {LOCATION_TOWN, LOCATION_GIANTS_CROWN, 20, 0, 1},
+    // Northern end of the five-stage pass, reached across Giant's Bridge from Stillbury.
+    {LOCATION_TOWN2, LOCATION_GIANTS_CROWN, 0, 12, 1}
 };
 
 // Serialized route 17 remains reserved.
@@ -60,6 +67,7 @@ const char *approach_area_name(Location area) {
         case LOCATION_DRAGONSPINE: return "DRAGONSPINE";
         case LOCATION_FROSTFELL: return "FROSTFELL WASTES";
         case LOCATION_DESERT: return "SUNSCAR WASTES";
+        case LOCATION_RIVER_CROSSING: return "RIVER DOCK / SALTWIND";
         case LOCATION_ASHEN: return "ASHEN HOLLOW";
         case LOCATION_GLASSDEEP: return "STONEWAKE QUARRY";
         case LOCATION_CATACOMBS: return "ROYAL CATACOMBS";
@@ -68,6 +76,43 @@ const char *approach_area_name(Location area) {
         case LOCATION_CROWNROAD_WEST: return "CROWN ROAD WEST";
         default: return "AREA";
     }
+}
+
+int approach_sunscar_road(const GameState *g) {
+    return g->location == LOCATION_APPROACH && g->approach_route == APPROACH_SUNSCAR_ROAD;
+}
+
+int approach_peaks_road(const GameState *g) {
+    return g->location == LOCATION_APPROACH && g->approach_route == APPROACH_PEAKS_ROAD;
+}
+
+const char *approach_origin_name(const TownApproach *route) {
+    if (route == &town_approaches[APPROACH_PEAKS_ROAD]) {
+        return "SUNSCAR WASTES";
+    }
+    return route == &town_approaches[APPROACH_SUNSCAR_ROAD] ? "GOBLIN MOUNTAINS" : approach_town_name(route->town);
+}
+
+int approach_peaks_exit(const GameState *g, int *x, int *y) {
+    if (!approach_sunscar_road(g)) {
+        return 0;
+    }
+    *x = APPROACH_PEAKS_BRANCH_X;
+    *y = 0;
+    return 1;
+}
+
+int approach_bridge_road(const GameState *g) {
+    return g->location == LOCATION_APPROACH && g->approach_route == APPROACH_PEAKS_NORTH_ROAD;
+}
+
+int approach_bridge_exit(const GameState *g, int *x, int *y) {
+    if (!approach_bridge_road(g)) {
+        return 0;
+    }
+    *x = APPROACH_W - 1;
+    *y = APPROACH_BRIDGE_EXIT_Y;
+    return 1;
 }
 
 const char *approach_town_name(Location town) {
@@ -130,7 +175,7 @@ TileType approach_scenery(Location area, int progress) {
         case LOCATION_ELDERWOOD:
         case LOCATION_CATACOMBS: return TILE_ELDERWOOD_WALL;
         case LOCATION_FROSTFELL: return progress < 65 ? TILE_ELDERWOOD_WALL : TILE_FROST_WALL;
-        case LOCATION_DESERT: return progress < 30 ? TILE_ELDERWOOD_WALL : TILE_DESERT_WALL;
+        case LOCATION_DESERT: return progress < 30 ? TILE_MOUNTAIN_WALL : TILE_DESERT_WALL;
         case LOCATION_ASHEN: return progress < 30 ? TILE_ELDERWOOD_WALL : progress < 65 ? TILE_FOREST_WALL : TILE_ASHEN_WALL;
         default: return TILE_WALL;
     }
@@ -175,8 +220,8 @@ static int scenery_grows(const Map *map, Location area, int x, int y) {
 
 static TileType scenery_at(const Map *map, Location area, int x, int y) {
     int progress = approach_progress(map, x, y);
-    if (area == LOCATION_FROSTFELL) {
-        // The woods end in one ragged tree line where the frozen ground begins.
+    if (area == LOCATION_FROSTFELL || area == LOCATION_DESERT) {
+        // The woods end in one ragged tree line where the frozen ground begins, and mountain rock in one ragged edge at the sandstone.
         int vertical = map->stairs_up_y == 0 || map->stairs_up_y == APPROACH_H - 1;
         progress = road_distance(map, x, y) + (int)(scenery_noise(vertical ? x / 3 : 0, vertical ? 0 : y / 3) % 17u) - 8;
     }
@@ -297,67 +342,8 @@ void approach_migrate_scenery(GameState *g) {
 
 void approach_refresh_dungeon(GameState *g) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_DUNGEON) {
-        return;
-    }
-    int tx = g->map.stairs_up_x;
-    int ty = g->map.stairs_up_y;
-    int dx = route->gate_x == 0 ? -1 : 1;
-    g->map.stairs_down_x = tx + APPROACH_LENGTH * dx;
-    g->map.stairs_down_y = ty - 2;
-    for (int y = 0; y < MAP_H; y++) {
-        for (int x = 0; x < MAP_W; x++) {
-            g->map.tiles[y][x] = x > 0 && x < APPROACH_W - 1 && y > 0 && y < APPROACH_H - 1 ? TILE_TOWN_FLOOR : TILE_WALL;
-        }
-    }
-    int other_x;
-    int other_y;
-    int road_open = approach_dungeon_town_exit(g, &other_x, &other_y);
-    if (!road_open) {
-        for (int step = 0; step <= APPROACH_LENGTH; step++) {
-            g->map.tiles[ty][tx + step * dx] = TILE_TOWN_PATH;
-        }
-    }
-    // The crypt faces south, above the straight road between the town gates.
-    for (int row = -2; row <= 0; row++) {
-        for (int side = -1; side <= 1; side++) {
-            if (row < 0 || side != 0) {
-                int x = g->map.stairs_down_x + side;
-                int y = g->map.stairs_down_y + row;
-                g->map.tiles[y][x] = TILE_WALL;
-            }
-        }
-    }
-    if (road_open) {
-        for (int x = 1; x < APPROACH_W - 1; x++) {
-            g->map.tiles[ty][x] = TILE_TOWN_PATH;
-        }
-        g->map.tiles[other_y][other_x] = TILE_APPROACH_DUNGEON_TOWN;
-    }
-    g->map.tiles[ty - 1][g->map.stairs_down_x] = TILE_TOWN_PATH;
-    g->map.tiles[ty][tx] = TILE_APPROACH_TOWN;
-    g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] = TILE_APPROACH_AREA;
-    approach_grow_scenery(&g->map, route->area);
-    if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
-        g->player.x = g->map.stairs_down_x;
-        g->player.y = ty;
-        map_mark_explored(&g->map, g->player.x, g->player.y);
-    }
-    for (int i = 0; i < g->floor_item_count; i++) {
-        FloorItem *item = &g->floor_items[i];
-        if (item->active) {
-            if (!map_is_walkable(&g->map, item->x, item->y)) {
-                item->x = g->map.stairs_down_x;
-                item->y = ty;
-            }
-            item->underlying_tile = g->map.tiles[item->y][item->x];
-        }
-    }
-    for (int i = 0; i < g->floor_item_count; i++) {
-        FloorItem *item = &g->floor_items[i];
-        if (item->active) {
-            g->map.tiles[item->y][item->x] = TILE_ITEM;
-        }
+    if (route && route->area == LOCATION_DUNGEON) {
+        approach_refresh_entrance(g);
     }
 }
 
@@ -366,7 +352,7 @@ int approach_forest_town_exit(const GameState *g, int *x, int *y) {
     if (!route || route->area != LOCATION_FOREST || !boss_gate_open(g, LOCATION_FOREST)) {
         return 0;
     }
-    *x = route->town == LOCATION_TOWN ? 0 : APPROACH_W - 1;
+    *x = route->town == LOCATION_TOWN ? APPROACH_W - 1 : 0;
     *y = APPROACH_H / 2;
     return 1;
 }
@@ -376,7 +362,7 @@ void approach_refresh_forest(GameState *g) {
     if (!route || route->area != LOCATION_FOREST) {
         return;
     }
-    int tx = route->town == LOCATION_TOWN ? APPROACH_W - 1 : 0;
+    int tx = route->town == LOCATION_TOWN ? 0 : APPROACH_W - 1;
     int ty = APPROACH_H / 2;
     int door_x = APPROACH_W / 2;
     int door_y = ty - 2;
@@ -392,7 +378,7 @@ void approach_refresh_forest(GameState *g) {
     int ox;
     int oy;
     int open = approach_forest_town_exit(g, &ox, &oy);
-    int from = open || tx == 0 ? 1 : APPROACH_LABYRINTH_X;
+    int from = open || tx == 0 ? 1 : door_x;
     int to = open || tx != 0 ? APPROACH_W - 2 : door_x;
     for (int x = from; x <= to; x++) {
         g->map.tiles[ty][x] = TILE_TOWN_PATH;
@@ -405,14 +391,6 @@ void approach_refresh_forest(GameState *g) {
     }
     g->map.tiles[door_y + 1][door_x] = TILE_TOWN_PATH;
     g->map.tiles[door_y][door_x] = TILE_APPROACH_AREA;
-    // The labyrinth shares this road; Rook's quest controls its sealed/open gate.
-    for (int y = APPROACH_LABYRINTH_Y - 2; y <= APPROACH_LABYRINTH_Y; y++) {
-        for (int x = APPROACH_LABYRINTH_X - 1; x <= APPROACH_LABYRINTH_X + 1; x++) {
-            g->map.tiles[y][x] = TILE_WALL;
-        }
-    }
-    g->map.tiles[APPROACH_LABYRINTH_Y + 1][APPROACH_LABYRINTH_X] = TILE_TOWN_PATH;
-    g->map.tiles[APPROACH_LABYRINTH_Y][APPROACH_LABYRINTH_X] = TILE_LABYRINTH_ENTRANCE;
     g->map.tiles[ty][tx] = TILE_APPROACH_TOWN;
     if (open) {
         g->map.tiles[oy][ox] = TILE_APPROACH_DUNGEON_TOWN;
@@ -435,9 +413,46 @@ void approach_refresh_forest(GameState *g) {
     }
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *item = &g->floor_items[i];
-        if (item->active) {
+        if (item->active && !map_is_travel_tile(g->map.tiles[item->y][item->x])) {
             g->map.tiles[item->y][item->x] = TILE_ITEM;
         }
+    }
+}
+
+void approach_retire_labyrinth(GameState *g) {
+    const TownApproach *route = approach_route(g);
+    if (!route || route->area != LOCATION_FOREST) {
+        return;
+    }
+    int entrance = g->map.tiles[APPROACH_LABYRINTH_Y][APPROACH_LABYRINTH_X] == TILE_LABYRINTH_ENTRANCE;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        const FloorItem *item = &g->floor_items[i];
+        entrance |= item->active && item->underlying_tile == TILE_LABYRINTH_ENTRANCE;
+    }
+    if (!entrance) {
+        return;
+    }
+    // Repair only the retired landmark and spur; leave the rest of the saved road intact.
+    for (int y = APPROACH_LABYRINTH_Y - 2; y <= APPROACH_LABYRINTH_Y; y++) {
+        for (int x = APPROACH_LABYRINTH_X - 1; x <= APPROACH_LABYRINTH_X + 1; x++) {
+            g->map.tiles[y][x] = y < APPROACH_LABYRINTH_Y ? TILE_FOREST_WALL : TILE_TOWN_FLOOR;
+        }
+    }
+    g->map.tiles[APPROACH_LABYRINTH_Y + 1][APPROACH_LABYRINTH_X] = TILE_TOWN_FLOOR;
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        int footprint = abs(item->x - APPROACH_LABYRINTH_X) <= 1 && item->y >= APPROACH_LABYRINTH_Y - 2 && item->y <= APPROACH_LABYRINTH_Y;
+        int spur = item->x == APPROACH_LABYRINTH_X && item->y == APPROACH_LABYRINTH_Y + 1;
+        if (!item->active || (!footprint && !spur)) {
+            continue;
+        }
+        item->underlying_tile = TILE_TOWN_FLOOR;
+        if (item->y < APPROACH_LABYRINTH_Y) {
+            item->x = g->map.stairs_down_x;
+            item->y = g->map.stairs_up_y;
+            item->underlying_tile = TILE_TOWN_PATH;
+        }
+        g->map.tiles[item->y][item->x] = TILE_ITEM;
     }
 }
 
@@ -446,70 +461,15 @@ int approach_mountain_town_exit(const GameState *g, int *x, int *y) {
     if (!route || route->area != LOCATION_MOUNTAINS || !boss_gate_open(g, LOCATION_MOUNTAINS)) {
         return 0;
     }
-    *x = APPROACH_W / 2;
-    *y = route->town == LOCATION_DAWNMERE ? 0 : APPROACH_H - 1;
+    *x = route->town == LOCATION_TOWN ? 0 : APPROACH_W - 1;
+    *y = APPROACH_H / 2;
     return 1;
 }
 
 void approach_refresh_mountains(GameState *g) {
     const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_MOUNTAINS) {
-        return;
-    }
-    int tx = APPROACH_W / 2;
-    int ty = route->town == LOCATION_DAWNMERE ? APPROACH_H - 1 : 0;
-    int dy = ty ? -1 : 1;
-    int junction = APPROACH_H / 2;
-    g->map.stairs_up_x = tx;
-    g->map.stairs_up_y = ty;
-    g->map.stairs_down_x = tx + 6;
-    g->map.stairs_down_y = junction - 1;
-    for (int y = 0; y < MAP_H; y++) {
-        for (int x = 0; x < MAP_W; x++) {
-            g->map.tiles[y][x] = x > 0 && x < APPROACH_W - 1 && y > 0 && y < APPROACH_H - 1 ? TILE_TOWN_FLOOR : TILE_WALL;
-        }
-    }
-    int ox;
-    int oy;
-    int open = approach_mountain_town_exit(g, &ox, &oy);
-    for (int step = 1; step < (open ? APPROACH_H - 1 : (ty > junction ? ty - junction : junction - ty) + 1); step++) {
-        g->map.tiles[ty + step * dy][tx] = TILE_TOWN_PATH;
-    }
-    for (int x = tx + 1; x <= g->map.stairs_down_x; x++) {
-        g->map.tiles[junction][x] = TILE_TOWN_PATH;
-    }
-    // The cave faces south; its sandstone spires stand east of the through road.
-    for (int row = 1 - APPROACH_MOUNTAIN_ROWS; row <= 0; row++) {
-        int radius = row < -6 ? 1 : row < -4 ? 2 : 3;
-        for (int side = -radius; side <= radius; side++) {
-            g->map.tiles[g->map.stairs_down_y + row][g->map.stairs_down_x + side] = TILE_WALL;
-        }
-    }
-    g->map.tiles[ty][tx] = TILE_APPROACH_TOWN;
-    g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] = TILE_APPROACH_AREA;
-    if (open) {
-        g->map.tiles[oy][ox] = TILE_APPROACH_DUNGEON_TOWN;
-    }
-    approach_grow_scenery(&g->map, route->area);
-    if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
-        g->player.x = tx;
-        g->player.y = junction;
-    }
-    for (int i = 0; i < g->floor_item_count; i++) {
-        FloorItem *item = &g->floor_items[i];
-        if (item->active) {
-            if (!map_is_walkable(&g->map, item->x, item->y)) {
-                item->x = tx;
-                item->y = junction;
-            }
-            item->underlying_tile = g->map.tiles[item->y][item->x];
-        }
-    }
-    for (int i = 0; i < g->floor_item_count; i++) {
-        FloorItem *item = &g->floor_items[i];
-        if (item->active) {
-            g->map.tiles[item->y][item->x] = TILE_ITEM;
-        }
+    if (route && route->area == LOCATION_MOUNTAINS) {
+        approach_refresh_entrance(g);
     }
 }
 
@@ -579,15 +539,17 @@ void approach_refresh_swamp(GameState *g) {
     }
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *item = &g->floor_items[i];
-        if (item->active) {
+        if (item->active && !map_is_travel_tile(g->map.tiles[item->y][item->x])) {
             g->map.tiles[item->y][item->x] = TILE_ITEM;
         }
     }
 }
 
-// Dead-end areas with a walk-in entrance sprite; 0 keeps the older approach style.
+// Walk-in entrance sprites, including the landmark beside the mountain through-road.
 int approach_entrance_rows(Location area) {
     switch (area) {
+        case LOCATION_DUNGEON: return 3;
+        case LOCATION_MOUNTAINS: return APPROACH_MOUNTAIN_ROWS;
         case LOCATION_DRAGONSPINE:
         case LOCATION_ASHEN: return 9;
         case LOCATION_COAST:
@@ -613,7 +575,63 @@ TileType approach_coast_ground(int x, int y) {
     return TILE_TOWN_FLOOR;
 }
 
+static void refresh_bridge_road(GameState *g) {
+    // The crossing is free; the Jarl controls passage through the Peaks beyond it.
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            TileType tile = x > 0 && x < APPROACH_W - 1 && y > 0 && y < APPROACH_H - 1 ? TILE_TOWN_FLOOR : TILE_WALL;
+            if (x < APPROACH_W && y >= 8 && y <= 16) {
+                tile = TILE_COAST_DEEP_WATER;
+                if (abs(x - APPROACH_BRIDGE_X) <= 2) {
+                    tile = abs(x - APPROACH_BRIDGE_X) == 2 ? TILE_GIANTS_WALL : TILE_GIANTS_PAVING;
+                }
+            }
+            if (x == APPROACH_BRIDGE_X && y >= APPROACH_BRIDGE_EXIT_Y && y < APPROACH_H) {
+                tile = y >= 8 && y <= 16 ? TILE_GIANTS_PAVING : TILE_TOWN_PATH;
+            }
+            if (y == APPROACH_BRIDGE_EXIT_Y && x >= APPROACH_BRIDGE_X && x < APPROACH_W) {
+                tile = TILE_TOWN_PATH;
+            }
+            g->map.tiles[y][x] = tile;
+        }
+    }
+    g->map.stairs_up_x = APPROACH_W - 1;
+    g->map.stairs_up_y = APPROACH_BRIDGE_EXIT_Y;
+    g->map.stairs_down_x = APPROACH_BRIDGE_X;
+    g->map.stairs_down_y = APPROACH_H - 1;
+    g->map.tiles[APPROACH_BRIDGE_EXIT_Y][APPROACH_W - 1] = TILE_APPROACH_TOWN;
+    g->map.tiles[APPROACH_H - 1][APPROACH_BRIDGE_X] = TILE_APPROACH_AREA;
+    approach_grow_scenery(&g->map, LOCATION_GIANTS_CROWN);
+    g->map.tiles[APPROACH_H - 3][APPROACH_BRIDGE_X - 2] = TILE_GIANTS_COLUMN;
+    g->map.tiles[APPROACH_H - 3][APPROACH_BRIDGE_X + 2] = TILE_GIANTS_COLUMN;
+    if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
+        g->player.x = APPROACH_BRIDGE_X;
+        g->player.y = APPROACH_H - 2;
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (!item->active) {
+            continue;
+        }
+        if (!map_is_walkable(&g->map, item->x, item->y)) {
+            item->x = APPROACH_BRIDGE_X;
+            item->y = APPROACH_H - 2;
+        }
+        item->underlying_tile = g->map.tiles[item->y][item->x];
+    }
+    for (int i = 0; i < g->floor_item_count; i++) {
+        FloorItem *item = &g->floor_items[i];
+        if (item->active && !map_is_travel_tile(g->map.tiles[item->y][item->x])) {
+            g->map.tiles[item->y][item->x] = TILE_ITEM;
+        }
+    }
+}
+
 void approach_refresh_entrance(GameState *g) {
+    if (approach_bridge_road(g)) {
+        refresh_bridge_road(g);
+        return;
+    }
     if (northern_approach(g)) {
         return;
     }
@@ -657,12 +675,30 @@ void approach_refresh_entrance(GameState *g) {
     }
     // The landmark faces south; only its doorway can be entered.
     for (int row = 1 - rows; row <= 0; row++) {
-        for (int side = -3; side <= 3; side++) {
+        int radius = 3;
+        if (route->area == LOCATION_DUNGEON) {
+            radius = 1;
+        } else if (route->area == LOCATION_MOUNTAINS) {
+            radius = row < -6 ? 1 : row < -4 ? 2 : 3;
+        }
+        for (int side = -radius; side <= radius; side++) {
             g->map.tiles[g->map.stairs_down_y + row][g->map.stairs_down_x + side] = TILE_WALL;
         }
     }
     g->map.tiles[ty][tx] = TILE_APPROACH_TOWN;
     g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] = TILE_APPROACH_AREA;
+    int bx;
+    int by;
+    if (approach_peaks_exit(g, &bx, &by)) {
+        // The desert road passes the pyramid, then turns north toward the Peaks.
+        for (int col = bx; col <= jx; col++) {
+            g->map.tiles[jy][col] = TILE_TOWN_PATH;
+        }
+        for (int row = by + 1; row < jy; row++) {
+            g->map.tiles[row][bx] = TILE_TOWN_PATH;
+        }
+        g->map.tiles[by][bx] = TILE_APPROACH_DUNGEON_TOWN;
+    }
     if (approach_scenery(route->area, 100) != TILE_WALL) {
         approach_grow_scenery(&g->map, route->area);
     }
@@ -683,11 +719,13 @@ void approach_refresh_entrance(GameState *g) {
     }
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *item = &g->floor_items[i];
-        if (item->active) {
+        if (item->active && !map_is_travel_tile(g->map.tiles[item->y][item->x])) {
             g->map.tiles[item->y][item->x] = TILE_ITEM;
         }
     }
     coastal_refresh_docks(g);
+    boss_gate_refresh(g);
+    western_prepare(g);
 }
 
 static void generate_approach(Map *map, Location area, int dx, int dy) {
@@ -831,6 +869,9 @@ void approach_migrate_roads(GameState *g) {
 
 Location approach_shortcut_town(const TownApproach *route) {
     if (route->area == LOCATION_FOREST) {
+        return route->town == LOCATION_TOWN ? LOCATION_DAWNMERE : LOCATION_TOWN;
+    }
+    if (route->area == LOCATION_MOUNTAINS) {
         return route->town == LOCATION_TOWN ? LOCATION_TOWN2 : LOCATION_TOWN;
     }
     if (route->area == LOCATION_SWAMP) {
@@ -840,13 +881,10 @@ Location approach_shortcut_town(const TownApproach *route) {
 }
 
 int approach_dungeon_town_exit(const GameState *g, int *x, int *y) {
-    const TownApproach *route = approach_route(g);
-    if (!route || route->area != LOCATION_DUNGEON || !boss_gate_open(g, LOCATION_DUNGEON)) {
-        return 0;
-    }
-    *x = route->town == LOCATION_TOWN ? APPROACH_W - 1 : 0;
-    *y = g->map.stairs_up_y;
-    return 1;
+    (void)g;
+    (void)x;
+    (void)y;
+    return 0;
 }
 
 int approach_shortcut_exit(const GameState *g, int *x, int *y) {
@@ -942,7 +980,7 @@ int approach_enter(GameState *g, int x, int y) {
         const TownApproach *route = &town_approaches[i];
         int gate = (route->gate_x == 0 && x == 0) || (route->gate_x == TOWN_W - 1 && x == TOWN_W - 1) ||
             (route->gate_y == 0 && y == 0) || (route->gate_y == TOWN_H - 1 && y == TOWN_H - 1);
-        if (g->location == route->town && gate) {
+        if (!route->unplaced && g->location == route->town && gate) {
             index = i;
             break;
         }
@@ -981,6 +1019,10 @@ int approach_enter_region(GameState *g, int index) {
     approach_refresh_swamp(g);
     approach_refresh_entrance(g);
     approach_refresh_fork(g);
+    if (approach_bridge_road(g)) {
+        g->player.x = g->map.stairs_up_x - 1;
+        g->player.y = g->map.stairs_up_y;
+    }
     if (northern_approach(g)) {
         northern_refresh(g);
         g->player.x = NORTH_ROAD_X;
@@ -989,12 +1031,13 @@ int approach_enter_region(GameState *g, int index) {
         g->player.last_dy = route->town == LOCATION_CASTLE ? 1 : -1;
     }
     boss_gate_refresh(g);
+    western_prepare(g);
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
     g->player.frozen_turns = 0;
     g->player.freeze_recovery = 0;
     char message[MAX_MESSAGE_LEN];
-    snprintf(message, sizeof(message), "Follow the path to %s. Turn back for %s.", approach_area_name(route->area), approach_town_name(route->town));
+    snprintf(message, sizeof(message), "Follow the path to %s. Turn back for %s.", approach_area_name(route->area), approach_origin_name(route));
     push_message(g, message);
     return 1;
 }
@@ -1007,12 +1050,21 @@ int approach_travel(GameState *g, int x, int y) {
     if (!route) {
         return 0;
     }
-    if (route->area == LOCATION_FOREST && g->map.tiles[y][x] == TILE_LABYRINTH_ENTRANCE) {
-        if (game_labyrinth_is_open(g)) {
-            game_enter_labyrinth(g);
-        } else {
-            push_message(g, "The labyrinth is sealed. Speak to Rook in Oakhaven's Tavern.");
-        }
+    if (g->map.tiles[y][x] == TILE_APPROACH_TOWN && approach_peaks_road(g)) {
+        approach_enter_region(g, APPROACH_SUNSCAR_ROAD);
+        g->player.x = APPROACH_PEAKS_BRANCH_X;
+        g->player.y = 1;
+        g->player.last_dx = 0;
+        g->player.last_dy = 1;
+        return 1;
+    }
+    if (g->map.tiles[y][x] == TILE_APPROACH_TOWN && approach_sunscar_road(g)) {
+        approach_enter_region(g, 2);
+        g->player.x = 1;
+        g->player.y = APPROACH_H / 2;
+        g->player.last_dx = 1;
+        g->player.last_dy = 0;
+        push_message(g, "The mountain road returns east to Oakhaven.");
         return 1;
     }
     if (g->map.tiles[y][x] == TILE_APPROACH_TOWN) {
@@ -1033,11 +1085,15 @@ int approach_travel(GameState *g, int x, int y) {
         return 1;
     }
     if (approach_forest_town_exit(g, &shortcut_x, &shortcut_y) && x == shortcut_x && y == shortcut_y) {
-        game_leave_approach_to_town(g, route->town == LOCATION_TOWN ? LOCATION_TOWN2 : LOCATION_TOWN);
+        game_leave_approach_to_town(g, route->town == LOCATION_TOWN ? LOCATION_DAWNMERE : LOCATION_TOWN);
         return 1;
     }
     if (approach_mountain_town_exit(g, &shortcut_x, &shortcut_y) && x == shortcut_x && y == shortcut_y) {
-        game_leave_approach_to_town(g, route->town == LOCATION_DAWNMERE ? LOCATION_TOWN4 : LOCATION_DAWNMERE);
+        approach_enter_region(g, APPROACH_SUNSCAR_ROAD);
+        return 1;
+    }
+    if (approach_peaks_exit(g, &shortcut_x, &shortcut_y) && x == shortcut_x && y == shortcut_y) {
+        approach_enter_region(g, APPROACH_PEAKS_ROAD);
         return 1;
     }
     if (approach_shortcut_exit(g, &shortcut_x, &shortcut_y) && x == shortcut_x && y == shortcut_y) {
@@ -1052,10 +1108,11 @@ int approach_travel(GameState *g, int x, int y) {
         return 0;
     }
     Location area = route->area;
+    int from_north = approach_bridge_road(g);
     g->location = route->town;
     g->approach_route = -1;
     switch (area) {
-        case LOCATION_GIANTS_CROWN: giants_enter(g, 0); break;
+        case LOCATION_GIANTS_CROWN: giants_enter_from(g, from_north); break;
         case LOCATION_IRONFANG: ironfang_enter(g, 0); break;
         case LOCATION_STORMWATCH: stormwatch_enter(g, 0); break;
         case LOCATION_DUNGEON: game_enter_dungeon(g); break;

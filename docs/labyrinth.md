@@ -1,21 +1,46 @@
 # Rook's Labyrinth — Minotaur encounter
 
-Rook, in **Oakhaven's Tavern**, assigns The Ivory Rook quest. Accept with `Y`
-to open the labyrinth gate beside the **Haunted Forest entrance on the road
-between Oakhaven and Stillbury**. It is outside both towns, just west of the
-forest sprite. Oakhaven's west gate or Stillbury's east gate leads onto this
-safe road. No forest boss victory is needed to reach either entrance.
+**Deferred in V2.** The labyrinth is outside the current Oakhaven, Haunted
+Forest and Goblin Mountains story arc. Its forest-road entrance, label, spur,
+travel trigger and final world-map landmark are removed. Rook is already absent
+from Oakhaven, so no current NPC offers his quest. Old quest acceptance and the
+debug passage override cannot reveal an entrance.
 
-The labyrinth is visible but sealed before the quest is assigned. Once unlocked,
-it remains open after retrieving the relic and completing the quest. Its existing
-sealed/open sprite and five-floor adventure are retained. Physical retreat from
-floor 1 returns beside the labyrinth doorway on the same approach; walk back to
-the town used, enter the forest, or continue along the through road once the
-Necromancer is defeated.
+The maze implementation, art, cached expeditions and existing quest progress
+are retained for its later return. Older forest-road saves lose only the
+retired landmark footprint and spur; exploration, wounds, inventory, dropped
+loot, quests and boss victories remain intact. A save inside the maze remains
+loadable and can retreat to the actual forest road beside the forest entrance.
+That retreat does not restore outdoor access to the labyrinth.
+
+The canonical README map is updated in place; its [built-in imagegen edit
+prompt](labyrinth-removal-map-prompt.md) records the exact removal constraints.
+
+## V2 deferral validation
+
+The native build and **6,868/6,868** gameplay assertions pass. Forest-road
+checks cover three seeds from both approaches with ordinary play, an old Rook
+quest, the Necromancer defeated and debug passages unlocked. They exercise
+actual forest entry, retreat and onward travel. Save tests preserve loot,
+exploration, quest progress and cached labyrinth wounds, and verify that a
+legacy expedition can still leave safely. The repair runs on every save
+version when the retired marker is present; approach maps are not cached
+combat stages, and the maze's own cached stages are unchanged.
+
+Native SDL review covers a fresh road, an older approach repaired on load,
+and an existing saved character, with 1280×720 and 640×480 views. The original
+local save was read through an isolated copy and its checksum stayed unchanged.
+
+![Forest road without the labyrinth](labyrinth-deferred/forest-road.png)
+
+![Older approach repaired in place, with dropped loot retained](labyrinth-deferred/saved-road.png)
+
+## Retained design for later placement
 
 Five maze floors each hold a rune. All five runes open the final vault gate;
-the Minotaur must fall before the player can take the ivory rook. Return to
-**Rook in Oakhaven's Tavern** for the one-time 40 gold and 500 score reward.
+the Minotaur must fall before the player can take the ivory rook. The existing
+one-time quest reward is 40 gold and 500 score. Its future location and quest
+giver placement will be designed in a separate change.
 
 ## Scrolling camera
 
@@ -115,9 +140,6 @@ Old victories remain completed without inventing another shield. An identifiable
 current dropped legacy Magic Shield remains recoverable as **Magic Shield**,
 including after saving again; it is never retroactively renamed to Aegis.
 
-See the [renderer captures and play-testing guide](art-sources/minotaur-encounter/README.md).
-
-
 ## Entrance relocation and older saves
 
 Save version **176** records `labyrinth_entry_town`, so loading inside the maze
@@ -128,5 +150,3 @@ spur, retaining the square's cobblestones, player position, exploration and loot
 items covering the removed gate receive grass underlays. Saved forest approaches
 gain the landmark, with blocked players and loot moved to accessible road tiles.
 
-See [sealed/open entrance renderer previews](art-sources/labyrinth-entrance/README.md)
-and the updated [world map](images/world-map.png).

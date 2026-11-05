@@ -3,12 +3,13 @@
 
 #include "../game/game.h"
 
-#define JOURNAL_QUEST_COUNT 22
+#define JOURNAL_QUEST_COUNT 26
 
 typedef enum {
     QUEST_TAB_ACTIVE = 0,
     QUEST_TAB_COMPLETED,
     QUEST_TAB_BOSSES,
+    QUEST_TAB_EVIDENCE,
     QUEST_TAB_COUNT
 } QuestJournalTab;
 

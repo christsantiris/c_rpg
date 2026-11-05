@@ -1,4 +1,5 @@
 #include "spell.h"
+#include "resurrection.h"
 #include <string.h>
 
 Spell spell_make_magic_arrow(void) {
@@ -73,10 +74,20 @@ Spell spell_make_teleport(void) {
     return s;
 }
 
+Spell spell_make_resurrection(void) {
+    Spell spell = {0};
+    strncpy(spell.name, "Resurrection", sizeof(spell.name) - 1);
+    spell.id = SPELL_RESURRECTION;
+    spell.type = SPELL_TYPE_UTILITY;
+    spell.mp_cost = RESURRECTION_MP;
+    spell.rank = 1;
+    return spell;
+}
+
 int spell_upgrade(Spell *spell) {
     if (!spell || spell->rank >= 3 ||
         spell->id == SPELL_RETURN_TO_TOWN ||
-        spell->id == SPELL_FROST_BOLT || spell->id == SPELL_TELEPORT) {
+        spell->id == SPELL_FROST_BOLT || spell->id == SPELL_TELEPORT || spell->id == SPELL_RESURRECTION) {
         return 0;
     }
     spell->rank++;

@@ -31,6 +31,17 @@ int map_is_explored(const Map *m, int x, int y) {
     return (m->explored[index / 8] & (1u << (index % 8))) != 0;
 }
 
+int map_is_travel_tile(TileType tile) {
+    if (tile == TILE_SOULSTONE_RITUAL) {
+        return 1;
+    }
+    return (tile >= TILE_TOWN_ROAD_ENTRY_NORTH && tile <= TILE_TOWN_ROAD_EXIT_WEST) ||
+        tile == TILE_APPROACH_TOWN || tile == TILE_APPROACH_AREA || tile == TILE_APPROACH_DUNGEON_TOWN ||
+        tile == TILE_LABYRINTH_ENTRANCE || tile == TILE_ROAD_GATE_OPEN || tile == TILE_ROAD_GATE_CLOSED ||
+        tile == TILE_FOREST_ENTRANCE || tile == TILE_FOREST_EXIT ||
+        tile == TILE_MOUNTAIN_ENTRANCE || tile == TILE_MOUNTAIN_EXIT || tile == TILE_BROKEN_FERRY;
+}
+
 void map_mirror_horizontal(Map *m) {
     unsigned char explored[MAP_EXPLORED_BYTES];
     memcpy(explored, m->explored, sizeof(explored));
@@ -467,7 +478,11 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_ROAD_GATE_CLOSED && m->tiles[y][x] != TILE_ROAD_BANK &&
+    return m->tiles[y][x] != TILE_SOULSTONE_SHRINE && m->tiles[y][x] != TILE_NPC_WARLOCK &&
+        m->tiles[y][x] != TILE_GOBLIN_ROAD_GUARD && m->tiles[y][x] != TILE_DARK_ELF_ROAD_GUARD &&
+        m->tiles[y][x] != TILE_ROAD_GATE_CLOSED && m->tiles[y][x] != TILE_ROAD_BANK &&
+        m->tiles[y][x] != TILE_CARAVAN_CAMP &&
+        m->tiles[y][x] != TILE_NPC_GARRAN && m->tiles[y][x] != TILE_NPC_LIORA &&
         m->tiles[y][x] != TILE_NPC_EDDA && m->tiles[y][x] != TILE_NPC_SEREN && m->tiles[y][x] != TILE_NPC_TAMSIN &&
         m->tiles[y][x] != TILE_CROWN_BARRICADE && m->tiles[y][x] != TILE_CROWN_SUPPLIES &&
         m->tiles[y][x] != TILE_IRON_BUNK && m->tiles[y][x] != TILE_IRON_FORGE && m->tiles[y][x] != TILE_IRON_WALL && m->tiles[y][x] != TILE_IRON_WATER &&
@@ -619,6 +634,28 @@ typedef enum {
     OUTDOOR_SIDE_NORTH,
     OUTDOOR_SIDE_SOUTH
 } OutdoorSide;
+
+static const OutdoorSide forest_exits[FOREST_DEPTH] = {
+    OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_SOUTH,
+    OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_EAST
+};
+
+static const OutdoorSide mountain_exits[MOUNTAIN_DEPTH] = {
+    OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_SOUTH,
+    OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_SOUTH
+};
+
+static OutdoorSide outdoor_entrance(const OutdoorSide *exits, int index, OutdoorSide first) {
+    if (index == 0) {
+        return first;
+    }
+    switch (exits[index - 1]) {
+        case OUTDOOR_SIDE_WEST: return OUTDOOR_SIDE_EAST;
+        case OUTDOOR_SIDE_EAST: return OUTDOOR_SIDE_WEST;
+        case OUTDOOR_SIDE_NORTH: return OUTDOOR_SIDE_SOUTH;
+        default: return OUTDOOR_SIDE_NORTH;
+    }
+}
 
 // The coast also uses selected clearing templates.
 static const ForestTemplate forest_templates[] = {
@@ -836,26 +873,6 @@ int map_forest_difficulty(int level) {
 
 void map_generate_forest(Map *m, int level) {
     static const int templates[FOREST_DEPTH] = {0, 1, 2, 4, 7};
-    static const OutdoorSide entrances[] = {
-        OUTDOOR_SIDE_WEST,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_WEST,
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_WEST
-    };
-    static const OutdoorSide exits[] = {
-        OUTDOOR_SIDE_EAST,
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_EAST,
-        OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_EAST
-    };
     int index = level - 1;
     if (index < 0) {
         index = 0;
@@ -863,13 +880,9 @@ void map_generate_forest(Map *m, int level) {
     if (index >= FOREST_DEPTH) {
         index = FOREST_DEPTH - 1;
     }
-    index = templates[index];
-    map_generate_outdoor(m, map_forest_difficulty(level), entrances[index], exits[index], 1,
-        &forest_templates[index]);
-    if (level == 1) {
-        // OakHaven lies east of the forest: enter from the east and head west.
-        map_mirror_horizontal(m);
-    }
+    OutdoorSide entrance = outdoor_entrance(forest_exits, index, OUTDOOR_SIDE_SOUTH);
+    map_generate_outdoor(m, map_forest_difficulty(level), entrance, forest_exits[index], 1,
+        &forest_templates[templates[index]]);
     int hidden_start_x;
     int hidden_start_y;
     int hidden_end_x;
@@ -929,6 +942,63 @@ void map_reveal_forest_exit(Map *m) {
     }
 }
 
+int map_repair_outdoor_entrance(Map *m, int level, int mountains) {
+    int depth = mountains ? MOUNTAIN_DEPTH : FOREST_DEPTH;
+    if (level < 1 || level > depth || m->room_count < 1) {
+        return 0;
+    }
+    const OutdoorSide *exits = mountains ? mountain_exits : forest_exits;
+    OutdoorSide side = outdoor_entrance(exits, level - 1, OUTDOOR_SIDE_SOUTH);
+    int x = m->stairs_up_x;
+    int y = m->stairs_up_y;
+    if ((side == OUTDOOR_SIDE_WEST && x == 1) ||
+        (side == OUTDOOR_SIDE_EAST && x == MAP_W - 2) ||
+        (side == OUTDOOR_SIDE_NORTH && y == 1) ||
+        (side == OUTDOOR_SIDE_SOUTH && y == MAP_H - 2)) {
+        return 0;
+    }
+    TileType wall = mountains ? TILE_MOUNTAIN_WALL : TILE_FOREST_WALL;
+    TileType floor = mountains ? TILE_MOUNTAIN_FLOOR : TILE_FOREST_FLOOR;
+    int center_x;
+    int center_y;
+    map_room_center(&m->rooms[0], &center_x, &center_y);
+    if (center_x < 2 || center_x >= MAP_W - 2 || center_y < 2 || center_y >= MAP_H - 2) {
+        return 0;
+    }
+    if (mountains && level == 3) {
+        floor = TILE_MOUNTAIN_CAVE_FLOOR;
+    }
+    if (x == 1) {
+        x = 0;
+    } else if (x == MAP_W - 2) {
+        x = MAP_W - 1;
+    } else if (y == 1) {
+        y = 0;
+    } else if (y == MAP_H - 2) {
+        y = MAP_H - 1;
+    } else {
+        return 0;
+    }
+    m->tiles[y][x] = wall;
+    x = center_x;
+    y = center_y;
+    int dx = side == OUTDOOR_SIDE_WEST ? -1 : side == OUTDOOR_SIDE_EAST ? 1 : 0;
+    int dy = side == OUTDOOR_SIDE_NORTH ? -1 : side == OUTDOOR_SIDE_SOUTH ? 1 : 0;
+    // Keep the old trail and all encounter/quest state. Only extend bare terrain
+    // from the first clearing to the correctly oriented boundary.
+    while (x > 0 && x < MAP_W - 1 && y > 0 && y < MAP_H - 1) {
+        if (m->tiles[y][x] == wall) {
+            m->tiles[y][x] = floor;
+        }
+        x += dx;
+        y += dy;
+    }
+    m->tiles[y][x] = mountains ? TILE_MOUNTAIN_ENTRANCE : TILE_FOREST_ENTRANCE;
+    m->stairs_up_x = x - dx;
+    m->stairs_up_y = y - dy;
+    return 1;
+}
+
 static int mountain_tile_in_room(const Map *m, int x, int y) {
     for (int i = 0; i < m->room_count; i++) {
         const Room *room = &m->rooms[i];
@@ -963,14 +1033,6 @@ int map_mountain_difficulty(int level) {
 
 void map_generate_mountains(Map *m, int level) {
     static const int templates[MOUNTAIN_DEPTH] = {0, 1, 2, 4, 7};
-    static const OutdoorSide entrances[MOUNTAIN_DEPTH] = {
-        OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_NORTH,
-        OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_WEST
-    };
-    static const OutdoorSide exits[MOUNTAIN_DEPTH] = {
-        OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_SOUTH
-    };
     int index = level - 1;
     if (index < 0) {
         index = 0;
@@ -978,7 +1040,8 @@ void map_generate_mountains(Map *m, int level) {
     if (index >= MOUNTAIN_DEPTH) {
         index = MOUNTAIN_DEPTH - 1;
     }
-    map_generate_outdoor(m, map_mountain_difficulty(level), entrances[index], exits[index], 0,
+    OutdoorSide entrance = outdoor_entrance(mountain_exits, index, OUTDOOR_SIDE_SOUTH);
+    map_generate_outdoor(m, map_mountain_difficulty(level), entrance, mountain_exits[index], 0,
         &mountain_templates[templates[index]]);
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -1322,10 +1385,6 @@ TileType map_coast_trap_underlay(const Map *m, int x, int y) {
 
 void map_generate_coast(Map *m, int level) {
     static const int templates[COAST_DEPTH] = {0, 1, 2, 5, 7};
-    static const OutdoorSide entrances[COAST_DEPTH] = {
-        OUTDOOR_SIDE_NORTH, OUTDOOR_SIDE_WEST, OUTDOOR_SIDE_SOUTH,
-        OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_SOUTH
-    };
     static const OutdoorSide exits[COAST_DEPTH] = {
         OUTDOOR_SIDE_EAST, OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_WEST,
         OUTDOOR_SIDE_SOUTH, OUTDOOR_SIDE_EAST
@@ -1337,7 +1396,8 @@ void map_generate_coast(Map *m, int level) {
     if (index >= COAST_DEPTH) {
         index = COAST_DEPTH - 1;
     }
-    map_generate_outdoor(m, templates[index] + 1, entrances[index], exits[index], 0,
+    OutdoorSide entrance = outdoor_entrance(exits, index, OUTDOOR_SIDE_NORTH);
+    map_generate_outdoor(m, templates[index] + 1, entrance, exits[index], 0,
         &forest_templates[templates[index]]);
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -1495,26 +1555,14 @@ void map_place_town4_guards(Map *m, int avoid_x, int avoid_y) {
 }
 
 void map_place_town2_center(Map *m) {
-    if (m->tiles[11][TOWN3_ROAD_X] == TILE_TOWN_FLOOR) {
-        m->tiles[11][TOWN3_ROAD_X] = TILE_TOWN_PATH;
-    }
-    for (int x = 18; x <= 22; x++) {
-        m->tiles[0][x] = TILE_TOWN_EXIT;
-    }
-    // Sunscar Wastes branches west from Stillbury.
-    for (int y = 10; y <= 14; y++) {
-        m->tiles[y][0] = TILE_TOWN_EXIT;
-    }
-    map_place_town2_south_gate(m);
     for (int x = TOWN_HEALER_DOOR_X; x <= TOWN_WITCH_DOOR_X; x++) {
         m->tiles[13][x] = TILE_TOWN_PATH;
     }
+    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
 }
 
 void map_place_town2_south_gate(Map *m) {
-    for (int x = SOUTH_AREA_GATE_X - 2; x <= SOUTH_AREA_GATE_X + 2; x++) {
-        m->tiles[TOWN_H - 1][x] = TILE_TOWN_EXIT;
-    }
+    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
 }
 
 void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
@@ -1541,23 +1589,24 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 1; x < TOWN_W - 1; x++)
         m->tiles[12][x] = TILE_TOWN_PATH;
 
-    // Elderwood and the northern castle road begin beyond the north gate.
+    // The north gate reaches the riverbank; the rapids themselves remain impassable.
     for (int x = 18; x <= 22; x++) {
         m->tiles[0][x] = TILE_TOWN_EXIT;
     }
-
-    // Forest travel and the unlocked Stillbury shortcut share the main gate.
+    // The western road reaches the mountains.
     for (int y = 10; y <= 12; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
 
-    // Dungeon exit at the east end of the crossroad.
-    for (int y = 10; y <= 14; y++)
+    // Haunted Forest lies east, with Dawnmere beyond it.
+    for (int y = 10; y <= 14; y++) {
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
+    }
 
-    // Sunken Coast exit at the south end of the crossroad.
-    for (int x = 18; x <= 22; x++)
+    // The dungeon is a local adventure south of town.
+    for (int x = 18; x <= 22; x++) {
         m->tiles[TOWN_H - 1][x] = TILE_TOWN_EXIT;
+    }
 
     // Blacksmith faces the east-west road.
     for (int dy = 0; dy < 4; dy++) {
@@ -1565,7 +1614,8 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
             m->tiles[TOWN_BLACKSMITH_Y + dy][TOWN_BLACKSMITH_X + dx] = TILE_SHOP_BLACKSMITH;
         }
     }
-    m->tiles[TOWN_BLACKSMITH_Y + 3][TOWN_BLACKSMITH_X + 2] = TILE_BLACKSMITH_DOOR;
+    // Both shops open into walk-in interiors.
+    m->tiles[TOWN_BLACKSMITH_Y + 3][TOWN_BLACKSMITH_X + 2] = TILE_LOCAL_DOOR;
     m->tiles[TOWN_BLACKSMITH_Y + 4][TOWN_BLACKSMITH_X + 2] = TILE_TOWN_PATH;
 
     // The alchemist faces the east-west road.
@@ -1575,8 +1625,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
                 TILE_SHOP_ALCHEMIST;
         }
     }
-    m->tiles[TOWN_ALCHEMIST_Y + 3][TOWN_ALCHEMIST_X + 2] =
-        TILE_ALCHEMIST_DOOR;
+    m->tiles[TOWN_ALCHEMIST_Y + 3][TOWN_ALCHEMIST_X + 2] = TILE_LOCAL_DOOR;
     m->tiles[TOWN_ALCHEMIST_Y + 4][TOWN_ALCHEMIST_X + 2] =
         TILE_TOWN_PATH;
 
@@ -1588,18 +1637,15 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
         }
     }
 
-    // The Tavern stands east of the Blacksmith, its door opening onto the square.
+    // Oakhaven's Inn stands east of the Blacksmith, opening onto the square.
     map_place_town_tavern(m);
 
     map_clear_town_harbor(m);
     m->tiles[TOWN_CAIN_Y][TOWN_CAIN_X] = TILE_NPC_CAIN;
-    m->tiles[TOWN_BRAM_Y][TOWN_BRAM_X] = TILE_NPC_BRAM;
     m->tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] = TILE_NPC_ALDRIC;
-    m->tiles[TAMSIN_Y][TAMSIN_X] = TILE_NPC_TAMSIN;
     town_life_place(m, LOCATION_TOWN);
 
-    // Spawn at the central crossroads so the south road remains unobstructed
-    // for a future region.
+    // Spawn at the central crossroads.
     *spawn_x = 20;
     *spawn_y = 12;
 }
@@ -1701,7 +1747,8 @@ void map_generate_town4(Map *m, int *spawn_x, int *spawn_y) {
     for (int x = 1; x < TOWN_W - 1; x++) {
         m->tiles[12][x] = TILE_TOWN_PATH;
     }
-    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
+    // The former mountain road no longer connects to Ridgeshire.
+    m->tiles[TOWN_H - 1][20] = TILE_WALL;
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
     }
@@ -1776,11 +1823,16 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[11][x] = TILE_TOWN_PATH;
     }
     map_place_town2_center(m);
-    // The Inn stands east of the Healer, its door opening onto the square.
+    // Stillbury's Tavern stands east of the Healer, opening onto the square.
     map_place_town_inn(m);
     town_life_place(m, LOCATION_TOWN2);
-    *spawn_x = TOWN_W - 2;
-    *spawn_y = 12;
+    for (int y = 0; y < TOWN_H; y++) {
+        m->tiles[y][0] = TILE_WALL;
+        m->tiles[y][TOWN_W - 1] = TILE_WALL;
+    }
+    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
+    *spawn_x = 20;
+    *spawn_y = TOWN_H - 2;
 }
 
 static void map_generate_town_square(Map *m) {
@@ -1824,12 +1876,9 @@ void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
     }
     for (int y = 10; y <= 14; y++) {
         m->tiles[y][0] = TILE_TOWN_EXIT;
-        m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
-    for (int x = 18; x <= 22; x++) {
-        m->tiles[0][x] = TILE_TOWN_EXIT;
-    }
-    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
+    // Saltwind follows the river-facing northern waterfront.
+    m->tiles[0][20] = TILE_TOWN_EXIT;
     town_life_place(m, LOCATION_DAWNMERE);
     m->tiles[SEREN_Y][SEREN_X] = TILE_NPC_SEREN;
     *spawn_x = 20;
@@ -1839,8 +1888,6 @@ void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
 void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_town_square(m);
     map_place_town3_frost_gate(m);
-    map_place_town3_ashen_gate(m);
-    m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
     for (int y = TOWN3_CROWN_GATE_Y - 2; y <= TOWN3_CROWN_GATE_Y + 2; y++) {
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
@@ -2431,7 +2478,7 @@ void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *
     *spawn_y = entry_y;
 }
 
-static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn) {
+static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y) {
     map_clear_exploration(m);
     m->burial_trap_count = 0;
     memset(m->burial_traps, 0, sizeof(m->burial_traps));
@@ -2468,11 +2515,7 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn
         }
     }
 
-    if (inn) {
-        m->tiles[7][28] = TILE_NPC_INNKEEPER;
-    } else {
-        m->tiles[7][28] = TILE_TAVERN_FLOOR;
-    }
+    m->tiles[7][28] = TILE_TAVERN_FLOOR;
     m->tiles[22][20] = TILE_TAVERN_EXIT;
     *spawn_x = 20;
     *spawn_y = 21;
@@ -2483,11 +2526,8 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y, int inn
 }
 
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
-    map_generate_tavern_room(m, spawn_x, spawn_y, 0);
-    map_place_tavern_elowen(m);
-    m->tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] = TILE_NPC_ROOK;
-    m->tiles[MARA_TAVERN_Y][MARA_TAVERN_X] = TILE_NPC_MARA;
-    m->tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] = TILE_NPC_DRAGON_SEEKER;
+    map_generate_tavern_room(m, spawn_x, spawn_y);
+    m->tiles[BRAM_INN_Y][BRAM_INN_X] = TILE_NPC_BRAM;
 }
 
 void map_place_tavern_brenna(Map *m) {
@@ -2495,10 +2535,9 @@ void map_place_tavern_brenna(Map *m) {
 }
 
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y) {
-    map_generate_tavern_room(m, spawn_x, spawn_y, 1);
-    m->tiles[ZARA_INN_Y][ZARA_INN_X] = TILE_NPC_GUILD_SEEKER;
+    map_generate_tavern_room(m, spawn_x, spawn_y);
+    // Zara now travels between Oakhaven and the Sunscar caravan camp.
     m->tiles[BRENNA_INN_Y][BRENNA_INN_X] = TILE_NPC_BRENNA;
-    m->tiles[ALDER_INN_Y][ALDER_INN_X] = TILE_NPC_ALDER;
 }
 
 void map_place_tavern_elowen(Map *m) {
@@ -2506,15 +2545,15 @@ void map_place_tavern_elowen(Map *m) {
 }
 
 void map_generate_guild(Map *m, int *sx, int *sy) {
-    map_generate_tavern_room(m, sx, sy, 1);
-    m->tiles[EDDA_Y][EDDA_X] = TILE_NPC_EDDA;
+    map_generate_tavern_room(m, sx, sy);
+    // Edda receives the Jarl's crown outside Stillbury's western checkpoint.
     m->tiles[GUILD_ORIN_Y][GUILD_ORIN_X] = TILE_NPC_ORIN;
     m->tiles[GUILD_SELENE_Y][GUILD_SELENE_X] = TILE_NPC_SELENE;
     m->tiles[GUILD_ZARA_Y][GUILD_ZARA_X] = TILE_TAVERN_FLOOR;
 }
 
 void map_generate_workshop(Map *m, int *sx, int *sy) {
-    map_generate_tavern_room(m, sx, sy, 0);
+    map_generate_tavern_room(m, sx, sy);
     for (int y = TAVERN_Y + 1; y < TAVERN_Y + TAVERN_H - 1; y++) {
         for (int x = TAVERN_X + 1; x < TAVERN_X + TAVERN_W - 1; x++) {
             m->tiles[y][x] = TILE_TAVERN_FLOOR;

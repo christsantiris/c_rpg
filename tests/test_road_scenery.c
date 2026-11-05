@@ -107,7 +107,7 @@ static void sparse_layouts(GameState *g, const TownApproach *route) {
         }
     }
     if (route->area == LOCATION_DUNGEON) {
-        ASSERT("the Oakhaven to Dawnmere road is lightly wooded", (near + far) * 100 > INTERIOR * 15 && (near + far) * 2 < INTERIOR);
+        ASSERT("the local dungeon path is lightly wooded", (near + far) * 100 > INTERIOR * 15 && (near + far) * 2 < INTERIOR);
     } else if (route->area == LOCATION_GLASSDEEP || route->area == LOCATION_GIANTS_CROWN) {
         ASSERT("the Stonewake and Giant's Peaks roads start grassy and gather a few boulders near the landmark", start == 0 && far > near * 3 &&
             (near + far) * 100 < INTERIOR * 15);
@@ -117,7 +117,7 @@ static void sparse_layouts(GameState *g, const TownApproach *route) {
 }
 
 static void road_layouts(GameState *g) {
-    const int routes[] = {0, 4, 16, 14, 5, 9, 2, 11, 12, 19, 8, 6, 13, 1, 15, 7, 18, 20};
+    const int routes[] = {0, 4, 14, 5, 9, 2, 11, 12, 19, 8, 6, 13, 1, 7, 18, 20, APPROACH_SUNSCAR_ROAD, APPROACH_PEAKS_ROAD};
     for (int i = 0; i < 18; i++) {
         game_init(g);
         approach_enter_region(g, routes[i]);
@@ -145,7 +145,7 @@ static void road_layouts(GameState *g) {
         int oy = vertical ? g->map.stairs_up_y + (g->map.stairs_up_y ? -3 : 3) : g->map.stairs_up_y + 6;
         ASSERT("the road opens into a clearing at its town end, where its signpost stands", map_is_walkable(&g->map, ox, oy));
         if (northern_approach(g)) {
-            ASSERT("the northern through road opens at both its Oakhaven and castle ends", map_is_walkable(&g->map, ox, APPROACH_H - 1 - oy));
+            ASSERT("northern rapids block the former southern connection", !map_is_walkable(&g->map, NORTH_ROAD_X, APPROACH_H - 1));
         }
         if (route->area == LOCATION_SWAMP) {
             ASSERT("the swamp road's verges are bog mud rather than grass", tile_count(g, TILE_TOWN_FLOOR) == 0 &&
@@ -160,7 +160,8 @@ static void road_layouts(GameState *g) {
             int far_x = vertical ? 8 : g->map.stairs_up_x ? 2 : APPROACH_W - 3;
             int far_y = vertical ? g->map.stairs_up_y ? 2 : APPROACH_H - 3 : 4;
             TileType far = g->map.tiles[far_y][far_x];
-            ASSERT("the road leaves town through green woods", g->map.tiles[near_y][near_x] == TILE_ELDERWOOD_WALL);
+            ASSERT("the road leaves through green woods, or the Sunscar road through mountain rock", g->map.tiles[near_y][near_x] == approach_scenery(route->area, 0) &&
+                approach_scenery(route->area, 0) == (route->area == LOCATION_DESERT ? TILE_MOUNTAIN_WALL : TILE_ELDERWOOD_WALL));
             ASSERT("and reaches its landmark through that region's own terrain", far == approach_scenery(route->area, 100) || far == TILE_ASHEN_LAVA);
             ASSERT("snow, sand and ash are drawn over ordinary road-side grass, without regional floor hazards",
                 tile_count(g, TILE_FROST_FLOOR) == 0 && tile_count(g, TILE_DESERT_FLOOR) == 0 && tile_count(g, TILE_ASHEN_FLOOR) == 0);
@@ -177,6 +178,18 @@ static void road_layouts(GameState *g) {
             }
             ASSERT("the Frostfell woods end in one tree line instead of dappling into the frozen ground", line);
         }
+        if (route->area == LOCATION_DESERT) {
+            int edge = 1;
+            for (int y = 1; y < APPROACH_H - 1; y++) {
+                int sandstone = 0;
+                for (int step = 1; step < APPROACH_W - 1; step++) {
+                    TileType tile = g->map.tiles[y][g->map.stairs_up_x ? APPROACH_W - 1 - step : step];
+                    sandstone |= tile == TILE_DESERT_WALL;
+                    edge &= !sandstone || tile != TILE_MOUNTAIN_WALL;
+                }
+            }
+            ASSERT("the Sunscar road's mountain rock ends in one edge instead of scattering squares into the sandstone", edge && tile_count(g, TILE_MOUNTAIN_WALL) > 0);
+        }
         if (route->area == LOCATION_ASHEN) {
             ASSERT("blackened dead trees and then lava-split basalt follow the green woods toward Ashen Hollow",
                 tile_count(g, TILE_FOREST_WALL) > 0 && tile_count(g, TILE_ASHEN_WALL) > 0 && tile_count(g, TILE_ASHEN_LAVA) > 0);
@@ -186,10 +199,6 @@ static void road_layouts(GameState *g) {
         int open;
         ASSERT("every open tile beside the scenery can be reached from the road", reached_from_town(g, &open) == open);
     }
-    game_init(g);
-    approach_enter_region(g, 3);
-    ASSERT("the Sunken Coast road keeps its open grass, shore and path", approach_scenery(LOCATION_COAST, 100) == TILE_WALL &&
-        tile_count(g, TILE_ELDERWOOD_WALL) == 0 && tile_count(g, TILE_MOUNTAIN_WALL) == 0 && tile_count(g, TILE_TOWN_FLOOR) > 0);
 }
 
 static void saved_roads(GameState *g, GameState *loaded) {
@@ -197,7 +206,7 @@ static void saved_roads(GameState *g, GameState *loaded) {
     if (save_exists(SCENERY_SLOT)) {
         return;
     }
-    const int routes[] = {0, 16, 5, 2, 8, 13, 1, 18, 20};
+    const int routes[] = {0, 14, 5, 2, 8, 13, 1, 18, 20};
     for (int i = 0; i < 9; i++) {
         game_init(g);
         approach_enter_region(g, routes[i]);
