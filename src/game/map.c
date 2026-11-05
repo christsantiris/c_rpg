@@ -481,6 +481,8 @@ int map_is_walkable(const Map *m, int x, int y) {
     return m->tiles[y][x] != TILE_SOULSTONE_SHRINE && m->tiles[y][x] != TILE_NPC_WARLOCK &&
         m->tiles[y][x] != TILE_GOBLIN_ROAD_GUARD && m->tiles[y][x] != TILE_DARK_ELF_ROAD_GUARD &&
         m->tiles[y][x] != TILE_ROAD_GATE_CLOSED && m->tiles[y][x] != TILE_ROAD_BANK &&
+        m->tiles[y][x] != TILE_CARAVAN_CAMP &&
+        m->tiles[y][x] != TILE_NPC_GARRAN && m->tiles[y][x] != TILE_NPC_LIORA &&
         m->tiles[y][x] != TILE_NPC_EDDA && m->tiles[y][x] != TILE_NPC_SEREN && m->tiles[y][x] != TILE_NPC_TAMSIN &&
         m->tiles[y][x] != TILE_CROWN_BARRICADE && m->tiles[y][x] != TILE_CROWN_SUPPLIES &&
         m->tiles[y][x] != TILE_IRON_BUNK && m->tiles[y][x] != TILE_IRON_FORGE && m->tiles[y][x] != TILE_IRON_WALL && m->tiles[y][x] != TILE_IRON_WATER &&
@@ -2534,7 +2536,7 @@ void map_place_tavern_brenna(Map *m) {
 
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y);
-    m->tiles[ZARA_INN_Y][ZARA_INN_X] = TILE_NPC_GUILD_SEEKER;
+    // Zara now travels between Oakhaven and the Sunscar caravan camp.
     m->tiles[BRENNA_INN_Y][BRENNA_INN_X] = TILE_NPC_BRENNA;
 }
 
@@ -2544,7 +2546,7 @@ void map_place_tavern_elowen(Map *m) {
 
 void map_generate_guild(Map *m, int *sx, int *sy) {
     map_generate_tavern_room(m, sx, sy);
-    m->tiles[EDDA_Y][EDDA_X] = TILE_NPC_EDDA;
+    // Edda receives the Jarl's crown outside Stillbury's western checkpoint.
     m->tiles[GUILD_ORIN_Y][GUILD_ORIN_X] = TILE_NPC_ORIN;
     m->tiles[GUILD_SELENE_Y][GUILD_SELENE_X] = TILE_NPC_SELENE;
     m->tiles[GUILD_ZARA_Y][GUILD_ZARA_X] = TILE_TAVERN_FLOOR;

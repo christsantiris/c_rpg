@@ -49,7 +49,7 @@ present from the start; its services require a recruited companion.
 
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/world-map.png?v=48a97aa41d11)](docs/world-map.png?v=48a97aa41d11)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=602dee3c0171)](docs/world-map.png?v=602dee3c0171)
 
 The V2 starting region contains Oakhaven, Goblin Mountains to its west, Haunted
 Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
@@ -63,14 +63,17 @@ the river bank. Its skiff passage crosses the calm estuary to Stillbury on the
 opposite bank, where Act 4 begins.
 
 Act 3's western road runs from the Goblin Mountains west through Sunscar Wastes.
-Leaving Sunscar returns to that desert road. Continue past its entrance and turn
+Zara, scout Garran and historian Liora wait at its caravan camp.
+Leaving Sunscar returns to that camp and desert road. Continue past its entrance and turn
 north toward Giant's Peaks on the river bank. Cross all five stages to reach
 Giant's Bridge, then follow the opposite bank east into Stillbury's west gate.
 Travelers from Stillbury can cross the bridge freely and enter the northern
 Peaks, but must traverse all five stages southward to reach Sunscar. The Last
 Jarl blocks onward passage to the opposite road until defeated; retreat remains
 available. His defeat permanently opens both directions. Both Act 3 routes
-reach the same town to begin Act 4.
+reach the same town to begin Act 4. Attacking the tribute convoy, like liberating
+Dawnmere, is reported to Stillbury. Defeating the Pharaoh or Jarl alone is not.
+See the [western quests and rewards](docs/act3-western.md).
 
 On Stillbury's bank, Stonewake Quarry lies between the river and the castle,
 Blackwater Swamp lies east of Stillbury, and Sunken Coast lies among the islands
@@ -131,7 +134,7 @@ inventory actions.
 - [Saltwind Marsh — five stages and skiff exploration](docs/saltwind-marsh.md)
 - [Stormwatch Headland](docs/stormwatch-headland.md)
 - [Blackwater Swamp](docs/swamp.md)
-- [Sunscar Wastes and the magic lamp quest](docs/sunscar-wastes.md)
+- [Sunscar Wastes and the King's Tribute quest](docs/sunscar-wastes.md)
 - [Ashen Hollow](docs/ashen-hollow.md)
 - [Giant's Peaks](docs/giants-peaks.md)
 - [Stonewake Quarry](docs/stonewake-quarry.md)

@@ -112,18 +112,20 @@ timers reset, while health, deaths, exploration, quest objects and portal
 destinations remain intact. The existing unclaimed-staff flag preserves reward
 availability after an old victory.
 
-## The Lost Magic Lamp
+## The King's Tribute
 
-Enter Stillbury's Tavern. Approach Zara and press `T` to hear her offer, then `Y`
-to accept her quest. Travel to Sunscar through Stillbury's west gate and find
-the golden magic lamp in the last clearing of stage 4. Stand on it and press
-`P` (Pick Up) to recover it, then return to Zara in the Tavern.
+Dain directs the player to Zara in Oakhaven's Inn after the Goblin King's defeat.
+Zara moves to the roadside caravan camp on the first visit to the Sunscar road.
+She assigns **The King's Tribute** and pays **200 gold and 500 XP** there after
+both the confiscated convoy cargo (stage 2) and the Pharaoh's agreement (stage 5)
+are recovered. The final Sunscar exit returns to this camp, avoiding an Oakhaven
+reward hike. The magic-lamp quest and its old hand-in are retired.
 
-The one-time reward is **80 gold and 600 score**. The lamp uses quest state rather
-than inventory space, so a full pack does not prevent recovery. The journal
-tracks the objective and marks it ready to return after pickup.
+Attacking the convoy is optional and is reported to Stillbury. Its seven named
+royal escorts retain wounds and casualties across expeditions; they do not attack
+until provoked. Interact beside the cargo to challenge them or move along, then
+recover it after the escort is defeated. Defeating the Pharaoh alone leaves the
+quest incomplete and creates no new public Crown offense.
 
-Accepting the quest preserves existing desert exploration, enemies, and portals.
-The quest works after the Pharaoh has been defeated. Saving preserves the Tavern,
-quest progress, and reward completion; older testing saves start with the quest
-unassigned.
+See [the three western quests](act3-western.md) for assignment, rewards,
+Crown standing and the onward journey through Giant's Peaks.

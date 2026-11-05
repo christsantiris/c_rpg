@@ -63,6 +63,7 @@ sprites:
 	python3 tools/sprites/swamp.py
 	python3 tools/sprites/coast.py
 	python3 tools/sprites/desert.py
+	python3 tools/sprites/caravan_camp.py
 	python3 tools/sprites/dragonspine.py
 	python3 tools/sprites/frostfell.py
 	python3 tools/sprites/ashen.py

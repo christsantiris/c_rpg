@@ -1,6 +1,7 @@
 #include "enemy_tactics.h"
 #include "aldric.h"
 #include "eastern_arc.h"
+#include "western_arc.h"
 #include <stdlib.h>
 
 static const int dx[] = {0, 1, 0, -1};
@@ -126,7 +127,7 @@ static int step_to(GameState *g, int index, int x, int y) {
 
 int enemy_tactics_move(GameState *g, int index) {
     Enemy *e = &g->enemies[index];
-    int royal_formation = eastern_town_combat(g) && royal(e);
+    int royal_formation = (eastern_town_combat(g) || western_convoy_enemy(g, e)) && royal(e);
     int formation = (g->location == LOCATION_MOUNTAINS && goblin(e)) || royal_formation;
     int flank = g->location == LOCATION_FOREST && dark_elf(e);
     if (!formation && !flank) {
