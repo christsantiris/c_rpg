@@ -1,3 +1,4 @@
+#include "../game/western_arc.h"
 #include "quest_journal.h"
 #include "../game/royal_evidence.h"
 #include <SDL2/SDL.h>
@@ -76,11 +77,11 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Dragonspine", {5, 0, 0}, 0, 600, "Potion of Strength"
     },
     {
-        "The Lost Magic Lamp", "Zara",
-        "Recover a magic lamp from Sunscar Wastes.",
-        "Return and speak to Zara in Stillbury's Tavern.",
-        {"Recover the magic lamp", "", ""},
-        "Sunscar Wastes", {DESERT_LAMP_LEVEL, 0, 0}, 80, 600
+        "The King's Tribute", "Zara",
+        "Recover confiscated goods and proof of the King's tribute to the Pharaoh.",
+        "Return to Zara at the caravan camp outside Sunscar for your reward.",
+        {"Reclaim the royal convoy's cargo", "Recover the Pharaoh's agreement"},
+        "Sunscar Wastes", {2, 5}, TRIBUTE_GOLD, 0, "500 XP"
     },
     {
         "Reclaim the Emberforge", "Steward Hadrin",
@@ -173,11 +174,11 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Ironfang Mines", {2, 4, 5, 0}, WAR_REWARD_GOLD, WAR_REWARD_SCORE
     },
     {
-        "Giant's Crown", "Antiquarian Edda",
-        "Read stage 2's inscription; find stage 3's western seal chamber.",
-        "Use the seal at stage 5's western vault after the Jarl falls; return to Edda.",
-        {"Read the royal inscription", "Recover the royal seal", "Defeat the Last Jarl", "Recover the royal crown"},
-        "Giant's Peaks", {2, 3, 5, 5}, CROWN_REWARD_GOLD, CROWN_REWARD_SCORE, "Stoneguard Shield"
+        "Giant's Crown", "Historian Liora",
+        "Recover the crown directly from the Last Jarl in Giant's Peaks 5.",
+        "Deliver it to Edda beside Giant's Bridge, outside Stillbury's checkpoint.",
+        {"Recover the Last Jarl's crown"},
+        "Giant's Peaks", {5}, CROWN_REWARD_GOLD, CROWN_REWARD_SCORE, "Stoneguard Shield"
     },
     {
         "Defeat the Necromancer", "Alder",
@@ -204,11 +205,20 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Board the skiff, paddle across and dock at Stillbury. Enter town to begin Act 4.",
         {"Defeat Sszareth at the final launch", "Reach Stillbury's river dock"},
         "Saltwind Marsh", {5, 0}, 0, 0
+    },
+    {
+        "Break the Jarl's Blockade", "Caravan Scout Garran",
+        "The Last Jarl holds the road to Stillbury under a royal charter.",
+        "Defeat him to open Giant's Bridge. Completion is immediate; no camp return is needed.",
+        {"Defeat the Last Jarl"}, "Giant's Peaks", {5}, 0, 0
     }
 
 };
 
 static int quest_state(const GameState *g, int quest) {
+    if (quest == 25) {
+        return g->jarl_quest_state;
+    }
     if (quest == 23 || quest == 24) {
         return quest == 23 ? g->dawnmere_quest_state : g->saltwind_quest_state;
     }
@@ -262,7 +272,7 @@ static int quest_state(const GameState *g, int quest) {
         return g->dragon_treasure_quest_state;
     }
     if (quest == 7) {
-        return g->sunscar_lamp_quest_state;
+        return g->tribute_quest_state;
     }
     if (quest == 8) {
         return g->emberforge_quest_state;
@@ -281,6 +291,9 @@ static int quest_state(const GameState *g, int quest) {
 }
 
 static int quest_progress(const GameState *g, int quest) {
+    if (quest == 25) {
+        return g->giants_crown_defeated;
+    }
     if (quest == 23 || quest == 24) {
         return quest == 23 ? g->dawnmere_progress : !!g->mangrove_defeated | (g->saltwind_quest_state == 3 ? 2 : 0);
     }
@@ -288,7 +301,7 @@ static int quest_progress(const GameState *g, int quest) {
         return (g->defeated_bosses & (1 << (quest == 21 ? LOCATION_FOREST : LOCATION_MOUNTAINS))) != 0;
     }
     if (quest == 20) {
-        return g->crown_quest_progress;
+        return !!(g->crown_quest_progress & CROWN_TAKEN);
     }
     if (quest == 19) {
         return g->war_machine_progress;
@@ -333,7 +346,7 @@ static int quest_progress(const GameState *g, int quest) {
         return g->dragon_treasure_quest_state >= 2;
     }
     if (quest == 7) {
-        return g->sunscar_lamp_quest_state >= 2;
+        return g->tribute_progress;
     }
     if (quest == 8) {
         return g->emberforge_progress;
@@ -431,7 +444,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
             entry->summary_line_1 = quest == 21 ? "The Necromancer's royal writ bears the King's seal, granting protection to his work." :
                 "The Goblin King's payment records bear the King's seal, funding raids and the western-road blockade.";
             entry->summary_line_2 = quest == 21 ? "Read it in Evidence. The road east to Dawnmere is open; no Inn return is required." :
-                "Read it in Evidence. The road west to Stillbury is open; no Inn return is required.";
+                "Read it in Evidence. The road west to Sunscar is open. Dain can introduce you to Zara; no Inn return is required.";
         }
         entry->area = definition->area;
         entry->objective_count = definition->stages[3] ? 4 : definition->stages[2] ? 3 : definition->stages[1] ? 2 : 1;

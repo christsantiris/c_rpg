@@ -23,7 +23,7 @@ her rescue and reunion. Mara, Ilya, and Rook have left Oakhaven in V2; their
 quests keep their progress but have no giver until a later act places them.
 After the Lich King's defeat, Alder and Dain arrive at Oakhaven's Inn with the
 eastward and westward adventure choices, and Aldric moves in from the square.
-Zara and Brenna remain in Stillbury's Tavern. Dawnmere's Alehouse has a generic
+Brenna remains in Stillbury's Tavern. Zara starts in Oakhaven's Inn after the Goblin King falls, then moves to the Sunscar caravan camp. Dawnmere's Alehouse has a generic
 host and no longer offers Dain's quest.
 Stillbury's duplicate Bram and the Bring Mira Home swamp quest are retired.
 
@@ -89,12 +89,15 @@ interpret the relevant record and recognize the corroboration if both were
 found. Their existing first-part rewards remain one-time; no second return is
 required. See [the story payoff](act2-story-payoff-plan.md).
 
-## Zara: The Lost Magic Lamp
+## Zara: The King's Tribute
 
-Zara waits in **Stillbury's Tavern**. Press `T` beside her, then `Y` to accept.
-Enter **Sunscar Wastes** through Stillbury's west gate, recover the magic lamp
-on stage **4** with `P` (Pick Up), and return to Zara in the Tavern for
-**80 gold and 600 score**.
+Zara assigns one quest, **The King's Tribute**, in Oakhaven's Inn or the Sunscar
+caravan camp. Reclaim Sunscar 2's convoy cargo and the Pharaoh's agreement on
+stage 5, then claim **200 gold and 500 XP** from her at the camp after exiting
+Sunscar. The lamp quest and its old rewards are retired.
+
+Two other camp NPCs assign the Jarl boss quest and crown delivery separately.
+See [the western arc](act3-western.md).
 
 ## Orin: Reclaim the Quarry
 

@@ -8,22 +8,29 @@ static const RoyalEvidence documents[] = {
     {ROYAL_EVIDENCE_PROTECTION, "Royal Writ of Protection", "Recovered from the Necromancer",
         "By royal command, the Necromancer's work in the eastern forest is under the King's protection. Patrols shall leave his grove undisturbed and permit his servants to pass."},
     {ROYAL_EVIDENCE_CONFISCATION, "Royal Confiscation Orders", "Recovered from Captain Rusk in Dawnmere",
-        "By the King's seal: Dawnmere's refusal of the levies is rebellion. Seize its cargo and detain those who resist. Send goods and prisoners to Stillbury's customs house. Captain Rusk shall hold the river waterfront until relieved."}
+        "By the King's seal: Dawnmere's refusal of the levies is rebellion. Seize its cargo and detain those who resist. Send goods and prisoners to Stillbury's customs house. Captain Rusk shall hold the river waterfront until relieved."},
+    {ROYAL_EVIDENCE_TRIBUTE, "The Pharaoh's Agreement", "Recovered from the Pharaoh in Sunscar Wastes",
+        "By the King's seal: confiscated goods shall be sent as tribute to the Pharaoh. Stillbury customs will record the shipments and release payment to the royal caravans. In return, the Pharaoh shall maintain his forces in Sunscar."},
+    {ROYAL_EVIDENCE_CHARTER, "The Jarl's Royal Charter", "Recovered from the Last Jarl in Giant's Peaks",
+        "By royal command: the Last Jarl shall hold the mountain road south of Giant's Bridge. Permit only shipments bearing a Stillbury customs seal. Keep unlicensed travelers and merchants from the crossing. The Crown guarantees his claim to the pass."}
 };
 
 int royal_evidence_found(const GameState *g) {
     return ((g->defeated_bosses & (1u << LOCATION_MOUNTAINS)) ? ROYAL_EVIDENCE_FUNDING : 0) |
         ((g->defeated_bosses & (1u << LOCATION_FOREST)) ? ROYAL_EVIDENCE_PROTECTION : 0) |
-        (g->dawnmere_liberated ? ROYAL_EVIDENCE_CONFISCATION : 0);
+        (g->dawnmere_liberated ? ROYAL_EVIDENCE_CONFISCATION : 0) |
+        ((g->defeated_bosses & (1u << LOCATION_DESERT)) ? ROYAL_EVIDENCE_TRIBUTE : 0) |
+        (g->giants_crown_defeated ? ROYAL_EVIDENCE_CHARTER : 0);
 }
 
 int royal_evidence_count(const GameState *g) {
     int found = royal_evidence_found(g);
-    return !!(found & ROYAL_EVIDENCE_FUNDING) + !!(found & ROYAL_EVIDENCE_PROTECTION) + !!(found & ROYAL_EVIDENCE_CONFISCATION);
+    return !!(found & ROYAL_EVIDENCE_FUNDING) + !!(found & ROYAL_EVIDENCE_PROTECTION) + !!(found & ROYAL_EVIDENCE_CONFISCATION) +
+        !!(found & ROYAL_EVIDENCE_TRIBUTE) + !!(found & ROYAL_EVIDENCE_CHARTER);
 }
 
 const RoyalEvidence *royal_evidence_document(int id) {
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < (int)(sizeof(documents) / sizeof(documents[0])); i++) {
         if (documents[i].id == id) {
             return &documents[i];
         }
@@ -33,7 +40,7 @@ const RoyalEvidence *royal_evidence_document(int id) {
 
 const RoyalEvidence *royal_evidence_entry(const GameState *g, int index) {
     int found = royal_evidence_found(g);
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < (int)(sizeof(documents) / sizeof(documents[0])); i++) {
         if ((found & documents[i].id) && index-- == 0) {
             return &documents[i];
         }
@@ -42,6 +49,9 @@ const RoyalEvidence *royal_evidence_entry(const GameState *g, int index) {
 }
 
 const char *royal_evidence_conclusion(const GameState *g) {
+    if (royal_evidence_found(g) & (ROYAL_EVIDENCE_TRIBUTE | ROYAL_EVIDENCE_CHARTER)) {
+        return "Royal tribute and control of the crossing point to Stillbury customs. The King is financing evil and restricting travel.";
+    }
     if (g->dawnmere_liberated) {
         return "The King ordered Dawnmere punished. Seized goods and prisoners were sent to Stillbury customs.";
     }

@@ -1,3 +1,5 @@
+#include "../game/western_arc.h"
+#include "western_arc_renderer.h"
 #include "../game/coast_exits.h"
 #include "boss_gate_renderer.h"
 #include "giants_crown_renderer.h"
@@ -312,7 +314,9 @@ static void draw_approach_ground(Renderer *r, const GameState *g, int sx, int sy
     const TownApproach *route = approach_route(g);
     Location area = route ? route->area : LOCATION_FOREST;
     int progress = route ? approach_progress(&g->map, x, y) : 0;
-    if (approach_ground(area) == TILE_SWAMP_FLOOR) {
+    if (approach_sunscar_road(g) && x >= 40 && x <= 52 && y >= 25 && y <= 34) {
+        draw_desert_floor(r, sx, sy, x, y);
+    } else if (approach_ground(area) == TILE_SWAMP_FLOOR) {
         draw_swamp_floor(r, sx, sy, x, y);
     } else if (area == LOCATION_FROSTFELL && progress >= 55) {
         draw_frostfell_floor(r, sx, sy, x, y);
@@ -582,7 +586,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
         (g->aldric_party_state == ALDRIC_FOLLOWING && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0);
     int dock_dialogue = coastal_approach(g) && strcmp(g->dialogue_speaker, "Captain Rowan") == 0;
     if (!g->dialogue_active ||
-        (!escort_dialogue && !dock_dialogue && !shortcut && !stormbell_prompt && !shrine_prompt && !town_life_is_interior(g->location) && g->location != LOCATION_TAVERN &&
+        (!escort_dialogue && !dock_dialogue && !approach_sunscar_road(g) && !approach_bridge_road(g) && !western_convoy_prompt(g) && !shortcut && !stormbell_prompt && !shrine_prompt && !town_life_is_interior(g->location) && g->location != LOCATION_TAVERN &&
         g->location != LOCATION_INN && g->location != LOCATION_HEALER && g->location != LOCATION_WITCH &&
         g->location != LOCATION_GUILD &&
         g->location != LOCATION_TOWN_HALL &&
@@ -639,6 +643,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
             game_active_quest_count(g), MAX_ACTIVE_QUESTS,
             war_machine_dialogue(g) ? "\n1: Watchfires   2: Break the War Machine" : "");
         hint = quest_limit_hint;
+    }
+    if (western_convoy_prompt(g)) {
+        hint = "Y: Reclaim cargo (anger Crown)\nN / Enter / Esc: Move along";
     }
     if (stormbell_prompt) {
         hint = "Ring bell? Y: Begin defense   N / Esc: Prepare first";
@@ -1907,8 +1914,8 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_glassdeep_ruin(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_GLASSDEEP_ENTRANCE || underlay == TILE_GLASSDEEP_EXIT) {
         draw_glassdeep_edge(r, screen_x, screen_y, map_x, map_y);
-    } else if (underlay == TILE_DESERT_LAMP) {
-        draw_desert_lamp(r, screen_x, screen_y, map_x, map_y);
+    } else if (underlay == TILE_RETIRED_DESERT_LAMP) {
+        draw_desert_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_FROST_LAKE) {
         draw_frostfell_lake(r, screen_x, screen_y, map_x, map_y);
         draw_frostfell_shore(r, g, screen_x, screen_y, map_x, map_y, underlay);
@@ -2291,6 +2298,10 @@ static void draw_low_health_warning(Renderer *r, const GameState *g) {
 
 // NPCs are transparent overlays; select their ground from the location, not the character.
 static void draw_npc_ground(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType floor) {
+    if (approach_sunscar_road(g)) {
+        draw_desert_floor(r, sx, sy, x, y);
+        return;
+    }
     if (g->location == LOCATION_DAWNMERE) {
         floor = map_dawnmere_ground(x, y);
     } else if (town_life_is_interior(g->location)) {
@@ -2946,8 +2957,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     break;
                 case TILE_DRAGON_TREASURE:
                     draw_dragon_goblet(r, sx, sy, x, y); break;
-                case TILE_DESERT_LAMP:
-                    draw_desert_lamp(r, sx, sy, x, y); break;
+                case TILE_RETIRED_DESERT_LAMP:
+                    draw_desert_floor(r, sx, sy, x, y); break;
                 case TILE_DRAGON_WALL:
                     draw_dragonspine_wall(r, &g->map, sx, sy, x, y);
                     break;
@@ -3155,7 +3166,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     break;
                 }
                 case TILE_NPC_EDDA:
-                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TOWN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_EDDA, 0);
                     break;
                 case TILE_NPC_SEREN:
@@ -3198,8 +3209,16 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_ROOK, 0);
                     break;
+                case TILE_CARAVAN_CAMP:
+                    draw_desert_floor(r, sx, sy, x, y);
+                    break;
+                case TILE_NPC_GARRAN:
+                case TILE_NPC_LIORA:
+                    draw_npc_ground(r, g, sx, sy, x, y, TILE_DESERT_FLOOR);
+                    npc_draw(r, sx, sy, g->map.tiles[y][x] == TILE_NPC_GARRAN ? NPC_ART_GARRAN : NPC_ART_LIORA, 0);
+                    break;
                 case TILE_NPC_GUILD_SEEKER:
-                    draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
+                    draw_npc_ground(r, g, sx, sy, x, y, approach_sunscar_road(g) ? TILE_DESERT_FLOOR : TILE_TAVERN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_ZARA, 0);
                     break;
                 case TILE_NPC_STEWARD:
@@ -3734,6 +3753,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     stormwatch_draw_warnings(r, g, v);
     stormbell_draw_details(r, g, v);
     giants_draw_details(r, g, v);
+    western_draw_details(r, g, v);
     ironfang_draw_details(r, g, v);
     northroad_draw_details(r, g, v);
 

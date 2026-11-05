@@ -1,3 +1,4 @@
+#include "western_arc.h"
 #include "coast_exits.h"
 #include "giants_crown.h"
 #include "ironfang.h"
@@ -1002,6 +1003,9 @@ static void dungeon_door_hint(GameState *g, TileType tile) {
 }
 
 int game_has_regional_interaction(const GameState *g) {
+    if (western_hint(g)) {
+        return 1;
+    }
     int door_x;
     int door_y;
     if (game_locked_door_target(g, &door_x, &door_y)) {
@@ -1484,6 +1488,9 @@ static void resolve_player_action(GameState *g, Action a) {
             action_resolve_enemies(g);
             return;
         }
+        if (western_interact(g)) {
+            return;
+        }
         if (giants_interact(g)) {
             return;
         }
@@ -1592,10 +1599,6 @@ static void resolve_player_action(GameState *g, Action a) {
 
     if (a.type == ACTION_PICK_UP) {
         if (containers_pickup(g)) {
-            return;
-        }
-        if (g->map.tiles[g->player.y][g->player.x] == TILE_DESERT_LAMP) {
-            game_collect_desert_lamp(g);
             return;
         }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_DRAGON_TREASURE) {
@@ -3011,6 +3014,7 @@ void action_resolve_player(GameState *g, Action a) {
     Location road_town = g->road_town;
     resolve_player_action(g, a);
     eastern_update(g);
+    western_update(g);
     if (location != g->location || level != g->level || route != g->approach_route || road_town != g->road_town) {
         // Travel handlers return before the ordinary movement-facing update.
         // A doorway or boundary crossing keeps the direction of that step.
@@ -3133,7 +3137,7 @@ static int enemy_prefers_range(const Enemy *e);
 
 // Royal archers hold a firing line on the Crown Roads and in occupied towns instead of chasing.
 static int enemy_holds_firing_line(const GameState *g, const Enemy *e) {
-    return e->type == ENEMY_ROAD_ARCHER && (game_is_crownroad(g) || eastern_town_combat(g));
+    return e->type == ENEMY_ROAD_ARCHER && (game_is_crownroad(g) || eastern_town_combat(g) || western_convoy_enemy(g, e));
 }
 
 static int enemy_is_support(const Enemy *e) {
@@ -3652,10 +3656,11 @@ static void grave_marshal_turn(GameState *g, int index) {
 
 static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
     eastern_update(g);
+    western_update(g);
     if (shots) {
         shots->count = 0;
     }
-    if (g->player.hp <= 0 || g->game_won || g->castle_prompt || stormbell_prompt_active(g) || g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD) {
+    if (g->player.hp <= 0 || g->game_won || g->castle_prompt || western_convoy_prompt(g) || stormbell_prompt_active(g) || g->location == LOCATION_APPROACH || g->location == LOCATION_TOWN_ROAD) {
         return;
     }
     if (mangrove_aboard(g)) {
@@ -3775,6 +3780,9 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
         }
         Enemy *e = &g->enemies[i];
         if (!e->active) {
+            continue;
+        }
+        if (western_convoy_enemy(g, e) && !e->boss_aux_x) {
             continue;
         }
         if (g->location == LOCATION_DAWNMERE && !g->dawnmere_liberated && !e->boss_aux_x) {
@@ -3975,7 +3983,7 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
         }
 
         // Formation front lines step from the center lane to a shoulder so archers can shoot past them.
-        int front_line = (g->location == LOCATION_MOUNTAINS && enemy_goblin_frontline(e)) || (eastern_town_combat(g) && e->type == ENEMY_ROYAL_GUARD);
+        int front_line = (g->location == LOCATION_MOUNTAINS && enemy_goblin_frontline(e)) || ((eastern_town_combat(g) || western_convoy_enemy(g, e)) && e->type == ENEMY_ROYAL_GUARD);
         if (adjacent && front_line && enemy_tactics_move(g, i) > 0) {
             e->move_timer++;
             continue;

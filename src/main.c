@@ -1,3 +1,4 @@
+#include "game/western_arc.h"
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -771,7 +772,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     int sc = event.key.keysym.scancode;
-                    if (screen == SCREEN_PLAYING && (eastern_handle_key(&game, sc, event.key.repeat) || royal_evidence_handle_key(&game, sc, event.key.repeat))) {
+                    if (screen == SCREEN_PLAYING && (western_handle_key(&game, sc, event.key.repeat) || eastern_handle_key(&game, sc, event.key.repeat) || royal_evidence_handle_key(&game, sc, event.key.repeat))) {
                         break;
                     }
                     if (screen == SCREEN_PLAYING && game_handle_cain_dialogue_key(&game, sc, event.key.repeat)) {
@@ -1127,7 +1128,7 @@ int main(int argc, char **argv) {
                                 if (eastern_talk(&game) || resurrection_talk(&game) || restoration_talk(&game) || town_life_talk(&game, 0)) {
                                     break;
                                 }
-                                if (crown_quest_talk(&game) || stormbell_talk(&game) || heartseed_talk(&game) || jail_talk_nearby(&game)) {
+                                if (western_talk(&game) || crown_quest_talk(&game) || stormbell_talk(&game) || heartseed_talk(&game) || jail_talk_nearby(&game)) {
                                     break;
                                 }
                                 if (game_workshop_near_smith(&game)) {
@@ -1360,7 +1361,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (western_convoy_prompt(&game) || game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
                         break;
                     }
 

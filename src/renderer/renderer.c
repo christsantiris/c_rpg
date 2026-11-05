@@ -50,6 +50,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     r->stonewake_workshop_texture = load_sprite_texture(sdl, "assets/images/stonewake-workshop.bmp");
     r->stonewake_crane_texture = load_sprite_texture(sdl, "assets/images/stonewake-crane.bmp");
     r->stonewake_prop_texture = load_sprite_texture(sdl, "assets/images/stonewake-props.bmp");
+    r->caravan_camp_texture = load_sprite_texture(sdl, "assets/images/caravan-camp.bmp");
     r->crown_quest_texture = load_sprite_texture(sdl, "assets/images/crown-quest-props.bmp");
     r->war_machine_texture = load_sprite_texture(sdl, "assets/images/war-machine-props.bmp");
     r->ironfang_boss_texture = load_sprite_texture(sdl, "assets/images/ironfang-boss.bmp");
@@ -158,6 +159,8 @@ void renderer_free(Renderer *r) {
     r->stonewake_prop_texture = NULL;
     SDL_DestroyTexture(r->ironfang_boss_texture);
     SDL_DestroyTexture(r->war_machine_texture);
+    SDL_DestroyTexture(r->caravan_camp_texture);
+    r->caravan_camp_texture = NULL;
     SDL_DestroyTexture(r->crown_quest_texture);
     r->crown_quest_texture = NULL;
     r->war_machine_texture = NULL;

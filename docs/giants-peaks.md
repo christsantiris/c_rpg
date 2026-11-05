@@ -1,6 +1,7 @@
 # Giant's Peaks
 
-**Giant's Crown** is assigned by Antiquarian Edda in Rosemoor's Adventurer's Guild.
+**Giant's Crown** is assigned by Historian Liora at the Sunscar caravan camp.
+Scout Garran separately assigns **Break the Jarl's Blockade** there.
 
 Giant's Peaks follows Sunscar Wastes. Beyond the Sunscar pyramid entrance, the
 desert road turns north, signed **N: GIANT'S PEAKS**. It leaves
@@ -29,7 +30,7 @@ reach six tiles, so every warned strike starts on screen.
 Southern boundary paths retreat; northern boundary paths advance. Intermediate
 travel and retreat remain available while enemies live. Defeat the Last Jarl to
 leave through the opposite end of the pass and open onward passage permanently.
-The Jarl also guards the quest vault. No quest acceptance is required to fight
+The Jarl carries the quest crown. No quest acceptance is required to fight
 him or open the bridge. See [boss gates](boss-gates.md).
 
 From Stillbury, the bridge itself is freely crossable. The southern trail enters
@@ -78,24 +79,17 @@ Jarl grants **200 gold and 2,200 score** once and appears in the boss journal.
 
 ## Giant's Crown
 
-Read the royal inscription in **stage 2's northwest village hall**. It directs
-you to a seal in **stage 3's western chamber**, behind cracked masonry. Open
-the chamber with a giant's warned strike or Interact and recover the seal from
-its pedestal. Defeat **the Last Jarl on stage 5**, then use the seal at the
-western royal vault and recover the intact crown. The warded door requires
-both the seal and the Jarl's defeat; heavy strikes cannot break it. The vault
-has a clear return passage, and its ordinary stone coffer remains separate.
+Liora at the caravan camp asks the player to recover the crown directly from the
+Last Jarl and deliver it to **Antiquarian Edda beside the Stillbury end of
+Giant's Bridge, outside the checkpoint**. No inscription, royal seal or vault
+key is required. The crown is recovered automatically on his defeat, including
+when the quest has not yet been accepted, and uses no pack space.
 
-Return to Edda for **220 gold, 1,600 score, and the Stoneguard Shield**. This
-rare Warrior shield grants **+8 defense, 20% block chance, 50% blocked damage
-reduction, and +30 maximum HP while equipped**. Equipping does not heal the
-player. Removing the shield removes its HP bonus and clamps current HP to the
-remaining maximum. Edda holds the shield if the pack is full, ready to collect
-by talking to her after making room. Gold, score, and equipment are awarded once.
-
-Use the configured Interact key for every quest object. All four discoveries
-appear in the journal, count before acceptance, and require no inventory slots.
-An existing Jarl victory counts.
+Edda grants **220 gold, 1,600 score, and a Stoneguard Shield** once. This Warrior
+shield grants **+8 defense, 20% block chance, 50% blocked damage reduction, and
++30 maximum HP** while equipped. She reserves it if the pack is full.
+Garran's boss quest completes immediately on the Jarl's defeat, with no camp
+return. The Jarl's normal boss reward is unchanged. See [western quests](act3-western.md).
 
 ## Expeditions and saves
 
@@ -111,11 +105,7 @@ and castle perimeter connection without resetting existing Ashen Hollow stages,
 quests, inventory, character statistics, or boss progress. Saved active and
 cached giant names normalize without changing their statistics or wounds.
 
-Save version **208** also retains Giant's Crown's discoveries, open vault, paid
-bounty, and reserved or collected shield. Older saves keep their maps, items,
-actors, broken masonry, portals, and prior progress. An already opened vault
-stays accessible; an older player or return portal inside it keeps an escape
-route. Crown recovery still requires the seal and Jarl victory. An existing
-Guild save gains Edda on her free floor tile, deferring an occupied tile until
-the next Guild entry. Debug shortcuts unlock the physical passage without
-completing the quest.
+Save version **240** retains previous crown discoveries and claimed or reserved
+rewards. The Jarl now supplies the crown directly; the old warded vault becomes
+ordinary optional treasure with breakable masonry. Live and cached maps are
+repaired in place, preserving loot and an escape route from an already open room.

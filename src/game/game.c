@@ -1,3 +1,4 @@
+#include "western_arc.h"
 #include "coast_exits.h"
 #include "boss_gates.h"
 #include "royal_evidence.h"
@@ -1447,6 +1448,7 @@ void enemies_spawn(GameState *g) {
 
 void game_init(GameState *g) {
     eastern_init(g);
+    western_init(g);
     g->loot_container_count = 0;
     memset(g->giants_crown, 0, sizeof(g->giants_crown));
     g->giants_crown_defeated = 0;
@@ -1638,7 +1640,6 @@ void game_init(GameState *g) {
     g->last_town_visited = LOCATION_TOWN;
     g->return_portal_town = -1;
     g->dragon_treasure_quest_state = 0;
-    g->sunscar_lamp_quest_state = 0;
     g->emberforge_quest_state = 0;
     g->emberforge_progress = 0;
     g->emberforge_encounters = 0;
@@ -2457,30 +2458,6 @@ static void restore_frostfell_reward(GameState *g) {
     g->map.tiles[y][x] = TILE_ITEM;
 }
 
-static void place_desert_lamp(GameState *g) {
-    if (g->location != LOCATION_DESERT || g->level != DESERT_LAMP_LEVEL ||
-        g->sunscar_lamp_quest_state != 1 || g->map.room_count == 0) {
-        return;
-    }
-    int x;
-    int y;
-    map_room_center(&g->map.rooms[g->map.room_count - 1], &x, &y);
-    if (g->map.tiles[y][x] == TILE_PORTAL && g->portal_origin_tile == TILE_DESERT_LAMP) {
-        return;
-    }
-    int occupied = 0;
-    for (int i = 0; i < g->floor_item_count; i++) {
-        FloorItem *item = &g->floor_items[i];
-        if (item->active && item->x == x && item->y == y) {
-            item->underlying_tile = TILE_DESERT_LAMP;
-            occupied = 1;
-        }
-    }
-    if (!occupied) {
-        g->map.tiles[y][x] = TILE_DESERT_LAMP;
-    }
-}
-
 static void restore_desert_reward(GameState *g) {
     desert_pharaoh_restore_reward(g);
 }
@@ -3095,6 +3072,7 @@ static void place_hunt_encounter(GameState *g) {
 }
 
 void game_refresh_quest_encounters(GameState *g) {
+    western_prepare(g);
     elowen_prepare(g);
     if (g->location == LOCATION_DUNGEON) {
         map_ensure_dungeon_connectivity(&g->map, g->level);
@@ -3116,7 +3094,6 @@ void game_refresh_quest_encounters(GameState *g) {
     sun_guardian_restore_reward(g);
     red_dragon_restore_reward(g);
     catacombs_restore_reward(g);
-    place_desert_lamp(g);
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
     place_dain_map_bearer(g);
@@ -3180,8 +3157,8 @@ static void generate_active_level(GameState *g) {
     int warden_placed = place_alder_warden(g);
     int beacon_placed = place_mara_beacon(g);
     place_dragon_treasure(g);
-    place_desert_lamp(g);
     enemies_spawn(g);
+    western_prepare(g);
     if (warden_placed) {
         spawn_alder_guardian(g);
     }
@@ -3983,6 +3960,7 @@ void game_enter_tavern(GameState *g) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
+    western_prepare(g);
     push_message(g, "You enter Oakhaven's Inn.");
 }
 
@@ -6339,8 +6317,12 @@ typedef struct {
 } QuestOffer;
 
 static const QuestOffer quest_offers[] = {
-    {"Antiquarian Edda", LOCATION_GUILD, offsetof(GameState, crown_quest_state), 0,
-        "Assigned: Giant's Crown. Read stage 2's inscription, find stage 3's seal, and recover the crown from stage 5's royal vault."},
+    {"Historian Liora", LOCATION_APPROACH, offsetof(GameState, crown_quest_state), 0,
+        "Assigned: Giant's Crown. Recover the crown from the Last Jarl and deliver it to Edda outside Stillbury's western checkpoint."},
+    {"Caravan Scout Garran", LOCATION_APPROACH, offsetof(GameState, jarl_quest_state), 0,
+        "Assigned: Break the Jarl's Blockade. Defeat the Last Jarl in Giant's Peaks 5. No return to camp is required."},
+    {"Zara", LOCATION_TAVERN, offsetof(GameState, tribute_quest_state), 0,
+        "Assigned: The King's Tribute. Recover Sunscar 2's cargo and the Pharaoh's agreement; return to Zara at the caravan camp."},
     {WAR_SPEAKER, LOCATION_TOWN_HALL, offsetof(GameState, war_machine_quest_state), 0,
         "Assigned: Break the War Machine. Read Ironfang 2's orders, sink Ironfang 4's weapons, and bring back the Mine Boss's seal."},
     {"Watchkeeper Seren", LOCATION_ALEHOUSE, offsetof(GameState, dawnmere_quest_state), 0,
@@ -6360,7 +6342,6 @@ static const QuestOffer quest_offers[] = {
     {"Alder", LOCATION_TAVERN, offsetof(GameState, alder_quest_state), REGIONAL_CHAIN_BOSS_OFFERED, "Assigned: Defeat the Necromancer."},
     {"Mara", LOCATION_TAVERN, offsetof(GameState, mara_quest_state), 0, "Assigned: Relight the Drowned Beacons."},
     {"Rook", LOCATION_TAVERN, offsetof(GameState, rook_quest_state), 0, "Assigned: The Ivory Rook."},
-    {"Zara", LOCATION_INN, offsetof(GameState, sunscar_lamp_quest_state), 0, "Assigned: The Lost Magic Lamp."},
     {"Ilya", LOCATION_TAVERN, offsetof(GameState, dragon_treasure_quest_state), 0, "Assigned: The Dragon's Hoard."},
     {"Nahla", LOCATION_ISLAND, offsetof(GameState, temple_treasure_state), 0, "Quest assigned: The Buried Sun."},
     {"Steward Hadrin", LOCATION_TOWN_HALL, offsetof(GameState, emberforge_quest_state), 0, "Assigned: Reclaim the Emberforge. See your quest journal."},
@@ -6387,7 +6368,11 @@ static const QuestOffer *current_quest_offer(const GameState *g) {
             !(g->defeated_bosses & (1 << LOCATION_DUNGEON))) {
             continue;
         }
-        if (g->location == offer->location && *state == offer->offered_state &&
+        int place = g->location == offer->location;
+        if (offer->state_offset == offsetof(GameState, tribute_quest_state)) {
+            place = place || approach_sunscar_road(g);
+        }
+        if (place && *state == offer->offered_state &&
             strcmp(g->dialogue_speaker, offer->speaker) == 0) {
             return offer;
         }
@@ -6442,6 +6427,7 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
     }
     int *state = (int *)((char *)g + offer->state_offset);
     *state = offer->offered_state + 1;
+    western_update(g);
     if (state == &g->crown_quest_state) {
         crown_quest_sync(g);
     } else if (state == &g->war_machine_quest_state) {
@@ -6507,44 +6493,7 @@ void game_talk_to_royal_guard(GameState *g, int x, int y) {
 }
 
 void game_talk_to_guild_seeker(GameState *g) {
-    if (g->location != LOCATION_INN || abs(g->player.x - ZARA_INN_X) > 1 || abs(g->player.y - ZARA_INN_Y) > 1) {
-        return;
-    }
-    g->dialogue_active = 1;
-    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Zara");
-    g->dialogue_x = ZARA_INN_X;
-    g->dialogue_y = ZARA_INN_Y;
-    if (g->sunscar_lamp_quest_state == 0) {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Recover a magic lamp from Sunscar Wastes level 4. Enter through "
-            "Stillbury's west gate. Stand on the lamp and press P, then return "
-            "to me here for 80 gold.");
-    } else if (g->sunscar_lamp_quest_state == 1) {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "The magic lamp lies in the last clearing of Sunscar Wastes level 4. "
-            "Stand on it and press P, then return it to me at the Tavern in Stillbury.");
-    } else if (g->sunscar_lamp_quest_state == 2) {
-        g->sunscar_lamp_quest_state = 3;
-        g->gold += 80;
-        g->score += 600;
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You found the lamp! I will keep it safe. Here are your 80 gold.");
-        push_message(g, "Completed: The Lost Magic Lamp. 80 gold awarded.");
-    } else {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "The magic lamp is safe with me. Thank you for recovering it.");
-    }
-}
-
-void game_collect_desert_lamp(GameState *g) {
-    if (g->location != LOCATION_DESERT || g->level != DESERT_LAMP_LEVEL ||
-        g->sunscar_lamp_quest_state != 1 ||
-        g->map.tiles[g->player.y][g->player.x] != TILE_DESERT_LAMP) {
-        return;
-    }
-    g->map.tiles[g->player.y][g->player.x] = TILE_DESERT_FLOOR;
-    g->sunscar_lamp_quest_state = 2;
-    push_message(g, "Magic lamp recovered. Return to Zara in Stillbury's Tavern.");
+    western_talk(g);
 }
 
 void game_talk_to_dragon_seeker(GameState *g) {
@@ -6620,8 +6569,8 @@ void game_talk_to_dain(GameState *g) {
             "You have %d of 2 map halves. Find the Archer Map Bearer in Mountains 1 and the Warchief Map Bearer in Mountains 2. Bring both halves back to me at Oakhaven's Inn.", halves);
     } else if (g->dain_quest_state == REGIONAL_CHAIN_COMPLETE) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "%sThe King's seal proves the Crown paid for goblin raids and the western-road blockade. Follow the opened road west to Sunscar Wastes to learn why.",
-            (royal_evidence_found(g) & 3) == 3 ? "The payments match the Necromancer's royal writ. " : "");
+            "%sThe King's seal proves the Crown paid for goblin raids and the western-road blockade. Speak to Zara at %s about the goods being taken through Sunscar Wastes.",
+            (royal_evidence_found(g) & 3) == 3 ? "The payments match the Necromancer's royal writ. " : "", g->zara_at_camp ? "the caravan camp outside Sunscar" : "Oakhaven's Inn");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "%sThe map marks the goblin fortress stores. Defeat the Goblin King and search his records for who supplies the raids. His fall opens the western road to Sunscar Wastes. Continue investigating the evil in our kingdom.",
@@ -6895,6 +6844,7 @@ void game_migrate_boss_shortcuts(GameState *g) {
 
 void game_update_level_progress(GameState *g) {
     eastern_update(g);
+    western_update(g);
     update_oakhaven_boss_quests(g);
     refresh_hunt_progress(g);
     if (g->location < LOCATION_JAIL && (g->defeated_bosses & (1 << g->location))) {

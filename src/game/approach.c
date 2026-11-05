@@ -1,3 +1,4 @@
+#include "western_arc.h"
 #include "giants_crown.h"
 #include "ironfang.h"
 #include "approach.h"
@@ -724,6 +725,7 @@ void approach_refresh_entrance(GameState *g) {
     }
     coastal_refresh_docks(g);
     boss_gate_refresh(g);
+    western_prepare(g);
 }
 
 static void generate_approach(Map *map, Location area, int dx, int dy) {
@@ -1029,6 +1031,7 @@ int approach_enter_region(GameState *g, int index) {
         g->player.last_dy = route->town == LOCATION_CASTLE ? 1 : -1;
     }
     boss_gate_refresh(g);
+    western_prepare(g);
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
     g->player.frozen_turns = 0;
