@@ -68,10 +68,13 @@ typedef enum {
     EQUIPMENT_ARMOR,
     EQUIPMENT_ACCESSORY_1,
     EQUIPMENT_ACCESSORY_2,
+    EQUIPMENT_ACCESSORY_3,
+    EQUIPMENT_ACCESSORY_4,
     MAX_CARRIED_ITEMS
 } EquipmentSlot;
 
-#define EQUIPMENT_SLOT_COUNT 6
+#define EQUIPMENT_SLOT_COUNT (4 + ACCESSORY_SLOT_COUNT)
+#define JAIL_EXTRA_SLOT_COUNT (1 + ACCESSORY_SLOT_COUNT)
 
 // Picks the message bar colour for a message.
 typedef enum {
@@ -381,7 +384,7 @@ typedef struct {
     int prisoner_x;
     int prisoner_y;
     Item jail_gear[MAX_CARRIED_ITEMS];
-    int jail_extra_slots[3]; // Helmet, Accessory 1, Accessory 2 evidence indices.
+    int jail_extra_slots[JAIL_EXTRA_SLOT_COUNT]; // Helmet followed by each accessory slot's evidence index.
     int jail_gear_count;
     int jail_gear_claimed;
     int jail_gear_state; // 0: none taken, 1: recover gear, 3: recovered.
