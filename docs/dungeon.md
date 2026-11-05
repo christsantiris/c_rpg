@@ -114,7 +114,7 @@ enemies do not block it. Entering the crypt always starts at floor 1.
 
 The Lich King guarantees the all-class **Crypt Ring**, an accessory granting
 **+5 maximum HP and +5 maximum MP**, with no attack or defense bonus. It uses
-either accessory slot and may be worn alongside another ring. Equipping it
+any accessory slot and may be worn alongside another ring. Equipping it
 does not restore current HP or MP. It replaces the former Cryptblade reward.
 
 Normally the ring drops on the floor. If the floor loot list is full, it remains

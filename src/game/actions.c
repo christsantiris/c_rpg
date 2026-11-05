@@ -1774,9 +1774,26 @@ static void resolve_player_action(GameState *g, Action a) {
         } else if (incoming.type == ITEM_HELMET) {
             slot = EQUIPMENT_HELMET;
         } else if (incoming.type == ITEM_ACCESSORY) {
-            slot = a.target_y == 2 ? EQUIPMENT_ACCESSORY_2 : EQUIPMENT_ACCESSORY_1;
-            if (!a.target_y && game_equipped_item(g, slot) && !game_equipped_item(g, EQUIPMENT_ACCESSORY_2)) {
-                slot = EQUIPMENT_ACCESSORY_2;
+            slot = EQUIPMENT_ACCESSORY_1;
+            if (a.target_y >= 1 && a.target_y <= ACCESSORY_SLOT_COUNT) {
+                slot += a.target_y - 1;
+            } else if (!a.target_y) {
+                // Upgrade the same non-ring category in place; otherwise fill an empty slot.
+                int empty = -1;
+                for (int other = EQUIPMENT_ACCESSORY_1; other <= EQUIPMENT_ACCESSORY_4; other++) {
+                    const Item *worn = game_equipped_item(g, other);
+                    if (worn && incoming.accessory_family != ACCESSORY_FAMILY_RING && worn->accessory_family == incoming.accessory_family) {
+                        slot = other;
+                        empty = -1;
+                        break;
+                    }
+                    if (!worn && empty < 0) {
+                        empty = other;
+                    }
+                }
+                if (empty >= 0) {
+                    slot = empty;
+                }
             }
         }
         if (!game_equip_item(g, idx, slot)) {

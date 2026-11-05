@@ -1379,7 +1379,7 @@ static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
     g->jail_main_hand = -1;
     g->jail_off_hand = -1;
     g->jail_armor = -1;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < JAIL_EXTRA_SLOT_COUNT; i++) {
         g->jail_extra_slots[i] = -1;
     }
     g->jail_supplies_taken = 0;
@@ -1440,10 +1440,13 @@ static int load_jail_equipment(const cJSON *root, GameState *g, int version) {
     }
     if (version >= 224) {
         const cJSON *slots = cJSON_GetObjectItem(root, "jail_extra_slots");
-        if (!cJSON_IsArray(slots) || cJSON_GetArraySize(slots) != 3) {
+        int count = cJSON_GetArraySize(slots);
+        int expected = version < 241 ? 3 : JAIL_EXTRA_SLOT_COUNT;
+        // Historical testing saves can already carry the appended empty slots.
+        if (!cJSON_IsArray(slots) || (count != expected && !(version < 241 && count == JAIL_EXTRA_SLOT_COUNT))) {
             return 0;
         }
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < count; i++) {
             const cJSON *value = cJSON_GetArrayItem(slots, i);
             if (!cJSON_IsNumber(value) || value->valueint < -1 || value->valueint >= g->jail_gear_count) {
                 return 0;
@@ -1946,7 +1949,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 240);
+    cJSON_AddNumberToObject(root, "save_version", 241);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -2009,7 +2012,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "jail_off_hand", g->jail_off_hand);
     cJSON_AddNumberToObject(root, "jail_armor", g->jail_armor);
     cJSON *extra_slots = cJSON_CreateArray();
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < JAIL_EXTRA_SLOT_COUNT; i++) {
         cJSON_AddItemToArray(extra_slots, cJSON_CreateNumber(g->jail_extra_slots[i]));
     }
     cJSON_AddItemToObject(root, "jail_extra_slots", extra_slots);
@@ -7116,11 +7119,13 @@ int load_game(GameState *g, int slot) {
         FloorItem worn[MAX_FLOOR_ITEMS] = {0};
         int count = 0;
         const cJSON *equipment = cJSON_GetObjectItem(root, "equipment");
-        if (!cJSON_IsArray(equipment) || cJSON_GetArraySize(equipment) != EQUIPMENT_SLOT_COUNT) {
+        int slots = cJSON_GetArraySize(equipment);
+        int expected = save_version < 241 ? 6 : EQUIPMENT_SLOT_COUNT;
+        if (!cJSON_IsArray(equipment) || (slots != expected && !(save_version < 241 && slots == EQUIPMENT_SLOT_COUNT))) {
             cJSON_Delete(root);
             return 0;
         }
-        for (int i = 0; i < EQUIPMENT_SLOT_COUNT; i++) {
+        for (int i = 0; i < slots; i++) {
             if (!stored_item_valid(cJSON_GetArrayItem(equipment, i))) {
                 cJSON_Delete(root);
                 return 0;

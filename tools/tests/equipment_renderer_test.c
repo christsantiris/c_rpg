@@ -67,25 +67,35 @@ int main(void) {
     game_draw(&r, g, &view);
     capture(&r, surface, "/tmp/equipment-new-character.bmp");
     assert(game_equip_main_hand(g, 0));
-    const Item items[] = {item_make_buckler(), item_make_leather_cap(), item_make_chain_mail(), item_make_ring_of_vigor(), item_make_copper_amulet()};
-    const EquipmentSlot slots[] = {EQUIPMENT_WEAK_HAND, EQUIPMENT_HELMET, EQUIPMENT_ARMOR, EQUIPMENT_ACCESSORY_1, EQUIPMENT_ACCESSORY_2};
-    for (int i = 0; i < 5; i++) {
+    const Item items[] = {item_make_buckler(), item_make_leather_cap(), item_make_chain_mail(), item_make_ring_of_vigor(), item_make_ring_of_vigor(), item_make_leather_gauntlets(), item_make_leather_bracers()};
+    const EquipmentSlot slots[] = {EQUIPMENT_WEAK_HAND, EQUIPMENT_HELMET, EQUIPMENT_ARMOR, EQUIPMENT_ACCESSORY_1, EQUIPMENT_ACCESSORY_2, EQUIPMENT_ACCESSORY_3, EQUIPMENT_ACCESSORY_4};
+    for (int i = 0; i < EQUIPMENT_SLOT_COUNT - 1; i++) {
         g->inventory[g->inventory_count++] = items[i];
         assert(game_equip_item(g, 0, slots[i]));
     }
     g->player.known_spells[0] = spell_make_magic_arrow();
     g->player.known_spell_count = 1;
     g->player.equipped_spell = 0;
+    g->aldric_party_state = 1;
+    g->aldric_hp = 120;
     renderer_begin_frame(&r);
     game_draw(&r, g, &view);
-    capture(&r, surface, "/tmp/equipment-six-slots-sidebar.bmp");
+    capture(&r, surface, "/tmp/equipment-eight-slots-sidebar.bmp");
     InventoryScreen inv;
     inventory_init(&inv);
     inventory_handle_key(&inv, SDL_SCANCODE_TAB, g->inventory_count, SDL_SCANCODE_I);
-    inv.selected = 4;
+    inv.selected = 7;
     renderer_begin_frame(&r);
     inventory_draw(&r, g, &inv);
-    capture(&r, surface, "/tmp/equipment-six-slots-inventory.bmp");
+    capture(&r, surface, "/tmp/equipment-eight-slots-inventory.bmp");
+    renderer_on_resize(&r, 640, 480);
+    renderer_begin_frame(&r);
+    game_draw(&r, g, &view);
+    capture(&r, surface, "/tmp/equipment-eight-slots-sidebar-small.bmp");
+    renderer_begin_frame(&r);
+    inventory_draw(&r, g, &inv);
+    capture(&r, surface, "/tmp/equipment-eight-slots-inventory-small.bmp");
+    renderer_on_resize(&r, 1280, 720);
     inv.equipment_tab = 0;
     const Item catalog[] = {item_make_leather_cap(), item_make_leather_gauntlets(), item_make_leather_bracers(), item_make_ring_of_vigor(), item_make_copper_amulet()};
     for (int i = 0; i < MAX_INVENTORY; i++) {
@@ -267,6 +277,6 @@ int main(void) {
     SDL_Quit();
     free(project);
     free(assets);
-    puts("PASS: six-slot equipment, full bag, bare heads, accessories, separate spell and existing-save migration render at native scale.");
+    puts("PASS: eight-slot equipment, full bag, bare heads, accessories, separate spell and existing-save migration render at native scale.");
     return 0;
 }

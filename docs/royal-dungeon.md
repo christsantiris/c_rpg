@@ -12,7 +12,7 @@ to the Royal Guards, who imprison them. The arrest dialogue explains exactly
 what happened. Walking nearby, bumping into him, or pressing Interact does not
 cause arrest. The dungeon's front gate is locked.
 
-Guards confiscate **all carried items, all six equipped slots, gold, and arrows**.
+Guards confiscate **all carried items, all eight equipped slots, gold, and arrows**.
 This includes potions, scrolls, tomes, accessories, and physical quest items in
 the pack. Exact item properties and the original equipment slots are stored in
 the evidence chest for recovery. Equipped bonuses are removed normally. Learned
@@ -113,7 +113,7 @@ complete confiscation rules.
 For play testing:
 
 1. Talk to the townsman east of the castle crossroads and read the arrest reason.
-2. Check that the bag, all six equipment slots, gold, and quiver are empty.
+2. Check that the bag, all eight equipment slots, gold, and quiver are empty.
 3. Confirm the hatch is hidden, including in debug mode. Talk to Tomas with T
    and accept with Y; locate the newly revealed hatch.
 4. Check the one all-class Smuggled Dagger is supplied in the cell; repeat the

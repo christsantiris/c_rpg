@@ -111,6 +111,12 @@ labels also support mouse clicks. In the spellbook, select a spell and press
 `E` or `Enter` to equip it. Shops and the docks use the arrow keys and
 `Enter`; shop buy and sell modes are switched with `Tab`.
 
+Players have eight equipment slots: Strong Hand, Weak Hand, Helmet, Armor and
+Accessory 1–4. Up to two rings may be worn; gauntlets, bracers, amulets, belts
+and boots each allow one equipped item per category. In the bag, **1–4** selects
+an accessory destination. Equipped items do not use bag capacity, and the
+equipped spell remains separate from equipment.
+
 Using an item keeps the inventory open, even after consuming the last item.
 Close it manually with **I** (or the remapped inventory key) or **Esc**.
 Drinking any potion still consumes one combat turn: enemies respond, and
