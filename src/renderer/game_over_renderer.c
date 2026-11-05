@@ -28,7 +28,7 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_ASHEN: return "ASHEN HOLLOW";
         case LOCATION_GLASSDEEP: return "STONEWAKE QUARRY";
         case LOCATION_DESERT: return "SUNSCAR WASTES";
-        case LOCATION_TAVERN: return "TAVERN";
+        case LOCATION_TAVERN: return "INN";
         case LOCATION_BAKERY: return "BAKERY";
         case LOCATION_BUTCHER: return "BUTCHER";
         case LOCATION_MONASTERY: return "MONASTERY";
@@ -37,7 +37,7 @@ static const char *game_over_location(const GameState *g) {
         case LOCATION_TOWN2: return "STILLBURY";
         case LOCATION_TOWN3: return "ROSEMOOR";
         case LOCATION_TOWN4: return "RIDGESHIRE";
-        case LOCATION_INN: return "INN";
+        case LOCATION_INN: return "TAVERN";
         case LOCATION_HEALER: return "HEALER";
         case LOCATION_WITCH: return "WITCH";
         case LOCATION_GUILD: return "ADVENTURER'S GUILD";

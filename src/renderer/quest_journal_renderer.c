@@ -1,6 +1,25 @@
 #include "quest_journal_renderer.h"
 #include "game_renderer.h"
 #include "sprites.h"
+#include "royal_evidence_renderer.h"
+
+static void draw_evidence(Renderer *r, const GameState *g, const QuestJournalScreen *screen) {
+    SDL_Color gold = {220, 180, 60, 255};
+    SDL_Color dimmed = {105, 105, 120, 255};
+    int compact = r->screen_h < 400;
+    int top = compact ? 40 : 110;
+    int count = royal_evidence_count(g);
+    const RoyalEvidence *document = royal_evidence_entry(g, screen->selected);
+    if (document) {
+        royal_evidence_draw(r, g, document, (SDL_Rect){16, top, r->screen_w - 32, r->screen_h - top - 16}, "");
+        char position[32];
+        SDL_snprintf(position, sizeof(position), "EVIDENCE %d / %d", screen->selected + 1, count);
+        renderer_draw_text(r, position, r->screen_w - 145, compact ? 8 : 62, gold, r->font_tiny);
+    } else {
+        renderer_draw_text(r, "NO ROYAL EVIDENCE FOUND", 24, top + 24, dimmed, r->font_small);
+    }
+    renderer_draw_text(r, "UP/DOWN DOCUMENTS   TAB/LEFT/RIGHT TABS   Q/ESC CLOSE", 16, r->screen_h - 10, dimmed, r->font_tiny);
+}
 
 static void draw_panel(Renderer *r, SDL_Rect rect) {
     SDL_SetRenderDrawColor(r->sdl, 55, 52, 77, 255);
@@ -86,6 +105,9 @@ static int draw_details(Renderer *r, const QuestJournalEntry *entry, int x, int 
     y += compact ? 4 : 12;
     SDL_snprintf(line, sizeof(line), "PROGRESS: %d / %d", complete_count, entry->objective_count);
     y += wrapped(r, line, x, y, width, r->font_small, white, draw) + (compact ? 20 : 32);
+    if (!entry->reward_gold && !entry->reward_score && !entry->reward_item) {
+        return y + 14;
+    }
     if (entry->reward_item && entry->reward_gold > 0) {
         SDL_snprintf(line, sizeof(line), "REWARD: %d GOLD + %s", entry->reward_gold, entry->reward_item);
     } else if (entry->reward_item) {
@@ -120,18 +142,24 @@ void quest_journal_draw(Renderer *r, const GameState *g, const QuestJournalScree
     int detail_x = narrow ? margin : margin + list_width + 16;
     int detail_width = r->screen_w - detail_x - margin;
 
-    renderer_draw_text(r, "QUEST JOURNAL", r->screen_w / 2 - 110, 35,
-        gold, r->font_large);
+    int compact_evidence = screen->tab == QUEST_TAB_EVIDENCE && r->screen_h < 400;
+    renderer_draw_text(r, "QUEST JOURNAL", compact_evidence ? 16 : r->screen_w / 2 - 110, compact_evidence ? 8 : 35,
+        gold, compact_evidence ? r->font_tiny : r->font_large);
     int active = game_active_quest_count(g);
     char active_label[32];
     SDL_snprintf(active_label, sizeof(active_label), "ACTIVE %d/%d", active, MAX_ACTIVE_QUESTS);
-    const char *tabs[QUEST_TAB_COUNT] = {active_label, "COMPLETED", "BOSSES"};
+    const char *tabs[QUEST_TAB_COUNT] = {active_label, "COMPLETED", "BOSSES", "EVIDENCE"};
+    TTF_Font *tab_font = r->screen_w < 850 ? r->font_tiny : r->font_small;
     int tab_x = margin;
     for (int tab = 0; tab < QUEST_TAB_COUNT; tab++) {
-        renderer_draw_text(r, tabs[tab], tab_x, 82, screen->tab == tab ? gold : dimmed, r->font_small);
+        renderer_draw_text(r, tabs[tab], tab_x, compact_evidence ? 24 : 82, screen->tab == tab ? gold : dimmed, tab_font);
         int width = 0;
-        TTF_SizeText(r->font_small, tabs[tab], &width, NULL);
+        TTF_SizeText(tab_font, tabs[tab], &width, NULL);
         tab_x += width + 24;
+    }
+    if (screen->tab == QUEST_TAB_EVIDENCE) {
+        draw_evidence(r, g, screen);
+        return;
     }
     if (screen->tab == QUEST_TAB_BOSSES) {
         draw_boss_progress(r, g);

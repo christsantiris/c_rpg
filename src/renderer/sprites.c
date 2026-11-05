@@ -423,10 +423,10 @@ static void draw_woodland_floor(Renderer *r, int tile_x, int tile_y, int map_x, 
     int x = tile_x * TILE_SIZE;
     int y = tile_y * TILE_SIZE;
     unsigned int seed = forest_tile_seed(map_x, map_y);
-    SDL_Color soil[3] = {{13, 25, 26, 255}, {17, 29, 28, 255}, {19, 28, 29, 255}};
-    SDL_Color moss = living ? (SDL_Color){46, 73, 35, 255} : (SDL_Color){28, 43, 38, 255};
-    SDL_Color moss_light = living ? (SDL_Color){84, 112, 47, 255} : (SDL_Color){44, 64, 51, 255};
-    SDL_Color leaf = living ? (SDL_Color){144, 118, 55, 255} : (SDL_Color){66, 61, 52, 255};
+    SDL_Color soil[3] = {{15, 32, 22, 255}, {18, 36, 23, 255}, {20, 34, 23, 255}};
+    SDL_Color moss = living ? (SDL_Color){46, 73, 35, 255} : (SDL_Color){29, 58, 32, 255};
+    SDL_Color moss_light = living ? (SDL_Color){84, 112, 47, 255} : (SDL_Color){42, 76, 39, 255};
+    SDL_Color leaf = living ? (SDL_Color){144, 118, 55, 255} : (SDL_Color){70, 65, 34, 255};
     if (living) {
         soil[0] = (SDL_Color){30, 47, 27, 255};
         soil[1] = (SDL_Color){35, 51, 28, 255};
@@ -484,10 +484,10 @@ static void draw_woodland_wall(Renderer *r, int tile_x, int tile_y, int map_x, i
     unsigned int frame = (SDL_GetTicks() / AMBIENT_FRAME_MS +
         ((seed >> 16) & 1u)) & 1u;
     int canopy_shift = (seed >> 20) % 3u == 0u ? (int)frame : 0;
-    SDL_Color shadow = living ? (SDL_Color){14, 31, 17, 255} : (SDL_Color){7, 18, 20, 255};
-    SDL_Color foliage = living ? (SDL_Color){31, 69, 33, 255} : (SDL_Color){24, 42, 38, 255};
-    SDL_Color foliage_light = living ? (SDL_Color){85, 119, 48, 255} : (SDL_Color){44, 64, 53, 255};
-    SDL_Color bark = living ? (SDL_Color){91, 74, 41, 255} : (SDL_Color){68, 62, 54, 255};
+    SDL_Color shadow = living ? (SDL_Color){14, 31, 17, 255} : (SDL_Color){6, 21, 13, 255};
+    SDL_Color foliage = living ? (SDL_Color){31, 69, 33, 255} : (SDL_Color){22, 51, 28, 255};
+    SDL_Color foliage_light = living ? (SDL_Color){85, 119, 48, 255} : (SDL_Color){37, 75, 37, 255};
+    SDL_Color bark = living ? (SDL_Color){91, 74, 41, 255} : (SDL_Color){64, 54, 35, 255};
 
     fill_rect(r, x, y, TILE_SIZE, TILE_SIZE, shadow);
     fill_rect(r, x + 1, y + 5, 9, 10, foliage);
@@ -495,25 +495,12 @@ static void draw_woodland_wall(Renderer *r, int tile_x, int tile_y, int map_x, i
     fill_rect(r, x + 3 + canopy_shift, y + 15, 7, 5, foliage_light);
     fill_rect(r, x + 17 + canopy_shift, y + 4, 5, 4, foliage_light);
     int shape = (int)((seed >> 11) % 4u);
-    if (!living && shape != 0) {
-        // Bare crooked branches interrupt the canopy in the corrupted woods.
-        fill_rect(r, x + trunk_x, y + 8, 5, 16, bark);
-        fill_rect(r, x + trunk_x + 1, y + 5, 3, 14, (SDL_Color){94, 84, 66, 255});
-        fill_rect(r, x + trunk_x - 2, y + 18, 8, 4, bark);
-        SDL_SetRenderDrawColor(r->sdl, bark.r, bark.g, bark.b, 255);
-        SDL_RenderDrawLine(r->sdl, x + trunk_x + 2, y + 13, x + 3, y + 5);
-        SDL_RenderDrawLine(r->sdl, x + 3, y + 5, x + 4, y + 1);
-        SDL_RenderDrawLine(r->sdl, x + trunk_x + 3, y + 16, x + 21, y + 8);
-        SDL_RenderDrawLine(r->sdl, x + 21, y + 8, x + 19, y + 3);
-        SDL_RenderDrawLine(r->sdl, x + trunk_x + 2, y + 7, x + 16, y + 1);
-        return;
-    }
     if (shape == 0) {
         fill_rect(r, x + 2, y + 7, 20, 13, foliage);
         fill_rect(r, x + 4, y + 4, 11, 9,
-            living ? (SDL_Color){49, 88, 36, 255} : (SDL_Color){29, 48, 42, 255});
+            living ? (SDL_Color){49, 88, 36, 255} : (SDL_Color){29, 66, 33, 255});
         fill_rect(r, x + 12, y + 11, 10, 10,
-            living ? (SDL_Color){46, 82, 35, 255} : (SDL_Color){27, 46, 40, 255});
+            living ? (SDL_Color){46, 82, 35, 255} : (SDL_Color){30, 61, 31, 255});
         fill_rect(r, x + 6 + canopy_shift, y + 6, 6, 2,
             foliage_light);
         fill_rect(r, x + 15 + canopy_shift, y + 13, 5, 2,
@@ -2009,21 +1996,22 @@ static void draw_forest_enemy(Renderer *r, int tx, int ty, EnemyType type) {
         case ENEMY_GIANT_SPIDER: art = FOREST_ART_GIANT_SPIDER; break;
         case ENEMY_DARK_ELF_ARCHER: art = FOREST_ART_DARK_ELF_ARCHER; break;
         case ENEMY_DARK_ELF_RANGER: art = FOREST_ART_DARK_ELF_RANGER; break;
+        case ENEMY_DARK_ELF_GUARD: art = FOREST_ART_DARK_ELF_GUARD; break;
         case ENEMY_FOREST_TROLL: art = FOREST_ART_FOREST_TROLL; break;
         case ENEMY_FOREST_NECROMANCER: art = FOREST_ART_FOREST_NECROMANCER; break;
         default: return;
     }
     static const SDL_Color bodies[FOREST_ART_COUNT] = {
         {238, 189, 84, 255}, {83, 87, 108, 255}, {106, 64, 103, 255},
-        {185, 166, 178, 255}, {185, 166, 178, 255}, {92, 111, 98, 255}, {208, 195, 163, 255}
+        {185, 166, 178, 255}, {185, 166, 178, 255}, {185, 166, 178, 255}, {92, 111, 98, 255}, {208, 195, 163, 255}
     };
     static const SDL_Color clothes[FOREST_ART_COUNT] = {
         {100, 72, 133, 255}, {83, 87, 108, 255}, {106, 64, 103, 255},
-        {83, 63, 109, 255}, {49, 101, 69, 255}, {105, 73, 47, 255}, {69, 53, 94, 255}
+        {83, 63, 109, 255}, {49, 101, 69, 255}, {65, 57, 94, 255}, {105, 73, 47, 255}, {69, 53, 94, 255}
     };
     static const SDL_Color eyes[FOREST_ART_COUNT] = {
         {213, 238, 203, 255}, {125, 210, 102, 255}, {239, 117, 88, 255},
-        {219, 111, 95, 255}, {238, 98, 75, 255}, {239, 175, 74, 255}, {151, 235, 110, 255}
+        {219, 111, 95, 255}, {238, 98, 75, 255}, {219, 111, 95, 255}, {239, 175, 74, 255}, {151, 235, 110, 255}
     };
     SDL_Color body = bodies[art];
     SDL_Color cloth = clothes[art];
@@ -2055,6 +2043,8 @@ static void draw_forest_enemy(Renderer *r, int tx, int ty, EnemyType type) {
     palette['u'] = (SDL_Color){48, 65, 44, 255};
     palette['U'] = (SDL_Color){102, 129, 72, 255};
     palette['N'] = (SDL_Color){213, 226, 223, 255};
+    palette['m'] = (SDL_Color){48, 51, 64, 255};
+    palette['M'] = (SDL_Color){112, 123, 142, 255};
     if (art == FOREST_ART_BLIGHTED_WOLF) {
         palette['H'] = (SDL_Color){133, 139, 153, 255};
     } else if (art == FOREST_ART_FOREST_NECROMANCER) {
@@ -2830,6 +2820,7 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_GIANT_SPIDER:
         case ENEMY_DARK_ELF_ARCHER:
         case ENEMY_DARK_ELF_RANGER:
+        case ENEMY_DARK_ELF_GUARD:
         case ENEMY_FOREST_TROLL:
         case ENEMY_FOREST_NECROMANCER:
             draw_forest_enemy(r, tile_x, tile_y, type); break;
@@ -4227,10 +4218,6 @@ void draw_guild_seeker(Renderer *r, int tx, int ty) {
     npc_draw(r, tx, ty, NPC_ART_ZARA, 0);
 }
 
-void draw_desert_lamp(Renderer *r, int tx, int ty, int mx, int my) {
-    draw_desert_floor(r, tx, ty, mx, my);
-    draw_world_prop(r, tx, ty, PROP_LAMP, (SDL_Color){109, 231, 213, 255});
-}
 
 void draw_town_path(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;
@@ -4575,6 +4562,53 @@ void draw_coast_transition(Renderer *r, int covered_width) {
     }
 }
 
+static void draw_rapids_transition(Renderer *r, int covered_width) {
+    if (covered_width <= 0) {
+        return;
+    }
+    int max_width = (r->screen_w + 1) / 2;
+    if (covered_width > max_width) {
+        covered_width = max_width;
+    }
+    int height = (int)((Uint64)r->screen_h * covered_width / max_width);
+    SDL_Rect clip = {0, 0, r->screen_w, height};
+    SDL_Rect previous_clip;
+    SDL_bool had_clip = SDL_RenderIsClipEnabled(r->sdl);
+    if (had_clip) {
+        SDL_RenderGetClipRect(r->sdl, &previous_clip);
+        if (!SDL_IntersectRect(&clip, &previous_clip, &clip)) {
+            return;
+        }
+    }
+    SDL_RenderSetClipRect(r->sdl, &clip);
+    fill_rect(r, 0, 0, r->screen_w, height, (SDL_Color){6, 38, 60, 255});
+    int drift = (int)(SDL_GetTicks() / 24u % 32u);
+    // Eastward white water breaks around river rocks, matching the local bank.
+    for (int y = 0; y < height; y += 40) {
+        int row = y / 40;
+        for (int x = -80; x < r->screen_w; x += 80) {
+            int column = (x + 80) / 80;
+            int px = x + drift + (row % 2) * 24;
+            fill_rect(r, px, y + 7, 48, 6, (SDL_Color){14, 65, 82, 255});
+            fill_rect(r, px + 4, y + 8, 31, 2, (SDL_Color){83, 165, 177, 255});
+            fill_rect(r, px + 9, y + 6, 15, 2, (SDL_Color){204, 231, 227, 255});
+            fill_rect(r, px + 26, y + 27, 43, 3, (SDL_Color){139, 202, 215, 255});
+            fill_rect(r, px + 39, y + 25, 14, 2, (SDL_Color){204, 231, 227, 255});
+            if ((row * 3 + column) % 7 == 0) {
+                int rock_x = x + 30;
+                fill_rect(r, rock_x - 6, y + 17, 6, 9, (SDL_Color){204, 231, 227, 255});
+                fill_rect(r, rock_x - 2, y + 13, 23, 3, (SDL_Color){139, 202, 215, 255});
+                fill_rect(r, rock_x - 2, y + 27, 28, 3, (SDL_Color){204, 231, 227, 255});
+                fill_rect(r, rock_x, y + 17, 21, 10, (SDL_Color){29, 44, 47, 255});
+                fill_rect(r, rock_x + 3, y + 14, 14, 10, (SDL_Color){64, 79, 74, 255});
+                fill_rect(r, rock_x + 5, y + 14, 9, 3, (SDL_Color){121, 131, 111, 255});
+                fill_rect(r, rock_x + 21, y + 20, 17, 2, (SDL_Color){139, 202, 215, 255});
+            }
+        }
+    }
+    SDL_RenderSetClipRect(r->sdl, had_clip ? &previous_clip : NULL);
+}
+
 static void draw_transition_terrain(Renderer *r, const Map *map, int tx, int ty, int mx, int my, TownExitStyle style) {
     TileType tile = map->tiles[my][mx];
     switch (style) {
@@ -4630,6 +4664,9 @@ void draw_area_transition(Renderer *r, int covered_width, TownExitStyle style) {
             return;
         case TOWN_EXIT_COAST:
             draw_coast_transition(r, covered_width);
+            return;
+        case TOWN_EXIT_RAPIDS:
+            draw_rapids_transition(r, covered_width);
             return;
         case TOWN_EXIT_FROST:
         case TOWN_EXIT_DESERT:
@@ -5310,7 +5347,7 @@ void draw_swamp_entrance(Renderer *r, int tile_x, int tile_y) {
 }
 
 void draw_area_entrance(Renderer *r, TownExitStyle style, int tile_x, int tile_y, int rows) {
-    if (!r->area_entrance_textures[style]) {
+    if (style < TOWN_EXIT_DUNGEON || style > TOWN_EXIT_GIANTS || !r->area_entrance_textures[style]) {
         draw_labyrinth_entrance_fallback(r, tile_x, tile_y, 1);
         return;
     }

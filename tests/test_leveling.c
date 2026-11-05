@@ -246,23 +246,6 @@ void test_region_difficulty_scaling(void) {
     g.defeated_bosses = (1 << LOCATION_DUNGEON) | (1 << LOCATION_FOREST) |
         (1 << LOCATION_MOUNTAINS) | (1 << LOCATION_COAST);
     g.level = 1;
-    g.location = LOCATION_FOREST;
-    map_generate_forest(&g.map, g.level);
-    enemies_spawn(&g);
-    int forest_roles = 0;
-    for (int i = 0; i < g.enemy_count; i++) {
-        forest_roles |= g.enemies[i].type == ENEMY_DARK_ELF_RANGER ||
-            g.enemies[i].type == ENEMY_FOREST_TROLL;
-    }
-    g.location = LOCATION_MOUNTAINS;
-    map_generate_mountains(&g.map, g.level);
-    enemies_spawn(&g);
-    int mountain_roles = 0;
-    for (int i = 0; i < g.enemy_count; i++) {
-        mountain_roles |= g.enemies[i].type == ENEMY_CAVE_TROLL ||
-            g.enemies[i].type == ENEMY_HOBGOBLIN_GUARD ||
-            g.enemies[i].type == ENEMY_GOBLIN_SHAMAN;
-    }
     g.location = LOCATION_COAST;
     map_generate_coast(&g.map, g.level);
     enemies_spawn(&g);
@@ -271,36 +254,69 @@ void test_region_difficulty_scaling(void) {
         coast_roles |= g.enemies[i].type == ENEMY_WATER_ELEMENTAL ||
             g.enemies[i].type == ENEMY_SEA_SERPENT;
     }
-    ASSERT("late-order opening stages add tougher roles in every region",
-        forest_roles && mountain_roles && coast_roles);
+    ASSERT("late-order Coast openings still add tougher roles", coast_roles);
 
+    // Act 1's outward band ignores which bosses fell first.
+    for (int area = 0; area < 2; area++) {
+        static Enemy reference[MAX_ENEMIES];
+        int count = 0;
+        int same = 1;
+        for (int order = 0; order < 2; order++) {
+            g.player.level = 5;
+            g.level = 1;
+            g.location = area ? LOCATION_MOUNTAINS : LOCATION_FOREST;
+            g.defeated_bosses = order ? (1 << LOCATION_DUNGEON) | (1 << LOCATION_COAST) |
+                (1 << (area ? LOCATION_FOREST : LOCATION_MOUNTAINS)) : 0;
+            srand(4401);
+            if (area) {
+                map_generate_mountains(&g.map, g.level);
+            } else {
+                map_generate_forest(&g.map, g.level);
+            }
+            enemies_spawn(&g);
+            if (!order) {
+                count = g.enemy_count;
+                memcpy(reference, g.enemies, sizeof(Enemy) * (size_t)count);
+                continue;
+            }
+            same &= g.enemy_count == count;
+            for (int i = 0; i < count && i < g.enemy_count; i++) {
+                same &= g.enemies[i].type == reference[i].type && g.enemies[i].max_hp == reference[i].max_hp &&
+                    g.enemies[i].attack == reference[i].attack && g.enemies[i].defense == reference[i].defense &&
+                    g.enemies[i].experience == reference[i].experience;
+            }
+        }
+        ASSERT(area ? "Goblin Mountains stats and roster ignore boss order" : "Haunted Forest stats and roster ignore boss order",
+            count > 0 && same);
+    }
+
+    // Regulars gain 10% HP, 4 attack and 1 defense; bosses keep base stats.
+    g.player.level = 1;
+    g.defeated_bosses = 0;
+    g.location = LOCATION_FOREST;
+    g.level = 1;
+    srand(4402);
+    map_generate_forest(&g.map, g.level);
+    enemies_spawn(&g);
+    int pixie_band = 0;
+    for (int i = 0; i < g.enemy_count; i++) {
+        const Enemy *e = &g.enemies[i];
+        pixie_band |= e->type == ENEMY_PIXIE && e->max_hp == 8 && e->attack == 8 && e->defense == 1 && e->experience == 9;
+    }
+    ASSERT("the outward band strengthens a stage-one Pixie from 7/4/0 to 8/8/1", pixie_band);
+    g.level = FOREST_BOSS_LEVEL;
+    srand(4403);
+    map_generate_forest(&g.map, g.level);
+    enemies_spawn(&g);
+    int necromancer_base = 0;
+    for (int i = 0; i < g.enemy_count; i++) {
+        const Enemy *e = &g.enemies[i];
+        necromancer_base |= e->type == ENEMY_FOREST_NECROMANCER && e->max_hp == 165 && e->attack == 18 && e->defense == 6;
+    }
+    ASSERT("the Necromancer keeps its base stats inside the band", necromancer_base);
     g.player.level = 11;
     g.level = 1;
     g.defeated_bosses = 1 << LOCATION_COAST;
-    g.location = LOCATION_FOREST;
-    map_generate_forest(&g.map, g.level);
-    enemies_spawn(&g);
-    int forest_after_coast = g.enemy_count > 0;
-    for (int i = 0; i < g.enemy_count; i++) {
-        Enemy *e = &g.enemies[i];
-        forest_after_coast &= e->type == ENEMY_GIANT_SPIDER ||
-            e->type == ENEMY_DARK_ELF_ARCHER || e->type == ENEMY_DARK_ELF_RANGER ||
-            e->type == ENEMY_FOREST_TROLL;
-        forest_after_coast &= e->max_hp >= 28 && e->attack >= 16;
-    }
-    ASSERT("level eleven forest after Coast starts with tougher enemies",
-        forest_after_coast);
-
-    g.location = LOCATION_MOUNTAINS;
-    map_generate_mountains(&g.map, g.level);
-    enemies_spawn(&g);
-    int mountain_after_coast = g.enemy_count > 0;
-    for (int i = 0; i < g.enemy_count; i++) {
-        mountain_after_coast &= g.enemies[i].type != ENEMY_GOBLIN_SCOUT &&
-            g.enemies[i].attack >= 16;
-    }
-    ASSERT("mountains also advance their opening encounter mix",
-        mountain_after_coast);
 
     g.location = LOCATION_DUNGEON;
     map_generate(&g.map, g.level);

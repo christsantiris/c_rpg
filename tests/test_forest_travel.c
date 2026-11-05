@@ -57,11 +57,16 @@ static void forest_rescue(GameState *g) {
         for (int x = 0; x < MAP_W; x++) {
             if (g->map.tiles[y][x] == TILE_FOREST_WARDEN) {
                 found++;
+                for (int i = 0; i < g->enemy_count; i++) {
+                    if (strcmp(g->enemies[i].name, ALDER_CAPTOR_NAME) == 0) {
+                        g->enemies[i].active = 0;
+                    }
+                }
                 game_rescue_forest_warden(g, x, y);
             }
         }
     }
-    ASSERT("Alder's wardens occupy forest levels two, three and four", found == (g->level >= 2 && g->level <= 4));
+    ASSERT("Alder's rangers occupy forest levels one and two", found == (g->level <= 2));
 }
 
 static void forest_walk_road(GameState *g, int west) {
@@ -72,15 +77,16 @@ static void forest_walk_road(GameState *g, int west) {
     walk_into_arrived_town(g);
 }
 
-static void test_forest_crossing(int stillbury, int home) {
-    srand(809 + stillbury + home * 2);
+static void test_forest_crossing(int dawnmere, int home) {
+    srand(809 + dawnmere + home * 2);
     game_init(&forest);
-    if (stillbury) {
-        game_enter_town2(&forest);
+    forest.dawnmere_liberated = 1;
+    if (dawnmere) {
+        game_enter_town_gate(&forest, LOCATION_DAWNMERE, 0, 12);
     }
     Location origin = forest.location;
     forest.alder_quest_state = 1;
-    int gate_x = stillbury ? TOWN_W - 1 : 0;
+    int gate_x = dawnmere ? 0 : TOWN_W - 1;
     action_resolve_player(&forest, (Action){ACTION_MOVE, gate_x, 12});
     finish_town_departure(&forest);
     ASSERT("either forest gate first opens a safe approach", forest.location == LOCATION_APPROACH && forest.enemy_count == 0);
@@ -105,7 +111,7 @@ static void test_forest_crossing(int stillbury, int home) {
         forest_step(&forest, 0);
         ASSERT("new forest levels grant their travel reward once", forest.level == level + 1 && forest.score == score + map_forest_difficulty(forest.level) * 100);
     }
-    ASSERT("all three wardens are rescued before the final grove", forest.alder_wardens_rescued == 7 && forest.alder_quest_state == 2);
+    ASSERT("both rangers are rescued before the final grove", forest.alder_wardens_rescued == ALDER_RESCUE_COMPLETE && forest.alder_quest_state == 2);
     int boss = forest_boss(&forest);
     ASSERT("the Necromancer waits on forest five", forest.level == 5 && boss >= 0);
     forest_landmark(&forest);
@@ -139,12 +145,12 @@ static void test_forest_crossing(int stillbury, int home) {
     forest_step(&forest, 0);
     ASSERT("the boss exit returns to the straight town road", forest.location == LOCATION_APPROACH && forest.player.y == APPROACH_H / 2 && forest.enemy_count == 0);
     ASSERT("victory opens the far town and a one-tile road", approach_forest_town_exit(&forest, &x, &y) && forest.map.tiles[y][forest.player.x] == TILE_TOWN_PATH && forest.map.tiles[y + 1][forest.player.x + 1] == TILE_TOWN_FLOOR);
-    ASSERT("road unlock and rescues survive saving", save_game(&forest, FOREST_TRAVEL_SLOT) && load_game(&restored, FOREST_TRAVEL_SLOT) && approach_forest_town_exit(&restored, &x, &y) && restored.alder_wardens_rescued == 7);
+    ASSERT("road unlock and rescues survive saving", save_game(&forest, FOREST_TRAVEL_SLOT) && load_game(&restored, FOREST_TRAVEL_SLOT) && approach_forest_town_exit(&restored, &x, &y) && restored.alder_wardens_rescued == ALDER_RESCUE_COMPLETE);
     forest = restored;
-    forest_walk_road(&forest, home ? stillbury : !stillbury);
-    Location destination = home ? origin : stillbury ? LOCATION_TOWN : LOCATION_TOWN2;
+    forest_walk_road(&forest, home ? !dawnmere : dawnmere);
+    Location destination = home ? origin : dawnmere ? LOCATION_TOWN : LOCATION_DAWNMERE;
     ASSERT("the road leads home or onward in the correct direction", forest.location == destination);
-    action_resolve_player(&forest, (Action){ACTION_MOVE, destination == LOCATION_TOWN ? 0 : TOWN_W - 1, 12});
+    action_resolve_player(&forest, (Action){ACTION_MOVE, destination == LOCATION_TOWN ? TOWN_W - 1 : 0, 12});
     walk_town_approach(&forest);
     ASSERT("revisiting from either town always starts at forest one", forest.location == LOCATION_FOREST && forest.level == 1);
     forest_landmark(&forest);
@@ -164,9 +170,9 @@ void test_forest_travel(void) {
     printf("Forward Haunted Forest adventure and town road tests:\n");
     ASSERT("the forest has five levels ending at the Necromancer", FOREST_DEPTH == 5 && FOREST_BOSS_LEVEL == 5);
     ASSERT("forest travel test slot is unused", !save_exists(FOREST_TRAVEL_SLOT));
-    for (int stillbury = 0; stillbury < 2; stillbury++) {
+    for (int dawnmere = 0; dawnmere < 2; dawnmere++) {
         for (int home = 0; home < 2; home++) {
-            test_forest_crossing(stillbury, home);
+            test_forest_crossing(dawnmere, home);
         }
     }
 }

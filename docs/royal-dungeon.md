@@ -5,15 +5,14 @@ entrance: a crenellated gatehouse in the castle's dark stone whose portcullis
 opens on stairs down to the cells. Barred cell grates at the foot of its walls,
 a hanging gibbet cage, shackles and the royal crest mark it as a prison.
 `tools/sprites/royal_dungeon.py` generates its 7 x 5 tile sprite,
-`assets/images/royal-dungeon.bmp`
-([renderer capture](art-sources/royal-dungeon/renderer-preview.png)).
+`assets/images/royal-dungeon.bmp`.
 A brown-coated townsman east of the crossroads appears to be an ordinary NPC.
 Talking to him with **T** triggers a one-time betrayal: he reports the player
 to the Royal Guards, who imprison them. The arrest dialogue explains exactly
 what happened. Walking nearby, bumping into him, or pressing Interact does not
 cause arrest. The dungeon's front gate is locked.
 
-Guards confiscate **all carried items, all six equipped slots, gold, and arrows**.
+Guards confiscate **all carried items, all eight equipped slots, gold, and arrows**.
 This includes potions, scrolls, tomes, accessories, and physical quest items in
 the pack. Exact item properties and the original equipment slots are stored in
 the evidence chest for recovery. Equipped bonuses are removed normally. Learned
@@ -114,7 +113,7 @@ complete confiscation rules.
 For play testing:
 
 1. Talk to the townsman east of the castle crossroads and read the arrest reason.
-2. Check that the bag, all six equipment slots, gold, and quiver are empty.
+2. Check that the bag, all eight equipment slots, gold, and quiver are empty.
 3. Confirm the hatch is hidden, including in debug mode. Talk to Tomas with T
    and accept with Y; locate the newly revealed hatch.
 4. Check the one all-class Smuggled Dagger is supplied in the cell; repeat the
@@ -130,6 +129,3 @@ For play testing:
     once, and arrows never exceed the quiver limit. Recover any remainder, check
     the completed journal, and confirm neither arrest nor rewards can repeat.
 
-SDL renderer checks: [hidden hatch](art-sources/jail-recovery/jail-hidden.png),
-[revealed hatch](art-sources/jail-recovery/jail-revealed.png), and
-[guarded evidence room](art-sources/jail-recovery/jail-evidence-room.png).

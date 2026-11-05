@@ -1,8 +1,9 @@
 # Castle Dungeon
 
-Enter the five-floor dungeon from Oakhaven's east road or Dawnmere's west road.
-That road runs through light woodland; see [road scenery](road-scenery.md).
-Both entrances always start at floor 1 and proceed forward to floor 5. Its rooms and
+Enter the five-floor dungeon from Oakhaven's south road. The lightly wooded
+approach is a local cul-de-sac, with no onward connection to Dawnmere.
+Entry always starts at
+floor 1 and proceeds forward to floor 5. Its rooms and
 connecting corridors are generated for each new expedition, then cached while
 that expedition is in progress. Backtracking preserves explored rooms, enemies,
 opened doors, and collected treasure. A later expedition generates new maps
@@ -39,8 +40,11 @@ verify that keys can be reached before opening their doors.
 
 ## Boss Chamber
 
-On floor 5, collect the golden key in the penultimate room with `P`, then walk
-into the Lich King's locked door to open it. Corridors around the outside of
+On floor 5, collect the golden key in the penultimate room with `P`, then face
+the Lich King's locked door and press `A` (or the remapped Interact key) to
+unlock it. Walking into the door shows the current key prompt without opening
+it or spending the key. Unlocking leaves you in place; step through afterward.
+Corridors around the outside of
 the sealed chamber keep earlier rooms and the door accessible. Its entrance
 is placed away from corners so unlocking it leads into the chamber.
 
@@ -60,8 +64,10 @@ in save version 106. Doors already opened remain open.
 ## Crypts and Traps
 
 On floors 2, 3, and 4, generation can add an optional crypt where space allows.
-Stand on its key and press `P`, then walk into the locked crypt door to spend
-the key. Stand on the cache inside and press `P` to collect its gold. Each
+Stand on its key and press `P`, then press `A` beside the locked crypt door to
+spend the key and open it. A stopped movement faces the door if several are
+nearby. The arrow keys remain movement controls; the remapped Interact key
+opens the door. Stand on the cache inside and press `P` to collect its gold. Each
 generated crypt cache holds `10 + 2 × floor` gold.
 
 Hidden traps may become spikes, fire, or poison when stepped on; the starting
@@ -70,8 +76,9 @@ room is excluded from trap placement.
 ## The Lich King's Chamber
 
 The final floor places a golden key in the room before the Lich King's sealed
-chamber. Stand on the key and press `P`, then walk into the chamber door to
-unlock it. The Lich stays dormant until you enter; damaging him from outside
+chamber. Stand on the key and press `P`, then use the Interact key (`A` by
+default) beside the chamber door to unlock it. The Lich stays dormant until
+you enter; damaging him from outside
 also starts his warned attacks. He remains inside the chamber.
 
 - **Crypt Sovereign, above half health:** a necrotic lance marks a fixed lane
@@ -100,12 +107,26 @@ in older saved chambers retain their state.
 
 Defeating the Lich unseals the pale stone return staircase. Stand on it and use
 the **stairs-up key (`<`, the comma key by default)** to emerge onto the safe
-straight, single-tile cobblestone road between the town gates. The crypt stands
-above the road, reached by a short path. Separate signs beside the town
-entrances read **OAKHAVEN** and **DAWNMERE**. Walk **west to Oakhaven** or **east to
-Dawnmere**. The new town connection stays hidden until the Lich is defeated.
-The stairs-down key (`.`) does not activate the exit; surviving enemies do not
-block it. Entering the crypt from either town always starts at floor 1.
+local path south of Oakhaven. Follow it north to the town's south gate.
+The dungeon remains revisitable after victory and never unlocks a road to
+Dawnmere. The stairs-down key (`.`) does not activate the exit; surviving
+enemies do not block it. Entering the crypt always starts at floor 1.
+
+The Lich King guarantees the all-class **Crypt Ring**, an accessory granting
+**+5 maximum HP and +5 maximum MP**, with no attack or defense bonus. It uses
+any accessory slot and may be worn alongside another ring. Equipping it
+does not restore current HP or MP. It replaces the former Cryptblade reward.
+
+Normally the ring drops on the floor. If the floor loot list is full, it remains
+in a named chamber reliquary without deleting other items. An unclaimed ring
+lost to a floor refresh is restored there on revisiting, even with the Lich
+already defeated. Interact beside the reliquary or press `P` while standing on
+it; a full inventory leaves it available. After the first claim, dropping or
+selling the ring does not create another. Its bonuses and claimed status persist
+through saving and loading.
+
+The following save-version notes describe historical V1 behavior. The V2
+geography uses fresh saves, with no migration to the new routes.
 
 Return-to-town spells and their portals remember your entrance town. Save
 version **167** preserves that entrance and portal destination; older saves
@@ -114,14 +135,6 @@ road while preserving exploration, position and dropped items. Save version
 **168** narrowed existing road maps; version **169** straightens the road and
 raises the crypt, safely moving any overlapping player or loot onto the paving.
 
-The guaranteed **Cryptblade** grants +2 attack and 10% critical chance and remains
-Warrior-only. Normally it drops on the floor. If the floor loot list is
-full, it remains in a named chamber reliquary without deleting other items.
-An unclaimed blade lost to a floor refresh is restored there on revisiting,
-even in a fresh expedition with the Lich already defeated. Interact beside the
-reliquary or press `P` while standing on it; a full inventory leaves it available.
-After the first claim, dropping or selling the blade does not create another.
-
 Save version **124** stores pending attacks, phase, finite-wave use, both warned
 summon coordinates and reward claim state in active/cached encounters. Older
 living encounters gain seals and safe cover in place, preserving boss health,
@@ -129,27 +142,38 @@ existing enemies, exploration, player position, quests and loot. Old unmarked
 bolt timing restarts with a visible warning. Previous victories remain defeated;
 only a known, currently dropped legacy Cryptblade is treated as unclaimed.
 
-[Renderer review and play-test checklist](art-sources/lich-encounter/README.md).
-
 Save version 109 converts old boss-room return doors and downward stair markers
 into the special staircase, including cached floors, loot underlays, and portal
 destinations. The stairs remain sealed if the Lich King is still alive.
 
-Bram stands near Cain in Oakhaven's central square. Speak to him with `T` for
-a warning about the Lich King in the eastern dungeon and advice to buy supplies
-from the blacksmith and alchemist. His warning changes after the Lich is defeated.
-Save version 108 adds Bram and the guards to older saves without resetting
-progress; defeated bosses and fallen guards remain defeated.
+Bram is Oakhaven's Innkeeper. Approach his counter inside the Inn and press `T`
+for a warning about the Lich King in the dungeon south of town and advice to
+buy supplies from the blacksmith and alchemist. His warning changes after the
+Lich is defeated. Bram no longer stands in the town square or Stillbury's Tavern.
+He now offers Save Elowen and rewards their reunion. Historical save
+version 108 still repairs Lich guards; it no longer inserts a town-square Bram.
 
-## Elowen's Quest
+## Save Elowen
 
-Speak with Elowen in **Oakhaven's Tavern** to begin **The Broken Seals** in
-**Oakhaven's dungeon**. Her three burial seals appear on floors 2, 3, and 4,
-each with an undead guard group.
-Stand on a seal and press `A` to restore it. Return to Elowen in Oakhaven's Tavern
-after all three are restored for 40 gold and 300 score. Her quest does not require defeating
-the Lich or clearing every floor. Accepting it starts a fresh expedition so
-the objectives can appear even if the dungeon was visited earlier.
+Bram offers **Save Elowen** at Oakhaven's Inn. Accept with `Y` or decline with
+`N`; accepting preserves an expedition already in progress. Elowen is a captive
+in the Lich King's final chamber, whether or not Bram has assigned the quest.
+Defeat the Lich to free her automatically. Other surviving enemies do not delay
+the rescue. The quest moves straight to **Completed** and releases its active
+slot; a full journal never prevents an unassigned rescue.
+
+Elowen follows the player without fighting, blocking movement or taking damage.
+She accompanies stairs, roads, buildings and the one-way Return to Town spell.
+Use the opened return stairs and the northward path to Oakhaven, or escape by
+spell, then speak to Bram at the Inn. He pays **80 gold once**, including with
+a full inventory or journal. Elowen then becomes a permanent Inn resident.
+Speak to her to hear that the Lich King claimed to be in league with the King;
+she does not yet know about Malakar.
+
+The former Broken Seals assignment, floor objectives and guardian groups are
+retired. The Lich encounter's two combat seals remain usable. Save version 229
+records Elowen's escort position as well as assignment, rescue and reunion state.
+This V2 rewrite uses fresh saves without a new migration of old quest progress.
 
 Cain's Scroll of Return to Town teaches a zero-MP, one-way escape to the last
 town visited. It leaves no return portal; re-enter through the normal dungeon

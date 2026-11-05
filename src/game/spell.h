@@ -10,7 +10,8 @@ typedef enum {
     SPELL_HEAL,
     SPELL_RETURN_TO_TOWN,
     SPELL_FROST_BOLT,
-    SPELL_TELEPORT
+    SPELL_TELEPORT,
+    SPELL_RESURRECTION
 } SpellID;
 
 typedef enum {
@@ -37,6 +38,7 @@ Spell spell_make_heal(void);
 Spell spell_make_return_to_town(void);
 Spell spell_make_frost_bolt(void);
 Spell spell_make_teleport(void);
+Spell spell_make_resurrection(void);
 int spell_upgrade(Spell *spell);
 
 #endif

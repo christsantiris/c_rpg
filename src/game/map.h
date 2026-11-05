@@ -83,6 +83,11 @@
 #define DAIN_ALEHOUSE_Y 18
 #define ALDER_INN_X 31
 #define ALDER_INN_Y 18
+// Oakhaven's Inn receives these quest givers after the Lich King's defeat.
+#define ALDER_OAKHAVEN_X 18
+#define ALDER_OAKHAVEN_Y 7
+#define DAIN_OAKHAVEN_X 18
+#define DAIN_OAKHAVEN_Y 18
 #define GUILD_ORIN_X 10
 #define GUILD_ORIN_Y 18
 #define GUILD_SELENE_X 28
@@ -90,7 +95,6 @@
 #define HUNT_FROSTFELL_LEVEL 3
 #define HUNT_GLASSDEEP_LEVEL 4
 #define HUNT_SUNSCAR_LEVEL 3
-#define DESERT_LAMP_LEVEL 4
 #define TAVERN_X 4
 #define TAVERN_Y 2
 #define TAVERN_W 32
@@ -101,10 +105,16 @@
 #define ROOK_TAVERN_Y 18
 #define TOWN_CAIN_X 19
 #define TOWN_CAIN_Y 11
+// Historical town-square coordinates, retained for old save fixtures.
 #define TOWN_BRAM_X 17
 #define TOWN_BRAM_Y 11
+#define BRAM_INN_X 28
+#define BRAM_INN_Y 7
 #define TOWN_ALDRIC_X 21
 #define TOWN_ALDRIC_Y 13
+// Aldric moves into Oakhaven's Inn after the Lich King's defeat.
+#define ALDRIC_INN_X 24
+#define ALDRIC_INN_Y 18
 // Former Oakhaven dock footprint, retained for legacy save migrations.
 #define TOWN_HARBOR_W 5
 #define TOWN_HARBOR_H 4
@@ -433,7 +443,7 @@ typedef enum {
     TILE_DESERT_EXIT,
     TILE_GUILD_DOOR,
     TILE_NPC_GUILD_SEEKER,
-    TILE_DESERT_LAMP,
+    TILE_RETIRED_DESERT_LAMP,
     TILE_FOREST_SHORTCUT,
     TILE_SWAMP_SHORTCUT,
     TILE_MOUNTAIN_SHORTCUT,
@@ -720,7 +730,16 @@ typedef enum {
     TILE_NPC_EDDA,
     TILE_ROAD_GATE_CLOSED,
     TILE_ROAD_GATE_OPEN,
-    TILE_ROAD_BANK
+    TILE_ROAD_BANK,
+    TILE_BROKEN_FERRY,
+    TILE_SOULSTONE_SHRINE,
+    TILE_SOULSTONE_RITUAL,
+    TILE_NPC_WARLOCK,
+    TILE_GOBLIN_ROAD_GUARD,
+    TILE_DARK_ELF_ROAD_GUARD,
+    TILE_NPC_GARRAN,
+    TILE_NPC_LIORA,
+    TILE_CARAVAN_CAMP
 } TileType;
 
 typedef struct {
@@ -794,8 +813,10 @@ void map_generate_temple(Map *m, int level, int *spawn_x, int *spawn_y);
 void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *spawn_y);
 void map_generate_forest(Map *m, int level);
 void map_mirror_horizontal(Map *m);
+int map_is_travel_tile(TileType tile);
 void map_reveal_forest_exit(Map *m);
 void map_reveal_forest_entrance(Map *m);
+int map_repair_outdoor_entrance(Map *m, int level, int mountains);
 int map_forest_difficulty(int level);
 void map_generate_mountains(Map *m, int level);
 int map_mountain_difficulty(int level);

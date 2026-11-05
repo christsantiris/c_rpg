@@ -12,12 +12,19 @@
 #define APPROACH_LABYRINTH_X (APPROACH_W / 2 - 8)
 #define APPROACH_LABYRINTH_Y (APPROACH_H / 2 - 2)
 #define APPROACH_OPENING 8
+#define APPROACH_SUNSCAR_ROAD 21
+#define APPROACH_PEAKS_ROAD 22
+#define APPROACH_PEAKS_NORTH_ROAD 23
+#define APPROACH_PEAKS_BRANCH_X (APPROACH_W / 2 - 12)
+#define APPROACH_BRIDGE_X (APPROACH_W / 2)
+#define APPROACH_BRIDGE_EXIT_Y 4
 
 typedef struct {
     Location town;
     Location area;
     int gate_x;
     int gate_y;
+    int unplaced; // No town gate leads here: kept for debug travel, or reached from another road.
 } TownApproach;
 
 extern const TownApproach town_approaches[];
@@ -26,6 +33,12 @@ extern const int town_approach_count;
 const TownApproach *approach_route(const GameState *g);
 const char *approach_area_name(Location area);
 const char *approach_town_name(Location town);
+int approach_sunscar_road(const GameState *g);
+int approach_peaks_road(const GameState *g);
+int approach_peaks_exit(const GameState *g, int *x, int *y);
+int approach_bridge_exit(const GameState *g, int *x, int *y);
+int approach_bridge_road(const GameState *g);
+const char *approach_origin_name(const TownApproach *route);
 TileType approach_floor(Location area);
 TileType approach_scenery(Location area, int progress);
 TileType approach_ground(Location area);
@@ -35,6 +48,7 @@ void approach_migrate_scenery(GameState *g);
 TileType approach_coast_ground(int x, int y);
 void approach_refresh_dungeon(GameState *g);
 void approach_refresh_forest(GameState *g);
+void approach_retire_labyrinth(GameState *g);
 int approach_forest_town_exit(const GameState *g, int *x, int *y);
 void approach_refresh_mountains(GameState *g);
 void approach_refresh_swamp(GameState *g);

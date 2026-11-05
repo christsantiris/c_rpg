@@ -26,11 +26,65 @@ retro pixel-art style. Choose a Warrior, Mage, or Rogue, prepare in town, and
 explore a five-floor undead dungeon, the five-level haunted forest, a five-level goblin mountain climb
 and many other adventures.
 
+Cain offers a Return to Town scroll and optional guidance about Oakhaven.
+While speaking to him, choose **1** for the town guide or **2** for Return to
+Town instructions; **Enter / Esc** closes the conversation.
+
+In Oakhaven, Bram asks you to rescue his daughter Elowen from the Lich King.
+You can find and free her without accepting the quest first. Bring her home
+to the Inn for a reward and the first clue behind the realm's troubles.
+After the Lich's defeat, Alder and Dain offer two short adventures on the first
+two forest or mountain stages, followed by optional hunts for those regions'
+bosses. Both bosses can also be reached without accepting their quests.
+Their defeats reveal royal parchments bearing the King's seal. Revisit the
+documents in the journal's **Evidence** tab; they use no inventory or quest
+slots. Alder and Dain can help interpret the discoveries on an optional return
+to the Inn. See [Act 2's story payoff](docs/act2-story-payoff-plan.md).
+
+Soulstone Shrine stands beside the path north of Oakhaven, before the broken
+ferry. Its warlock offers resurrection for **200 gold per fallen companion**.
+A level-10 Mage can buy the **400-gold Resurrection scroll** and perform the
+ritual directly at the shrine's marked circle for **80 MP**. The shrine is
+present from the start; its services require a recruited companion.
+
 ## World Map
 
-[![World map of the Castle of No Return](docs/images/world-map-giants-peaks.png)](docs/images/world-map-giants-peaks.png)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=b1d08eaa71ee)](docs/world-map.png?v=b1d08eaa71ee)
 
-An illustrated overview based on the world's town connections.
+The V2 starting region contains Oakhaven, Goblin Mountains to its west, Haunted
+Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
+to a broken ferry landing at Northern Rapids; the river cannot be crossed.
+The river begins in Frostfell's snow and ice, passes Rosemoor and Giant's
+Peaks, then flows through Northern Rapids to the eastern estuary. The southern
+coast below the dungeon is open sea.
+
+Act 3’s eastern route runs from occupied Dawnmere north into Saltwind Marsh on
+the river bank. Its skiff passage crosses the calm estuary to Stillbury on the
+opposite bank, where Act 4 begins.
+
+Act 3's western road runs from the Goblin Mountains west through Sunscar Wastes.
+Zara, scout Garran and historian Liora wait at its caravan camp.
+Leaving Sunscar returns to that camp and desert road. Continue past its entrance and turn
+north toward Giant's Peaks on the river bank. Cross all five stages to reach
+Giant's Bridge, then follow the opposite bank east into Stillbury's west gate.
+Travelers from Stillbury can cross the bridge freely and enter the northern
+Peaks, but must traverse all five stages southward to reach Sunscar. The Last
+Jarl blocks onward passage to the opposite road until defeated; retreat remains
+available. His defeat permanently opens both directions. Both Act 3 routes
+reach the same town to begin Act 4. Attacking the tribute convoy, like liberating
+Dawnmere, is reported to Stillbury. Defeating the Pharaoh or Jarl alone is not.
+See the [western quests and rewards](docs/act3-western.md).
+
+On Stillbury's bank, Stonewake Quarry lies between the river and the castle,
+Blackwater Swamp lies east of Stillbury, and Sunken Coast lies among the islands
+north of the estuary. None of the three is connected by road yet.
+Goblin Mountains, Sunscar Wastes and Frostfell now fill the enlarged western
+terrain left by those relocations. This changes the atlas footprint, not the
+number of combat stages.
+
+The rest of the world is shown as provisional context and will be redesigned
+in later steps; later connections remain undecided.
+Rook's Labyrinth is deferred to a later arc and has no current world entrance.
 
 ## Controls
 
@@ -42,7 +96,7 @@ An illustrated overview based on the world's town connections.
 | `T` | Talk to a nearby NPC or rescue a forest warden |
 | `I` | Open or close inventory |
 | `B` | Open spellbook |
-| `Q` | Open the quest and boss journal |
+| `Q` | Open the quest, boss and evidence journal |
 | `C` | Cast the equipped spell |
 | `F` | Use an equipped bow or the Demonic Sword's ranged attack |
 | `H` | Open help |
@@ -57,6 +111,12 @@ labels also support mouse clicks. In the spellbook, select a spell and press
 `E` or `Enter` to equip it. Shops and the docks use the arrow keys and
 `Enter`; shop buy and sell modes are switched with `Tab`.
 
+Players have eight equipment slots: Strong Hand, Weak Hand, Helmet, Armor and
+Accessory 1–4. Up to two rings may be worn; gauntlets, bracers, amulets, belts
+and boots each allow one equipped item per category. In the bag, **1–4** selects
+an accessory destination. Equipped items do not use bag capacity, and the
+equipped spell remains separate from equipment.
+
 Using an item keeps the inventory open, even after consuming the last item.
 Close it manually with **I** (or the remapped inventory key) or **Esc**.
 Drinking any potion still consumes one combat turn: enemies respond, and
@@ -70,7 +130,7 @@ inventory actions.
 - [Regional difficulty and progression](docs/difficulty-scaling.md)
 - [Weapons, armor, and shields](docs/weapons.md)
 - [Spells](docs/spells.md) and [Mage progression](docs/mage-progression.md)
-- [Tavern quests](docs/tavern-quests.md) and [quest journal](docs/quest-journal.md)
+- [Town quests](docs/tavern-quests.md) and [quest journal](docs/quest-journal.md)
 - [Castle Dungeon](docs/dungeon.md)
 - [Haunted Forest](docs/haunted-forest.md)
 - [Goblin Mountains](docs/goblin-mountains.md)
@@ -80,7 +140,7 @@ inventory actions.
 - [Saltwind Marsh — five stages and skiff exploration](docs/saltwind-marsh.md)
 - [Stormwatch Headland](docs/stormwatch-headland.md)
 - [Blackwater Swamp](docs/swamp.md)
-- [Sunscar Wastes and the magic lamp quest](docs/sunscar-wastes.md)
+- [Sunscar Wastes and the King's Tribute quest](docs/sunscar-wastes.md)
 - [Ashen Hollow](docs/ashen-hollow.md)
 - [Giant's Peaks](docs/giants-peaks.md)
 - [Stonewake Quarry](docs/stonewake-quarry.md)
@@ -147,9 +207,10 @@ See the [parameter table](#debug-script-parameters) and
 [weapon-to-parameter mapping](#debug-weapon-names) below for exact accepted values.
 
 Select **New Game**, enter a name, and choose a class, or load an existing
-character. All four town-to-town roads, the Sunken Coast dock road, island sailing
-without a treasure map, and the labyrinth entrance are open immediately.
-Locked dungeon doors, mountain barriers, temple doors, the labyrinth vault,
+character. All four town-to-town roads, the Sunken Coast dock road and island sailing
+without a treasure map are open immediately. The deferred labyrinth has no
+entrance, including in debug mode.
+Locked dungeon doors, mountain barriers, temple doors,
 quarry crane walkways and castle portcullises open as you explore. Each unused
 quarry crossing lowers once; its crane then respects manual raised, crossing and
 salvage settings. Boss-blocked exits,
@@ -320,16 +381,12 @@ Extract `dist/CastleOfNoReturn-linux-x86_64.tar.gz`, then either:
 - Fix Linux installer
 
 ### Feature enhancements
-- Expand world map
-   Farms between areas for rest to improve hp. New story lines. More coherent quest structure. Use larger scale sprites. Chain quests together. Unlock new quests with completion of another. NPCs can offer quest part 2. Max number of active quests - NPC can say come back when you have completed xyz task.
-- Recruit a party to join the adventure
-   NPCs that can team up with the player character and accompany on the quest. Implement resurrection. 
 - Improve difficulty scaling and economy
    Warrior and Rogue should struggle at certain levels without better weapons. Mage should struggle without better spells. Purchasing new weapons, armor and tomes should become necessary to progress.
-- Add paypal/other integration to buy gold
-   Add real money feature to buy in-game gold.
 - DnD style stats instead of static class based stats
    Roll for stats. Choose a class based on strengths. Ascending armor class chance to hit. 
-- Fix wasted space in labrynth area. Rescale to 1.5x? 
-   Minotaur too easy. Ivory rook uses a not p.
+- Add paypal/other integration to buy gold
+   Add real money feature to buy in-game gold.
+- Refresh documentation
+   - Game guide(s), Readme
 

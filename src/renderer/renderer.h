@@ -8,6 +8,13 @@
 #define LOCAL_BUILDING_TEXTURE_COUNT 8
 
 typedef enum {
+    OAKHAVEN_BAKERY,
+    OAKHAVEN_GOLDSMITH,
+    OAKHAVEN_BLACKSMITH,
+    OAKHAVEN_SHOP_TEXTURE_COUNT
+} OakhavenShopTexture;
+
+typedef enum {
     TOWN_EXIT_DUNGEON,
     TOWN_EXIT_FOREST,
     TOWN_EXIT_MOUNTAINS,
@@ -22,7 +29,8 @@ typedef enum {
     TOWN_EXIT_CATACOMBS,
     TOWN_EXIT_STORMWATCH,
     TOWN_EXIT_IRONFANG,
-    TOWN_EXIT_GIANTS
+    TOWN_EXIT_GIANTS,
+    TOWN_EXIT_RAPIDS // Transition only; no regional entrance texture.
 } TownExitStyle;
 
 typedef struct {
@@ -45,6 +53,7 @@ typedef struct {
     SDL_Texture *ironfang_boss_texture;
     SDL_Texture *war_machine_texture;
     SDL_Texture *crown_quest_texture;
+    SDL_Texture *caravan_camp_texture;
     SDL_Texture *stonewake_enemy_texture;
     SDL_Texture *stonewake_crane_texture;
     SDL_Texture *stonewake_prop_texture;
@@ -60,6 +69,8 @@ typedef struct {
     SDL_Texture *loot_chest_texture;
     SDL_Texture *road_checkpoint_texture;
     SDL_Texture *road_bank_texture;
+    SDL_Texture *broken_ferry_texture;
+    SDL_Texture *soulstone_shrine_texture;
     SDL_Texture *town_textures[5]; // Indexed by town_road_index().
     SDL_Texture *castle_texture;
     SDL_Texture *apothecary_texture;
@@ -68,6 +79,7 @@ typedef struct {
     SDL_Texture *town_hall_texture;
     SDL_Texture *royal_dungeon_texture;
     SDL_Texture *local_building_textures[LOCAL_BUILDING_TEXTURE_COUNT];
+    SDL_Texture *oakhaven_shop_textures[OAKHAVEN_SHOP_TEXTURE_COUNT];
     SDL_Texture *alehouse_cask_texture;
     SDL_Texture *island_texture;
     SDL_Texture *island_temple_texture;

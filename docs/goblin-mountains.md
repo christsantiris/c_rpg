@@ -1,11 +1,17 @@
 # Goblin Mountains
 
 The Goblin Mountains stand beside a straight, single-tile cobblestone road
-between **Dawnmere's north gate** and **Ridgeshire's south gate**. The road
+between **Stillbury's east gate** and **Oakhaven's west gate**. The road
 climbs a grassy pass between rock walls that open into a meadow at its town end. Enter the
 large fortified mountain cave from either town to start at **level 1** and
 fight upward through five levels. Mountain levels never play in reverse from
-Ridgeshire. Ordinary backtracking within a climb remains available.
+either town. Ordinary backtracking within a climb remains available.
+
+The northbound cave doorway enters Mountain 1 from its south edge. Each later
+stage enters opposite the previous stage's exit, preserving the travel direction
+on forward trips and retreat. Entering, leaving and revisiting a stage retain
+the crossing step's facing. Older saved entrances are repaired in place while
+keeping exploration, enemies, wounds and quest progress.
 
 The mountains are drawn at the Crown Roads' 1.5× zoom: the camera shows about 30
 × 18 tiles around the player. The Goblin King acts within twelve tiles; the camera leans toward him to keep him on screen as his warned attacks begin.
@@ -18,15 +24,18 @@ its newly raised rows onto the road.
 
 | Level | Region | Layout identity | Enemy roster |
 | --- | --- | --- | --- |
-| 1 | Blackrock Foothills | Open switchbacks and scout camps | Goblin Scouts |
-| 2 | Raider Pass | Timber bridges and overlapping firing lanes | Scouts and Archers |
-| 3 | Cinder Mines | Braided underground routes | Scouts, Archers, Warchiefs and Giant Spiders |
-| 4 | Siege Camp | Split routes and fortified positions | Goblin warbands |
-| 5 | Crown Peak | Summit fortress | Full roster and the Goblin King |
+| 1 | Blackrock Foothills | Open switchbacks and scout camps | Scouts, Archers, Warchiefs and Giant Spiders |
+| 2 | Raider Pass | Timber bridges and overlapping firing lanes | Archers, Warchiefs, Giant Spiders, Cave Trolls and Hobgoblin Guards |
+| 3 | Cinder Mines | Braided underground routes | Archers, Warchiefs, Giant Spiders, Cave Trolls, Hobgoblin Guards and Shamans |
+| 4 | Siege Camp | Split routes and fortified positions | The stage-3 roster |
+| 5 | Crown Peak | Summit fortress | The stage-3 roster and the Goblin King |
+
+The mountains use the post-dungeon [outward difficulty band](difficulty-scaling.md#act-2-outward-band),
+which does not change with the order in which bosses are defeated.
 
 Intermediate levels do not require a full clear. The living Goblin King blocks
 the level-5 summit exit. Defeat him, collect the loot, and use that exit to
-emerge onto the road. Walk **north to Ridgeshire** or **south to Dawnmere**.
+emerge onto the road. Walk **west to Stillbury** or **east to Oakhaven**.
 The through road opens permanently on victory. There is no mountain shortcut,
 boss branch, travel menu, or direct teleport to town. Retreat at level 1 returns
 to the cave approach for the town used to enter.
@@ -42,6 +51,14 @@ to the cave approach for the town used to enter.
 - **Goblin Shaman:** periodically heals a nearby wounded ally.
 - **Goblin King:** a stationary two-phase encounter with fixed axe lanes,
   marked bombardment pockets and finite powder kegs at Crown Peak.
+
+Nearby goblins form a warband when the ground has room. Scouts, Warchiefs and
+Hobgoblin Guards take the front shoulders, keeping a center firing lane open
+for Archers. Shamans stay behind the line and retain their healing cadence.
+The formation follows a moving player. Narrow passes, occupied positions and
+unreachable slots fall back to ordinary movement; goblins never move through
+each other or gain extra movement. Splitting the group or holding a narrow
+bridge can disrupt its formation. Lone goblins retain their existing roles.
 
 The route geometry and ground treatment vary by level. Foothill and ascent
 stages use exposed basalt switchbacks. Raider Pass contains
@@ -66,10 +83,29 @@ save/load.
 
 ## Mountain Quests
 
-Dain assigns **Recover the Treasure Map** in Dawnmere's Alehouse. The
-Archer, Warchief and Shaman Map Bearers occupy **levels 2, 3 and 4**, respectively,
-with themed guards. Collected fragments do not use inventory space. Return all
-three to Dain for **60 gold and 400 score**.
+Dain arrives in **Oakhaven's Inn after the Lich King's defeat** and offers
+**Recover the Treasure Map**. An Archer Map Bearer on **Mountains 1** holds one
+half; a Warchief Map Bearer on **Mountains 2** holds the other. Their themed
+guards remain. Halves are collected automatically on the marked bearers'
+defeat and use no inventory space. Bring both halves to Dain for **60 gold and
+400 score once**, without needing to travel farther than stage 2.
+
+He then offers **Defeat the Goblin King**, explaining that ending his rule
+opens the road west to Stillbury and continues the investigation into the evil
+creatures' arrival. Accept or decline the hunt; it uses an active slot only
+while unfinished and does not reset retrieval progress or the expedition.
+The boss remains on **Mountains 5**, reachable without either quest or NPC
+dialogue. Victory completes the follow-up immediately; earlier victories are
+credited at the short quest's turn-in. No extra Inn return or NPC payment is
+required. Existing Goblin King loot remains available.
+
+His defeat also reveals **Royal Payment Records** bearing the King's seal:
+the Crown funded his raids and paid to keep the western road closed. The
+parchment appears even without Dain's quests and remains readable in
+**Q → Evidence**. Dain's map now points the player toward the fortress stores
+and the records behind the raids. His optional post-victory dialogue interprets
+the payments, and links them to the Necromancer's protection if both documents
+were found. See [the story payoff](act2-story-payoff-plan.md).
 
 Marshal Veyra's **Watchfires of Ridgeshire** still spans three regions:
 **Goblin Mountains 5**, **Ashen Hollow 3** and **Dragonspine 3**. Clear each
@@ -80,6 +116,8 @@ Return to Town is a one-way escape to the last town visited, independently of
 the mountain entrance used. It leaves no return portal.
 
 ## Save Compatibility
+
+The V2 geography uses fresh saves; the notes below describe earlier V1 migrations.
 
 Save version **171** moves Oakhaven mountain entrance and portal anchors to
 Dawnmere. Saved mountain approaches become the new road. Legacy peak level 4
@@ -94,7 +132,7 @@ for that saved visit, so moving its future anchor cannot strand the player.
 ## Crown Peak Boss Encounter
 
 The Goblin King keeps his original baseline 180 HP, 20 attack, 8 defense and
-500 experience, with existing regional scaling. He remains dormant until the
+500 experience; the outward band leaves boss stats unchanged. He remains dormant until the
 player enters the fortress or damages him from range. He stays in the arena;
 retreat beyond his range pauses a pending warning without healing him.
 
@@ -149,4 +187,3 @@ health, deaths, player position, exploration, loot, portal anchors and quests.
 Previous victories remain defeated; only a known current legacy floor shield
 establishes an unclaimed reward.
 
-See the [encounter screenshots and play-testing guide](art-sources/goblin-king-encounter/README.md).

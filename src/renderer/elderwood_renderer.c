@@ -56,7 +56,7 @@ void draw_northern_road(Renderer *r, const GameState *g, const Viewport *v) {
     draw_area_entrance(r, TOWN_EXIT_CATACOMBS, viewport_to_screen_x(v, NORTH_CAT_X), viewport_to_screen_y(v, NORTH_CAT_Y), 6);
     label(r, v, "ELDERWOOD FOREST", NORTH_ELDER_X, NORTH_ELDER_Y - 5);
     label(r, v, "ROYAL CATACOMBS", NORTH_CAT_X, NORTH_CAT_Y - 5);
-    draw_town_road_sign(r, viewport_to_screen_x(v, NORTH_ROAD_X + 2), viewport_to_screen_y(v, 44), "S: OAKHAVEN");
+    draw_town_road_sign(r, viewport_to_screen_x(v, NORTH_ROAD_X + 2), viewport_to_screen_y(v, 44), "RAPIDS: NO CROSSING");
     draw_town_road_sign(r, viewport_to_screen_x(v, NORTH_ROAD_X + 2), viewport_to_screen_y(v, 4), "N: CROWN ROAD NORTH");
 
 }
@@ -183,10 +183,6 @@ static void root_arch(Renderer *r, int sx, int sy) {
 }
 
 void draw_heartseed_details(Renderer *r, const GameState *g, const Viewport *v) {
-    if (g->location == LOCATION_TOWN) {
-        label(r, v, "FORESTER TAMSIN", TAMSIN_X - 2, TAMSIN_Y - 1);
-        return;
-    }
     if (g->location != LOCATION_ELDERWOOD) {
         return;
     }

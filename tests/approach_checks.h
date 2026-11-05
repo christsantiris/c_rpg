@@ -17,43 +17,64 @@ static inline int approach_check_entrance_horizontal(const TownApproach *route) 
     return route && approach_entrance_rows(route->area) && !approach_check_entrance_vertical(route);
 }
 
+// Follow the actual passable tiles, rather than assuming a regional road orientation.
+static inline void walk_approach_to(GameState *g, int tx, int ty) {
+    int previous[APPROACH_W * APPROACH_H];
+    int queue[APPROACH_W * APPROACH_H];
+    for (int i = 0; i < APPROACH_W * APPROACH_H; i++) {
+        previous[i] = -1;
+    }
+    int start = g->player.y * APPROACH_W + g->player.x;
+    int target = ty * APPROACH_W + tx;
+    previous[start] = start;
+    queue[0] = start;
+    int head = 0;
+    int tail = 1;
+    const int dx[] = {0, 1, 0, -1};
+    const int dy[] = {-1, 0, 1, 0};
+    while (head < tail && previous[target] < 0) {
+        int cell = queue[head++];
+        for (int side = 0; side < 4; side++) {
+            int x = cell % APPROACH_W + dx[side];
+            int y = cell / APPROACH_W + dy[side];
+            if (x < 0 || y < 0 || x >= APPROACH_W || y >= APPROACH_H) {
+                continue;
+            }
+            int next = y * APPROACH_W + x;
+            TileType tile = g->map.tiles[y][x];
+            int transition = tile == TILE_APPROACH_AREA || tile == TILE_APPROACH_TOWN || tile == TILE_APPROACH_DUNGEON_TOWN ||
+                tile == TILE_LABYRINTH_ENTRANCE || tile == TILE_NORTH_CATACOMBS || tile == TILE_NORTH_ELDERWOOD || tile == TILE_NORTH_CASTLE;
+            if (previous[next] >= 0 || (transition && next != target) || (!map_is_walkable(&g->map, x, y) && !(transition && next == target))) {
+                continue;
+            }
+            previous[next] = cell;
+            queue[tail++] = next;
+        }
+    }
+    ASSERT("a continuous route reaches the actual approach transition", previous[target] >= 0);
+    if (previous[target] < 0) {
+        return;
+    }
+    int count = 0;
+    for (int cell = target; cell != start; cell = previous[cell]) {
+        queue[count++] = cell;
+    }
+    for (int i = count - 1; i >= 0 && g->location == LOCATION_APPROACH; i--) {
+        action_resolve_player(g, (Action){ACTION_MOVE, queue[i] % APPROACH_W, queue[i] / APPROACH_W});
+    }
+}
+
 static inline void walk_return_approach(GameState *g) {
     if (g->location == LOCATION_TOWN_ROAD) {
         walk_into_arrived_town(g);
         return;
     }
     ASSERT("the area exit returns to the safe approach path", g->location == LOCATION_APPROACH && g->enemy_count == 0);
-    int steps = 0;
-    const TownApproach *route = approach_route(g);
-    if (northern_approach(g)) {
-        while (g->location == LOCATION_APPROACH && steps++ < APPROACH_W + APPROACH_H) {
-            int dx = (NORTH_ROAD_X > g->player.x) - (NORTH_ROAD_X < g->player.x);
-            int dy = dx ? 0 : (g->map.stairs_up_y > g->player.y) - (g->map.stairs_up_y < g->player.y);
-            action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});
-        }
-        walk_crownroad_north(g, 1);
-        walk_into_arrived_town(g);
-        ASSERT("northern return path reaches its original town", g->location == (route ? route->town : LOCATION_CASTLE));
+    if (g->location != LOCATION_APPROACH) {
         return;
     }
-    int dungeon_road = route && (route->area == LOCATION_DUNGEON || route->area == LOCATION_FOREST || approach_check_entrance_horizontal(route));
-    int mountain_road = route && (route->area == LOCATION_MOUNTAINS || route->area == LOCATION_SWAMP || approach_check_entrance_vertical(route));
-    while (g->location == LOCATION_APPROACH && steps++ < APPROACH_W + APPROACH_BRANCH_LENGTH) {
-        int dx = (g->map.stairs_up_x > g->player.x) - (g->map.stairs_up_x < g->player.x);
-        int dy = (g->map.stairs_up_y > g->player.y) - (g->map.stairs_up_y < g->player.y);
-        if (mountain_road && dx) {
-            dy = 0;
-        } else if (dungeon_road) {
-            if (dy) {
-                dx = 0;
-            }
-        } else if (g->map.stairs_up_x == g->map.stairs_down_x && dx) {
-            dy = 0;
-        } else if (g->map.stairs_up_y == g->map.stairs_down_y && dy) {
-            dx = 0;
-        }
-        action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});
-    }
+    walk_approach_to(g, g->map.stairs_up_x, g->map.stairs_up_y);
+    walk_crownroad_north(g, 1);
     walk_into_arrived_town(g);
     ASSERT("walking the return path reaches the town gate", g->location != LOCATION_APPROACH);
 }
@@ -137,38 +158,15 @@ static inline void walk_town_approach(GameState *g) {
     walk_crownroad_north(g, 0);
     finish_town_departure(g);
     ASSERT("town departure begins on a safe approach path", g->location == LOCATION_APPROACH && g->enemy_count == 0);
-    int steps = 0;
-    const TownApproach *route = approach_route(g);
-    if (northern_approach(g)) {
-        int target_y = route->town == LOCATION_CASTLE ? g->map.stairs_down_y - 5 : g->map.stairs_down_y;
-        while (g->location == LOCATION_APPROACH && steps++ < APPROACH_W + APPROACH_H) {
-            int dx = (g->map.stairs_down_x > g->player.x) - (g->map.stairs_down_x < g->player.x);
-            int dy = dx ? 0 : (target_y > g->player.y) - (target_y < g->player.y);
-            action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});
-        }
-        ASSERT("either northern approach reaches the incoming side of its adventure", g->location == route->area);
+    if (g->location != LOCATION_APPROACH) {
         return;
     }
-    int dungeon_road = route && (route->area == LOCATION_DUNGEON || route->area == LOCATION_FOREST || approach_check_entrance_horizontal(route));
-    int mountain_road = route && (route->area == LOCATION_MOUNTAINS || route->area == LOCATION_SWAMP || approach_check_entrance_vertical(route));
-    while (g->location == LOCATION_APPROACH && steps++ < APPROACH_W + 4) {
-        int dx = (g->map.stairs_down_x > g->player.x) - (g->map.stairs_down_x < g->player.x);
-        int dy = (g->map.stairs_down_y > g->player.y) - (g->map.stairs_down_y < g->player.y);
-        int trunk = (g->player.y - g->map.stairs_down_y - 1) * (g->map.stairs_up_y - g->map.stairs_down_y - 1) > 0;
-        if (mountain_road && trunk && g->player.x != g->map.stairs_up_x) {
-            // Scenery lines the road, so step back onto it before following it.
-            dx = (g->map.stairs_up_x > g->player.x) - (g->map.stairs_up_x < g->player.x);
-            dy = 0;
-        } else if (mountain_road && g->player.y != g->map.stairs_down_y + 1 && g->player.x == g->map.stairs_up_x) {
-            dx = 0;
-            dy = (g->map.stairs_down_y + 1 > g->player.y) - (g->map.stairs_down_y + 1 < g->player.y);
-        } else if (mountain_road && dx) {
-            dy = 0;
-        } else if (dungeon_road && dx) {
-            dy = 0;
-        }
-        action_resolve_player(g, (Action){ACTION_MOVE, g->player.x + dx, g->player.y + dy});
+    const TownApproach *route = approach_route(g);
+    int y = g->map.stairs_down_y;
+    if (northern_approach(g) && route->town == LOCATION_CASTLE) {
+        y -= 5;
     }
+    walk_approach_to(g, g->map.stairs_down_x, y);
     ASSERT("walking the approach reaches the enemy area entrance", g->location != LOCATION_APPROACH);
 }
 

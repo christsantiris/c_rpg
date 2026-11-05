@@ -289,12 +289,16 @@ static const NpcLook npc_looks[NPC_ART_COUNT] = {
     [NPC_ART_VEYRA] = {NPC_HELM, NPC_ARMOR, RGB(102, 38, 61), RGB(146, 152, 166), RGB(88, 53, 36), RGB(196, 146, 106), RGB(227, 181, 78)},
     [NPC_ART_SELENE] = {NPC_HAIR, NPC_FUR, RGB(65, 93, 59), RGB(65, 93, 59), RGB(130, 74, 41), RGB(202, 153, 112), RGB(180, 198, 135)},
     [NPC_ART_ALDRIC] = {NPC_BEARD, NPC_COAT, RGB(64, 91, 119), RGB(64, 91, 119), RGB(167, 163, 153), RGB(196, 146, 106), RGB(192, 157, 87)},
+    [NPC_ART_ALDRIC_ARMED] = {NPC_BEARD, NPC_COAT, RGB(64, 91, 119), RGB(64, 91, 119), RGB(167, 163, 153), RGB(196, 146, 106), RGB(192, 157, 87)},
     [NPC_ART_TESSA] = {NPC_HAIR, NPC_APRON, RGB(65, 103, 66), RGB(139, 106, 64), RGB(120, 69, 37), RGB(203, 156, 118), RGB(191, 202, 142)},
     [NPC_ART_LYSA] = {NPC_HAIR, NPC_ROBE, RGB(217, 222, 200), RGB(217, 222, 200), RGB(83, 51, 36), RGB(208, 164, 126), RGB(73, 150, 110)},
     [NPC_ART_MORWEN] = {NPC_HAT, NPC_ROBE, RGB(72, 42, 100), RGB(72, 42, 100), RGB(42, 32, 30), RGB(196, 152, 119), RGB(120, 195, 137)},
     [NPC_ART_EDDA] = {NPC_HAIR, NPC_ROBE, RGB(113, 76, 105), RGB(89, 67, 77), RGB(184, 180, 158), RGB(206, 165, 128), RGB(215, 189, 112)},
     [NPC_ART_SEREN] = {NPC_CAP, NPC_COAT, RGB(64, 92, 119), RGB(57, 70, 85), RGB(110, 67, 38), RGB(209, 167, 124), RGB(213, 176, 86)},
-    [NPC_ART_TAMSIN] = {NPC_HOOD, NPC_COAT, RGB(71, 101, 48), RGB(89, 69, 43), RGB(112, 62, 33), RGB(202, 153, 112), RGB(210, 185, 100)}
+    [NPC_ART_TAMSIN] = {NPC_HOOD, NPC_COAT, RGB(71, 101, 48), RGB(89, 69, 43), RGB(112, 62, 33), RGB(202, 153, 112), RGB(210, 185, 100)},
+    [NPC_ART_WARLOCK] = {NPC_HOOD, NPC_ROBE, RGB(71, 43, 99), RGB(56, 36, 82), RGB(178, 171, 183), RGB(193, 161, 140), RGB(127, 215, 201)},
+    [NPC_ART_GARRAN] = {NPC_HOOD, NPC_COAT, RGB(117, 98, 62), RGB(80, 76, 49), RGB(74, 49, 29), RGB(190, 142, 102), RGB(201, 159, 89)},
+    [NPC_ART_LIORA] = {NPC_HAIR, NPC_ROBE, RGB(108, 70, 102), RGB(86, 62, 86), RGB(62, 40, 31), RGB(177, 119, 83), RGB(214, 181, 111)}
 };
 #undef RGB
 
@@ -469,6 +473,9 @@ static void npc_accessories(NpcCanvas *c, NpcArt art) {
             npc_prop(c, 3, 10, "cCcc/ccCcc/ccCcc/ccCcc/.ccc/.ccc");
             npc_prop(c, 17, 16, "ooooo/oLLlo/oLrlo/olllo/ooooo");
             npc_prop(c, 18, 8, "N/M/M/L/L/L/FF/L/L/L/L/L/L/L/oo");
+            break;
+        case NPC_ART_ALDRIC_ARMED:
+            npc_prop(c, 14, 3, "...o/..oNo/.oNMmo/.oNMmo/.oNMmo/.oNMmo/.oNMmo/.oNMmo/.oNMmo/.oNMmo/oGGGGGo/..olo/......./...G");
             break;
         case NPC_ART_EDDA:
             npc_prop(c, 17, 13, "ooooo/oWWlo/oWWlo/oWWlo/olllo/ooooo");

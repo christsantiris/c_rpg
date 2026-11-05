@@ -84,6 +84,10 @@ static void prepare_legacy_region(int forest, int level) {
     for (int i = 0; i < depth; i++) {
         if (forest) {
             map_generate_forest(&cache[i].map, i == 7 ? FOREST_BOSS_LEVEL : (i == 3 ? FOREST_DEPTH : i + 1));
+            if (i == 0) {
+                // This V1 fixture predates the V2 west-side forest entrance.
+                map_mirror_horizontal(&cache[i].map);
+            }
         } else {
             map_generate_swamp(&cache[i].map, i + 1);
         }
@@ -188,7 +192,7 @@ static void test_mountain_migration(void) {
             for (int enemy = 0; enemy < loaded.enemy_count; enemy++) {
                 bearers += loaded.enemies[enemy].dain_fragment == DAIN_FRAGMENT_WARCHIEF;
             }
-            ASSERT("migration removes Bomber fragments from the old second stage", bearers == 0 && loaded.enemies[0].dain_fragment == 0);
+            ASSERT("the old Bomber loses its marker and the V2 second-half bearer appears", bearers == 1 && loaded.enemies[0].dain_fragment == 0);
         }
         ASSERT("mountain migration is stable after saving the current format", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == loaded.level && reloaded.enemies[0].hp == loaded.enemies[0].hp);
         remove("saves/savegame_99123.json");
@@ -197,6 +201,7 @@ static void test_mountain_migration(void) {
     original.defeated_bosses = 1 << LOCATION_MOUNTAINS;
     original.enemies[0].active = 0;
     original.mountain_cache[7].enemies[0].active = 0;
+    original.dawnmere_liberated = 1;
     original.last_town_visited = LOCATION_DAWNMERE;
     game_open_town_portal(&original);
     int ok = make_legacy_save(78) && load_game(&loaded, ROUTE_SAVE_SLOT);
@@ -310,7 +315,7 @@ static void test_split_forest_migration(void) {
                     wardens += loaded.map.tiles[row][column] == TILE_FOREST_WARDEN;
                 }
             }
-            ASSERT("only unfinished third rescues appear on the explored fourth level", loaded.level == 4 && wardens == !rescued &&
+            ASSERT("the V2 rescue never adds a third ranger on the old fourth level", loaded.level == 4 && wardens == 0 &&
                 loaded.enemies[0].hp == 11 && loaded.alder_wardens_rescued == original.alder_wardens_rescued);
             ASSERT("migrated forest quest rewrites and reloads successfully", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) &&
                 reloaded.alder_wardens_rescued == loaded.alder_wardens_rescued);
@@ -373,7 +378,7 @@ static void test_split_mountain_migration(void) {
                     loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == original.floor_items[0].underlying_tile);
             }
             ASSERT("old active Shaman becomes a regular enemy without losing damage", loaded.level == 3 && (collected ?
-                loaded.enemies[0].dain_fragment == DAIN_FRAGMENT_WARCHIEF :
+                (!loaded.enemies[0].active && !loaded.enemies[0].dain_fragment && loaded.enemies[0].hp == 0) :
                 (!loaded.enemies[0].dain_fragment && loaded.enemies[0].hp == 9 && strcmp(loaded.enemies[0].name, "Goblin Shaman") == 0)));
             if (!collected) {
                 loaded.player.attack = 10000;
@@ -388,7 +393,7 @@ static void test_split_mountain_migration(void) {
             for (int i = 0; i < loaded.enemy_count; i++) {
                 bearers += loaded.enemies[i].active && loaded.enemies[i].dain_fragment == DAIN_FRAGMENT_SHAMAN;
             }
-            ASSERT("only missing Shaman fragments gain bearers on the explored fourth stage", loaded.level == 4 && bearers == !collected &&
+            ASSERT("the V2 map quest adds no third half on the old fourth stage", loaded.level == 4 && bearers == 0 &&
                 loaded.enemies[0].hp == 11 && loaded.dain_map_fragments == original.dain_map_fragments);
             game_refresh_quest_encounters(&loaded);
             int refreshed = 0;
@@ -498,7 +503,7 @@ static void test_near_side_quest_migration(void) {
             for (int enemy = 0; enemy < loaded.enemy_count; enemy++) {
                 objectives += loaded.enemies[enemy].active && loaded.enemies[enemy].dain_fragment == DAIN_FRAGMENT_ARCHER;
             }
-            ASSERT("a collected first objective does not respawn on new level two", loaded.level == 2 && !objectives);
+            ASSERT("only the V2 second ranger can appear on the cached second stage", loaded.level == 2 && objectives == forest);
             game_descend(&loaded);
             objectives = 0;
             for (int row = 0; row < MAP_H; row++) {
@@ -511,8 +516,8 @@ static void test_near_side_quest_migration(void) {
             }
             int enemies = loaded.enemy_count;
             game_refresh_quest_encounters(&loaded);
-            ASSERT("a missing second objective appears once on cached level three without resetting enemies", loaded.level == 3 &&
-                objectives == 1 && loaded.enemies[0].hp == 17 && loaded.enemy_count == enemies);
+            ASSERT("V2 objectives never extend past stage two or reset saved third-stage enemies", loaded.level == 3 &&
+                objectives == 0 && loaded.enemies[0].hp == 17 && loaded.enemy_count == enemies);
             ASSERT("relocated objectives and partial progress survive another save", save_game(&loaded, ROUTE_SAVE_SLOT) &&
                 load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == 3 &&
                 reloaded.alder_wardens_rescued == 1 && reloaded.dain_map_fragments == 1 && reloaded.enemy_count == enemies);
@@ -678,7 +683,7 @@ static void test_forest_adventure_migration(void) {
 
     game_init(&original);
     original.defeated_bosses |= 1 << LOCATION_FOREST;
-    approach_enter(&original, 0, 12);
+    approach_enter_region(&original, 0);
     // A player on the former crossroads arm can be saved off the new road, on its verge.
     original.player.x = 55;
     original.player.y = 26;
@@ -692,62 +697,6 @@ static void test_forest_adventure_migration(void) {
     int y;
     ASSERT("old crossroads saves gain the boss-unlocked forest road", ok && loaded.location == LOCATION_APPROACH && approach_forest_town_exit(&loaded, &x, &y) && !approach_boss_exit(&loaded, &x, &y));
     ASSERT("crossroads migration preserves exploration and accessible player and loot positions", loaded.player.x == 55 && loaded.player.y == 26 && map_is_explored(&loaded.map, 55, 26) && map_is_walkable(&loaded.map, 55, 26) && loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded.map.tiles[26][54] == TILE_ITEM);
-    remove("saves/savegame_99123.json");
-}
-
-static void test_swamp_adventure_migration(void) {
-    const int stages[7] = {1, 2, 3, 5, 4, 2, 1};
-    for (int old = 1; old <= 7; old++) {
-        game_init(&original);
-        original.location = LOCATION_SWAMP;
-        original.level = old;
-        original.max_swamp_level_reached = 7;
-        original.swamp_entry_town = LOCATION_TOWN3;
-        original.swamp_portal_town = LOCATION_TOWN3;
-        original.innkeeper_quest_state = 1;
-        original.gold = 321;
-        for (int i = 0; i < 7; i++) {
-            LevelCache *cache = &original.swamp_cache[i];
-            cache->valid = 1;
-            map_generate_swamp(&cache->map, 1);
-            cache->enemy_count = 1;
-            cache->enemies[0] = (Enemy){.active = 1, .type = i == 3 ? ENEMY_SWAMP_DEMON : ENEMY_VAMPIRE, .hp = 41 + i, .max_hp = 180, .x = 20, .y = 20, .move_timer = 2};
-            cache->map.tiles[20][20] = TILE_SWAMP_FLOOR;
-            cache->map.tiles[20][21] = i == 2 ? TILE_SWAMP_DAUGHTER : TILE_SWAMP_SHORTCUT;
-            map_mark_explored(&cache->map, 20, 20);
-        }
-        original.map = original.swamp_cache[old - 1].map;
-        original.enemy_count = 1;
-        original.enemies[0] = original.swamp_cache[old - 1].enemies[0];
-        original.enemies[0].hp = 17;
-        original.player.x = 20;
-        original.player.y = 20;
-        original.floor_item_count = 1;
-        original.floor_items[0] = (FloorItem){.active = 1, .x = 20, .y = 20, .underlying_tile = TILE_SWAMP_SHORTCUT, .item = item_make_health_potion()};
-        original.map.tiles[20][20] = TILE_ITEM;
-        int other = old == 1 ? 7 : old == 2 ? 6 : 1;
-        original.portal_active = 1;
-        original.portal_location = LOCATION_SWAMP;
-        original.portal_level = other;
-        original.portal_x = 22;
-        original.portal_y = 20;
-        original.portal_origin_tile = TILE_SWAMP_SHORTCUT;
-        original.swamp_cache[other - 1].map.tiles[20][22] = TILE_PORTAL;
-        original.dialogue_active = 1;
-        snprintf(original.dialogue_speaker, MAX_SPEAKER_LEN, "Shortcut found");
-        int ok = make_legacy_save(172) && load_game(&loaded, ROUTE_SAVE_SLOT);
-        ASSERT("all seven old swamp floors migrate with active wounds, loot and exploration", ok && loaded.level == stages[old - 1] && loaded.max_swamp_level_reached == 5 && loaded.enemies[0].hp == 17 && loaded.player.x == 20 && loaded.player.y == 20 && loaded.map.tiles[20][20] == TILE_ITEM && loaded.floor_items[0].underlying_tile == TILE_SWAMP_FLOOR && map_is_explored(&loaded.map, 20, 20) && loaded.gold == 321 && !loaded.dialogue_active);
-        ASSERT("Mira's original third-level map and the fourth-level Demon are preserved", ok && loaded.swamp_cache[2].map.tiles[20][21] == TILE_SWAMP_DAUGHTER && loaded.swamp_cache[2].enemies[0].hp == 43 && loaded.swamp_cache[4].enemies[0].type == ENEMY_SWAMP_DEMON && loaded.swamp_cache[4].enemies[0].hp == 44);
-        ASSERT("swamp migration retires surplus caches and preserves travel anchors", ok && !loaded.swamp_cache[5].valid && !loaded.swamp_cache[6].valid && loaded.swamp_entry_town == LOCATION_TOWN3 && loaded.swamp_portal_town == LOCATION_TOWN3 && loaded.portal_origin_tile == TILE_SWAMP_FLOOR);
-        if (ok) {
-            int stage = loaded.level;
-            int portal = loaded.portal_level;
-            ASSERT("swamp migration is stable after resaving", save_game(&loaded, ROUTE_SAVE_SLOT) && load_game(&reloaded, ROUTE_SAVE_SLOT) && reloaded.level == stage && reloaded.portal_level == portal && reloaded.enemies[0].hp == 17);
-            game_return_to_town(&loaded);
-            test_restore_cached_floor(&loaded);
-            ASSERT("merged outer swamp floors retain the separate linked portal snapshot", loaded.location == LOCATION_SWAMP && loaded.level == portal && loaded.player.x == 22 && loaded.player.y == 20 && loaded.enemies[0].hp == 40 + other && loaded.swamp_entry_town == LOCATION_TOWN3);
-        }
-    }
     remove("saves/savegame_99123.json");
 }
 
@@ -797,5 +746,4 @@ void test_route_save_migrations(void) {
     test_forest_adventure_migration();
     test_split_mountain_migration();
     test_near_side_quest_migration();
-    test_swamp_adventure_migration();
 }

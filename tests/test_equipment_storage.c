@@ -49,7 +49,7 @@ static int make_legacy_save(void) {
     }
     cJSON *bag = cJSON_GetObjectItem(root, "inventory");
     cJSON *worn = cJSON_GetObjectItem(root, "equipment");
-    const char *indices[] = {"equipped_main_hand", "equipped_off_hand", NULL, "equipped_armor", NULL, NULL};
+    const char *indices[EQUIPMENT_SLOT_COUNT] = {"equipped_main_hand", "equipped_off_hand", NULL, "equipped_armor", NULL, NULL};
     for (int i = 0; i < EQUIPMENT_SLOT_COUNT; i++) {
         cJSON *item = cJSON_GetObjectItem(cJSON_GetArrayItem(worn, i), "item");
         if (indices[i] && cJSON_GetObjectItem(item, "active")->valueint) {
@@ -73,7 +73,7 @@ static int make_legacy_save(void) {
 }
 
 void test_equipment_storage(void) {
-    printf("Six equipment slots and storage migration:\n");
+    printf("Equipment slots and storage migration:\n");
     GameState *g = calloc(1, sizeof(*g));
     GameState *loaded = calloc(1, sizeof(*loaded));
     ASSERT("equipment storage fixtures allocate", g && loaded);
@@ -105,7 +105,7 @@ void test_equipment_storage(void) {
     int defense = g->player.defense;
     int hp = g->player.max_hp;
     int mp = g->player.max_mp;
-    ASSERT("all six slots can be populated outside the bag", put_on(g, item_make_long_sword(), EQUIPMENT_STRONG_HAND) && put_on(g, item_make_buckler(), EQUIPMENT_WEAK_HAND) && put_on(g, item_make_leather_cap(), EQUIPMENT_HELMET) && put_on(g, item_make_chain_mail(), EQUIPMENT_ARMOR) && put_on(g, item_make_ring_of_vigor(), EQUIPMENT_ACCESSORY_1) && put_on(g, item_make_copper_amulet(), EQUIPMENT_ACCESSORY_2) && g->inventory_count == 0 && game_equipment_valid(g));
+    ASSERT("the original six slots can be populated outside the bag", put_on(g, item_make_long_sword(), EQUIPMENT_STRONG_HAND) && put_on(g, item_make_buckler(), EQUIPMENT_WEAK_HAND) && put_on(g, item_make_leather_cap(), EQUIPMENT_HELMET) && put_on(g, item_make_chain_mail(), EQUIPMENT_ARMOR) && put_on(g, item_make_ring_of_vigor(), EQUIPMENT_ACCESSORY_1) && put_on(g, item_make_copper_amulet(), EQUIPMENT_ACCESSORY_2) && g->inventory_count == 0 && game_equipment_valid(g));
     ASSERT("helmet, armor and accessory bonuses affect player stats", g->player.attack == attack + 6 && g->player.defense == defense + 1 + 2 + 3 && g->player.max_hp == hp + 10 && g->player.max_mp == mp + 10);
     g->player.hp = 37;
     g->player.mp = 3;
@@ -172,11 +172,15 @@ void test_equipment_storage(void) {
     for (int i = 0; i < MAX_INVENTORY; i++) {
         g->inventory[g->inventory_count++] = item_make_short_sword();
     }
+    Item gauntlets = item_make_leather_gauntlets();
+    Item bracers = item_make_leather_bracers();
+    game_restore_equipment(g, &gauntlets, EQUIPMENT_ACCESSORY_3);
+    game_restore_equipment(g, &bracers, EQUIPMENT_ACCESSORY_4);
     game_enter_town_gate(g, LOCATION_CASTLE, INFORMANT_X, INFORMANT_Y + 1);
     jail_talk_nearby(g);
-    ASSERT("arrest safely stores all sixteen carried gear items and removes every bonus", g->jail_gear_count == MAX_CARRIED_ITEMS && g->inventory_count == 0 && !game_equipped_item(g, EQUIPMENT_HELMET) && g->player.attack == 14 && g->player.defense == 6 && g->player.max_hp == 150 && g->player.max_mp == 20);
+    ASSERT("arrest safely stores all eighteen carried gear items and removes every bonus", g->jail_gear_count == MAX_CARRIED_ITEMS && g->inventory_count == 0 && !game_equipped_item(g, EQUIPMENT_HELMET) && g->player.attack == 14 && g->player.defense == 6 && g->player.max_hp == 150 && g->player.max_mp == 20);
     ok = save_game(g, STORAGE_SLOT) && load_game(loaded, STORAGE_SLOT);
-    ASSERT("six confiscated slot assignments and sixteen items survive reload", ok && loaded->jail_gear_count == MAX_CARRIED_ITEMS && !memcmp(g->jail_gear, loaded->jail_gear, sizeof(g->jail_gear)) && !memcmp(g->jail_extra_slots, loaded->jail_extra_slots, sizeof(g->jail_extra_slots)));
+    ASSERT("eight confiscated slot assignments and eighteen items survive reload", ok && loaded->jail_gear_count == MAX_CARRIED_ITEMS && !memcmp(g->jail_gear, loaded->jail_gear, sizeof(g->jail_gear)) && !memcmp(g->jail_extra_slots, loaded->jail_extra_slots, sizeof(g->jail_extra_slots)));
     if (ok) {
         *g = *loaded;
         g->location = LOCATION_JAIL_ARMORY;
@@ -187,12 +191,12 @@ void test_equipment_storage(void) {
             g->inventory[g->inventory_count++] = item_make_health_potion();
         }
         jail_recover_gear(g);
-        ASSERT("original worn slots recover directly despite a full bag", g->jail_gear_claimed == 63 && g->jail_gear_state == 1 && game_equipment_valid(g) && game_equipped_item(g, EQUIPMENT_ACCESSORY_2) && g->inventory_count == MAX_INVENTORY);
+        ASSERT("original worn slots recover directly despite a full bag", g->jail_gear_claimed == (1 << EQUIPMENT_SLOT_COUNT) - 1 && g->jail_gear_state == 1 && game_equipment_valid(g) && game_equipped_item(g, EQUIPMENT_ACCESSORY_2) && g->inventory_count == MAX_INVENTORY);
         for (int i = 0; i < MAX_INVENTORY; i++) {
             game_remove_inventory_item(g, 0);
         }
         jail_recover_gear(g);
-        ASSERT("remaining bag gear recovers once without overflowing storage", g->jail_gear_state == 3 && g->jail_gear_claimed == 65535 && g->inventory_count == MAX_INVENTORY);
+        ASSERT("remaining bag gear recovers once without overflowing storage", g->jail_gear_state == 3 && g->jail_gear_claimed == (1 << MAX_CARRIED_ITEMS) - 1 && g->inventory_count == MAX_INVENTORY);
     }
     InventoryScreen inv;
     inventory_init(&inv);

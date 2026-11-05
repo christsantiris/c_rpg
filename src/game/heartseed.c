@@ -164,28 +164,15 @@ void heartseed_prepare(GameState *g) {
     put_object(g, HEARTSEED_X, HEARTSEED_Y, TILE_HEARTSEED_ALTAR);
 }
 
+// Tamsin left Oakhaven in V2; a later act places her again.
 void heartseed_migrate(GameState *g) {
-    if (g->location == LOCATION_TOWN) {
-        // Keep an old save's player and dropped items beside the new resident.
-        if (g->player.x == TAMSIN_X && g->player.y == TAMSIN_Y) {
-            g->player.x++;
-        }
-        for (int i = 0; i < g->floor_item_count; i++) {
-            FloorItem *item = &g->floor_items[i];
-            if (item->active && item->x == TAMSIN_X && item->y == TAMSIN_Y) {
-                item->x++;
-                item->underlying_tile = TILE_TOWN_FLOOR;
-                g->map.tiles[item->y][item->x] = TILE_ITEM;
-            }
-        }
-        g->map.tiles[TAMSIN_Y][TAMSIN_X] = TILE_NPC_TAMSIN;
-    }
     // Unvisited or cached forest stages receive their objects when unpacked.
     heartseed_prepare(g);
 }
 
 int heartseed_talk(GameState *g) {
-    if (g->location != LOCATION_TOWN || abs(g->player.x - TAMSIN_X) > 1 || abs(g->player.y - TAMSIN_Y) > 1) {
+    if (g->location != LOCATION_TOWN || g->map.tiles[TAMSIN_Y][TAMSIN_X] != TILE_NPC_TAMSIN ||
+        abs(g->player.x - TAMSIN_X) > 1 || abs(g->player.y - TAMSIN_Y) > 1) {
         return 0;
     }
     g->dialogue_active = 1;

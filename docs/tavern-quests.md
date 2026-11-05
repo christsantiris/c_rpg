@@ -1,6 +1,6 @@
 # Tavern, Inn, Guild, and Town Hall Quests
 
-The Tavern is a walkable town hub for regional quests. Walk into its front
+Oakhaven's Inn is a walkable town hub for regional quests. Walk into its front
 door, approach an NPC inside, and press `T` to speak with them. Leave through
 the south doorway to return to the same town street.
 
@@ -9,15 +9,23 @@ message bar is reserved for concise game events such as quest assignment,
 progress, and completion. Quest offers display **Y** to accept and **N** to
 decline; **Esc** also declines. Declining leaves the quest inactive and
 available when you speak to the NPC again. Only acceptance adds it to the
-journal and starts its expedition. Up to three optional quests can be active;
+journal. Some side quests start a fresh expedition; accepting Save Elowen
+preserves the current dungeon. Alder and Dain also preserve explored stages,
+adding their objectives when those stages are revisited. Up to three optional quests can be active;
 finishing their objectives moves them to the journal's Completed tab and frees
 a slot before turn-in. Pending NPC rewards are labelled in the completed entry.
 NPCs keep their offers available when the limit is reached.
 Tomas's escape and confiscated-equipment recovery do not use these slots.
 Other dialogue bubbles are dismissed by
-movement. Elowen, Mara, Ilya, and Rook wait in Oakhaven's Tavern. Alder,
-Zara, Brenna, and Bram wait in Stillbury's Inn, which uses the same doorway and
-conversation controls.
+movement. Bram runs Oakhaven's Inn, offering the Lich King warning and supply
+advice and the Save Elowen quest at its counter. Elowen lives there only after
+her rescue and reunion. Mara, Ilya, and Rook have left Oakhaven in V2; their
+quests keep their progress but have no giver until a later act places them.
+After the Lich King's defeat, Alder and Dain arrive at Oakhaven's Inn with the
+eastward and westward adventure choices, and Aldric moves in from the square.
+Brenna remains in Stillbury's Tavern. Zara starts in Oakhaven's Inn after the Goblin King falls, then moves to the Sunscar caravan camp. Dawnmere's Alehouse has a generic
+host and no longer offers Dain's quest.
+Stillbury's duplicate Bram and the Bring Mira Home swamp quest are retired.
 
 Ridgeshire's Town Hall uses the same entry, conversation, and exit controls.
 Steward Hadrin assigns **Reclaim the Emberforge**: recover its guarded mechanism
@@ -35,45 +43,61 @@ fighting their guards to prevent resurrection. Return to Oswin for 150 gold
 and 1,500 score once. Existing exploration, cold braziers, and boss victories
 are preserved. See [Royal Catacombs](catacombs.md#rest-for-the-forgotten).
 
-## Elowen: The Broken Seals
+## Bram: Save Elowen
 
-Speak to Elowen with `T` in **Oakhaven's Tavern**. She asks the player to repair
-shattered burial seals in **Oakhaven's dungeon**, on floors 2,
-3, and 4. Each seal is protected by an escalating undead group. Stand
-on a seal and press `A` to restore it, then return to Elowen in Oakhaven's
-Tavern after repairing all three to receive 40 gold and 300 score.
+Bram offers the rescue of his daughter from the Lich King's final chamber in
+Oakhaven's dungeon. Acceptance uses one of the three active quest slots but
+does not reset prior exploration. Defeating the Lich frees Elowen automatically,
+even if the quest was never accepted or the journal is full. The quest moves
+straight to **Completed** with a reminder to reunite her with Bram.
 
-Quest acceptance, seal progress, completion, and rewards persist in saves.
-This local quest requires no trip to another town. Older saves move Elowen back
-to the Tavern without resetting the quest or dungeon exploration.
+Elowen follows safely through travel and the one-way Return to Town spell.
+Speak to Bram at the Inn to receive **80 gold once**. She stops following and
+becomes a permanent Inn resident, thanking the player and revealing the Lich's
+claim to be in league with the King. The old Broken Seals quest is retired;
+assignment, escort position, rescue, reunion and reward collection persist in
+fresh V2 saves. See [the dungeon rescue](dungeon.md#save-elowen).
 
-## Dain: Recover the Treasure Map
+## Dain: Recover the Treasure Map → Defeat the Goblin King
 
-Dain waits in **Dawnmere's Alehouse**. Press `T` beside him, then `Y` to
-accept **Recover the Treasure Map**, and return to him with all three fragments
-for the reward.
+Dain arrives at **Oakhaven's Inn after the Lich King's defeat**. Press `T`
+beside him, then `Y` to accept the map retrieval. The Goblin Mountains are west
+of Oakhaven. An Archer Map Bearer on **Mountains 1** carries one half, and a
+Warchief Map Bearer on **Mountains 2** carries the other. Defeating these marked
+bearers collects their halves automatically without using inventory space.
 
-Dain is a retired dwarven caravan warden who tracks the organized goblin raids
-through the mountains. Goblins tore an old dwarven treasure map into three
-pieces. A Goblin Archer, Goblin Warchief, and Goblin Shaman each carry one
-fragment. Defeating them recovers their fragments automatically without using
-normal inventory space.
+Return to Dain with both halves for **60 gold and 400 score once**. There is no
+third fragment or stage-3/4 retrieval objective. On turn-in, he offers
+**Defeat the Goblin King**, explaining that ending the King's rule opens the
+road west to Stillbury to investigate why evil creatures descended on the
+kingdom. The follow-up can be accepted or declined and uses an active slot only
+while accepted and unfinished. Acceptance preserves first-part progress and
+does not restart the expedition.
 
-Enter Ridgeshire's south mountain gate and follow the road to the mountain cave.
-Either town entrance starts the climb at level 1. The Archer, Warchief and Shaman
-Map Bearers occupy **levels 2, 3 and 4**, before the level-5 Goblin King. After
-victory, exit onto the road north to Ridgeshire or south to Dawnmere.
-Each leader travels with a themed warband, turning every fragment into a
-distinct combat encounter. Returning all three fragments allows Dain to
-reconstruct the map and locate its hidden dwarven hoard. He awards the player
-60 gold and 400 score.
+The Goblin King remains on **Mountains 5** and can be reached and defeated
+without Dain's dialogue or either quest. Victory completes an available or
+accepted follow-up immediately, with no extra Inn turn-in. Earlier victories
+are credited when the short quest is turned in. The boss retains its existing
+loot; this story follow-up adds no second NPC payment.
 
-## Zara: The Lost Magic Lamp
+The map points toward the goblin fortress stores, and Dain asks the player to
+search the King's records for whoever supplies the raids. Defeating the Goblin
+King reveals royal funding; defeating the Necromancer reveals royal protection
+for his work. Both sealed parchments are kept in **Q → Evidence**, independently
+of either quest chain. Optional return conversations with Dain and Alder
+interpret the relevant record and recognize the corroboration if both were
+found. Their existing first-part rewards remain one-time; no second return is
+required. See [the story payoff](act2-story-payoff-plan.md).
 
-Zara waits in **Stillbury's Inn**. Press `T` beside her, then `Y` to accept.
-Enter **Sunscar Wastes** through Stillbury's west gate, recover the magic lamp
-on stage **4** with `P` (Pick Up), and return to Zara in the Inn for
-**80 gold and 600 score**.
+## Zara: The King's Tribute
+
+Zara assigns one quest, **The King's Tribute**, in Oakhaven's Inn or the Sunscar
+caravan camp. Reclaim Sunscar 2's convoy cargo and the Pharaoh's agreement on
+stage 5, then claim **200 gold and 500 XP** from her at the camp after exiting
+Sunscar. The lamp quest and its old rewards are retired.
+
+Two other camp NPCs assign the Jarl boss quest and crown delivery separately.
+See [the western arc](act3-western.md).
 
 ## Orin: Reclaim the Quarry
 
@@ -88,27 +112,34 @@ With a full pack, Orin holds the hammer until a later conversation. Rewards
 pay once, existing quest progress survives migration, and the Colossus is
 optional. See [Reclaim the Quarry](stonewake-quarry.md#reclaim-the-quarry).
 
-## Alder: The Lost Wardens
+## Alder: The Lost Rangers → Defeat the Necromancer
 
-Alder waits in **Stillbury's Inn**; press `T` beside him, then `Y` to accept the
-quest. He is an aging forest ranger searching for three wardens lost while
-investigating the Necromancer's influence. The wardens appear in guarded groves
-on **Forest 2, 3 and 4**. Either town entrance starts at Forest 1 and reaches
-all three before the level-5 Necromancer. After victory, exit onto the road west
-to Stillbury or east to Oakhaven. The forest has no shortcut. You can also
-retreat through Forest 1 or cast Return to Town to reach the town used to enter.
+Alder arrives at **Oakhaven's Inn after the Lich King's defeat**. Accept
+**The Lost Rangers** to search the Haunted Forest east of town. One ranger
+is held on **Forest 1**, and the other on **Forest 2**. Each is guarded by three
+Giant Spiders labelled **Spider Captor**. Defeat those captors, stand beside
+the ranger and press `T` to free them. Ordinary enemies need not be cleared.
+Missing rangers return on later expeditions; freed rangers never respawn.
 
-Each captive has a thematic hunting party led by a Giant Spider, Dark Elf, or
-Forest Troll. Missing wardens are guaranteed to appear on later expeditions,
-while rescued wardens never respawn. Quest acceptance and rescue progress
-persist through backtracking and save/load.
+Return to Alder after both rescues for **70 gold and 500 score once**. He then
+offers **Defeat the Necromancer**, explaining that the Necromancer's fall opens
+the road east to Dawnmere and lets the player investigate the evil's source.
+Accept with `Y` or decline with `N`; the follow-up obeys the three-quest limit.
+It preserves the two rescues and does not restart the expedition.
 
-After rescuing all three wardens, return to Alder in Stillbury's Inn to receive
-70 gold and 500 score once. Older saves update his location without losing rescues.
+The Necromancer remains on **Forest 5** and can be reached and defeated without
+Alder's dialogue or either quest. Victory completes an available or accepted
+follow-up immediately, with no extra Inn return. Earlier victories count when
+the rescues are turned in. The boss retains its existing loot and grants no
+extra NPC payment. Assignment, rescues, turn-in, follow-up and victory persist
+through save/load. This V2 rewrite uses fresh saves without a new migration.
 
 ## Mara: Relight the Drowned Beacons
 
-Mara waits in **Oakhaven's Tavern**. Press `T`
+In V2, Mara has left Oakhaven and no one offers this quest until a later act
+places her. Existing quest progress is kept.
+
+Mara waits in **Oakhaven's Inn**. Press `T`
 beside her to speak. She is a retired tidekeeper who carries a sheltered ember
 from the old coast lights. She asks the player to relight drowned beacons on
 Coast stages 2, 3, and 4. Each beacon stands inside a flooded side room and cannot be reached or
@@ -118,13 +149,13 @@ the exposed beacon and press `A` to light it.
 The beacons are defended by groups led by a Giant Crab, Animated Statue, and
 Sea Serpent. Stages do not need to be cleared, and the Drowned Queen is not
 part of the objective. Lit beacons remain lit through backtracking, repeat
-expeditions, and save/load. Return to Mara in Oakhaven's Tavern after
+expeditions, and save/load. Return to Mara in Oakhaven's Inn after
 lighting all three to receive 80 gold and 600 score once. Older saves return
-her to Oakhaven's Tavern without changing quest progress.
+her to Oakhaven's Inn without changing quest progress.
 
 ## Brenna: The Silent Expedition
 
-Quartermaster Brenna waits in Stillbury's Inn. Press `T` beside her, then `Y`
+Quartermaster Brenna waits in Stillbury's Tavern. Press `T` beside her, then `Y`
 to accept. She explains the route across the swamp north of Stillbury to
 Rosemoor, then through Rosemoor's north gate into Frostfell in the far north.
 
@@ -146,14 +177,14 @@ Existing saves migrate automatically, including saves inside the Tavern.
 ## Docks Unlock
 
 The road to the docks appears after the Drowned Queen is defeated on the Sunken
-Coast. The other regional bosses and Tavern quests are not required. Captain
+Coast. The other regional bosses and town quests are not required. Captain
 Rowan waits on the beach beside the Sunken Coast entrance, outside Oakhaven.
 He gives the Island Treasure Map when spoken to, enabling ship travel from the
 nearby coastal dock.
 
 ## Nahla: The Buried Sun
 
-Nahla waits on the Ruined Isle rather than in the Tavern. She asks the player to
+Nahla waits on the Ruined Isle rather than in the Inn. She asks the player to
 climb the five-tier Ruined Temple, defeat the Fallen Sun Guardian, and recover
 the buried treasure from the summit vault. Press `Y` to accept her offer. Return
 to Nahla with the treasure for 150 gold and 2,500 score. This quest also appears
@@ -162,10 +193,13 @@ adventure area.
 
 ## Ilya: The Dragon's Hoard
 
-Ilya waits alongside Elowen and Mara in **Oakhaven's Tavern**. Press
+In V2, Ilya has left Oakhaven and no one offers this quest until a later act
+places her. Existing quest progress is kept.
+
+Ilya waits alongside Elowen and Mara in **Oakhaven's Inn**. Press
 `T` beside her, then `Y` to accept the quest. Travel north through the mountains
 to Ridgeshire, then take its north gate to Dragonspine. Recover the golden goblet
-on stage 5 by standing on it and pressing `P` (Pick up), then return to Ilya in the Tavern
+on stage 5 by standing on it and pressing `P` (Pick up), then return to Ilya in the Inn
 for one **Potion of Strength and 600 score**. Make room in your pack before
 turning it in. The potion permanently adds 1 base attack when consumed. Older
 saves move Ilya while retaining existing quest and boss progress.
@@ -208,7 +242,12 @@ without requiring the absent Lich King to be defeated again.
 
 ## Rook: The Ivory Rook
 
-Speak with Rook in Oakhaven's Tavern and press `Y` to accept his one-time
+In V2, Rook has left Oakhaven and no one offers this quest until a later act
+places him. The labyrinth entrance, label and world-map landmark are also
+removed for now. Existing quest progress is kept. The notes below describe the
+retained quest implementation for later placement.
+
+Speak with Rook in Oakhaven's Inn and press `Y` to accept his one-time
 retrieval quest. This opens the labyrinth gate beside the Haunted Forest
 entrance on the Oakhaven–Stillbury road. Take either town's forest gate and
 follow the path; entering the forest or defeating its boss is not required.
@@ -234,7 +273,7 @@ keep their bits; the old third rune moves to floor 5. Expeditions that already
 reached the old vault receive credit for the two new intermediate runes.
 
 Save version **114** moves Dain to Ridgeshire's
-town center, and Zara to Stillbury's Inn. Existing quest progress, rewards,
+town center, and Zara to Stillbury's Tavern. Existing quest progress, rewards,
 exploration, and region caches are preserved. Saved maps remove the former NPC
 tiles and repair loot underlays; overlapping players and loot move beside the
 new positions. Stale dialogue from the moved NPCs is dismissed.

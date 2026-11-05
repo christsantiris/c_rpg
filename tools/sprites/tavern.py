@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Town 1 tavern sprite.
+"""Stillbury tavern sprite.
 
-Draws 7 x 5 tiles (168 x 120) for the tavern lot at TOWN_TAVERN_X/Y in Town 1,
-with the door on TOWN_TAVERN_DOOR_X/Y. Run `make sprites` to rewrite
+Draws 7 x 5 tiles (168 x 120) for the tavern lot at TOWN_INN_X/Y in Stillbury,
+with the door on TOWN_INN_DOOR_X/Y. Run `make sprites` to rewrite
 assets/images/tavern.bmp.
 """
 from pathlib import Path

@@ -247,6 +247,126 @@ def build_shop(kind):
     return canvas
 
 
+def shop_door(layer, stone):
+    """Keep the ordinary door and threshold on the existing bottom-center tile."""
+    stone_arch(layer, 60, 75, 91, 6, stone)
+    arched_door(layer, 60, 75, 91, 6, WOOD, IRON)
+    rectangle(layer, 52, 92, 68, 93, stone[4])
+    rectangle(layer, 50, 94, 70, 95, stone[2])
+
+
+def build_oakhaven_bakery():
+    """A broad, low timber bakery with a red hipped roof and bread windows."""
+    size = (120, 96)
+    canvas = Image.new("RGBA", size, (0, 0, 0, 0))
+    brick = [(55, 32, 27), (82, 47, 35), (119, 73, 49), (151, 103, 69), (187, 137, 91), (214, 170, 121)]
+    glass = [(16, 27, 31), (25, 41, 45), (42, 63, 63), (62, 88, 82), (87, 109, 94)]
+    chimney = Layer(*size)
+    flat_wall(chimney, 81, 93, 8, 35, brick, row_h=4, base=3, seed=300, bw=(4, 7))
+    rectangle(chimney, 79, 5, 95, 8, brick[4])
+    rectangle(chimney, 82, 5, 92, 5, OUT)
+    composite(canvas, chimney, OUT)
+
+    front = Layer(*size)
+    plaster(front, poly_mask(size, [(8, 45), (95, 45), (95, 86), (8, 86)]), PLASTER, 301)
+    flat_wall(front, 8, 95, 86, 91, STONE, row_h=4, base=3, seed=302, bw=(6, 10))
+    for x in (9, 48, 74, 94):
+        beam(front, x, 47, x, 90, WOOD, width=3)
+    for y in (50, 85):
+        beam(front, 8, y, 95, y, WOOD, width=3)
+    beam(front, 10, 52, 20, 61, WOOD)
+    beam(front, 93, 52, 83, 61, WOOD)
+    # Cool glazing separates the golden bread from the warm plaster.
+    lit_window(front, 16, 65, 27, 15, glass, WOOD, shutters=False)
+    for y in (66, 74):
+        for x in (17, 26, 35):
+            stamp(front, x, y, LOAF, BREAD)
+    beam(front, 15, 72, 44, 72, WOOD, width=1)
+    lit_window(front, 80, 65, 10, 13, glass, WOOD, shutters=False)
+    stamp(front, 81, 71, LOAF, BREAD)
+    composite(canvas, front, OUT)
+
+    roof = Layer(*size)
+    mask = poly_mask(size, [(2, 46), (18, 18), (84, 18), (101, 46)])
+    roof_tiles(roof, mask, ROOFS[0], 303, tile_w=5, row_h=3,
+               shade=lambda x, y: -1 if x > 84 + (y - 18) // 2 else 0)
+    beam(roof, 18, 18, 84, 18, ROOFS[0], width=2)
+    beam(roof, 2, 47, 101, 47, WOOD, width=2)
+    composite(canvas, roof, OUT)
+
+    awning = Layer(*size)
+    for x, y in sorted(poly_mask(size, [(14, 57), (43, 57), (47, 63), (10, 63)])):
+        stripe = (x - 10) // 5 % 2
+        awning.put(x, y, ((222, 202, 158), (158, 67, 44))[stripe] if y < 62 else
+                   ((167, 142, 103), (105, 40, 29))[stripe])
+    beam(awning, 13, 56, 44, 56, WOOD, width=1)
+    for x in range(11, 47):
+        awning.put(x, 64 + (x // 5 % 2), (167, 142, 103) if (x - 10) // 5 % 2 == 0 else (105, 40, 29))
+    composite(canvas, awning, OUT)
+
+    detail = Layer(*size)
+    shop_door(detail, STONE)
+    hanging_sign(detail, 0)
+    sack(detail, 104, 82)
+    sack(detail, 113, 83)
+    stamp(detail, 12, 86, CRATE, PROPS)
+    stamp(detail, 14, 83, LOAF, BREAD)
+    stamp(detail, 95, 77, LANTERN, {"i": IRON[1], "I": IRON[2], "y": GLOW[2], "Y": GLOW[3], "W": GLOW[4]})
+    composite(canvas, detail, OUT)
+    return canvas
+
+
+def build_oakhaven_goldsmith():
+    """A pale limestone townhouse with blue slate and glazed jewelry bays."""
+    size = (120, 96)
+    canvas = Image.new("RGBA", size, (0, 0, 0, 0))
+    pale = [(49, 47, 44), (78, 76, 68), (130, 129, 112), (165, 164, 142), (195, 194, 167), (221, 219, 192)]
+    blue = [(20, 28, 40), (31, 46, 64), (48, 70, 96), (64, 91, 121), (88, 117, 146), (122, 148, 173)]
+    glass = [(14, 23, 29), (23, 39, 47), (32, 60, 68), (45, 82, 90), (86, 127, 130)]
+    gold = {"G": (233, 185, 68), "W": (255, 237, 166), "g": (132, 83, 29)}
+    ring = [".GGG.", "GW..g", "G...g", ".ggg."]
+
+    wall = Layer(*size)
+    flat_wall(wall, 19, 96, 34, 91, pale, row_h=4, base=3, seed=310, bw=(6, 10),
+              shade=lambda x, y: -1 if x > 88 else 0)
+    for y in (35, 59, 62, 88):
+        beam(wall, 18, y, 97, y, pale, width=2)
+    for x in (20, 94):
+        flat_wall(wall, x, x + 2, 38, 87, pale, row_h=5, base=4, seed=x, bw=(3, 3))
+    for x in (33, 76):
+        stone_arch(wall, x + 5, 43, 54, 5, pale, thick=2)
+        lit_window(wall, x, 43, 11, 12, GLOW, WOOD, shutters=False)
+    stamp(wall, 57, 46, ["..G..", ".GWG.", "GWGGg", ".Ggg.", "..g.."], gold)
+    composite(canvas, wall, OUT)
+
+    roof = Layer(*size)
+    roof_tiles(roof, poly_mask(size, [(13, 32), (29, 8), (86, 8), (103, 32)]), blue, 311,
+               tile_w=5, row_h=3, rounded=False, shade=lambda x, y: -1 if x > 86 else 0)
+    beam(roof, 29, 8, 86, 8, blue, width=2)
+    beam(roof, 13, 33, 103, 33, pale, width=2)
+    composite(canvas, roof, OUT)
+
+    shop = Layer(*size)
+    # Projecting stone sills frame two glass displays, rather than an open stall.
+    for x0, x1 in ((24, 44), (77, 91)):
+        flat_wall(shop, x0 - 2, x1 + 2, 66, 86, pale, row_h=4, base=4, seed=x0, bw=(4, 7))
+        lit_window(shop, x0, 67, x1 - x0 + 1, 14, glass, WOOD, shutters=False)
+        beam(shop, x0 - 3, 84, x1 + 3, 84, pale, width=3)
+    for x in (26, 36):
+        stamp(shop, x, 75, ring, gold)
+    stamp(shop, 80, 70, ["G.....G", ".G...G.", "..G.G..", "...B...", "..BBB..", "...b..."],
+          {**gold, "B": (110, 198, 216), "b": (42, 105, 134)})
+    # A shallow pediment and layered arch make the single doorway readable.
+    roof_tiles(shop, poly_mask(size, [(47, 71), (60, 62), (73, 71)]), blue, 312,
+               tile_w=4, row_h=3, rounded=False)
+    beam(shop, 46, 72, 74, 72, pale, width=2)
+    shop_door(shop, pale)
+    hanging_sign(shop, 3)
+    stamp(shop, 98, 77, LANTERN, {"i": IRON[1], "I": IRON[2], "y": GLOW[2], "Y": GLOW[3], "W": GLOW[4]})
+    composite(canvas, shop, OUT)
+    return canvas
+
+
 def build_monastery():
     size = (168, 120)
     canvas = Image.new("RGBA", size, (0, 0, 0, 0))
@@ -420,6 +540,8 @@ def main():
     for kind, name in enumerate(("bakery", "butcher", "spice-merchant", "goldsmith", "cobbler", "belt-maker")):
         save_sprite(build_shop(kind), ASSETS / f"{name}.bmp")
     save_sprite(build_monastery(), ASSETS / "monastery.bmp")
+    save_sprite(build_oakhaven_bakery(), ASSETS / "oakhaven-bakery.bmp")
+    save_sprite(build_oakhaven_goldsmith(), ASSETS / "oakhaven-goldsmith.bmp")
 
 
 if __name__ == "__main__":

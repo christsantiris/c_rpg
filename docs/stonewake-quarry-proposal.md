@@ -7,13 +7,13 @@ approved concept direction; runtime art uses pixelkit.
 
 ## Proposed appearance
 
-- [Entrance landmark](art-sources/stonewake-proposal/entrance-concept.png): low
+- Entrance landmark: low
   limestone benches, timber lifting equipment, a central mine entrance and
   short rail track, with a small turquoise excavation pool.
-- [Area concept](art-sources/stonewake-proposal/area-concept.png): permanent
+- Area concept: permanent
   ramp circuits around excavation cuts, optional crane crossings, workshops
   and supply yards. The layout should offer connected detours and discoveries.
-- [Enemies and quest reward](art-sources/stonewake-proposal/enemies-concept.png):
+- Enemies and quest reward:
   Rockworm, Quarry Construct, Stone Troll, Iron Sentinel and Quarry Colossus,
   compared with the player at a shared scale.
 

@@ -101,7 +101,8 @@ void test_town_escapes(void) {
     for (unsigned int a = 0; a < sizeof(areas) / sizeof(areas[0]); a++) {
         for (int t = 0; t < 5; t++) {
             game_init(g);
-            game_enter_town_gate(g, towns[t], 0, 12);
+            g->dawnmere_liberated = 1;
+        game_enter_town_gate(g, towns[t], 0, 12);
             enter(g, areas[a]);
             ASSERT("escape fixture enters the requested area", g->location == areas[a]);
             if (areas[a] != LOCATION_ISLAND && areas[a] != LOCATION_CROWNROAD_NORTH) {
@@ -131,6 +132,7 @@ void test_town_escapes(void) {
     // removed without replacing the town map or its items and discoveries.
     for (int t = 0; t < 5; t++) {
         game_init(g);
+        g->dawnmere_liberated = 1;
         game_enter_town_gate(g, towns[t], 0, 12);
         TileType floor = g->map.tiles[12][21];
         TileType item_floor = g->map.tiles[13][21];
@@ -149,6 +151,7 @@ void test_town_escapes(void) {
         ASSERT("retired portals stay closed after another save/load", save_game(loaded, ESCAPE_SLOT) && load_game(g, ESCAPE_SLOT) && !g->portal_active && !portals(&g->map));
     }
     game_init(g);
+    g->dawnmere_liberated = 1;
     game_enter_town_gate(g, LOCATION_DAWNMERE, 0, 12);
     castle_enter(g, 1);
     g->player.known_spells[0] = spell_make_return_to_town();

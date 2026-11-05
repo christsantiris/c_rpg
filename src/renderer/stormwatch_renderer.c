@@ -174,10 +174,10 @@ void stormwatch_draw_hint(Renderer *r, const GameState *g) {
     }
 }
 
-static void bell_label(Renderer *r, const Viewport *v, const char *text, int x, int y, int above) {
+static void bell_label(Renderer *r, const Viewport *v, const char *text, int x, int y, int above, int shift) {
     int width = 0;
     TTF_SizeText(r->font_tiny, text, &width, NULL);
-    int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
+    int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2 + shift;
     int py = viewport_to_screen_y(v, y) * TILE_SIZE - above;
     renderer_draw_text(r, text, px + 1, py + 1, (SDL_Color){21, 32, 36, 255}, r->font_tiny);
     renderer_draw_text(r, text, px, py, (SDL_Color){225, 210, 158, 255}, r->font_tiny);
@@ -185,7 +185,8 @@ static void bell_label(Renderer *r, const Viewport *v, const char *text, int x, 
 
 void stormbell_draw_details(Renderer *r, const GameState *g, const Viewport *v) {
     if (g->location == LOCATION_DAWNMERE && g->map.tiles[SEREN_Y][SEREN_X] == TILE_NPC_SEREN && viewport_is_visible(v, SEREN_X, SEREN_Y)) {
-        bell_label(r, v, "WATCHKEEPER SEREN", SEREN_X, SEREN_Y, 16);
+        // Slide Seren's name east of the Alehouse's hanging sign.
+        bell_label(r, v, "WATCHKEEPER SEREN", SEREN_X, SEREN_Y, 16, 12);
         return;
     }
     if (g->location != LOCATION_STORMWATCH || (g->level != 3 && g->level != 4)) {
@@ -202,5 +203,5 @@ void stormbell_draw_details(Renderer *r, const GameState *g, const Viewport *v) 
     if (r->stormbell_texture) {
         SDL_RenderCopy(r->sdl, r->stormbell_texture, &src, &dst);
     }
-    bell_label(r, v, clapper ? "BELL CLAPPER" : g->stormbell_phase == 3 ? "RESTORED STORMBELL" : "STORMBELL", x, y, clapper ? 14 : 31);
+    bell_label(r, v, clapper ? "BELL CLAPPER" : g->stormbell_phase == 3 ? "RESTORED STORMBELL" : "STORMBELL", x, y, clapper ? 14 : 31, 0);
 }

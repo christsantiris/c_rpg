@@ -2,8 +2,7 @@
 
 Status: implemented as five playable stages east of Dawnmere. See the
 [current area guide](stormwatch-headland.md) for controls, enemy stats and rewards.
-The [native sprite review](art-sources/stormwatch/enemy-review.png) uses the actual
-player and Dark Elf as scale references. The following records the approved
+The following records the approved
 mechanics and visual direction.
 
 ## Landscape and identity

@@ -119,13 +119,7 @@ Existing hunt and quarry quest progress is retained.
 sheet, 96×72 workshop and four
 24×24 machinery/supply props. These assets have transparent backgrounds and
 use the same native pixel scale as existing buildings and the player. See
-[approved concepts](stonewake-quarry-proposal.md),
-[native comparison](images/stonewake-native-comparison.png),
-[approach capture](images/stonewake-quarry-approach.png),
-[workshop capture](images/stonewake-quarry-workshop.png),
-[crane route comparison](images/stonewake-crane-routes.png),
-[Colossus capture](images/stonewake-quarry-colossus.png), and
-[atlas edit record](art-sources/world-map/stonewake.md).
+[approved concepts](stonewake-quarry-proposal.md).
 
 Save version **194** adds the persistent unearned/reserved/claimed warhammer
 state. Older active and cached Glassdeep maps are retiled in place, preserving
@@ -154,5 +148,3 @@ without resetting wounds, deaths, exploration, loot or quest progress.
 Crown Road North and the Catacombs structural overhaul are separate follow-up
 change sets. Stormwatch/eastern Dawnmere development remains a later design.
 
-Verification and visual review are recorded in
-[implementation validation](art-sources/stonewake-proposal/validation.md).
