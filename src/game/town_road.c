@@ -33,6 +33,10 @@ int town_road_connection(Location town, TownSide side, TownApproach *connection)
         return 1;
     }
     if (town == LOCATION_TOWN2) {
+        if (side == TOWN_SIDE_NORTH) {
+            *connection = town_approaches[APPROACH_QUARRY_ROAD];
+            return 1;
+        }
         if (side == TOWN_SIDE_SOUTH) {
             *connection = (TownApproach){town, LOCATION_RIVER_CROSSING, 20, TOWN_H - 1};
             return 1;
@@ -168,7 +172,7 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
     if (town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
         snprintf(message, sizeof(message), "Soulstone Shrine lies west of the path. North: broken ferry, no crossing. South: Oakhaven.");
     } else if (town == LOCATION_TOWN2) {
-        snprintf(message, sizeof(message), "Stillbury: west to Giant's Bridge; south to the skiff and Saltwind. Approach the town to enter.");
+        snprintf(message, sizeof(message), "Stillbury: north to the quarry and labyrinth; west to Giant's Bridge; south to the skiff. Approach the town to enter.");
     } else if (town == LOCATION_DAWNMERE && !g->dawnmere_liberated) {
         snprintf(message, sizeof(message), "Dawnmere is occupied. Enter at the west gate, or walk around the town to the Saltwind road north.");
     } else {
@@ -278,7 +282,8 @@ int town_road_travel(GameState *g, int x, int y) {
         game_enter_crownroad(g, connection.area, 0);
     } else {
         for (int i = 0; i < town_approach_count; i++) {
-            if (town_approaches[i].town == connection.town && town_approaches[i].area == connection.area) {
+            if (town_approaches[i].town == connection.town && town_approaches[i].area == connection.area &&
+                town_approaches[i].gate_x == connection.gate_x && town_approaches[i].gate_y == connection.gate_y) {
                 approach_enter_region(g, i);
                 break;
             }

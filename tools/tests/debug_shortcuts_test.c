@@ -1803,42 +1803,32 @@ int main(void) {
     SDL_RenderPresent(sdl);
     game_return_to_approach(game);
     assert(northern_approach(game));
-    // Normal play still requires Rook's quest; the debug flag bypasses it.
+    // The restored labyrinth is optional and open before accepting Rook's quest.
     game_init(game);
-    assert(approach_enter(game, 0, 12));
-    game->player.x = APPROACH_LABYRINTH_X;
-    game->player.y = APPROACH_LABYRINTH_Y + 1;
-    action_resolve_player(game, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
-    assert(game->location == LOCATION_APPROACH && !game_labyrinth_is_open(game));
-    assert(game->player.y == APPROACH_LABYRINTH_Y + 1);
-    game_leave_approach(game);
-    visit_exterior_town(game);
-    game_enter_tavern(game);
+    assert(approach_enter_region(game, APPROACH_QUARRY_ROAD));
+    game->player.x = QUARRY_LABYRINTH_X;
+    game->player.y = QUARRY_LABYRINTH_Y + 1;
+    action_resolve_player(game, (Action){ACTION_MOVE, QUARRY_LABYRINTH_X, QUARRY_LABYRINTH_Y});
+    assert(game->location == LOCATION_LABYRINTH && game->level == 1 && !game->rook_quest_state);
+    assert(save_game(game, 2) && load_game(game, 2));
+    game_leave_labyrinth(game);
+    assert(game->location == LOCATION_APPROACH && game->approach_route == APPROACH_QUARRY_ROAD && game->labyrinth_entry_town == LOCATION_TOWN2);
+    assert(game->player.x == QUARRY_LABYRINTH_X && game->player.y == QUARRY_LABYRINTH_Y + 1);
+    game_enter_inn(game);
     game->player.x = ROOK_TAVERN_X;
     game->player.y = ROOK_TAVERN_Y + 1;
     game_talk_to_rook(game);
+    assert(game_quest_offer_active(game));
     game_handle_quest_offer_key(game, SDL_SCANCODE_Y, 0);
-    assert(game_labyrinth_is_open(game));
-    game_leave_tavern(game);
-    assert(approach_enter(game, 0, 12));
-    while (game->player.x > APPROACH_LABYRINTH_X) {
-        action_resolve_player(game, (Action){ACTION_MOVE, game->player.x - 1, game->player.y});
-    }
-    action_resolve_player(game, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y + 1});
-    action_resolve_player(game, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
-    assert(game->location == LOCATION_LABYRINTH && game->level == 1 && game->enemy_count > 0);
-    assert(save_game(game, 2) && load_game(game, 2));
-    game_leave_labyrinth(game);
-    assert(game->location == LOCATION_APPROACH && game->labyrinth_entry_town == LOCATION_TOWN);
-    assert(game->player.x == APPROACH_LABYRINTH_X && game->player.y == APPROACH_LABYRINTH_Y + 1);
+    assert(game->rook_quest_state == 1);
     game_init(game);
     debug_apply_loadout(game, &debug_config);
-    assert(game->debug_passages_unlocked && game->rook_quest_state == 0);
-    assert(approach_enter(game, 0, 12));
-    game->player.x = APPROACH_LABYRINTH_X;
-    game->player.y = APPROACH_LABYRINTH_Y + 1;
-    action_resolve_player(game, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
-    assert(game->location == LOCATION_LABYRINTH && game->rook_quest_state == 0);
+    assert(game->debug_passages_unlocked && !game->rook_quest_state && game_labyrinth_is_open(game));
+    assert(approach_enter_region(game, APPROACH_QUARRY_ROAD));
+    game->player.x = QUARRY_LABYRINTH_X;
+    game->player.y = QUARRY_LABYRINTH_Y + 1;
+    action_resolve_player(game, (Action){ACTION_MOVE, QUARRY_LABYRINTH_X, QUARRY_LABYRINTH_Y});
+    assert(game->location == LOCATION_LABYRINTH && !game->rook_quest_state);
     game_leave_labyrinth(game);
     // Loaded town exteriors preserve identity and equipment under the debug option.
     assert(town_road_enter(game, LOCATION_DAWNMERE, TOWN_SIDE_WEST, 0));
@@ -1858,7 +1848,7 @@ int main(void) {
     // Docks and sailing work immediately for new and loaded normal characters.
     for (int loaded = 0; loaded < 2; loaded++) {
         game_init(game);
-        assert(!game_harbor_unlocked(game) && !game_can_sail_to_island(game) && !game_labyrinth_is_open(game));
+        assert(!game_harbor_unlocked(game) && !game_can_sail_to_island(game) && game_labyrinth_is_open(game));
         game->gold = 393;
         game->inventory_count = 1;
         game->inventory[0] = item_make_greatsword();

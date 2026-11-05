@@ -1,3 +1,4 @@
+#include "labyrinth_arc.h"
 #include "western_arc.h"
 #include "giants_crown.h"
 #include "ironfang.h"
@@ -39,7 +40,8 @@ const TownApproach town_approaches[] = {
     // The Giant's Peaks road runs north from the Sunscar road's junction.
     {LOCATION_TOWN, LOCATION_GIANTS_CROWN, 20, 0, 1},
     // Northern end of the five-stage pass, reached across Giant's Bridge from Stillbury.
-    {LOCATION_TOWN2, LOCATION_GIANTS_CROWN, 0, 12, 1}
+    {LOCATION_TOWN2, LOCATION_GIANTS_CROWN, 0, 12, 1},
+    {LOCATION_TOWN2, LOCATION_GLASSDEEP, 20, 0}
 };
 
 // Serialized route 17 remains reserved.
@@ -726,6 +728,7 @@ void approach_refresh_entrance(GameState *g) {
     coastal_refresh_docks(g);
     boss_gate_refresh(g);
     western_prepare(g);
+    labyrinth_prepare_road(g);
 }
 
 static void generate_approach(Map *map, Location area, int dx, int dy) {
@@ -1043,6 +1046,10 @@ int approach_enter_region(GameState *g, int index) {
 }
 
 int approach_travel(GameState *g, int x, int y) {
+    if (g->approach_route == APPROACH_QUARRY_ROAD && g->map.tiles[y][x] == TILE_LABYRINTH_ENTRANCE) {
+        game_enter_labyrinth(g);
+        return 1;
+    }
     if (northern_travel(g, x, y)) {
         return 1;
     }

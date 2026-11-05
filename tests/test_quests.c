@@ -350,7 +350,7 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
         {"Dain", LOCATION_TAVERN, &g->dain_quest_state},
         {"Alder", LOCATION_TAVERN, &g->alder_quest_state},
         {"Mara", LOCATION_TAVERN, &g->mara_quest_state},
-        {"Rook", LOCATION_TAVERN, &g->rook_quest_state},
+        {"Rook", LOCATION_INN, &g->rook_quest_state},
         {"Zara", LOCATION_TAVERN, &g->tribute_quest_state},
         {"Ilya", LOCATION_TAVERN, &g->dragon_treasure_quest_state},
         {"Nahla", LOCATION_ISLAND, &g->temple_treasure_state},
@@ -404,6 +404,7 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
     g->dain_quest_state = 1;
     g->alder_quest_state = 1;
     g->mara_quest_state = 1;
+    game_enter_inn(g);
     g->player.x = ROOK_TAVERN_X;
     g->player.y = ROOK_TAVERN_Y + 1;
     game_talk_to_rook(g);
@@ -416,6 +417,7 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
     ASSERT("a full-journal offer can still be dismissed", !loaded->dialogue_active);
     loaded->elowen_quest_state = 2;
     loaded->elowen_seals_restored = 7;
+    game_enter_tavern(loaded);
     loaded->player.x = BRAM_INN_X;
     loaded->player.y = BRAM_INN_Y + 1;
     int gold = loaded->gold;
@@ -424,6 +426,7 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
         loaded->gold == gold + 80 && game_active_quest_count(loaded) == 3);
     loaded->dain_quest_state = 2;
     loaded->dain_map_fragments = 7;
+    game_enter_inn(loaded);
     loaded->player.x = ROOK_TAVERN_X;
     loaded->player.y = ROOK_TAVERN_Y + 1;
     game_talk_to_rook(loaded);
@@ -464,7 +467,7 @@ void test_quest_offer_controls(void) {
         {game_talk_to_dain, LOCATION_TAVERN, DAIN_OAKHAVEN_X, DAIN_OAKHAVEN_Y, &g.dain_quest_state},
         {game_talk_to_alder, LOCATION_TAVERN, ALDER_OAKHAVEN_X, ALDER_OAKHAVEN_Y, &g.alder_quest_state},
         {game_talk_to_mara, LOCATION_TAVERN, MARA_TAVERN_X, MARA_TAVERN_Y, &g.mara_quest_state},
-        {game_talk_to_rook, LOCATION_TAVERN, ROOK_TAVERN_X, ROOK_TAVERN_Y, &g.rook_quest_state},
+        {game_talk_to_rook, LOCATION_INN, ROOK_TAVERN_X, ROOK_TAVERN_Y, &g.rook_quest_state},
         {game_talk_to_guild_seeker, LOCATION_TAVERN, ZARA_OAKHAVEN_X, ZARA_OAKHAVEN_Y, &g.tribute_quest_state},
         {game_talk_to_dragon_seeker, LOCATION_TAVERN, ILYA_TAVERN_X, ILYA_TAVERN_Y, &g.dragon_treasure_quest_state},
         {game_talk_to_nahla, LOCATION_ISLAND, ISLAND_NAHLA_X, ISLAND_NAHLA_Y, &g.temple_treasure_state},

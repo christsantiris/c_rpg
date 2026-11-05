@@ -1,3 +1,4 @@
+#include "../game/labyrinth_arc.h"
 #include "../game/western_arc.h"
 #include "../game/coast_exits.h"
 #include "../game/boss_gates.h"
@@ -1949,7 +1950,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 241);
+    cJSON_AddNumberToObject(root, "save_version", 242);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -4775,7 +4776,7 @@ int load_game(GameState *g, int slot) {
     g->defeated_bosses = defeated_bosses ? defeated_bosses->valueint : 0;
     const cJSON *evidence_seen = cJSON_GetObjectItem(root, "royal_evidence_seen");
     if (save_version >= 235 && (!cJSON_IsNumber(evidence_seen) || evidence_seen->valuedouble != evidence_seen->valueint ||
-        evidence_seen->valueint < 0 || evidence_seen->valueint > 31 || (evidence_seen->valueint & ~royal_evidence_found(g)))) {
+        evidence_seen->valueint < 0 || evidence_seen->valueint > 63 || (evidence_seen->valueint & ~royal_evidence_found(g)))) {
         cJSON_Delete(root);
         return 0;
     }
@@ -7197,6 +7198,7 @@ int load_game(GameState *g, int slot) {
         return 0;
     }
     approach_retire_labyrinth(g);
+    labyrinth_migrate(g, save_version);
     game_repair_outdoor_entries(g);
     town_road_refresh_oakhaven(g);
     aldric_place(g);

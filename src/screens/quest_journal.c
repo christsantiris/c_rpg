@@ -63,11 +63,11 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Ruined Temple", {5, 0, 0}, 150, 2500
     },
     {
-        "The Ivory Rook", "Rook",
-        "Find the labyrinth on the road from Oakhaven to Dawnmere; light five runes and defeat the Minotaur.",
-        "Return the ivory rook to Rook in Oakhaven's Inn.",
-        {"Recover the ivory rook", "", ""},
-        "Rook's Labyrinth", {5, 0, 0}, ROOK_QUEST_REWARD, 500
+        "Slay the Minotaur", "Rook",
+        "People disappear into the labyrinth beside Stillbury's quarry road. Find and slay the Minotaur.",
+        "Completes on the boss's defeat; no return to Rook is needed.",
+        {"Slay the Minotaur", "", ""},
+        "Labyrinth", {5, 0, 0}, ROOK_QUEST_REWARD, 500
     },
     {
         "The Dragon's Hoard", "Ilya",
@@ -399,7 +399,7 @@ int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entr
     };
     static const char *areas[JOURNAL_BOSS_COUNT] = {
         "Dungeon", "Haunted Forest", "Goblin Mountains", "Sunken Coast",
-        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Ashen Hollow", "Stonewake Quarry", "Rook's Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Saltwind Marsh", "Stormwatch Headland", "Ironfang Mines", "Giant's Peaks"
+        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Ashen Hollow", "Stonewake Quarry", "Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Saltwind Marsh", "Stormwatch Headland", "Ironfang Mines", "Giant's Peaks"
     };
     static const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,

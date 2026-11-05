@@ -1,3 +1,4 @@
+#include "labyrinth_arc.h"
 #include "western_arc.h"
 #include "coast_exits.h"
 #include "giants_crown.h"
@@ -572,6 +573,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             g->catacombs_mantle_unclaimed = 1;
         }
         if (type == ENEMY_MINOTAUR) {
+            labyrinth_complete_quest(g);
             g->minotaur_reward_state = MINOTAUR_REWARD_AEGIS;
         }
         if (type == ENEMY_SWAMP_DEMON) {
