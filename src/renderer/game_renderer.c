@@ -3563,7 +3563,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     if (approach_sunscar_road(g)) {
-        draw_town_road_sign(r, viewport_to_screen_x(v, APPROACH_PEAKS_BRANCH_X + 2), viewport_to_screen_y(v, APPROACH_H / 2 - 4), "N: GIANT'S PEAKS");
+        draw_town_road_sign(r, viewport_to_screen_x(v, g->map.stairs_down_x - 9), viewport_to_screen_y(v, g->map.stairs_down_y - 2), "SUNSCAR WASTES");
+        draw_town_road_sign(r, viewport_to_screen_x(v, APPROACH_PEAKS_BRANCH_X + 2), viewport_to_screen_y(v, APPROACH_H / 2 - 12), "N: GIANT'S PEAKS");
     }
 
     if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_FOREST) {
