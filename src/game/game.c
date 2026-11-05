@@ -967,7 +967,7 @@ static int quest_group_pending(const GameState *g) {
         }
         return !(g->alder_wardens_rescued & bit);
     }
-    if (g->location == LOCATION_COAST && g->mara_quest_state == 1) {
+    if (g->location == LOCATION_COAST) {
         int bit = g->level == 2 ? MARA_BEACON_STAGE_2 :
             (g->level == 3 ? MARA_BEACON_STAGE_3 :
             (g->level == 4 ? MARA_BEACON_STAGE_4 : 0));
@@ -2299,7 +2299,7 @@ static int mara_beacon_bit(int level) {
 }
 
 static int place_mara_beacon(GameState *g) {
-    if (g->location != LOCATION_COAST || g->mara_quest_state == 0) {
+    if (g->location != LOCATION_COAST) {
         return 0;
     }
     int bit = mara_beacon_bit(g->level);
@@ -4964,12 +4964,7 @@ int game_interact_labyrinth(GameState *g) {
 }
 
 void game_enter_island(GameState *g) {
-    for (int i = 0; i < g->inventory_count; i++) {
-        if (g->inventory[i].type == ITEM_TREASURE_MAP) {
-            game_remove_inventory_item(g, i);
-            break;
-        }
-    }
+    mangrove_store(g);
     g->island_travel_unlocked = 1;
     int spawn_x;
     int spawn_y;
@@ -6024,7 +6019,7 @@ int game_has_treasure_map(const GameState *g) {
 }
 
 int game_can_sail_to_island(const GameState *g) {
-    return g->debug_passages_unlocked || g->island_travel_unlocked || game_has_treasure_map(g);
+    return game_harbor_unlocked(g) || g->island_travel_unlocked;
 }
 
 static int island_interaction_tile(TileType tile) {
@@ -6070,7 +6065,7 @@ int game_interact_island(GameState *g) {
             return 1;
         }
         if (tile == TILE_ISLAND_MARKER) {
-            push_message(g, "The carved sun matches the symbol on your treasure map.");
+            push_message(g, "The carved sun marks the path to the ruined temple.");
             return 1;
         }
         if (tile == TILE_ISLAND_STATUE) {
@@ -6143,39 +6138,43 @@ void game_talk_to_nahla(GameState *g) {
 }
 
 void game_talk_to_rowan(GameState *g) {
-    g->dialogue_active = 1;
-    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Captain Rowan");
-    g->dialogue_x = COAST_ROWAN_X;
-    g->dialogue_y = COAST_ROWAN_Y;
-    if (game_harbor_unlocked(g)) {
-        const char *warning = temple_training_recommended(g)
-            ? " The ruined temple is dangerous. Clear the dungeon or mountains "
-              "for experience first, or sail now and turn back if needed."
-            : "";
-        if (g->island_travel_unlocked) {
-            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "The island route is charted. You may sail whenever you wish.%s",
-                warning);
-        } else if (game_has_treasure_map(g)) {
-            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "Keep the island map safe; it marks the ruined temple.%s",
-                warning);
-        } else if (g->inventory_count >= MAX_INVENTORY) {
-            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "I have an island map for you. Make room in your pack.%s",
-                warning);
-        } else {
-            g->inventory[g->inventory_count++] = item_make_treasure_map();
-            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "Take this island map. It marks the ruined temple.%s",
-                warning);
-            push_message(g, "Rowan gives you an Island Treasure Map.");
-        }
+    if (!coastal_stillbury_docks(g) || abs(g->player.x - STILLBURY_ROWAN_X) > 1 ||
+        abs(g->player.y - STILLBURY_ROWAN_Y) > 1) {
         return;
     }
-    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-        "The Drowned Queen keeps the coast too dangerous to sail. "
-        "Defeat her in the Sunken Coast, then return to these docks beside its entrance. I can take you to the island beyond these shores.");
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Captain Rowan");
+    g->dialogue_x = STILLBURY_ROWAN_X;
+    g->dialogue_y = STILLBURY_ROWAN_Y;
+    const char *sailing = game_can_sail_to_island(g)
+        ? " The Queen is defeated. My ship here can take you to the Ruined Isle and bring you back to Stillbury."
+        : " The Drowned Queen prevents island voyages. Follow Stillbury's eastern road through Elderwood to Sunken Coast and defeat her.";
+    if (g->mara_quest_state == 0) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Our coastal trade needs its lights restored. Lower the tides and relight the three guarded beacons on Sunken Coast stages 2, 3 and 4. "
+            "Return to me at Stillbury's docks for 80 gold. Will you help?%s", sailing);
+    } else if (g->mara_quest_state == 1) {
+        int lit = 0;
+        for (int bit = 0; bit < 3; bit++) {
+            lit += !!(g->mara_beacons_lit & (1 << bit));
+        }
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "%d of 3 beacons are lit. The lights on Sunken Coast stages 2, 3 and 4 guide the trading ships. "
+            "Return here for your reward when all three burn.%s", lit, sailing);
+    } else if (g->mara_quest_state == 2) {
+        g->mara_quest_state = 3;
+        g->gold += 80;
+        g->score += 600;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The three beacons shine again. Here are your 80 gold, with the harbor's thanks.%s%s",
+            coastal_trade_restored(g) ? " Coastal trade can resume; Stillbury's merchants will remember your help." :
+            " The Queen must fall before ordinary trading ships can sail safely.", sailing);
+        push_message(g, "Reward collected: Relight the Drowned Beacons. +80 gold, +600 score.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "%s%s", coastal_trade_restored(g) ? "Trade sails again, thanks to you." :
+            "The beacons burn, but the Queen still threatens our trading ships.", sailing);
+    }
 }
 
 static void prepare_quest_expedition(GameState *g, Location location) {
@@ -6258,7 +6257,7 @@ static const QuestOffer quest_offers[] = {
     {"Alder", LOCATION_TAVERN, offsetof(GameState, alder_quest_state), 0, "Assigned: The Lost Rangers."},
     {"Dain", LOCATION_TAVERN, offsetof(GameState, dain_quest_state), REGIONAL_CHAIN_BOSS_OFFERED, "Assigned: Defeat the Goblin King."},
     {"Alder", LOCATION_TAVERN, offsetof(GameState, alder_quest_state), REGIONAL_CHAIN_BOSS_OFFERED, "Assigned: Defeat the Necromancer."},
-    {"Mara", LOCATION_TAVERN, offsetof(GameState, mara_quest_state), 0, "Assigned: Relight the Drowned Beacons."},
+    {"Captain Rowan", LOCATION_RIVER_CROSSING, offsetof(GameState, mara_quest_state), 0, "Assigned: Relight the Drowned Beacons. Return to Rowan at Stillbury's docks for your reward."},
     {"Rook", LOCATION_INN, offsetof(GameState, rook_quest_state), 0, "Assigned: Slay the Minotaur."},
     {"Ilya", LOCATION_TAVERN, offsetof(GameState, dragon_treasure_quest_state), 0, "Assigned: The Dragon's Hoard."},
     {"Nahla", LOCATION_ISLAND, offsetof(GameState, temple_treasure_state), 0, "Quest assigned: The Buried Sun."},
@@ -6364,9 +6363,8 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
         g->dain_map_fragments = 0;
     } else if (state == &g->alder_quest_state && offer->offered_state == 0) {
         g->alder_wardens_rescued = 0;
-    } else if (state == &g->mara_quest_state) {
-        g->mara_beacons_lit = 0;
-        prepare_quest_expedition(g, LOCATION_COAST);
+    } else if (state == &g->mara_quest_state && (g->mara_beacons_lit & 7) == 7) {
+        g->mara_quest_state = 2;
     } else if (state == &g->dragon_treasure_quest_state) {
         prepare_quest_expedition(g, LOCATION_DRAGONSPINE);
     } else if (state == &g->catacombs_quest_state) {
@@ -6608,44 +6606,9 @@ void game_talk_to_mara(GameState *g) {
     g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
     g->dialogue_x = MARA_TAVERN_X;
     g->dialogue_y = MARA_TAVERN_Y;
-    if (g->mara_quest_state == 0) {
-        strncpy(g->dialogue_text,
-            "On Sunken Coast, relight beacons on stages 2, 3, and 4; lower tides and defeat their guardians. Rowan's docks stand beside the entrance. Return to Oakhaven's Inn.",
-            MAX_DIALOGUE_LEN - 1);
-        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-        return;
-    }
-    if (g->mara_quest_state == 1) {
-        int lit = 0;
-        for (int bit = 0; bit < 3; bit++) {
-            if (g->mara_beacons_lit & (1 << bit)) {
-                lit++;
-            }
-        }
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have relit %d of 3 beacons. The remaining lights wait on coast stages 2, 3, and 4.",
-            lit);
-        char status[MAX_MESSAGE_LEN];
-        snprintf(status, sizeof(status), "Quest progress: %d/3 beacons.", lit);
-        push_message(g, status);
-        return;
-    }
-    if (g->mara_quest_state == 2) {
-        g->mara_quest_state = 3;
-        g->gold += 80;
-        g->score += 600;
-        strncpy(g->dialogue_text,
-            "All three flames shine across the drowned road. Sailors can find safe water again. Take this with my thanks.",
-            MAX_DIALOGUE_LEN - 1);
-        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-        push_message(g, "Completed: Relight the Drowned Beacons.");
-        return;
-    }
-    strncpy(g->dialogue_text,
-        "The beacons still burn. Even this ruined coast can guide travelers home.",
-        MAX_DIALOGUE_LEN - 1);
-    g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-    push_message(g, "Mara's quest is already complete.");
+    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+        "Beyond the river, the Ruined Isle holds a powerful treasure of sun and moon. "
+        "In Stillbury, find Captain Rowan at the docks south of town. He knows the voyage, but the Drowned Queen keeps his ship in port.");
 }
 
 void game_talk_to_rook(GameState *g) {
@@ -6674,10 +6637,6 @@ void game_light_coast_beacon(GameState *g, int x, int y) {
         y >= MAP_H || g->map.tiles[y][x] != TILE_COAST_BEACON_UNLIT) {
         return;
     }
-    if (g->mara_quest_state != 1) {
-        push_message(g, "An ancient drowned beacon stands here.");
-        return;
-    }
     for (int map_y = 0; map_y < MAP_H; map_y++) {
         for (int map_x = 0; map_x < MAP_W; map_x++) {
             if (g->map.tiles[map_y][map_x] == TILE_COAST_DEEP_WATER) {
@@ -6702,8 +6661,13 @@ void game_light_coast_beacon(GameState *g, int x, int y) {
     snprintf(status, sizeof(status), "Beacon lit: %d/3.", lit);
     push_message(g, status);
     if ((g->mara_beacons_lit & 7) == 7) {
-        g->mara_quest_state = 2;
-        push_message(g, "All beacons lit. Return to Mara in Oakhaven's Inn.");
+        if (g->mara_quest_state < 2) {
+            g->mara_quest_state = 2;
+        }
+        push_message(g, "All beacons lit. Return to Captain Rowan at Stillbury's docks for your reward.");
+        if (coastal_trade_restored(g)) {
+            push_message(g, "With the Queen defeated and the beacons restored, Stillbury's coastal trade can resume.");
+        }
     }
 }
 

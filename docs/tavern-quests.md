@@ -19,7 +19,8 @@ Tomas's escape and confiscated-equipment recovery do not use these slots.
 Other dialogue bubbles are dismissed by
 movement. Bram runs Oakhaven's Inn, offering the Lich King warning and supply
 advice and the Save Elowen quest at its counter. Elowen lives there only after
-her rescue and reunion. Mara and Ilya have left Oakhaven in V2; their quests await later placement.
+her rescue and reunion. Mara introduces the coastal adventure there; Ilya's
+quest awaits later placement.
 Rook now offers Slay the Minotaur in Stillbury's Tavern.
 After the Lich King's defeat, Alder and Dain arrive at Oakhaven's Inn with the
 eastward and westward adventure choices, and Aldric moves in from the square.
@@ -134,24 +135,22 @@ the rescues are turned in. The boss retains its existing loot and grants no
 extra NPC payment. Assignment, rescues, turn-in, follow-up and victory persist
 through save/load. This V2 rewrite uses fresh saves without a new migration.
 
-## Mara: Relight the Drowned Beacons
+## Mara and Rowan: Relight the Drowned Beacons
 
-In V2, Mara has left Oakhaven and no one offers this quest until a later act
-places her. Existing quest progress is kept.
+Mara is present in **Oakhaven's Inn** from the start. Her optional introduction
+points to the Ruined Isle and Captain Rowan at Stillbury's docks; it neither
+assigns a quest nor collects its reward.
 
-Mara waits in **Oakhaven's Inn**. Press `T`
-beside her to speak. She is a retired tidekeeper who carries a sheltered ember
-from the old coast lights. She asks the player to relight drowned beacons on
-Coast stages 2, 3, and 4. Each beacon stands inside a flooded side room and cannot be reached or
-lit until the stage's tide control drains the surrounding deep water. Stand on
-the exposed beacon and press `A` to light it.
+**Captain Rowan**, at the river landing south of Stillbury, offers the beacon
+quest with Y/N and the normal three-active-quest limit. Relight guarded beacons
+on **Sunken Coast 2, 3 and 4** after draining their channels. Beacons are present
+and record discoveries before acceptance. Acceptance preserves existing Coast
+stages, wounds, loot and lit beacons. All three lights move the quest to
+Completed, releasing the active slot. Rowan pays **80 gold and 600 score** once.
 
-The beacons are defended by groups led by a Giant Crab, Animated Statue, and
-Sea Serpent. Stages do not need to be cleared, and the Drowned Queen is not
-part of the objective. Lit beacons remain lit through backtracking, repeat
-expeditions, and save/load. Return to Mara in Oakhaven's Inn after
-lighting all three to receive 80 gold and 600 score once. Older saves return
-her to Oakhaven's Inn without changing quest progress.
+The Queen is not a beacon objective. Her defeat opens the island voyage from
+Stillbury independently; the beacons and Queen together reopen coastal trade
+and improve civilian reception. No Oakhaven return is required.
 
 ## Brenna: The Silent Expedition
 
@@ -176,11 +175,10 @@ Existing saves migrate automatically, including saves inside the Tavern.
 
 ## Docks Unlock
 
-The road to the docks appears after the Drowned Queen is defeated on the Sunken
-Coast. The other regional bosses and town quests are not required. Captain
-Rowan waits on the beach beside the Sunken Coast entrance, outside Oakhaven.
-He gives the Island Treasure Map when spoken to, enabling ship travel from the
-nearby coastal dock.
+Stillbury's docks are accessible before clearing Sunken Coast. Defeating the
+Drowned Queen unlocks Rowan's island voyage; no sea chart or other quest is
+required. Physical return voyages land back at Stillbury's docks. See the
+[harbor and island guide](harbor-and-ruined-isle.md).
 
 ## Nahla: The Buried Sun
 
