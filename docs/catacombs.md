@@ -1,8 +1,8 @@
 # Royal Catacombs
 
 The Royal Catacombs now stand as a separate sprite along the northern road
-between Oakhaven and Castle Grounds. From Oakhaven, defeat Elderthorn in
-[Elderwood Forest](elderwood-forest.md) to reach them. Defeat the Grave Marshal
+between Stillbury and Castle Grounds. From Stillbury, defeat the Demon in
+[Blackwater Swamp](swamp.md) to reach them. Defeat the Grave Marshal
 to unlock [Crown Road North](crown-road-north.md), the goblin-occupied final
 stretch of this castle route. They can also be reached from Castle Grounds'
 south exit by crossing that road. The
@@ -28,7 +28,7 @@ road beside the Catacombs sprite. On floor 5, the cyan return passage remains se
 the Grave Marshal is defeated. Stand on it and press **D** to return directly
 to that road without retracing the other floors or clearing every enemy. Walk
 north onto Crown Road North for Castle Grounds or south through cleared
-Elderwood for Oakhaven.
+Blackwater for Stillbury.
 
 Each floor has its own persistent cache. Leaving and revisiting preserves
 explored maps, enemy health, deaths, resurrection allowances, extinguished

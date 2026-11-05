@@ -3,6 +3,7 @@
 #include "sprites.h"
 #include "../game/elderwood.h"
 #include "../game/heartseed.h"
+#include "../game/approach.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -42,22 +43,29 @@ void draw_elderwood_tile(Renderer *r, int sx, int sy, int x, int y, TileType til
 static void label(Renderer *r, const Viewport *v, const char *name, int x, int y) {
     int width = 0;
     TTF_SizeText(r->font_tiny, name, &width, NULL);
-    renderer_draw_text(r, name, viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2,
-        viewport_to_screen_y(v, y) * TILE_SIZE - 16, (SDL_Color){226, 203, 116, 255}, r->font_tiny);
+    if (!viewport_is_visible(v, x, y)) {
+        return;
+    }
+    int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
+    int py = viewport_to_screen_y(v, y) * TILE_SIZE - 16;
+    int limit = v->tiles_x * TILE_SIZE - width - 2;
+    px = px < 2 ? 2 : px > limit ? limit : px;
+    py = py < 88 ? 88 : py;
+    renderer_draw_text(r, name, px, py, (SDL_Color){226, 203, 116, 255}, r->font_tiny);
 }
 
 void draw_northern_road(Renderer *r, const GameState *g, const Viewport *v) {
     if (!northern_approach(g)) {
         return;
     }
-    SDL_Rect elder = {(viewport_to_screen_x(v, NORTH_ELDER_X) - 3) * TILE_SIZE,
-        (viewport_to_screen_y(v, NORTH_ELDER_Y) - 5) * TILE_SIZE, 7 * TILE_SIZE, 6 * TILE_SIZE};
-    SDL_RenderCopy(r->sdl, r->elderwood_entrance_texture, NULL, &elder);
+    draw_swamp_entrance(r, viewport_to_screen_x(v, NORTH_SWAMP_X), viewport_to_screen_y(v, NORTH_SWAMP_Y));
     draw_area_entrance(r, TOWN_EXIT_CATACOMBS, viewport_to_screen_x(v, NORTH_CAT_X), viewport_to_screen_y(v, NORTH_CAT_Y), 6);
-    label(r, v, "ELDERWOOD FOREST", NORTH_ELDER_X, NORTH_ELDER_Y - 5);
+    label(r, v, "BLACKWATER SWAMP", NORTH_SWAMP_X, NORTH_SWAMP_Y - 4);
     label(r, v, "ROYAL CATACOMBS", NORTH_CAT_X, NORTH_CAT_Y - 5);
-    draw_town_road_sign(r, viewport_to_screen_x(v, NORTH_ROAD_X + 2), viewport_to_screen_y(v, 44), "RAPIDS: NO CROSSING");
+    draw_town_road_sign(r, viewport_to_screen_x(v, NORTH_ROAD_X + 2), viewport_to_screen_y(v, 44), "S: STILLBURY");
     draw_town_road_sign(r, viewport_to_screen_x(v, NORTH_ROAD_X + 2), viewport_to_screen_y(v, 4), "N: CROWN ROAD NORTH");
+    label(r, v, "S: STILLBURY", NORTH_ROAD_X, APPROACH_H - 1);
+    label(r, v, "N: CASTLE ROAD", NORTH_ROAD_X, 0);
 
 }
 

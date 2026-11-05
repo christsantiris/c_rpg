@@ -1,19 +1,19 @@
-# Elderwood Forest and the northern castle road
+# Elderwood Forest and the eastern coastal road
 
-Oakhaven's north exit reaches a safe cobblestone road through dense Elderwood
-trees, matching Crown Road North beyond it. The road opens into clearings at
-both ends and around each landmark. A living woodland sprite stands beside it; touching the landmark starts Elderwood at level 1. Elderthorn
-blocks the road farther north. Defeating it opens the route to a separate Royal
-Catacombs sprite. Defeating the Grave Marshal opens the remaining passage into
-Castle Grounds. The existing Crown Roads remain available.
+Stillbury's east gate leads onto a safe cobblestone road through Elderwood.
+A living woodland landmark beside the road starts its five-stage adventure.
+Elderthorn blocks onward passage east to Sunken Coast. Defeating him opens
+that road permanently; Blackwater's victory is independent.
+Retreat from Elderwood or Sunken Coast returns to this eastern route and
+Stillbury. The final Elderwood exit emerges north of its landmark onto a trail
+that bends east toward the coast, preserving the crossing direction. The northern road instead passes through Blackwater Swamp and the
+Royal Catacombs beneath the castle.
 
-The same road connects both directions without reversing or flipping its map.
-Physical retreat from either adventure returns beside its own entrance. Entering
-Elderwood or Catacombs from either end always starts at level 1. Returning to the
-Castle end from a Castle-origin expedition remains possible before either boss
-is defeated. Completing the route from either end requires defeating both
-Elderthorn and the Grave Marshal. Each section has a visible checkpoint and
-independent victory requirement. See [boss gates](boss-gates.md).
+Elderwood's entrances and exits lie on the actual south and north map boundaries.
+Travel and retreat keep the direction of the crossing step. Save version 243
+extends old active and cached markers in place, preserving exploration,
+brambles, wounds, loot and quest progress. The Elderwood story clue about
+Malakar remains undecided; this geography change adds no new clue or quest.
 
 Elderwood is drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 × 18
 tiles around the player, and its charges and roots, which reach at most seven

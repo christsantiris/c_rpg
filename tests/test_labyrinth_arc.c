@@ -148,11 +148,12 @@ void test_labyrinth_arc(void) {
         srand(seeds[seed]);
         game_init(g);
         game_enter_town2(g);
-        ASSERT("the northern quarry exit works while every regional boss and Rook quest remain unfinished", lab_path(g, 20, 0) && g->location == LOCATION_TOWN_ROAD && !g->rook_quest_state && !g->defeated_bosses);
+        ASSERT("the western quarry route works while every regional boss and Rook quest remain unfinished", lab_path(g, 0, 12) && g->location == LOCATION_TOWN_ROAD && !g->rook_quest_state && !g->defeated_bosses);
         int x;
         int y;
-        town_road_exit(TOWN_SIDE_NORTH, &x, &y);
-        ASSERT("the real north exterior boundary reaches the signed quarry road facing north", lab_path(g, x, y) && g->location == LOCATION_APPROACH && g->approach_route == APPROACH_QUARRY_ROAD && g->player.last_dy == -1);
+        town_road_exit(TOWN_SIDE_WEST, &x, &y);
+        ASSERT("the real west boundary reaches the bridge fork", lab_path(g, x, y) && approach_bridge_road(g));
+        ASSERT("the northern fork reaches the signed quarry road facing north", lab_path(g, BRIDGE_QUARRY_X, 0) && g->approach_route == APPROACH_QUARRY_ROAD && g->player.last_dy == -1);
         ASSERT("the Minotaur never blocks entry into the quarry", lab_path(g, g->map.stairs_down_x, g->map.stairs_down_y) && g->location == LOCATION_GLASSDEEP);
         game_return_to_approach(g);
         ASSERT("quarry retreat returns to the same new road beside the optional maze", g->location == LOCATION_APPROACH && g->approach_route == APPROACH_QUARRY_ROAD);
@@ -186,7 +187,8 @@ void test_labyrinth_arc(void) {
             ASSERT("every real upstairs permits actual retreat while the Minotaur lives", lab_path(g, g->map.stairs_up_x, g->map.stairs_up_y) &&
                 (stage > 1 ? g->location == LOCATION_LABYRINTH && g->level == stage - 1 : g->location == LOCATION_APPROACH && g->approach_route == APPROACH_QUARRY_ROAD));
         }
-        ASSERT("the quarry-road boundary remains a usable retreat to Stillbury", lab_path(g, g->map.stairs_up_x, g->map.stairs_up_y) && g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_TOWN2);
+        ASSERT("the quarry-road boundary returns south to the bridge fork", lab_path(g, g->map.stairs_up_x, g->map.stairs_up_y) && approach_bridge_road(g) && g->player.last_dy == 1);
+        ASSERT("the fork returns east to Stillbury", lab_path(g, APPROACH_W - 1, APPROACH_BRIDGE_EXIT_Y) && g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_TOWN2);
     }
     game_init(g);
     g->royal_reported_actions = 1;

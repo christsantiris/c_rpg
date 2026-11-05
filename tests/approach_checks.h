@@ -43,7 +43,7 @@ static inline void walk_approach_to(GameState *g, int tx, int ty) {
             int next = y * APPROACH_W + x;
             TileType tile = g->map.tiles[y][x];
             int transition = tile == TILE_APPROACH_AREA || tile == TILE_APPROACH_TOWN || tile == TILE_APPROACH_DUNGEON_TOWN ||
-                tile == TILE_LABYRINTH_ENTRANCE || tile == TILE_NORTH_CATACOMBS || tile == TILE_NORTH_ELDERWOOD || tile == TILE_NORTH_CASTLE;
+                tile == TILE_LABYRINTH_ENTRANCE || tile == TILE_NORTH_CATACOMBS || tile == TILE_NORTH_SWAMP || tile == TILE_NORTH_CASTLE;
             if (previous[next] >= 0 || (transition && next != target) || (!map_is_walkable(&g->map, x, y) && !(transition && next == target))) {
                 continue;
             }

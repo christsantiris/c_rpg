@@ -49,7 +49,7 @@ present from the start; its services require a recruited companion.
 
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/world-map.png?v=658e41f2d82f)](docs/world-map.png?v=658e41f2d82f)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=397df5e09b72)](docs/world-map.png?v=397df5e09b72)
 
 The V2 starting region contains Oakhaven, Goblin Mountains to its west, Haunted
 Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
@@ -75,21 +75,23 @@ reach the same town to begin Act 4. Attacking the tribute convoy, like liberatin
 Dawnmere, is reported to Stillbury. Defeating the Pharaoh or Jarl alone is not.
 See the [western quests and rewards](docs/act3-western.md).
 
-On Stillbury's bank, Stonewake Quarry lies between the river and the castle,
-Blackwater Swamp lies east of Stillbury, and Sunken Coast lies among the islands
-north of the estuary. Stillbury's north road reaches Stonewake Quarry, with an
-optional entrance to the Labyrinth beside it. The Minotaur never blocks quarry
-travel. Rook offers **Slay the Minotaur** in Stillbury's Tavern; victory completes
-the quest immediately and reveals a prisoner register implicating Malakar's
-private office. Swamp and coast connections remain deferred.
-Goblin Mountains, Sunscar Wastes and Frostfell now fill the enlarged western
-terrain left by those relocations. This changes the atlas footprint, not the
-number of combat stages.
+Stillbury's north gate leads through **Blackwater Swamp** toward the **Royal
+Catacombs** beneath the castle. Defeating the Swamp Demon opens the road to the
+Catacombs; defeating the Grave Marshal opens the final castle approach.
+The eastern gate leads through **Elderwood Forest**: defeating Elderthorn opens
+the onward road to **Sunken Coast**. Physical retreat leads back to Stillbury.
+The western road forks before **Giant's Bridge**. Its northern branch reaches
+**Stonewake Quarry**, with an optional **Labyrinth** entrance beside that road.
+Neither the Jarl nor the Minotaur blocks the quarry branch. Rook offers
+**Slay the Minotaur** in Stillbury's Tavern; victory completes the quest
+immediately and reveals a prisoner register implicating Malakar's private office.
+See the [labyrinth arc](docs/labyrinth.md).
 
-The rest of the world is shown as provisional context and will be redesigned
-in later steps; later connections remain undecided.
-See the [labyrinth arc](docs/labyrinth.md). Elderwood and Blackwater will exchange
-positions in the next coastal-route change; that geography remains pending.
+The atlas no longer labels the river mouth as Estuary. Geography south of the
+river stays fixed. Mara's arrival in Oakhaven, Rowan's move to Stillbury's docks,
+the coastal trade and island rewards, and changes to Stillbury's reception are
+next story steps. Elderwood's Malakar clue remains undecided.
+The rest of the world is provisional context for later design.
 
 ## Controls
 

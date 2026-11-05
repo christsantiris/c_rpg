@@ -1635,7 +1635,7 @@ void game_init(GameState *g) {
     g->spice_skiff_quest_state = 0;
     g->spice_skiff_progress = 0;
     g->retired_coast_item_count = 0;
-    g->elderwood_entry_town = LOCATION_CASTLE;
+    g->elderwood_entry_town = LOCATION_TOWN2;
     g->catacombs_entry_town = LOCATION_CASTLE;
     g->northern_portal_town = LOCATION_CASTLE;
     g->last_town_visited = LOCATION_TOWN;
@@ -3467,6 +3467,10 @@ void game_descend(GameState *g) {
     prepare_forest_arrival(g, 0);
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
+    if (g->location == LOCATION_SWAMP) {
+        g->player.x += g->map.stairs_up_x == 0 ? 1 : 0;
+        g->player.y -= g->map.stairs_up_y == SWAMP_MAP_H - 1 ? 1 : 0;
+    }
     sync_temple_floor_state(g);
 }
 
@@ -3530,6 +3534,9 @@ void game_ascend(GameState *g) {
     prepare_forest_arrival(g, 1);
     g->player.x = g->map.stairs_down_x;
     g->player.y = g->map.stairs_down_y;
+    if (g->location == LOCATION_SWAMP) {
+        g->player.x--;
+    }
     sync_temple_floor_state(g);
 }
 
@@ -3759,8 +3766,8 @@ void game_enter_swamp(GameState *g) {
     if (g->level > g->max_swamp_level_reached) {
         g->max_swamp_level_reached = g->level;
     }
-    g->player.x = g->map.stairs_up_x + 1;
-    g->player.y = g->map.stairs_up_y;
+    g->player.x = g->map.stairs_up_x;
+    g->player.y = g->map.stairs_up_y - 1;
     g->dialogue_active = 0;
     push_message(g, "Braided mudbanks cross blackwater channels. Reeds hide you from distant, unhurt foes.");
 }
@@ -3893,12 +3900,12 @@ void game_refresh_debug_passages(GameState *g) {
     }
     if (northern_approach(g)) {
         for (int x = 1; x < ELDERWOOD_W - 1; x++) {
-            if (quest_object_tile(g, x, NORTH_FOREST_BARRIER_Y) == TILE_ELDERWOOD_WALL) {
-                set_quest_object_tile(g, x, NORTH_FOREST_BARRIER_Y, x == NORTH_ROAD_X ? TILE_TOWN_PATH : TILE_TOWN_FLOOR);
+            if (quest_object_tile(g, x, NORTH_SWAMP_BARRIER_Y) == TILE_ELDERWOOD_WALL) {
+                set_quest_object_tile(g, x, NORTH_SWAMP_BARRIER_Y, x == NORTH_ROAD_X ? TILE_TOWN_PATH : TILE_TOWN_FLOOR);
             }
         }
         set_quest_object_tile(g, NORTH_ROAD_X, 0, TILE_NORTH_CASTLE);
-        set_quest_object_tile(g, NORTH_ROAD_X, ELDERWOOD_H - 1, TILE_NORTH_OAKHAVEN);
+        set_quest_object_tile(g, NORTH_ROAD_X, ELDERWOOD_H - 1, TILE_NORTH_STILLBURY);
     }
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -5495,6 +5502,35 @@ void game_return_to_approach(GameState *g) {
         push_message(g, "You emerge onto the Sunscar road. It returns east to the Goblin Mountains.");
         return;
     }
+    if (g->location == LOCATION_SWAMP || g->location == LOCATION_COAST) {
+        Location area = g->location;
+        Location origin = g->swamp_entry_town;
+        int onward = area == LOCATION_SWAMP && g->level == SWAMP_DEPTH && boss_gate_open(g, LOCATION_SWAMP);
+        clear_floor_loot(g);
+        LevelCache *cache = active_cache(g);
+        cache[g->level - 1].map = g->map;
+        cache[g->level - 1].enemy_count = g->enemy_count;
+        memcpy(cache[g->level - 1].enemies, g->enemies, sizeof(Enemy) * g->enemy_count);
+        cache[g->level - 1].level_cleared = g->level_cleared;
+        cache[g->level - 1].valid = 1;
+        if (area == LOCATION_SWAMP) {
+            northern_return(g, origin == LOCATION_CASTLE ? LOCATION_CASTLE : LOCATION_TOWN2, 0);
+            if (onward) {
+                g->player.x = NORTH_SWAMP_X + 1;
+                g->player.y = NORTH_SWAMP_Y - 6;
+                g->player.last_dx = 1;
+                g->player.last_dy = 0;
+            }
+        } else {
+            approach_enter_region(g, APPROACH_COAST_ROAD);
+            g->player.x = g->map.stairs_down_x;
+            g->player.y = g->map.stairs_down_y + 1;
+            g->player.last_dx = 0;
+            g->player.last_dy = 1;
+        }
+        map_mark_explored(&g->map, g->player.x, g->player.y);
+        return;
+    }
     Location area = g->location;
     int lich_exit = area == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH &&
         (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_DUNGEON)));
@@ -5502,17 +5538,8 @@ void game_return_to_approach(GameState *g) {
         (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)));
     int forest_exit = area == LOCATION_FOREST && g->level == FOREST_DEPTH &&
         (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_FOREST)));
-    int swamp_exit = area == LOCATION_SWAMP && g->level == SWAMP_DEPTH &&
-        (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP)));
     game_return_to_town(g);
     enter_return_approach(g, area);
-    if (swamp_exit && g->location == LOCATION_APPROACH) {
-        g->player.x = g->map.stairs_up_x;
-        g->player.y = g->map.stairs_down_y + 1;
-        g->player.last_dx = -1;
-        g->player.last_dy = 0;
-        push_message(g, "The road is open: north to Rosemoor, south to Stillbury.");
-    }
     if (forest_exit && g->location == LOCATION_APPROACH) {
         g->player.x = g->map.stairs_down_x;
         g->player.y = g->map.stairs_up_y;

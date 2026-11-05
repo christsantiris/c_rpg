@@ -96,7 +96,7 @@ int boss_gate_checkpoints(const GameState *g, RoadCheckpoint *points) {
         return 0;
     }
     if (northern_approach(g)) {
-        points[0] = (RoadCheckpoint){LOCATION_ELDERWOOD, NORTH_ROAD_X, NORTH_FOREST_BARRIER_Y, 1};
+        points[0] = (RoadCheckpoint){LOCATION_SWAMP, NORTH_ROAD_X, NORTH_SWAMP_BARRIER_Y, 1};
         points[1] = (RoadCheckpoint){LOCATION_CATACOMBS, NORTH_ROAD_X, NORTH_CAT_Y - 2, 1};
         return 2;
     }

@@ -223,7 +223,7 @@ static void marsh_journey(GameState *g, GameState *loaded, int seed) {
     ASSERT("leaving the north bank reaches Stillbury's opposite-boundary approach", journey_to(g, RIVER_NORTH_X, 0) && g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_TOWN2 && g->player.y == TOWN_ROAD_H - 2 && !g->act4_arrived);
     town_road_entrance(TOWN_SIDE_SOUTH, &x, &y);
     ASSERT("walking into Stillbury starts Act 4 and retains a safe liberated Dawnmere anchor", journey_to(g, x, y) && g->location == LOCATION_TOWN2 && g->act4_arrived && g->last_town_visited == LOCATION_DAWNMERE && g->player.last_dy == -1);
-    ASSERT("Stillbury has river, bridge and quarry-road entrances while the coast remains deferred", g->map.tiles[0][20] == TILE_TOWN_EXIT && g->map.tiles[12][0] == TILE_TOWN_EXIT && g->map.tiles[12][TOWN_W - 1] == TILE_WALL);
+    ASSERT("Stillbury has river, bridge, Blackwater and Elderwood entrances", g->map.tiles[0][20] == TILE_TOWN_EXIT && g->map.tiles[12][0] == TILE_TOWN_EXIT && g->map.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT);
     ASSERT("known anti-Crown actions trigger a checkpoint choice inside town", journey_to(g, 20, 20) && eastern_move(g, 20, 19) && g->stillbury_prompt);
     eastern_handle_key(g, SDL_SCANCODE_N, 0);
     g->enemies[0].hp -= 9;

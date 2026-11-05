@@ -1,6 +1,7 @@
 # Labyrinth: Slay the Minotaur
 
-Stillbury's **north gate** leads to the Stonewake Quarry approach. An optional
+Stillbury's **western road forks before Giant's Bridge**. Its northern branch
+leads to the Stonewake Quarry approach. An optional
 stone doorway stands on a short western spur beside that road. Its entrance
 and signs are visible without accepting a quest. The main quarry route and
 retreat to Stillbury remain available while the Minotaur lives.
@@ -70,6 +71,7 @@ loading old saves. Old expeditions now retreat to Stillbury's quarry road.
 Rook is restored in saved tavern interiors, and saved Stillbury exteriors gain
 the north road without resetting exploration or loot.
 
-The former Oakhaven/Haunted Forest entrance stays retired. No coastal-route,
-Elderwood/Blackwater relocation or Elderwood story clue is implemented here.
-The canonical README atlas shows the quarry road and optional labyrinth spur.
+The former Oakhaven/Haunted Forest entrance stays retired. Save version 243
+connects the quarry road to the western bridge fork, independently of Blackwater
+and Elderwood. The canonical README atlas shows this road and optional spur.
+Elderwood's separate story clue remains undecided.
