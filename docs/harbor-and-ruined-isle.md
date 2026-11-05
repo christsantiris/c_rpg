@@ -4,20 +4,17 @@ The docks and island open after the Sunken Coast boss is defeated.
 
 ## Unlocking the Docks
 
-Leave Oakhaven through its south gate and follow the Sunken Coast approach.
-Captain Rowan stands on the beach beside the area entrance; the docks are
-further east on the same coastal approach, outside town. Defeat the Drowned
-Queen to open the dock landing. No other boss or Tavern quest is required.
-Until then, Captain Rowan explains that the Queen blocks the sea route. Speak
-with Rowan after defeating her to receive the Island Treasure Map. Inventory
-space is required. If the dungeon and mountains remain uncleared, Rowan
-recommends training in one of them before facing the Ruined Temple. Nahla
-repeats the advice on the island. The advice does not block travel or entry.
+Captain Rowan stands at the river landing **south of Stillbury**, beside the
+skiff dock used by Saltwind travelers. Follow the northern shore path to his
+ship and Talk to him for **Relight the Drowned Beacons**. The docks are
+accessible from the start; the **Drowned Queen's defeat** opens island voyages.
+No beacon quest, sea chart, other regional boss or spare inventory slot is
+required. Previously unlocked island voyages remain available in existing saves.
 
-Walk into the dock entrance to open the docks scene. Select **Board ship for
-the Ruined Isle** and press `Enter`, or choose the return option to stay in
-on the coastal approach. The first voyage uses the map to unlock the route and consumes it. Later
-voyages remain available without carrying a map.
+Walk into the dock entrance to open the sailing menu. Select **Board ship -
+sail to the Ruined Isle** and press `Enter`, or stay at Stillbury's docks.
+Before the Queen falls, the menu explains why passage is blocked. Rowan also
+pays the beacon quest's existing 80 gold and 600 score at this landing.
 
 ## Ruined Isle
 
@@ -26,10 +23,10 @@ a lagoon, ruined statuary, an abandoned camp, and the gated temple approach.
 Stand on or beside an island landmark and press `A` to inspect it.
 
 Captain Rowan waits at the landing. Speak with him using `T` and choose the
-ship option to return to the Sunken Coast docks. Casting Return to Town on the
-island performs that same coastal return and does not leave a portal. Sailing
-does not mark Oakhaven visited; enter its town sprite to update the last-town
-destination.
+ship option to return to Stillbury's docks. The river skiff, exploration and
+items left on the shore survive the voyage. Walk north into Stillbury to visit
+its services. Sailing does not change the last-town destination; entering a town
+does. Return to Town remains a one-way escape to the last town visited.
 
 Nahla waits near the temple approach. Speaking with her starts **The Buried
 Sun**. Walk into the temple gate to enter the pyramid.

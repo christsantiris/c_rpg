@@ -1477,9 +1477,9 @@ static void test_retired_cast_migration(void) {
     original->dialogue_active = 1;
     snprintf(original->dialogue_speaker, sizeof(original->dialogue_speaker), "Rook");
     ok = save_game(original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 231) && load_game(loaded, LEGACY_SLOT);
-    ASSERT("older saves lose Rook, Mara and Ilya from the Inn but keep quest progress", ok &&
+    ASSERT("older saves restore Mara as the coastal introduction and retire Rook and Ilya without losing quest progress", ok &&
         loaded->map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_TAVERN_FLOOR &&
-        loaded->map.tiles[MARA_TAVERN_Y][MARA_TAVERN_X] == TILE_TAVERN_FLOOR &&
+        loaded->map.tiles[MARA_TAVERN_Y][MARA_TAVERN_X] == TILE_NPC_MARA &&
         loaded->map.tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] == TILE_TAVERN_FLOOR &&
         loaded->mara_quest_state == 1 && !loaded->dialogue_active);
     remove_test_save(LEGACY_SLOT);

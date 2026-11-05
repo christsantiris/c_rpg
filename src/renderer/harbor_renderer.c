@@ -104,21 +104,21 @@ void harbor_draw(Renderer *r, const GameState *g, const HarborScreen *s) {
     draw_centered_text(r, on_island ? "CAPTAIN ROWAN" : "DOCKS",
         play_w / 2, 34, gold, r->font_large);
     draw_centered_text(r, on_island
-        ? "RETURN TO THE SUNKEN COAST DOCKS WHEN READY."
+        ? "RETURN TO STILLBURY'S DOCKS WHEN READY."
         : g->island_travel_unlocked
         ? "THE SEA ROUTE TO THE RUINED ISLE IS OPEN."
         : can_sail
-        ? "THE TREASURE MAP CHARTS A COURSE TO THE RUINED ISLE."
-        : "A SEA CHART IS REQUIRED. SPEAK WITH CAPTAIN ROWAN.",
+        ? "THE QUEEN IS DEFEATED. THE ISLAND PASSAGE IS SAFE."
+        : "DEFEAT THE DROWNED QUEEN TO OPEN ISLAND PASSAGE.",
         play_w / 2, 70, on_island || can_sail ? ready : locked, r->font_tiny);
 
     draw_harbor_option(r, s, 0, on_island || can_sail, on_island
-        ? "RETURN TO THE COASTAL DOCKS"
+        ? "SAIL BACK TO STILLBURY"
         : can_sail
         ? "BOARD SHIP - SAIL TO THE RUINED ISLE"
-        : "BOARD SHIP - TREASURE MAP REQUIRED");
+        : "PASSAGE BLOCKED BY THE QUEEN");
     draw_harbor_option(r, s, 1, 1, on_island
-        ? "STAY ON THE RUINED ISLE" : "RETURN TO THE COASTAL DOCKS");
+        ? "STAY ON THE RUINED ISLE" : "STAY AT STILLBURY'S DOCKS");
 
     info_panel_draw_harbor(r, g);
     message_bar_draw(r, g);

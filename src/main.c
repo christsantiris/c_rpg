@@ -456,9 +456,9 @@ static void handle_harbor_result(HarborResult result, GameState *game, GameScree
     if (result == HARBOR_CLOSED) {
         *screen = SCREEN_PLAYING;
         push_message(game, game->location == LOCATION_ISLAND
-            ? "You remain on the island." : "You return to the coastal landing.");
+            ? "You remain on the island." : "You remain at Stillbury's docks.");
     } else if (result == HARBOR_MAP_REQUIRED) {
-        push_message(game, "The captain needs a sea chart. Speak with Rowan.");
+        push_message(game, "The Drowned Queen prevents island voyages. Defeat her on Sunken Coast, then return to Stillbury's docks.");
     } else if (result == HARBOR_BOARD) {
         game_enter_island(game);
         enter_playing(renderer, viewport, game);
@@ -1183,6 +1183,10 @@ int main(int argc, char **argv) {
                                             aldric_talk(&game, tx, ty);
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
+                                            TILE_NPC_MARA) {
+                                            game_talk_to_mara(&game);
+                                            found = 1;
+                                        } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ROWAN) {
                                             game_talk_to_rowan(&game);
                                             found = 1;
@@ -1224,7 +1228,7 @@ int main(int argc, char **argv) {
                                             harbor_init(&harbor_screen);
                                             screen = SCREEN_HARBOR;
                                             push_message(&game,
-                                                "Captain Rowan offers passage back to town.");
+                                                "Captain Rowan offers passage back to Stillbury's docks.");
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ISLAND_NAHLA) {

@@ -1,4 +1,5 @@
 #include "game/western_arc.h"
+#include "game/coastal_travel.h"
 #include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
@@ -43,7 +44,7 @@ void test_quest_activation_gating(void) {
 
     game_return_to_town(&g);
     game_enter_coast(&g);
-    ASSERT("Mara's beacons require quest activation",
+    ASSERT("the first coast stage has no beacon",
         !find_tile(&g.map, TILE_COAST_BEACON_UNLIT, &object_x, &object_y));
 
     g.location = LOCATION_MOUNTAINS;
@@ -111,12 +112,12 @@ void test_tavern_interior(void) {
         map_is_walkable(&g.map, BRAM_INN_X, BRAM_INN_Y + 1));
     int retired_x = 0;
     int retired_y = 0;
-    ASSERT("Rook, Mara and Ilya no longer stand in Oakhaven's Inn",
+    ASSERT("Mara introduces the coast while Rook and Ilya are absent from Oakhaven's Inn",
         !find_tile(&g.map, TILE_NPC_ROOK, &retired_x, &retired_y) &&
-        !find_tile(&g.map, TILE_NPC_MARA, &retired_x, &retired_y) &&
+        find_tile(&g.map, TILE_NPC_MARA, &retired_x, &retired_y) &&
         !find_tile(&g.map, TILE_NPC_DRAGON_SEEKER, &retired_x, &retired_y));
-    ASSERT("their former Inn positions are open floor",
-        map_is_walkable(&g.map, ROOK_TAVERN_X, ROOK_TAVERN_Y) && map_is_walkable(&g.map, MARA_TAVERN_X, MARA_TAVERN_Y) &&
+    ASSERT("retired Inn positions are open floor and Mara's seat is approachable",
+        map_is_walkable(&g.map, ROOK_TAVERN_X, ROOK_TAVERN_Y) && map_is_walkable(&g.map, MARA_TAVERN_X, MARA_TAVERN_Y + 1) &&
         map_is_walkable(&g.map, ILYA_TAVERN_X, ILYA_TAVERN_Y));
     game_leave_tavern(&g);
     game_enter_inn(&g);
@@ -349,7 +350,7 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
         {"Bram", LOCATION_TAVERN, &g->elowen_quest_state},
         {"Dain", LOCATION_TAVERN, &g->dain_quest_state},
         {"Alder", LOCATION_TAVERN, &g->alder_quest_state},
-        {"Mara", LOCATION_TAVERN, &g->mara_quest_state},
+        {"Captain Rowan", LOCATION_RIVER_CROSSING, &g->mara_quest_state},
         {"Rook", LOCATION_INN, &g->rook_quest_state},
         {"Zara", LOCATION_TAVERN, &g->tribute_quest_state},
         {"Ilya", LOCATION_TAVERN, &g->dragon_treasure_quest_state},
@@ -466,7 +467,7 @@ void test_quest_offer_controls(void) {
         {game_talk_to_bram, LOCATION_TAVERN, BRAM_INN_X, BRAM_INN_Y, &g.elowen_quest_state},
         {game_talk_to_dain, LOCATION_TAVERN, DAIN_OAKHAVEN_X, DAIN_OAKHAVEN_Y, &g.dain_quest_state},
         {game_talk_to_alder, LOCATION_TAVERN, ALDER_OAKHAVEN_X, ALDER_OAKHAVEN_Y, &g.alder_quest_state},
-        {game_talk_to_mara, LOCATION_TAVERN, MARA_TAVERN_X, MARA_TAVERN_Y, &g.mara_quest_state},
+        {game_talk_to_rowan, LOCATION_RIVER_CROSSING, STILLBURY_ROWAN_X, STILLBURY_ROWAN_Y, &g.mara_quest_state},
         {game_talk_to_rook, LOCATION_INN, ROOK_TAVERN_X, ROOK_TAVERN_Y, &g.rook_quest_state},
         {game_talk_to_guild_seeker, LOCATION_TAVERN, ZARA_OAKHAVEN_X, ZARA_OAKHAVEN_Y, &g.tribute_quest_state},
         {game_talk_to_dragon_seeker, LOCATION_TAVERN, ILYA_TAVERN_X, ILYA_TAVERN_Y, &g.dragon_treasure_quest_state},
