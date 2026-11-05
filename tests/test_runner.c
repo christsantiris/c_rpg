@@ -22,6 +22,7 @@ void test_western_geography(void);
 void test_western_arc(void);
 void test_labyrinth_arc(void);
 void test_stillbury_routes(void);
+void test_coastal_quest(void);
 void test_map(void);
 void test_map_tiles(void);
 void test_viewport(void);
@@ -107,6 +108,7 @@ int main(void) {
     test_western_arc();
     test_labyrinth_arc();
     test_stillbury_routes();
+    test_coastal_quest();
     test_boss_gates();
     test_royal_evidence();
     test_eastern_arc();

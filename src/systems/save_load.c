@@ -1951,7 +1951,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 243);
+    cJSON_AddNumberToObject(root, "save_version", 244);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -7189,6 +7189,7 @@ int load_game(GameState *g, int slot) {
             town_road_migrate(g);
         }
     }
+    coastal_migrate_quest(g, save_version);
     if (!eastern_valid(g)) {
         cJSON_Delete(root);
         return 0;

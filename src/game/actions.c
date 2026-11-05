@@ -1,6 +1,7 @@
 #include "labyrinth_arc.h"
 #include "western_arc.h"
 #include "coast_exits.h"
+#include "coastal_travel.h"
 #include "giants_crown.h"
 #include "ironfang.h"
 #include "crownroad_north.h"
@@ -395,6 +396,12 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         game_record_temple_enemy_defeated(g, type);
         if (type == ENEMY_LICH_KING) {
             elowen_rescue(g);
+        }
+        if (type == ENEMY_DROWNED_QUEEN) {
+            push_message(g, "The Queen falls. Return to Captain Rowan at Stillbury's docks for passage to the Ruined Isle.");
+            if (coastal_trade_restored(g)) {
+                push_message(g, "With the Queen defeated and the beacons restored, Stillbury's coastal trade can resume.");
+            }
         }
 
         if (type == ENEMY_CINDER_LORD) {

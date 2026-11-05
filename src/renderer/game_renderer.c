@@ -584,7 +584,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int shrine_prompt = resurrection_prompt_active(g);
     int escort_dialogue = strcmp(g->dialogue_speaker, "Elowen") == 0 ||
         (g->aldric_party_state == ALDRIC_FOLLOWING && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0);
-    int dock_dialogue = coastal_approach(g) && strcmp(g->dialogue_speaker, "Captain Rowan") == 0;
+    int dock_dialogue = coastal_stillbury_docks(g) && strcmp(g->dialogue_speaker, "Captain Rowan") == 0;
     if (!g->dialogue_active ||
         (!escort_dialogue && !dock_dialogue && !approach_sunscar_road(g) && !approach_bridge_road(g) && !western_convoy_prompt(g) && !shortcut && !stormbell_prompt && !shrine_prompt && !town_life_is_interior(g->location) && g->location != LOCATION_TAVERN &&
         g->location != LOCATION_INN && g->location != LOCATION_HEALER && g->location != LOCATION_WITCH &&
@@ -3605,11 +3605,27 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     mangrove_draw_landmark(r, g, v);
     mangrove_draw_spice_quest(r, g, v);
-    if (coastal_approach(g)) {
-        int dock_x = viewport_to_screen_x(v, COAST_DOCK_X);
-        int dock_y = viewport_to_screen_y(v, COAST_DOCK_Y);
+    if (g->location == LOCATION_RIVER_CROSSING &&
+        (viewport_is_visible(v, STILLBURY_ROWAN_X, STILLBURY_ROWAN_Y) ||
+        viewport_is_visible(v, STILLBURY_DOCK_X, STILLBURY_DOCK_Y) ||
+        viewport_is_visible(v, STILLBURY_DOCK_ENTRY_X, STILLBURY_DOCK_ENTRY_Y))) {
+        int dock_x = viewport_to_screen_x(v, STILLBURY_DOCK_X);
+        int dock_y = viewport_to_screen_y(v, STILLBURY_DOCK_Y);
         draw_harbor(r, dock_x, dock_y);
-        renderer_draw_text(r, "DOCKS", dock_x * TILE_SIZE, (dock_y - 1) * TILE_SIZE,
+        int label_w;
+        float scale_x;
+        float scale_y;
+        SDL_RenderGetScale(r->sdl, &scale_x, &scale_y);
+        TTF_SizeText(r->font_tiny, "STILLBURY DOCKS", &label_w, NULL);
+        int label_x = dock_x * TILE_SIZE;
+        int right = (int)((r->screen_w - INFO_PANEL_W) / scale_x) - label_w - 4;
+        if (label_x > right) {
+            label_x = right;
+        }
+        if (label_x < 4) {
+            label_x = 4;
+        }
+        renderer_draw_text(r, "STILLBURY DOCKS", label_x, (dock_y - 1) * TILE_SIZE,
             (SDL_Color){220, 180, 60, 255}, r->font_tiny);
     }
     if (g->location == LOCATION_APPROACH && g->approach_route == APPROACH_ELDERWOOD_ROAD) {

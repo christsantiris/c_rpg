@@ -4,6 +4,7 @@
 #include "town_life.h"
 #include "town_road.h"
 #include "stormbell.h"
+#include "coastal_travel.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -467,6 +468,7 @@ void eastern_river_map(Map *map) {
     map->stairs_up_y = MANGROVE_H - 1;
     map->stairs_down_x = RIVER_NORTH_X;
     map->stairs_down_y = 0;
+    coastal_place_docks(map);
 }
 
 void eastern_river_enter(GameState *g, int from_town) {
@@ -516,6 +518,7 @@ void eastern_river_enter(GameState *g, int from_town) {
     }
     g->player.last_dx = 0;
     g->player.last_dy = from_town ? 1 : -1;
+    coastal_refresh_docks(g);
     push_message(g, "River passage: Saltwind south, Stillbury north. Board and dock with your Interact key.");
 }
 

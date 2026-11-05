@@ -2512,6 +2512,7 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y) {
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y);
     m->tiles[BRAM_INN_Y][BRAM_INN_X] = TILE_NPC_BRAM;
+    m->tiles[MARA_TAVERN_Y][MARA_TAVERN_X] = TILE_NPC_MARA;
 }
 
 void map_place_tavern_brenna(Map *m) {

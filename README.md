@@ -49,7 +49,7 @@ present from the start; its services require a recruited companion.
 
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/world-map.png?v=397df5e09b72)](docs/world-map.png?v=397df5e09b72)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=a714ec5ef68c)](docs/world-map.png?v=a714ec5ef68c)
 
 The V2 starting region contains Oakhaven, Goblin Mountains to its west, Haunted
 Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
@@ -87,11 +87,18 @@ Neither the Jarl nor the Minotaur blocks the quarry branch. Rook offers
 immediately and reveals a prisoner register implicating Malakar's private office.
 See the [labyrinth arc](docs/labyrinth.md).
 
+Mara introduces the Ruined Isle from Oakhaven's Inn without assigning a quest.
+Captain Rowan waits at **Stillbury's docks**, south of town beside the river
+skiff landing. He assigns **Relight the Drowned Beacons** and pays its reward
+there; no return to Oakhaven is needed. Defeating the Drowned Queen opens his
+ship's island passage independently of the beacons. Island voyages return to
+Stillbury's docks. Restoring all three beacons and defeating the Queen reopens
+coastal trade, warming civilian reactions without clearing the Crown's record.
+See the [coastal quest and travel notes](docs/coastal-quest.md).
+
 The atlas no longer labels the river mouth as Estuary. Geography south of the
-river stays fixed. Mara's arrival in Oakhaven, Rowan's move to Stillbury's docks,
-the coastal trade and island rewards, and changes to Stillbury's reception are
-next story steps. Elderwood's Malakar clue remains undecided.
-The rest of the world is provisional context for later design.
+river stays fixed. Elderwood's Malakar clue and the new island amulet remain
+separate story steps. The rest of the world is provisional context for later design.
 
 ## Controls
 
@@ -214,8 +221,7 @@ See the [parameter table](#debug-script-parameters) and
 [weapon-to-parameter mapping](#debug-weapon-names) below for exact accepted values.
 
 Select **New Game**, enter a name, and choose a class, or load an existing
-character. All four town-to-town roads, the Sunken Coast dock road and island sailing
-without a treasure map are open immediately. The deferred labyrinth has no
+character. Town-to-town roads and island sailing from Stillbury's docks are open immediately. The deferred labyrinth has no
 entrance, including in debug mode.
 Locked dungeon doors, mountain barriers, temple doors,
 quarry crane walkways and castle portcullises open as you explore. Each unused

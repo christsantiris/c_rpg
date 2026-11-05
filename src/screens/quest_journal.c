@@ -48,9 +48,9 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Haunted Forest", {1, 2}, 70, 500
     },
     {
-        "Relight the Drowned Beacons", "Mara",
+        "Relight the Drowned Beacons", "Captain Rowan",
         "Lower the tides and relight three guarded beacons.",
-        "Return and speak to Mara in Oakhaven's Inn.",
+        "Return to Captain Rowan at Stillbury's docks, south of town.",
         {"Light drowned beacon", "Light drowned beacon",
             "Light drowned beacon"},
         "Sunken Coast", {2, 3, 4}, 80, 600
