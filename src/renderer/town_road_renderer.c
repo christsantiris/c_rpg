@@ -108,6 +108,9 @@ void draw_town_road(Renderer *r, const GameState *g, const Viewport *v) {
         if (g->road_town == LOCATION_TOWN2 && side == TOWN_SIDE_WEST) {
             area = "GIANT'S BRIDGE";
         }
+        if (g->road_town == LOCATION_TOWN2 && side == TOWN_SIDE_NORTH) {
+            area = "QUARRY / LABYRINTH";
+        }
         int x;
         int y;
         x = side == TOWN_SIDE_WEST ? TOWN_SPRITE_X - 7 : side == TOWN_SIDE_EAST ? TOWN_SPRITE_X + TOWN_SPRITE_W + 6 : TOWN_ROAD_W / 2;

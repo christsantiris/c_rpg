@@ -2334,7 +2334,7 @@ static void draw_labyrinth_exits(Renderer *r, const GameState *g, const Viewport
             if (tile == TILE_LABYRINTH_STAIRS) {
                 snprintf(label, sizeof(label), "DOWN: FLOOR %d", g->level + 1);
             } else if (g->level == 1) {
-                snprintf(label, sizeof(label), "FOREST ROAD");
+                snprintf(label, sizeof(label), "QUARRY ROAD / STILLBURY");
             } else {
                 snprintf(label, sizeof(label), "UP: FLOOR %d", g->level - 1);
             }
@@ -3560,6 +3560,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         if (open || approach_route(g)->town == LOCATION_TOWN) {
             draw_town_road_sign(r, viewport_to_screen_x(v, APPROACH_W - 8), viewport_to_screen_y(v, APPROACH_H / 2 + 2), "OAKHAVEN");
         }
+    }
+
+    if (g->location == LOCATION_APPROACH && g->approach_route == APPROACH_QUARRY_ROAD) {
+        draw_labyrinth_entrance(r, viewport_to_screen_x(v, QUARRY_LABYRINTH_X), viewport_to_screen_y(v, QUARRY_LABYRINTH_Y), 1);
+        draw_town_road_sign(r, viewport_to_screen_x(v, QUARRY_LABYRINTH_X), viewport_to_screen_y(v, QUARRY_LABYRINTH_Y + 2), "LABYRINTH");
+        draw_town_road_sign(r, viewport_to_screen_x(v, APPROACH_W / 2 + 2), viewport_to_screen_y(v, QUARRY_LABYRINTH_Y + 2), "N: STONEWAKE QUARRY");
     }
 
     if (approach_sunscar_road(g)) {

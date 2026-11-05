@@ -90,6 +90,10 @@ void eastern_refresh(GameState *g) {
                 restore_town_tile(g, x, 0, TILE_WALL);
                 restore_town_tile(g, x, TOWN_H - 1, TILE_WALL);
             }
+            restore_town_tile(g, 20, 0, TILE_TOWN_EXIT);
+            for (int y = 1; y <= 12; y++) {
+                restore_town_tile(g, 20, y, TILE_TOWN_PATH);
+            }
             restore_town_tile(g, 20, TOWN_H - 1, TILE_TOWN_EXIT);
             restore_town_tile(g, 0, 12, TILE_TOWN_EXIT);
             for (int x = 1; x <= 7; x++) {
@@ -339,13 +343,14 @@ int eastern_move(GameState *g, int x, int y) {
     }
     int west_checkpoint = x >= 5 && x <= 7 && y >= 10 && y <= 14;
     int south_checkpoint = x >= 17 && x <= 23 && y >= 17 && y <= 19;
-    if (g->location == LOCATION_TOWN2 && g->royal_reported_actions && !g->stillbury_challenge && (west_checkpoint || south_checkpoint)) {
+    int north_checkpoint = x >= 17 && x <= 23 && y >= 4 && y <= 6;
+    if (g->location == LOCATION_TOWN2 && g->royal_reported_actions && !g->stillbury_challenge && (west_checkpoint || south_checkpoint || north_checkpoint)) {
         g->stillbury_prompt = 1;
         g->dialogue_active = 1;
         snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Royal Checkpoint");
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "You are wanted for acts against the Crown. Surrender your passage. Y: submit and return to the gate. N: resist. Esc: withdraw.");
         g->dialogue_x = west_checkpoint ? 7 : 20;
-        g->dialogue_y = west_checkpoint ? 12 : 17;
+        g->dialogue_y = west_checkpoint ? 12 : north_checkpoint ? 5 : 17;
         return 1;
     }
     return 0;
@@ -414,14 +419,15 @@ int eastern_handle_key(GameState *g, int key, int repeat) {
             g->enemy_count = 3;
             for (int i = 0; i < 3; i++) {
                 int west = g->dialogue_x == 7;
-                game_spawn_enemy(g, &g->enemies[i], i == 2 ? ENEMY_ROAD_ARCHER : ENEMY_ROYAL_GUARD, west ? 8 + (i == 2) : 19 + i, west ? 11 + i : 16 - (i == 2));
+                int north = g->dialogue_y == 5;
+                game_spawn_enemy(g, &g->enemies[i], i == 2 ? ENEMY_ROAD_ARCHER : ENEMY_ROYAL_GUARD, west ? 8 + (i == 2) : 19 + i, west ? 11 + i : north ? 7 + (i == 2) : 16 - (i == 2));
                 g->enemies[i].boss_aux_y = 1;
             }
             eastern_store(g);
             push_message(g, "The checkpoint turns hostile. The gate behind you remains your retreat.");
         } else {
             g->player.x = g->dialogue_x == 7 ? 2 : 20;
-            g->player.y = g->dialogue_x == 7 ? 12 : 22;
+            g->player.y = g->dialogue_x == 7 ? 12 : g->dialogue_y == 5 ? 2 : 22;
             push_message(g, "You withdraw toward the gate. Stillbury remains suspicious.");
         }
     }

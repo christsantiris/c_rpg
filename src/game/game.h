@@ -441,7 +441,7 @@ typedef struct {
     Location labyrinth_entry_town;
     int       rook_quest_state;
     int innkeeper_quest_state; // Retired Mira quest; reserved for historical save data.
-    int       rook_labyrinth_switches;
+    int rook_labyrinth_switches; // Retired rune progress; retained for historical saves.
     int       rook_quest_completions;
     FloorItem floor_items[MAX_FLOOR_ITEMS];
     int       floor_item_count;

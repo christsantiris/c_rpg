@@ -12,7 +12,11 @@ static const RoyalEvidence documents[] = {
     {ROYAL_EVIDENCE_TRIBUTE, "The Pharaoh's Agreement", "Recovered from the Pharaoh in Sunscar Wastes",
         "By the King's seal: confiscated goods shall be sent as tribute to the Pharaoh. Stillbury customs will record the shipments and release payment to the royal caravans. In return, the Pharaoh shall maintain his forces in Sunscar."},
     {ROYAL_EVIDENCE_CHARTER, "The Jarl's Royal Charter", "Recovered from the Last Jarl in Giant's Peaks",
-        "By royal command: the Last Jarl shall hold the mountain road south of Giant's Bridge. Permit only shipments bearing a Stillbury customs seal. Keep unlicensed travelers and merchants from the crossing. The Crown guarantees his claim to the pass."}
+        "By royal command: the Last Jarl shall hold the mountain road south of Giant's Bridge. Permit only shipments bearing a Stillbury customs seal. Keep unlicensed travelers and merchants from the crossing. The Crown guarantees his claim to the pass."},
+    {ROYAL_EVIDENCE_PRISONERS, "Labyrinth Intake Register", "Recovered from the Minotaur's lair",
+        "Prisoners received under royal authority, transferred from Stillbury customs. Authorization: Malakar, Royal Arcanist. "
+        "Deliver the condemned to the inner maze. Send all returns to the Arcanist's private office; no copies to the royal court. "
+        "The last column records their delivery. No departures are recorded."}
 };
 
 int royal_evidence_found(const GameState *g) {
@@ -20,13 +24,14 @@ int royal_evidence_found(const GameState *g) {
         ((g->defeated_bosses & (1u << LOCATION_FOREST)) ? ROYAL_EVIDENCE_PROTECTION : 0) |
         (g->dawnmere_liberated ? ROYAL_EVIDENCE_CONFISCATION : 0) |
         ((g->defeated_bosses & (1u << LOCATION_DESERT)) ? ROYAL_EVIDENCE_TRIBUTE : 0) |
-        (g->giants_crown_defeated ? ROYAL_EVIDENCE_CHARTER : 0);
+        (g->giants_crown_defeated ? ROYAL_EVIDENCE_CHARTER : 0) |
+        ((g->defeated_bosses & (1u << LOCATION_LABYRINTH)) ? ROYAL_EVIDENCE_PRISONERS : 0);
 }
 
 int royal_evidence_count(const GameState *g) {
     int found = royal_evidence_found(g);
     return !!(found & ROYAL_EVIDENCE_FUNDING) + !!(found & ROYAL_EVIDENCE_PROTECTION) + !!(found & ROYAL_EVIDENCE_CONFISCATION) +
-        !!(found & ROYAL_EVIDENCE_TRIBUTE) + !!(found & ROYAL_EVIDENCE_CHARTER);
+        !!(found & ROYAL_EVIDENCE_TRIBUTE) + !!(found & ROYAL_EVIDENCE_CHARTER) + !!(found & ROYAL_EVIDENCE_PRISONERS);
 }
 
 const RoyalEvidence *royal_evidence_document(int id) {
@@ -49,6 +54,9 @@ const RoyalEvidence *royal_evidence_entry(const GameState *g, int index) {
 }
 
 const char *royal_evidence_conclusion(const GameState *g) {
+    if (royal_evidence_found(g) & ROYAL_EVIDENCE_PRISONERS) {
+        return "Malakar's private office directed the disappearances under royal authority and kept the records from the royal court. What does the King know?";
+    }
     if (royal_evidence_found(g) & (ROYAL_EVIDENCE_TRIBUTE | ROYAL_EVIDENCE_CHARTER)) {
         return "Royal tribute and control of the crossing point to Stillbury customs. The King is financing evil and restricting travel.";
     }

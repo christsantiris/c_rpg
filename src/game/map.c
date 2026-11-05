@@ -37,7 +37,7 @@ int map_is_travel_tile(TileType tile) {
     }
     return (tile >= TILE_TOWN_ROAD_ENTRY_NORTH && tile <= TILE_TOWN_ROAD_EXIT_WEST) ||
         tile == TILE_APPROACH_TOWN || tile == TILE_APPROACH_AREA || tile == TILE_APPROACH_DUNGEON_TOWN ||
-        tile == TILE_LABYRINTH_ENTRANCE || tile == TILE_ROAD_GATE_OPEN || tile == TILE_ROAD_GATE_CLOSED ||
+        tile == TILE_LABYRINTH_ENTRANCE || tile == TILE_LABYRINTH_EXIT || tile == TILE_LABYRINTH_STAIRS || tile == TILE_ROAD_GATE_OPEN || tile == TILE_ROAD_GATE_CLOSED ||
         tile == TILE_FOREST_ENTRANCE || tile == TILE_FOREST_EXIT ||
         tile == TILE_MOUNTAIN_ENTRANCE || tile == TILE_MOUNTAIN_EXIT || tile == TILE_BROKEN_FERRY;
 }
@@ -1830,6 +1830,7 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
         m->tiles[y][0] = TILE_WALL;
         m->tiles[y][TOWN_W - 1] = TILE_WALL;
     }
+    m->tiles[0][20] = TILE_TOWN_EXIT;
     m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;
@@ -2432,17 +2433,12 @@ void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *
         }
     }
 
-    m->tiles[dead_end_y[0]][dead_end_x[0]] =
-        switches & (1 << (level - 1)) ? TILE_LABYRINTH_SWITCH_ON :
-            TILE_LABYRINTH_SWITCH_OFF;
+    (void)switches; // Historical save data; the Minotaur no longer has a rune gate.
     if (level < LABYRINTH_DEPTH) {
         int main_stair = dead_end_count / 2;
-        int false_stair = dead_end_count - 1;
         m->stairs_down_x = dead_end_x[main_stair];
         m->stairs_down_y = dead_end_y[main_stair];
         m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_LABYRINTH_STAIRS;
-        m->tiles[dead_end_y[false_stair]][dead_end_x[false_stair]] =
-            TILE_LABYRINTH_STAIRS;
     } else {
         for (int x = 33; x <= 40; x++) {
             m->tiles[entry_y][x] = TILE_LABYRINTH_FLOOR;
@@ -2452,23 +2448,8 @@ void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *
                 m->tiles[y][x] = TILE_LABYRINTH_FLOOR;
             }
         }
-        if (switches != (1 << LABYRINTH_SWITCH_COUNT) - 1) {
-            m->tiles[entry_y][35] = TILE_LABYRINTH_GATE;
-        }
-        m->tiles[entry_y][40] = TILE_LABYRINTH_RELIC;
         m->stairs_down_x = 40;
         m->stairs_down_y = entry_y;
-    }
-
-    if (level > 1) {
-        m->tiles[LABYRINTH_FALSE_EXIT_Y][LABYRINTH_FALSE_EXIT_X] =
-            TILE_LABYRINTH_EXIT;
-        m->tiles[LABYRINTH_FALSE_EXIT_Y][LABYRINTH_FALSE_EXIT_X + 1] =
-            TILE_LABYRINTH_FLOOR;
-        m->tiles[LABYRINTH_FALSE_EXIT_Y][LABYRINTH_FALSE_EXIT_X + 2] =
-            TILE_TRAP_REVEALED;
-        m->tiles[LABYRINTH_FALSE_EXIT_Y][LABYRINTH_FALSE_EXIT_X + 3] =
-            TILE_LABYRINTH_FLOOR;
     }
 
     m->tiles[entry_y][1] = TILE_LABYRINTH_EXIT;
@@ -2536,6 +2517,7 @@ void map_place_tavern_brenna(Map *m) {
 
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y);
+    m->tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] = TILE_NPC_ROOK;
     // Zara now travels between Oakhaven and the Sunscar caravan camp.
     m->tiles[BRENNA_INN_Y][BRENNA_INN_X] = TILE_NPC_BRENNA;
 }

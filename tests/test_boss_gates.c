@@ -378,6 +378,7 @@ static void deferred_labyrinth(GameState *g, GameState *loaded) {
         game_enter_labyrinth(g);
         g->enemies[0].hp = 37;
         game_leave_labyrinth(g);
+        approach_enter_region(g, routes[n]);
         g->rook_quest_state = 1;
         g->rook_labyrinth_switches = 3;
         g->gold = 789;
@@ -411,7 +412,7 @@ static void deferred_labyrinth(GameState *g, GameState *loaded) {
         game_enter_labyrinth(g);
         ASSERT("a legacy save inside the deferred labyrinth remains loadable", save_game(g, GATE_SLOT) && load_game(loaded, GATE_SLOT) && loaded->location == LOCATION_LABYRINTH);
         game_leave_labyrinth(loaded);
-        ASSERT("a legacy labyrinth expedition can leave onto the real forest road and retreat", loaded->location == LOCATION_APPROACH && !labyrinth_entrances(loaded) &&
+        ASSERT("a legacy labyrinth expedition returns to the new quarry road and can retreat to Stillbury", loaded->location == LOCATION_APPROACH && loaded->approach_route == APPROACH_QUARRY_ROAD && labyrinth_entrances(loaded) == 1 &&
             map_is_walkable(&loaded->map, loaded->player.x, loaded->player.y) && path(loaded, loaded->map.stairs_up_x, loaded->map.stairs_up_y, 1) && loaded->location == LOCATION_TOWN_ROAD);
     }
     remove("saves/savegame_99311.json");

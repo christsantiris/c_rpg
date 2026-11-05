@@ -19,8 +19,8 @@ Tomas's escape and confiscated-equipment recovery do not use these slots.
 Other dialogue bubbles are dismissed by
 movement. Bram runs Oakhaven's Inn, offering the Lich King warning and supply
 advice and the Save Elowen quest at its counter. Elowen lives there only after
-her rescue and reunion. Mara, Ilya, and Rook have left Oakhaven in V2; their
-quests keep their progress but have no giver until a later act places them.
+her rescue and reunion. Mara and Ilya have left Oakhaven in V2; their quests await later placement.
+Rook now offers Slay the Minotaur in Stillbury's Tavern.
 After the Lich King's defeat, Alder and Dain arrive at Oakhaven's Inn with the
 eastward and westward adventure choices, and Aldric moves in from the square.
 Brenna remains in Stillbury's Tavern. Zara starts in Oakhaven's Inn after the Goblin King falls, then moves to the Sunscar caravan camp. Dawnmere's Alehouse has a generic
@@ -240,40 +240,28 @@ Boss victories are permanent. Defeated bosses do not appear in later
 expeditions. In a replayed dungeon finale, the return passage remains available
 without requiring the absent Lich King to be defeated again.
 
-## Rook: The Ivory Rook
+## Rook: Slay the Minotaur
 
-In V2, Rook has left Oakhaven and no one offers this quest until a later act
-places him. The labyrinth entrance, label and world-map landmark are also
-removed for now. Existing quest progress is kept. The notes below describe the
-retained quest implementation for later placement.
+Rook stands in Stillbury's Tavern and offers a one-time boss quest with explicit
+Y acceptance / N decline. People arrested by the King's soldiers disappear
+into the labyrinth beside the quarry road north of town; rumors say the
+Minotaur consumes them. The ordinary three-active-quest limit applies.
 
-Speak with Rook in Oakhaven's Inn and press `Y` to accept his one-time
-retrieval quest. This opens the labyrinth gate beside the Haunted Forest
-entrance on the Oakhaven–Stillbury road. Take either town's forest gate and
-follow the path; entering the forest or defeating its boss is not required.
-Physical retreat returns to the same path. The gate remains sealed until the
-quest is assigned and stays open after completion. Explore five maze floors with enemies and
-look-alike stairs; some stairs lead only to a dead-end corridor and its return
-stair. Activate one rune on each floor to open the final vault, defeat the
-Minotaur, recover the ivory rook, and return to Rook for 40 gold and 500 score.
-The quest and boss are one-time, but the labyrinth remains open for further
-combat expeditions.
+Enter the optional landmark beside the north road, explore five maze floors,
+and defeat the Minotaur on floor 5. No quest acceptance is required to enter.
+The quarry stays reachable while the boss lives. Its death completes the active
+quest and pays **40 gold and 500 score** once, without returning to Rook.
+If defeated before acceptance, accepting Rook's offer acknowledges the existing
+victory immediately, even with three other quests active.
 
-The Minotaur guards floor 5's relic vault and pursues players with melee
-attacks once the runes open the gate. It has 120 base HP, 18 attack, 7 defense,
-and grants 250 base XP before the shared enemy scaling. Its guaranteed drop
-is the Warrior's Magic Shield. The Labyrinth entry in the Bosses journal
-records its defeat. Legacy Maze Warden enemies load as Minotaurs using the
-same saved enemy ID, preserving health, explored maps, runes, and quest or
-boss completion. A previously defeated Warden stays defeated.
+The guaranteed boss equipment remains **Labyrinth Aegis**, a Warrior shield
+with +9 defense and 25% block. Full inventories leave the reward claimable.
+The lair's **Labyrinth Intake Register** enters the Evidence journal on victory.
+It identifies Malakar's private office as authorizing the prisoner transfers
+under royal authority and withholding reports from the royal court. It does
+not reveal how the King is controlled.
 
-Save version 85 preserves existing seal progress and moves the former temple
-summit and labyrinth vault to level 5. Old labyrinth runes on floors 1 and 2
-keep their bits; the old third rune moves to floor 5. Expeditions that already
-reached the old vault receive credit for the two new intermediate runes.
-
-Save version **114** moves Dain to Ridgeshire's
-town center, and Zara to Stillbury's Tavern. Existing quest progress, rewards,
-exploration, and region caches are preserved. Saved maps remove the former NPC
-tiles and repair loot underlays; overlapping players and loot move beside the
-new positions. Stale dialogue from the moved NPCs is dismissed.
+The ivory rook retrieval, runes, puzzle gate, false stairs and NPC reward hand-in
+are retired. Maze exploration, normal stair retreat and the Minotaur's combat
+remain. Save version 242 repairs old active and cached maps in place, retaining
+wounds, discoveries, loot and victories. See [labyrinth details](labyrinth.md).

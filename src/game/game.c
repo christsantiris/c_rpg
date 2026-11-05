@@ -1,3 +1,4 @@
+#include "labyrinth_arc.h"
 #include "western_arc.h"
 #include "coast_exits.h"
 #include "boss_gates.h"
@@ -3878,8 +3879,8 @@ int game_harbor_unlocked(const GameState *g) {
 
 static void offer_rook_quest(GameState *g) {
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-        "Take the road to Dawnmere through Oakhaven's east gate. The labyrinth is beside the Haunted Forest entrance. "
-        "Recover my ivory rook from the Minotaur, then return to Oakhaven's Inn.");
+        "People taken by the King's soldiers disappear into the labyrinth beside the quarry road north of Stillbury. "
+        "Nobody returns. They say a Minotaur feeds on them. Will you find it and slay it?");
 }
 
 void game_refresh_debug_passages(GameState *g) {
@@ -4905,25 +4906,18 @@ static void load_labyrinth_floor(GameState *g) {
         g->level_cleared = 0;
         spawn_labyrinth_enemies(g);
     }
-    if (g->level == LABYRINTH_DEPTH && g->rook_quest_state >= 2) {
-        g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] =
-            TILE_LABYRINTH_FLOOR;
-    }
-    if (g->level == LABYRINTH_DEPTH &&
-        g->rook_labyrinth_switches == (1 << LABYRINTH_SWITCH_COUNT) - 1) {
-        g->map.tiles[g->map.stairs_up_y][35] = TILE_LABYRINTH_FLOOR;
-    }
+    labyrinth_simplify_map(&g->map, g->level);
     g->floor_item_count = 0;
     minotaur_restore_reward(g);
 }
 
 int game_labyrinth_is_open(const GameState *g) {
-    return g->debug_passages_unlocked || g->rook_quest_state != 0;
+    (void)g;
+    return 1;
 }
 
 void game_enter_labyrinth(GameState *g) {
-    const TownApproach *route = approach_route(g);
-    g->labyrinth_entry_town = route && route->area == LOCATION_FOREST ? route->town : LOCATION_TOWN;
+    g->labyrinth_entry_town = LOCATION_TOWN2;
     g->approach_route = -1;
     g->location = LOCATION_LABYRINTH;
     start_expedition(g, g->labyrinth_cache, LABYRINTH_DEPTH);
@@ -4933,137 +4927,32 @@ void game_enter_labyrinth(GameState *g) {
     g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
-    push_message(g, "You enter Rook's labyrinth.");
-    push_message(g, "Five runes open the deepest vault.");
-    push_message(g, "Press the interact key (A by default) on or beside rune switches to activate them.");
+    push_message(g, "You enter the labyrinth. The Minotaur lurks on floor 5.");
 }
 
 void game_change_labyrinth_floor(GameState *g, int descending, int false_stair) {
+    (void)false_stair;
+    if ((descending && g->level >= LABYRINTH_DEPTH) || (!descending && g->level <= 1)) {
+        return;
+    }
     clear_floor_loot(g);
     save_labyrinth_floor(g);
     g->level += descending ? 1 : -1;
     load_labyrinth_floor(g);
-    if (descending) {
-        g->player.x = false_stair ? LABYRINTH_FALSE_EXIT_X + 1 : 2;
-        g->player.y = false_stair ? LABYRINTH_FALSE_EXIT_Y :
-            g->map.stairs_up_y;
-    } else {
-        g->player.x = g->map.stairs_down_x;
-        g->player.y = g->map.stairs_down_y;
-        if (false_stair) {
-            for (int y = 0; y < LABYRINTH_H; y++) {
-                for (int x = 0; x < LABYRINTH_W; x++) {
-                    if (g->map.tiles[y][x] == TILE_LABYRINTH_STAIRS &&
-                        (x != g->map.stairs_down_x ||
-                        y != g->map.stairs_down_y)) {
-                        g->player.x = x;
-                        g->player.y = y;
-                    }
-                }
-            }
-        }
-    }
+    g->player.x = descending ? 2 : g->map.stairs_down_x;
+    g->player.y = descending ? g->map.stairs_up_y : g->map.stairs_down_y;
     g->dialogue_active = 0;
-    if (false_stair && descending) {
-        push_message(g, "The stairs end in a blind corridor.");
-    } else if (false_stair) {
-        push_message(g, "You return to the maze above.");
-    } else {
-        push_message(g, "You reach another level of the labyrinth.");
-    }
-}
-
-static int labyrinth_interaction_tile(TileType tile) {
-    return tile == TILE_LABYRINTH_SWITCH_OFF ||
-        tile == TILE_LABYRINTH_SWITCH_ON || tile == TILE_LABYRINTH_RELIC;
+    map_mark_explored(&g->map, g->player.x, g->player.y);
+    push_message(g, "You reach another level of the labyrinth.");
 }
 
 int game_has_labyrinth_interaction(const GameState *g) {
-    if (g->location != LOCATION_LABYRINTH) {
-        return 0;
-    }
-    static const int offsets[5][2] = {
-        {0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}
-    };
-    for (int i = 0; i < 5; i++) {
-        int x = g->player.x + offsets[i][0];
-        int y = g->player.y + offsets[i][1];
-        if (x >= 0 && x < MAP_W && y >= 0 && y < MAP_H &&
-            labyrinth_interaction_tile(g->map.tiles[y][x])) {
-            return 1;
-        }
-    }
+    (void)g;
     return 0;
 }
 
 int game_interact_labyrinth(GameState *g) {
-    if (g->location != LOCATION_LABYRINTH) {
-        return 0;
-    }
-    static const int offsets[5][2] = {
-        {0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}
-    };
-    for (int i = 0; i < 5; i++) {
-        int x = g->player.x + offsets[i][0];
-        int y = g->player.y + offsets[i][1];
-        if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
-            continue;
-        }
-        TileType tile = g->map.tiles[y][x];
-        if (tile == TILE_LABYRINTH_SWITCH_ON) {
-            push_message(g, "This labyrinth rune is already lit.");
-            return 1;
-        }
-        if (tile == TILE_LABYRINTH_SWITCH_OFF) {
-            g->map.tiles[y][x] = TILE_LABYRINTH_SWITCH_ON;
-            g->rook_labyrinth_switches |= 1 << (g->level - 1);
-            int lit = 0;
-            for (int floor = 0; floor < LABYRINTH_DEPTH; floor++) {
-                lit += (g->rook_labyrinth_switches >> floor) & 1;
-            }
-            if (lit == LABYRINTH_SWITCH_COUNT) {
-                for (int map_y = 0; map_y < MAP_H; map_y++) {
-                    for (int map_x = 0; map_x < MAP_W; map_x++) {
-                        if (g->map.tiles[map_y][map_x] ==
-                            TILE_LABYRINTH_GATE) {
-                            g->map.tiles[map_y][map_x] =
-                                TILE_LABYRINTH_FLOOR;
-                        }
-                    }
-                }
-                if (g->labyrinth_cache[LABYRINTH_DEPTH - 1].valid) {
-                    g->labyrinth_cache[LABYRINTH_DEPTH - 1].map.tiles[
-                        g->labyrinth_cache[LABYRINTH_DEPTH - 1].map.stairs_up_y][35] =
-                        TILE_LABYRINTH_FLOOR;
-                }
-                push_message(g, "The fifth rune opens the relic vault!");
-            } else {
-                char message[MAX_MESSAGE_LEN];
-                snprintf(message, sizeof(message),
-                    "Labyrinth rune lit: %d of %d.",
-                    lit, LABYRINTH_SWITCH_COUNT);
-                push_message(g, message);
-            }
-            return 1;
-        }
-        if (tile == TILE_LABYRINTH_RELIC) {
-            if (g->rook_quest_state != 1) {
-                push_message(g, "The empty pedestal holds nothing for you.");
-                return 1;
-            }
-            for (int enemy = 0; enemy < g->enemy_count; enemy++) {
-                if (g->enemies[enemy].active && g->enemies[enemy].is_boss) {
-                    push_message(g, "The Minotaur guards the ivory rook.");
-                    return 1;
-                }
-            }
-            g->rook_quest_state = 2;
-            g->map.tiles[y][x] = TILE_LABYRINTH_FLOOR;
-            push_message(g, "You recover Rook's stolen ivory rook.");
-            push_message(g, "Return it to Rook in Oakhaven's Inn.");
-            return 1;
-        }
-    }
+    (void)g;
     return 0;
 }
 
@@ -5532,7 +5421,7 @@ static void return_to_town(GameState *g, Location destination) {
 static void enter_return_approach(GameState *g, Location area) {
     for (int i = 0; i < town_approach_count; i++) {
         const TownApproach *route = &town_approaches[i];
-        if (route->area != area || route->town != g->location) {
+        if (route->area != area || route->town != g->location || (area == LOCATION_GLASSDEEP && i != APPROACH_QUARRY_ROAD)) {
             continue;
         }
         if (approach_enter_region(g, i)) {
@@ -5558,15 +5447,13 @@ static void enter_return_approach(GameState *g, Location area) {
 
 void game_leave_labyrinth(GameState *g) {
     save_labyrinth_floor(g);
-    return_to_town(g, g->labyrinth_entry_town);
-    enter_return_approach(g, LOCATION_FOREST);
-    // A legacy expedition can retreat safely after its outdoor entrance is retired.
-    g->player.x = g->map.stairs_down_x;
-    g->player.y = g->map.stairs_up_y;
+    approach_enter_region(g, APPROACH_QUARRY_ROAD);
+    g->player.x = QUARRY_LABYRINTH_X;
+    g->player.y = QUARRY_LABYRINTH_Y + 1;
     g->player.last_dx = 0;
     g->player.last_dy = 1;
     map_mark_explored(&g->map, g->player.x, g->player.y);
-    push_message(g, "You emerge from Rook's labyrinth onto the forest road.");
+    push_message(g, "You emerge onto Stillbury's quarry road.");
 }
 
 void game_return_to_approach(GameState *g) {
@@ -5659,10 +5546,12 @@ void game_leave_approach_to_town(GameState *g, Location town) {
         return;
     }
     TownApproach destination = *route;
-    for (int i = 0; i < town_approach_count; i++) {
-        if (town_approaches[i].town == town && town_approaches[i].area == route->area) {
-            destination = town_approaches[i];
-            break;
+    if (route->town != town) {
+        for (int i = 0; i < town_approach_count; i++) {
+            if (town_approaches[i].town == town && town_approaches[i].area == route->area) {
+                destination = town_approaches[i];
+                break;
+            }
         }
     }
     if (town_road_enter(g, destination.town, town_road_side(destination.gate_x, destination.gate_y), 0)) {
@@ -6343,7 +6232,7 @@ static const QuestOffer quest_offers[] = {
     {"Dain", LOCATION_TAVERN, offsetof(GameState, dain_quest_state), REGIONAL_CHAIN_BOSS_OFFERED, "Assigned: Defeat the Goblin King."},
     {"Alder", LOCATION_TAVERN, offsetof(GameState, alder_quest_state), REGIONAL_CHAIN_BOSS_OFFERED, "Assigned: Defeat the Necromancer."},
     {"Mara", LOCATION_TAVERN, offsetof(GameState, mara_quest_state), 0, "Assigned: Relight the Drowned Beacons."},
-    {"Rook", LOCATION_TAVERN, offsetof(GameState, rook_quest_state), 0, "Assigned: The Ivory Rook."},
+    {"Rook", LOCATION_INN, offsetof(GameState, rook_quest_state), 0, "Assigned: Slay the Minotaur."},
     {"Ilya", LOCATION_TAVERN, offsetof(GameState, dragon_treasure_quest_state), 0, "Assigned: The Dragon's Hoard."},
     {"Nahla", LOCATION_ISLAND, offsetof(GameState, temple_treasure_state), 0, "Quest assigned: The Buried Sun."},
     {"Steward Hadrin", LOCATION_TOWN_HALL, offsetof(GameState, emberforge_quest_state), 0, "Assigned: Reclaim the Emberforge. See your quest journal."},
@@ -6401,6 +6290,10 @@ int game_active_quest_count(const GameState *g) {
 
 int game_quest_offer_at_limit(const GameState *g) {
     const QuestOffer *offer = current_quest_offer(g);
+    if (offer && offer->state_offset == offsetof(GameState, rook_quest_state) &&
+        (g->defeated_bosses & (1u << LOCATION_LABYRINTH))) {
+        return 0;
+    }
     return offer && offer->state_offset != offsetof(GameState, jail_quest_state) &&
         game_active_quest_count(g) >= MAX_ACTIVE_QUESTS;
 }
@@ -6449,8 +6342,6 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
         prepare_quest_expedition(g, LOCATION_COAST);
     } else if (state == &g->dragon_treasure_quest_state) {
         prepare_quest_expedition(g, LOCATION_DRAGONSPINE);
-    } else if (state == &g->rook_quest_state) {
-        g->rook_labyrinth_switches = 0;
     } else if (state == &g->catacombs_quest_state) {
         catacombs_accept_quest(g);
     } else if (state == &g->jail_quest_state) {
@@ -6459,7 +6350,7 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
     push_message(g, offer->message);
     update_oakhaven_boss_quests(g);
     if (state == &g->rook_quest_state) {
-        push_message(g, "The labyrinth on the road to Dawnmere is now open.");
+        labyrinth_complete_quest(g);
     }
     return 1;
 }
@@ -6731,7 +6622,7 @@ void game_talk_to_mara(GameState *g) {
 }
 
 void game_talk_to_rook(GameState *g) {
-    if (g->location != LOCATION_TAVERN || abs(g->player.x - ROOK_TAVERN_X) > 1 || abs(g->player.y - ROOK_TAVERN_Y) > 1) {
+    if (g->location != LOCATION_INN || abs(g->player.x - ROOK_TAVERN_X) > 1 || abs(g->player.y - ROOK_TAVERN_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
@@ -6742,25 +6633,12 @@ void game_talk_to_rook(GameState *g) {
         offer_rook_quest(g);
     } else if (g->rook_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Find the labyrinth on the east road to Dawnmere by the Haunted Forest entrance. One rune per floor opens the "
-            "Minotaur's vault. Return my ivory rook to Oakhaven's Inn.");
-        push_message(g, "Rook is waiting for the ivory rook.");
-    } else if (g->rook_quest_state == 2) {
-        g->gold += ROOK_QUEST_REWARD;
-        g->score += 500;
-        g->rook_quest_state = 3;
-        g->rook_quest_completions++;
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "My ivory rook! Thank you for bringing it back. Please take %d gold "
-            "for your trouble.", ROOK_QUEST_REWARD);
-        char msg[MAX_MESSAGE_LEN];
-        snprintf(msg, sizeof(msg), "Completed: The Ivory Rook. %d gold awarded.",
-            ROOK_QUEST_REWARD);
-        push_message(g, msg);
+            "The labyrinth lies beside the quarry road north of Stillbury. Slay the Minotaur on floor 5. "
+            "The quarry road is open; entering the maze is your choice.");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Thank you for recovering my ivory rook.");
-        push_message(g, "Rook's quest is already complete.");
+            "The Minotaur is dead. The register shows Malakar's office ordered those prisoners sent into the maze. "
+            "The townsfolk blamed the King, but his arcanist must answer for this.");
     }
 }
 

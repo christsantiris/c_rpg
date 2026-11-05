@@ -310,12 +310,12 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         snprintf(status, sizeof(status), "%s %s: %d FOES LEFT", g->level == TEMPLE_DEPTH ? "TREASURE" : "STAIRS", remaining > 0 ? "SEALED" : "OPEN", remaining);
         line2 = status;
     } else if (g->location == LOCATION_LABYRINTH) {
-        title = "ROOK'S LABYRINTH";
-        line1 = "FIVE FLOORS; ONE RUNE PER FLOOR";
-        line2 = "FALSE STAIRS LEAD TO DEAD ENDS";
+        title = "LABYRINTH";
+        line1 = "FIND THE MINOTAUR ON FLOOR 5";
+        line2 = "RETREAT REMAINS AVAILABLE";
         if (g->level == LABYRINTH_DEPTH) {
             title = "THE MINOTAUR'S VAULT";
-            line1 = "LIGHT FIVE RUNES TO OPEN THE GATE";
+            line1 = "SLAY THE MINOTAUR";
             line2 = "BAIT CHARGES INTO STONE TO STAGGER";
         }
     } else if (g->location == LOCATION_CATACOMBS) {
