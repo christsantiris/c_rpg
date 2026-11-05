@@ -49,7 +49,7 @@ present from the start; its services require a recruited companion.
 
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/world-map.png?v=602dee3c0171)](docs/world-map.png?v=602dee3c0171)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=b1d08eaa71ee)](docs/world-map.png?v=b1d08eaa71ee)
 
 The V2 starting region contains Oakhaven, Goblin Mountains to its west, Haunted
 Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
