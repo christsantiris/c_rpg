@@ -4218,10 +4218,6 @@ void draw_guild_seeker(Renderer *r, int tx, int ty) {
     npc_draw(r, tx, ty, NPC_ART_ZARA, 0);
 }
 
-void draw_desert_lamp(Renderer *r, int tx, int ty, int mx, int my) {
-    draw_desert_floor(r, tx, ty, mx, my);
-    draw_world_prop(r, tx, ty, PROP_LAMP, (SDL_Color){109, 231, 213, 255});
-}
 
 void draw_town_path(Renderer *r, int tile_x, int tile_y) {
     int x = tile_x * TILE_SIZE;

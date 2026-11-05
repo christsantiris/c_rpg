@@ -1,3 +1,4 @@
+#include "western_arc.h"
 #include "boss_gates.h"
 #include "containers.h"
 #include "giants_crown.h"
@@ -459,6 +460,7 @@ void giants_defeat(GameState *g) {
         push_message(g, "The Last Jarl falls. You recover 200 gold. The pass between Sunscar and Stillbury is open.");
     }
     crown_quest_sync(g);
+    western_update(g);
 }
 
 static int valid_stage(const GiantsStage *state) {

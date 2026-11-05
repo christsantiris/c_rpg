@@ -1,4 +1,5 @@
 #include "aldric.h"
+#include "western_arc.h"
 #include "eastern_arc.h"
 #include "mangrove.h"
 #include "combat_feedback.h"
@@ -124,6 +125,9 @@ void aldric_turn(GameState *g) {
     int threat_distance = 0;
     for (int i = 0; i < g->enemy_count; i++) {
         Enemy *e = &g->enemies[i];
+        if (western_convoy_enemy(g, e) && !e->boss_aux_x) {
+            continue;
+        }
         if (!e->active) {
             continue;
         }

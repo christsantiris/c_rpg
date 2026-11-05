@@ -1,3 +1,4 @@
+#include "game/western_arc.h"
 #include "approach_checks.h"
 #include "test_utils.h"
 #include "../src/game/game.h"
@@ -238,11 +239,11 @@ void test_dain_town_center(void) {
     visit_dain(&g);
     action_resolve_player(&g, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("Dain requires conversation rather than Action", !g.dain_quest_state);
-    g.sunscar_lamp_quest_state = 1;
+    g.tribute_quest_state = 1;
     game_talk_to_dain(&g);
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     ASSERT("Dain assigns the same mountain quest in Oakhaven and leaves Zara's quest intact", g.dain_quest_state == 1 &&
-        !g.dain_map_fragments && g.sunscar_lamp_quest_state == 1 &&
+        !g.dain_map_fragments && g.tribute_quest_state == 1 &&
         g.dialogue_x == DAIN_OAKHAVEN_X && g.dialogue_y == DAIN_OAKHAVEN_Y &&
         strstr(g.dialogue_text, "Mountains 1 and 2") && strstr(g.dialogue_text, "Oakhaven's Inn"));
     g.dain_map_fragments = DAIN_FRAGMENT_ARCHER;
@@ -251,7 +252,7 @@ void test_dain_town_center(void) {
         strcmp(entry.title, "Recover the Treasure Map") == 0 && entry.stages[0] == 1 && entry.stages[1] == 2 && entry.objective_count == 2 &&
         entry.reward_gold == 60 && entry.reward_score == 400 && entry.objective_complete[0] && !entry.objective_complete[1] && strstr(entry.summary_line_2, "Oakhaven's Inn"));
     ASSERT("saving in Oakhaven retains Dain and partial map progress", save_game(&g, 99141) && load_game(&loaded, 99141) &&
-        loaded.location == LOCATION_TAVERN && loaded.dain_quest_state == 1 && loaded.dain_map_fragments == 1 && loaded.sunscar_lamp_quest_state == 1 &&
+        loaded.location == LOCATION_TAVERN && loaded.dain_quest_state == 1 && loaded.dain_map_fragments == 1 && loaded.tribute_quest_state == 1 &&
         loaded.map.tiles[DAIN_OAKHAVEN_Y][DAIN_OAKHAVEN_X] == TILE_NPC_DAIN);
     g = loaded;
     int gold = g.gold;
@@ -350,7 +351,7 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
         {"Alder", LOCATION_TAVERN, &g->alder_quest_state},
         {"Mara", LOCATION_TAVERN, &g->mara_quest_state},
         {"Rook", LOCATION_TAVERN, &g->rook_quest_state},
-        {"Zara", LOCATION_INN, &g->sunscar_lamp_quest_state},
+        {"Zara", LOCATION_TAVERN, &g->tribute_quest_state},
         {"Ilya", LOCATION_TAVERN, &g->dragon_treasure_quest_state},
         {"Nahla", LOCATION_ISLAND, &g->temple_treasure_state},
         {"Steward Hadrin", LOCATION_TOWN_HALL, &g->emberforge_quest_state},
@@ -364,7 +365,7 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
         {"Watchkeeper Seren", LOCATION_ALEHOUSE, &g->dawnmere_quest_state},
         {"Watchkeeper Seren", LOCATION_DAWNMERE, &g->saltwind_quest_state},
         {WAR_SPEAKER, LOCATION_TOWN_HALL, &g->war_machine_quest_state},
-        {"Antiquarian Edda", LOCATION_GUILD, &g->crown_quest_state}
+        {"Historian Liora", LOCATION_APPROACH, &g->crown_quest_state}
     };
     size_t count = sizeof(offers) / sizeof(offers[0]);
     for (size_t i = 0; i < count; i++) {
@@ -464,7 +465,7 @@ void test_quest_offer_controls(void) {
         {game_talk_to_alder, LOCATION_TAVERN, ALDER_OAKHAVEN_X, ALDER_OAKHAVEN_Y, &g.alder_quest_state},
         {game_talk_to_mara, LOCATION_TAVERN, MARA_TAVERN_X, MARA_TAVERN_Y, &g.mara_quest_state},
         {game_talk_to_rook, LOCATION_TAVERN, ROOK_TAVERN_X, ROOK_TAVERN_Y, &g.rook_quest_state},
-        {game_talk_to_guild_seeker, LOCATION_INN, ZARA_INN_X, ZARA_INN_Y, &g.sunscar_lamp_quest_state},
+        {game_talk_to_guild_seeker, LOCATION_TAVERN, ZARA_OAKHAVEN_X, ZARA_OAKHAVEN_Y, &g.tribute_quest_state},
         {game_talk_to_dragon_seeker, LOCATION_TAVERN, ILYA_TAVERN_X, ILYA_TAVERN_Y, &g.dragon_treasure_quest_state},
         {game_talk_to_nahla, LOCATION_ISLAND, ISLAND_NAHLA_X, ISLAND_NAHLA_Y, &g.temple_treasure_state},
         {game_talk_to_steward, LOCATION_TOWN_HALL, HALL_STEWARD_X, HALL_STEWARD_Y, &g.emberforge_quest_state},
@@ -479,6 +480,9 @@ void test_quest_offer_controls(void) {
         g.location = cases[i].location;
         g.player.x = cases[i].x;
         g.player.y = cases[i].y + 1;
+        if (cases[i].state == &g.tribute_quest_state) {
+            g.map.tiles[ZARA_OAKHAVEN_Y][ZARA_OAKHAVEN_X] = TILE_NPC_GUILD_SEEKER;
+        }
         int messages = g.message_count;
         cases[i].talk(&g);
         ASSERT("talking offers a quest without activating it or logging an assignment", game_quest_offer_active(&g) &&

@@ -302,7 +302,11 @@ typedef struct {
     int dawnmere_progress; // Checkpoint, market squad, commander.
     int dawnmere_quest_state; // 0 unaccepted, 1 active, 3 completed.
     int saltwind_quest_state; // 0 unaccepted, 1 active, 3 completed.
-    int royal_reported_actions; // 1: Dawnmere liberation, 2: future public western actions.
+    int royal_reported_actions; // 1: Dawnmere liberation, 2: attacking the royal tribute convoy.
+    int tribute_quest_state; // 0 unaccepted, 1 active, 2 completed/reward pending, 3 rewarded.
+    int tribute_progress; // 1: confiscated cargo recovered, 2: Pharaoh's agreement recovered.
+    int jarl_quest_state; // 0 unaccepted, 1 active, 3 completed on the Jarl's defeat.
+    int zara_at_camp; // Zara travels from Oakhaven's Inn to the Sunscar caravan camp.
     int act4_arrived;
     int stillbury_challenge;
     int stillbury_prompt;
@@ -313,7 +317,7 @@ typedef struct {
     int giants_crown_defeated;
     int giants_entry_from_north;
     int crown_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
-    int crown_quest_progress; // Inscription, royal seal, Jarl victory, royal crown.
+    int crown_quest_progress; // Legacy inscription/seal bits, Jarl victory, crown recovered directly.
     int crown_vault_open;
     int crown_reward_state; // 0 unearned, 1 reserved with Edda, 2 claimed.
     IronfangStage ironfang[IRON_DEPTH];
@@ -489,7 +493,6 @@ typedef struct {
     int cain_scroll_given;
     int island_travel_unlocked;
     int dragon_treasure_quest_state;
-    int sunscar_lamp_quest_state;
     int emberforge_quest_state;
     int emberforge_progress;
     int emberforge_encounters;
@@ -612,7 +615,6 @@ int game_sharpen_weapon(GameState *g, int index);
 int game_workshop_item_index(const GameState *g, int row);
 void game_leave_guild(GameState *g);
 void game_talk_to_guild_seeker(GameState *g);
-void game_collect_desert_lamp(GameState *g);
 void game_enter_labyrinth(GameState *g);
 void game_leave_labyrinth(GameState *g);
 int game_labyrinth_is_open(const GameState *g);

@@ -57,10 +57,11 @@ Ilya assigns **The Dragon's Hoard** in **Oakhaven's Inn**. Its objective
 remains the golden goblet on Dragonspine stage 5, beyond Ridgeshire's north
 gate. Return to Ilya in the Inn for one Potion of Strength and 600 score.
 
-Zara's **The Lost Magic Lamp** quest also appears after accepting it inside
-Stillbury's Tavern. Recover the lamp from Sunscar Wastes stage 4,
-then return to Zara for 80 gold and 600 score. Pickup moves the quest to
-Completed with its reward pending; speak to Zara to collect it.
+Zara's **The King's Tribute** tracks Sunscar 2's confiscated cargo and the
+Pharaoh's agreement on stage 5. Both are required. The quest moves to Completed
+before the camp reward is collected. Garran's Jarl quest completes on the boss's
+defeat; Liora's crown quest waits in Completed for delivery to Edda outside
+Stillbury. The lamp quest is retired. See [western quests](act3-western.md).
 
 Town Hall quest, **Reclaim the Emberforge**, tracks recovery of its mechanism
 on Ashen Hollow stage 2 and repair of its furnace on stage 4. Return to Steward
