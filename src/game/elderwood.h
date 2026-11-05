@@ -4,11 +4,11 @@
 #include "game.h"
 
 #define NORTH_ROAD_X 32
-#define NORTH_ELDER_X 40
-#define NORTH_ELDER_Y 32
+#define NORTH_SWAMP_X 40
+#define NORTH_SWAMP_Y 32
 #define NORTH_CAT_X 24
 #define NORTH_CAT_Y 15
-#define NORTH_FOREST_BARRIER_Y 30
+#define NORTH_SWAMP_BARRIER_Y 30
 
 enum { ELDER_CHARGE = 1, ELDER_ROOTS, ELDER_SUMMON };
 

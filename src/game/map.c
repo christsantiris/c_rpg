@@ -39,6 +39,9 @@ int map_is_travel_tile(TileType tile) {
         tile == TILE_APPROACH_TOWN || tile == TILE_APPROACH_AREA || tile == TILE_APPROACH_DUNGEON_TOWN ||
         tile == TILE_LABYRINTH_ENTRANCE || tile == TILE_LABYRINTH_EXIT || tile == TILE_LABYRINTH_STAIRS || tile == TILE_ROAD_GATE_OPEN || tile == TILE_ROAD_GATE_CLOSED ||
         tile == TILE_FOREST_ENTRANCE || tile == TILE_FOREST_EXIT ||
+        tile == TILE_ELDERWOOD_ENTRANCE || tile == TILE_ELDERWOOD_EXIT ||
+        tile == TILE_SWAMP_ENTRANCE || tile == TILE_SWAMP_EXIT ||
+        tile == TILE_NORTH_SWAMP || tile == TILE_NORTH_CATACOMBS || tile == TILE_NORTH_STILLBURY || tile == TILE_NORTH_CASTLE ||
         tile == TILE_MOUNTAIN_ENTRANCE || tile == TILE_MOUNTAIN_EXIT || tile == TILE_BROKEN_FERRY;
 }
 
@@ -519,7 +522,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_ELDERWOOD_WALL &&
         m->tiles[y][x] != TILE_ELDERWOOD_BRAMBLE &&
         m->tiles[y][x] != TILE_ELDERWOOD_LOG &&
-        m->tiles[y][x] != TILE_NORTH_ELDERWOOD &&
+        m->tiles[y][x] != TILE_NORTH_SWAMP &&
         m->tiles[y][x] != TILE_NORTH_CATACOMBS &&
         m->tiles[y][x] != TILE_FOREST_WALL &&
         m->tiles[y][x] != TILE_FOREST_HIDDEN_TRAIL &&

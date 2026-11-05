@@ -1,4 +1,5 @@
 #include "../game/labyrinth_arc.h"
+#include "../game/stillbury_routes.h"
 #include "../game/western_arc.h"
 #include "../game/coast_exits.h"
 #include "../game/boss_gates.h"
@@ -1127,9 +1128,9 @@ static int elderwood_load(const cJSON *root, GameState *g, int version) {
     }
     if (g->max_elderwood_level_reached < 1 || g->max_elderwood_level_reached > ELDERWOOD_DEPTH ||
         g->elderwood_defeated < 0 || g->elderwood_defeated > 1 ||
-        (g->elderwood_entry_town != LOCATION_TOWN && g->elderwood_entry_town != LOCATION_CASTLE) ||
-        (g->catacombs_entry_town != LOCATION_TOWN && g->catacombs_entry_town != LOCATION_CASTLE) ||
-        (g->northern_portal_town != LOCATION_TOWN && g->northern_portal_town != LOCATION_CASTLE && g->northern_portal_town != LOCATION_TOWN3)) {
+        (g->elderwood_entry_town != LOCATION_TOWN && g->elderwood_entry_town != LOCATION_CASTLE && g->elderwood_entry_town != LOCATION_TOWN2) ||
+        (g->catacombs_entry_town != LOCATION_TOWN && g->catacombs_entry_town != LOCATION_CASTLE && g->catacombs_entry_town != LOCATION_TOWN2) ||
+        (g->northern_portal_town != LOCATION_TOWN && g->northern_portal_town != LOCATION_CASTLE && g->northern_portal_town != LOCATION_TOWN3 && g->northern_portal_town != LOCATION_TOWN2)) {
         return 0;
     }
     const cJSON *array = cJSON_GetObjectItem(root, "elderwood_cache");
@@ -1950,7 +1951,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 242);
+    cJSON_AddNumberToObject(root, "save_version", 243);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -4492,8 +4493,8 @@ int load_game(GameState *g, int slot) {
     g->mountain_portal_town = mountain_portal->valueint;
     if ((g->forest_entry_town != LOCATION_TOWN && g->forest_entry_town != LOCATION_DAWNMERE && g->forest_entry_town != LOCATION_TOWN2) ||
         (g->forest_portal_town != LOCATION_TOWN && g->forest_portal_town != LOCATION_DAWNMERE && g->forest_portal_town != LOCATION_TOWN2) ||
-        (g->swamp_entry_town != LOCATION_TOWN2 && g->swamp_entry_town != LOCATION_TOWN3) ||
-        (g->swamp_portal_town != LOCATION_TOWN2 && g->swamp_portal_town != LOCATION_TOWN3) ||
+        (g->swamp_entry_town != LOCATION_TOWN2 && g->swamp_entry_town != LOCATION_TOWN3 && g->swamp_entry_town != LOCATION_CASTLE) ||
+        (g->swamp_portal_town != LOCATION_TOWN2 && g->swamp_portal_town != LOCATION_TOWN3 && g->swamp_portal_town != LOCATION_CASTLE) ||
         (g->mountain_entry_town != LOCATION_TOWN && g->mountain_entry_town != LOCATION_TOWN2 && g->mountain_entry_town != LOCATION_DAWNMERE && g->mountain_entry_town != LOCATION_TOWN4) ||
         (g->mountain_portal_town != LOCATION_TOWN && g->mountain_portal_town != LOCATION_TOWN2 && g->mountain_portal_town != LOCATION_DAWNMERE && g->mountain_portal_town != LOCATION_TOWN4)) {
         cJSON_Delete(root);
@@ -7199,6 +7200,7 @@ int load_game(GameState *g, int slot) {
     }
     approach_retire_labyrinth(g);
     labyrinth_migrate(g, save_version);
+    stillbury_routes_migrate(g, save_version);
     game_repair_outdoor_entries(g);
     town_road_refresh_oakhaven(g);
     aldric_place(g);

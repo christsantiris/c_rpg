@@ -2365,10 +2365,19 @@ static void draw_labyrinth_exits(Renderer *r, const GameState *g, const Viewport
 }
 
 static void draw_adventure_exits(Renderer *r, const GameState *g, const Viewport *v) {
-    if ((g->location != LOCATION_FOREST && g->location != LOCATION_MOUNTAINS) || !r->font_tiny) {
+    if ((g->location != LOCATION_FOREST && g->location != LOCATION_MOUNTAINS && g->location != LOCATION_ELDERWOOD && g->location != LOCATION_SWAMP) || !r->font_tiny) {
         return;
     }
     int forest = g->location == LOCATION_FOREST;
+    int elder = g->location == LOCATION_ELDERWOOD;
+    int swamp = g->location == LOCATION_SWAMP;
+    TileType entrance = elder ? TILE_ELDERWOOD_ENTRANCE : swamp ? TILE_SWAMP_ENTRANCE : forest ? TILE_FOREST_ENTRANCE : TILE_MOUNTAIN_ENTRANCE;
+    TileType exit = elder ? TILE_ELDERWOOD_EXIT : swamp ? TILE_SWAMP_EXIT : forest ? TILE_FOREST_EXIT : TILE_MOUNTAIN_EXIT;
+    const char *name = elder ? "ELDERWOOD" : swamp ? "BLACKWATER" : forest ? "HAUNTED FOREST" : "GOBLIN MOUNTAINS";
+    const char *road = elder ? "ELDERWOOD" : swamp ? "BLACKWATER" : forest ? "FOREST" : "MOUNTAIN";
+    const char *boss = elder ? "ELDERTHORN" : swamp ? "SWAMP DEMON" : forest ? "NECROMANCER" : "GOBLIN KING";
+    int depth = elder ? ELDERWOOD_DEPTH : swamp ? SWAMP_DEPTH : forest ? FOREST_DEPTH : MOUNTAIN_DEPTH;
+    int edge_w = elder ? ELDERWOOD_W : swamp ? SWAMP_MAP_W : MAP_W;
     float zoom = game_camera_zoom(g);
     for (int y = v->cam_y; y < v->cam_y + v->tiles_y && y < MAP_H; y++) {
         for (int x = v->cam_x; x < v->cam_x + v->tiles_x && x < MAP_W; x++) {
@@ -2376,20 +2385,19 @@ static void draw_adventure_exits(Renderer *r, const GameState *g, const Viewport
             if (tile == TILE_ITEM) {
                 tile = floor_item_underlay(g, x, y);
             }
-            int onward = tile == (forest ? TILE_FOREST_EXIT : TILE_MOUNTAIN_EXIT);
-            if (!onward && tile != (forest ? TILE_FOREST_ENTRANCE : TILE_MOUNTAIN_ENTRANCE)) {
+            int onward = tile == exit;
+            if (!onward && tile != entrance) {
                 continue;
             }
             char label[64];
-            char direction = x == 0 ? 'W' : x == MAP_W - 1 ? 'E' : y == 0 ? 'N' : 'S';
+            char direction = x == 0 ? 'W' : x == edge_w - 1 ? 'E' : y == 0 ? 'N' : 'S';
             int stage = g->level + (onward ? 1 : -1);
-            int depth = forest ? FOREST_DEPTH : MOUNTAIN_DEPTH;
             if (onward && g->level == depth && !boss_gate_open(g, g->location)) {
-                snprintf(label, sizeof(label), "%c: DEFEAT %s", direction, forest ? "NECROMANCER" : "GOBLIN KING");
+                snprintf(label, sizeof(label), "%c: DEFEAT %s", direction, boss);
             } else if (stage < 1 || stage > depth) {
-                snprintf(label, sizeof(label), "%c: %s ROAD", direction, forest ? "FOREST" : "MOUNTAIN");
+                snprintf(label, sizeof(label), "%c: %s ROAD", direction, road);
             } else {
-                snprintf(label, sizeof(label), "%c: %s %d", direction, forest ? "HAUNTED FOREST" : "GOBLIN MOUNTAINS", stage);
+                snprintf(label, sizeof(label), "%c: %s %d", direction, name, stage);
             }
             int width;
             TTF_SizeText(r->font_tiny, label, &width, NULL);
@@ -2674,11 +2682,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_HEARTSEED_ALTAR:
                     draw_elderwood_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
-                case TILE_NORTH_ELDERWOOD:
+                case TILE_NORTH_SWAMP:
                 case TILE_NORTH_CATACOMBS:
                     draw_town_floor(r, sx, sy);
                     break;
-                case TILE_NORTH_OAKHAVEN:
+                case TILE_NORTH_STILLBURY:
                 case TILE_NORTH_CASTLE:
                     draw_town_path(r, sx, sy);
                     break;
@@ -3584,7 +3592,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
-    if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_SWAMP) {
+    if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_SWAMP && !northern_approach(g)) {
         draw_swamp_entrance(r, viewport_to_screen_x(v, g->map.stairs_down_x), viewport_to_screen_y(v, g->map.stairs_down_y));
         int open = g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP));
         if (open || approach_route(g)->town == LOCATION_TOWN2) {
@@ -3603,6 +3611,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_harbor(r, dock_x, dock_y);
         renderer_draw_text(r, "DOCKS", dock_x * TILE_SIZE, (dock_y - 1) * TILE_SIZE,
             (SDL_Color){220, 180, 60, 255}, r->font_tiny);
+    }
+    if (g->location == LOCATION_APPROACH && g->approach_route == APPROACH_ELDERWOOD_ROAD) {
+        SDL_Rect trees = {(viewport_to_screen_x(v, g->map.stairs_down_x) - 3) * TILE_SIZE,
+            (viewport_to_screen_y(v, g->map.stairs_down_y) - 5) * TILE_SIZE, 7 * TILE_SIZE, 6 * TILE_SIZE};
+        SDL_RenderCopy(r->sdl, r->elderwood_entrance_texture, NULL, &trees);
     }
     TownExitStyle entrance_style;
     if (g->location == LOCATION_APPROACH && !northern_approach(g) && approach_route(g) && approach_entrance_rows(approach_route(g)->area) &&
@@ -4005,13 +4018,22 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_town_road_sign(r, viewport_to_screen_x(v, sign_x), viewport_to_screen_y(v, sign_y), sign);
                 }
             }
-            int ends = approach_bridge_road(g) || approach_sunscar_road(g) ? 3 : 2;
+            int ends = approach_bridge_road(g) ? 4 : approach_sunscar_road(g) || g->approach_route == APPROACH_ELDERWOOD_ROAD ? 3 : 2;
             for (int end = 0; end < ends; end++) {
                 int x = end ? g->map.stairs_down_x : g->map.stairs_up_x;
                 int y = end ? g->map.stairs_down_y : g->map.stairs_up_y;
                 const char *name = end ? approach_area_name(route->area) : approach_origin_name(route);
+                if (end == 3) {
+                    x = BRIDGE_QUARRY_X;
+                    y = 0;
+                    name = "N: QUARRY / LABYRINTH";
+                }
                 if (end == 2) {
-                    if (approach_bridge_road(g)) {
+                    if (g->approach_route == APPROACH_ELDERWOOD_ROAD) {
+                        x = APPROACH_W - 1;
+                        y = APPROACH_H / 2;
+                        name = "E: SUNKEN COAST";
+                    } else if (approach_bridge_road(g)) {
                         x = APPROACH_BRIDGE_X;
                         y = 8;
                         name = "GIANT'S BRIDGE";

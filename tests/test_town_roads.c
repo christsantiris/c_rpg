@@ -64,7 +64,7 @@ static void riverbank_round_trips(GameState *g, GameState *loaded) {
 static void chapter_one_connections(GameState *g, GameState *loaded) {
     TownApproach route;
     ASSERT("Oakhaven's west road reaches Goblin Mountains", town_road_connection(LOCATION_TOWN, TOWN_SIDE_WEST, &route) && route.area == LOCATION_MOUNTAINS);
-    ASSERT("Stillbury now faces its river dock rather than Goblin Mountains", !town_road_connection(LOCATION_TOWN2, TOWN_SIDE_EAST, &route) && town_road_connection(LOCATION_TOWN2, TOWN_SIDE_SOUTH, &route) && route.area == LOCATION_RIVER_CROSSING);
+    ASSERT("Stillbury connects east to Elderwood and south to the river dock", town_road_connection(LOCATION_TOWN2, TOWN_SIDE_EAST, &route) && route.area == LOCATION_ELDERWOOD && town_road_connection(LOCATION_TOWN2, TOWN_SIDE_SOUTH, &route) && route.area == LOCATION_RIVER_CROSSING);
     ASSERT("Oakhaven's east road reaches Haunted Forest", town_road_connection(LOCATION_TOWN, TOWN_SIDE_EAST, &route) && route.area == LOCATION_FOREST);
     ASSERT("Dawnmere faces the other end of Haunted Forest", town_road_connection(LOCATION_DAWNMERE, TOWN_SIDE_WEST, &route) && route.area == LOCATION_FOREST);
     ASSERT("Oakhaven's south road reaches its local dungeon", town_road_connection(LOCATION_TOWN, TOWN_SIDE_SOUTH, &route) && route.area == LOCATION_DUNGEON);

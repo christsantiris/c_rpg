@@ -45,14 +45,14 @@ void coastal_refresh_docks(GameState *g) {
 }
 
 void coastal_return_from_island(GameState *g) {
-    approach_enter_region(g, 3);
+    approach_enter_region(g, APPROACH_COAST_ROAD);
     coastal_refresh_docks(g);
     g->player.x = game_harbor_unlocked(g) ? COAST_DOCK_ENTRY_X : COAST_DOCK_X - 1;
     g->player.y = game_harbor_unlocked(g) ? COAST_DOCK_ENTRY_Y : COAST_DOCK_Y - 1;
     g->player.last_dx = -1;
     g->player.last_dy = 0;
     map_mark_explored(&g->map, g->player.x, g->player.y);
-    push_message(g, "The ship returns to the docks beside the Sunken Coast entrance. Oakhaven is north.");
+    push_message(g, "The ship returns to the docks beside the Sunken Coast entrance. Stillbury lies west through Elderwood.");
 }
 
 void coastal_migrate_travel(GameState *g) {

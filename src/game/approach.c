@@ -1,4 +1,5 @@
 #include "labyrinth_arc.h"
+#include "stillbury_routes.h"
 #include "western_arc.h"
 #include "giants_crown.h"
 #include "ironfang.h"
@@ -41,7 +42,10 @@ const TownApproach town_approaches[] = {
     {LOCATION_TOWN, LOCATION_GIANTS_CROWN, 20, 0, 1},
     // Northern end of the five-stage pass, reached across Giant's Bridge from Stillbury.
     {LOCATION_TOWN2, LOCATION_GIANTS_CROWN, 0, 12, 1},
-    {LOCATION_TOWN2, LOCATION_GLASSDEEP, 20, 0}
+    {LOCATION_TOWN2, LOCATION_GLASSDEEP, 20, 0, 1},
+    {LOCATION_TOWN2, LOCATION_SWAMP, 20, 0},
+    {LOCATION_TOWN2, LOCATION_ELDERWOOD, TOWN_W - 1, 12},
+    {LOCATION_TOWN2, LOCATION_COAST, TOWN_W - 1, 12, 1}
 };
 
 // Serialized route 17 remains reserved.
@@ -89,6 +93,12 @@ int approach_peaks_road(const GameState *g) {
 }
 
 const char *approach_origin_name(const TownApproach *route) {
+    if (route == &town_approaches[APPROACH_COAST_ROAD]) {
+        return "ELDERWOOD FOREST";
+    }
+    if (route == &town_approaches[APPROACH_QUARRY_ROAD]) {
+        return "BRIDGE FORK / STILLBURY";
+    }
     if (route == &town_approaches[APPROACH_PEAKS_ROAD]) {
         return "SUNSCAR WASTES";
     }
@@ -561,6 +571,7 @@ int approach_entrance_rows(Location area) {
         case LOCATION_STORMWATCH:
         case LOCATION_IRONFANG:
         case LOCATION_GIANTS_CROWN:
+        case LOCATION_ELDERWOOD:
         case LOCATION_CATACOMBS: return 6;
         default: return 0;
     }
@@ -603,6 +614,10 @@ static void refresh_bridge_road(GameState *g) {
     g->map.stairs_down_y = APPROACH_H - 1;
     g->map.tiles[APPROACH_BRIDGE_EXIT_Y][APPROACH_W - 1] = TILE_APPROACH_TOWN;
     g->map.tiles[APPROACH_H - 1][APPROACH_BRIDGE_X] = TILE_APPROACH_AREA;
+    for (int y = 0; y < APPROACH_BRIDGE_EXIT_Y; y++) {
+        g->map.tiles[y][BRIDGE_QUARRY_X] = TILE_TOWN_PATH;
+    }
+    g->map.tiles[0][BRIDGE_QUARRY_X] = TILE_APPROACH_DUNGEON_TOWN;
     approach_grow_scenery(&g->map, LOCATION_GIANTS_CROWN);
     g->map.tiles[APPROACH_H - 3][APPROACH_BRIDGE_X - 2] = TILE_GIANTS_COLUMN;
     g->map.tiles[APPROACH_H - 3][APPROACH_BRIDGE_X + 2] = TILE_GIANTS_COLUMN;
@@ -704,6 +719,7 @@ void approach_refresh_entrance(GameState *g) {
     if (approach_scenery(route->area, 100) != TILE_WALL) {
         approach_grow_scenery(&g->map, route->area);
     }
+    stillbury_routes_prepare(g);
     if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
         g->player.x = jx;
         g->player.y = jy;
@@ -1035,6 +1051,7 @@ int approach_enter_region(GameState *g, int index) {
     }
     boss_gate_refresh(g);
     western_prepare(g);
+    stillbury_routes_prepare(g);
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
     g->player.frozen_turns = 0;
@@ -1046,6 +1063,9 @@ int approach_enter_region(GameState *g, int index) {
 }
 
 int approach_travel(GameState *g, int x, int y) {
+    if (stillbury_routes_travel(g, x, y)) {
+        return 1;
+    }
     if (g->approach_route == APPROACH_QUARRY_ROAD && g->map.tiles[y][x] == TILE_LABYRINTH_ENTRANCE) {
         game_enter_labyrinth(g);
         return 1;
@@ -1115,6 +1135,10 @@ int approach_travel(GameState *g, int x, int y) {
         return 0;
     }
     Location area = route->area;
+    if (area == LOCATION_ELDERWOOD) {
+        elderwood_enter(g);
+        return 1;
+    }
     int from_north = approach_bridge_road(g);
     g->location = route->town;
     g->approach_route = -1;

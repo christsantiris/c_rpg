@@ -1,16 +1,23 @@
 # Blackwater Swamp
 
-Blackwater Swamp has five forward levels, with the Swamp Demon on level 5. Stillbury's north gate and Rosemoor's south gate each lead
-onto a safe cobblestone causeway through bog, reeds and dead trees, with narrow
-mud verges and a clearing at its town end. A mossy crypt framed by mangroves
-stands in a clearing beside the road; its south-facing doorway always starts Swamp 1.
+Blackwater lies between Stillbury's northern gate and the Royal Catacombs
+beneath the castle. Its mossy landmark stands beside the safe northern road.
+Walk into its south-facing doorway to begin five stages, with the Swamp Demon
+on stage 5. Stage 1 has a southern boundary entrance and an inward northbound
+trail; the mudbanks turn east through the remaining stages.
 
-Before the Demon is defeated, the road ends at the entrance. Victory opens
-the full north–south road: Rosemoor north, Stillbury south. Leaving the final
-clearing returns to that road so the player can walk home or onward. There is
-no swamp shortcut, boss branch or route-choice menu. Ordinary backtracking
-within the swamp remains available; retreat from level 1 returns to the entrance
-path for the town used. Regular enemies do not need to be cleared to advance.
+Defeating the Demon opens the road north to the Catacombs. The Grave Marshal
+controls the final castle approach independently. Retreat from Swamp 1 returns
+to Blackwater's doorway and Stillbury; returning from the final stage opens the
+same road on the Catacombs side of the demon gate. Its eastbound exit trail
+continues forward before bending toward the northern road. Rosemoor no longer connects directly to the swamp.
+The quarry and optional labyrinth branch from Stillbury's western bridge road.
+Elderwood and Sunken Coast lie on the separate eastern road.
+
+Save version 243 moves the old western stage-1 entrance to the south boundary
+in place, preserving active and cached maps, exploration, enemies and wounds.
+Stillbury's improved reception after the Demon is a subsequent story change;
+the existing Demonic Sword reward remains available.
 
 The swamp is drawn at the Crown Roads' 1.5× zoom: the camera shows about
 30 × 18 tiles around the player. The Swamp Demon wakes within twelve tiles; the camera leans toward it to keep it on screen as its telegraphed attacks begin.

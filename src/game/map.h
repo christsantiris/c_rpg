@@ -652,9 +652,9 @@ typedef enum {
     TILE_ELDERWOOD_EXIT,
     TILE_ELDERWOOD_BRAMBLE,
     TILE_ELDERWOOD_LOG,
-    TILE_NORTH_ELDERWOOD,
+    TILE_NORTH_SWAMP,
     TILE_NORTH_CATACOMBS,
-    TILE_NORTH_OAKHAVEN,
+    TILE_NORTH_STILLBURY,
     TILE_NORTH_CASTLE,
     TILE_JAIL_GEAR_CHEST,
     // Skip the 16 tile IDs from the retired coastal region.
@@ -823,6 +823,7 @@ int map_mountain_difficulty(int level);
 void map_generate_coast(Map *m, int level);
 void map_shape_coast(Map *m, int level);
 void map_generate_swamp(Map *m, int level);
+void map_swamp_south_entry(Map *m);
 int map_swamp_difficulty(int level);
 void map_generate_high_pass(Map *m);
 void map_generate_dragonspine(Map *m, int level);
