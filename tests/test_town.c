@@ -7,6 +7,7 @@
 #include "../src/game/elowen.h"
 #include "../src/game/restoration.h"
 #include "../src/game/heartseed.h"
+#include "../src/game/elderwood_quest.h"
 #include "../src/screens/shop.h"
 #include "../src/screens/harbor.h"
 #include "../src/systems/save_load.h"
@@ -624,7 +625,7 @@ void test_bram_guidance(void) {
     g.player.x = TAMSIN_X + 1;
     g.player.y = TAMSIN_Y;
     ASSERT("Tamsin no longer stands in Oakhaven's square and cannot be spoken to there",
-        map_is_walkable(&g.map, TAMSIN_X, TAMSIN_Y) && !heartseed_talk(&g) && !g.dialogue_active);
+        map_is_walkable(&g.map, TAMSIN_X, TAMSIN_Y) && !elderwood_quest_talk(&g) && !g.dialogue_active);
     g.player.x = 20;
     g.player.y = 12;
     game_talk_to_bram(&g);

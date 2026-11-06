@@ -91,7 +91,10 @@ Stillbury's north gate leads through **Blackwater Swamp** toward the **Royal
 Catacombs** beneath the castle. Defeating the Swamp Demon opens the road to the
 Catacombs; defeating the Grave Marshal opens the final castle approach.
 The eastern gate leads through **Elderwood Forest**: defeating Elderthorn opens
-the onward road to **Sunken Coast**. Physical retreat leads back to Stillbury.
+the onward road to **Sunken Coast**. **Ranger Tamsin**, near Stillbury's east
+gate, offers **Clear Elderwood**: defeat Elderthorn, then return to her for
+**120 gold and 800 score**. The boss objective moves straight to Completed;
+there are no Heartseed or rescue objectives. Physical retreat leads back to Stillbury.
 The western road forks before **Giant's Bridge**. Its northern branch reaches
 **Stonewake Quarry**, with an optional **Labyrinth** entrance beside that road.
 Neither the Jarl nor the Minotaur blocks the quarry branch. Rook offers
@@ -109,7 +112,7 @@ coastal trade, warming civilian reactions without clearing the Crown's record.
 See the [coastal quest and travel notes](docs/coastal-quest.md).
 
 The atlas no longer labels the river mouth as Estuary. Geography south of the
-river stays fixed. Elderwood's Malakar clue and the new island amulet remain
+river stays fixed. Further Malakar evidence and the new island amulet remain
 separate story steps. The rest of the world is provisional context for later design.
 
 ## Controls

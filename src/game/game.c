@@ -15,6 +15,7 @@
 #include "catacombs.h"
 #include "elderwood.h"
 #include "heartseed.h"
+#include "elderwood_quest.h"
 #include "spice_skiff.h"
 #include "stormbell.h"
 #include "war_machine.h"
@@ -1631,6 +1632,7 @@ void game_init(GameState *g) {
     g->max_elderwood_level_reached = 1;
     g->elderwood_defeated = 0;
     g->heartseed_quest_state = 0;
+    g->elderwood_quest_state = 0;
     g->heartseed_progress = 0;
     g->heartseed_bindings = 0;
     g->heartseed_sites = 0;
@@ -6255,8 +6257,8 @@ static const QuestOffer quest_offers[] = {
         "Assigned: Passage Through Saltwind. Defeat Sszareth, paddle across the river and dock at Stillbury."},
     {"Spice Merchant Corvin", LOCATION_DAWNMERE_MERCHANT, offsetof(GameState, spice_skiff_quest_state), 0,
         "Assigned: The Missing Spice Skiff. Search the stranded skiff on Saltwind 2 and recover its cargo on Saltwind 3."},
-    {"Forester Tamsin", LOCATION_TOWN, offsetof(GameState, heartseed_quest_state), 0,
-        "Assigned: The Stolen Heartseed. Find Dark Elf orders in Elderwood 2 and the bound grove in Elderwood 4."},
+    {RANGER_TAMSIN, LOCATION_TOWN2, offsetof(GameState, elderwood_quest_state), 0,
+        "Assigned: Clear Elderwood. Defeat Elderthorn in Elderwood 5, then claim Ranger Tamsin's reward in Stillbury."},
     {"Huntmaster Selene", LOCATION_GUILD, offsetof(GameState, hunt_quest_state), 0, "Assigned: The Three Great Hunts. See your quest journal."},
     {"Marshal Veyra", LOCATION_TOWN_HALL, offsetof(GameState, watchfire_quest_state), 0, "Assigned: Watchfires of Ridgeshire. See your quest journal."},
     {"Bram", LOCATION_TAVERN, offsetof(GameState, elowen_quest_state), ELOWEN_MISSING, "Assigned: Save Elowen. Defeat the Lich King in Oakhaven's dungeon."},
@@ -6364,8 +6366,8 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
         stormbell_accept(g);
     } else if (state == &g->spice_skiff_quest_state) {
         spice_skiff_accept(g);
-    } else if (state == &g->heartseed_quest_state) {
-        heartseed_accept(g);
+    } else if (state == &g->elderwood_quest_state) {
+        elderwood_quest_sync(g);
     } else if (state == &g->dain_quest_state && offer->offered_state == 0) {
         g->dain_map_fragments = 0;
     } else if (state == &g->alder_quest_state && offer->offered_state == 0) {

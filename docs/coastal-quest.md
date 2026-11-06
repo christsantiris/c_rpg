@@ -60,5 +60,6 @@ The older all-purpose debug harness has an unrelated obsolete
 `NORTH_FOREST_BARRIER_Y` reference in its geography scenario; the updated Rowan
 renderer cases were compiled and executed separately.
 
-Elderwood's Heartseed story and Malakar evidence, and the new island amulet,
-remain separate changes.
+Elderwood now uses Ranger Tamsin's boss-only **Clear Elderwood** quest; the
+Heartseed mission is retired. Further Malakar evidence and the new island
+amulet remain separate changes.

@@ -30,7 +30,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/war_machine.h"
 #include "game/crown_quest.h"
 #include "game/jail.h"
-#include "game/heartseed.h"
+#include "game/elderwood_quest.h"
 #include "game/town_life.h"
 #include "game/town_road.h"
 #include "game/restoration.h"
@@ -1142,7 +1142,7 @@ int main(int argc, char **argv) {
                                 if (eastern_talk(&game) || resurrection_talk(&game) || restoration_talk(&game) || town_life_talk(&game, 0)) {
                                     break;
                                 }
-                                if (western_talk(&game) || crown_quest_talk(&game) || stormbell_talk(&game) || heartseed_talk(&game) || jail_talk_nearby(&game)) {
+                                if (western_talk(&game) || crown_quest_talk(&game) || stormbell_talk(&game) || elderwood_quest_talk(&game) || jail_talk_nearby(&game)) {
                                     break;
                                 }
                                 if (game_workshop_near_smith(&game)) {

@@ -1,3 +1,4 @@
+#include "game/elderwood_quest.h"
 #include "game/combat_feedback.h"
 #include "../../src/game/coast_exits.h"
 #include "game/boss_gates.h"
@@ -111,62 +112,36 @@ static void test_container_renderer(Renderer *r, GameState *g, SDL_Surface *surf
     puts("PASS: A opens/closes chests, P collects loose gold, and arrows still move; native renderer captures all chest states.");
 }
 
-static void test_heartseed_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+static void test_elderwood_quest_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     game_init(g);
-    g->player.x = TAMSIN_X + 1;
-    g->player.y = TAMSIN_Y;
+    game_enter_town2(g);
+    g->player.x = RANGER_TAMSIN_X - 1;
+    g->player.y = RANGER_TAMSIN_Y;
     Viewport view;
     int width = (r->screen_w - INFO_PANEL_W) / TILE_SIZE;
     viewport_init(&view, width, r->tiles_y, TOWN_W, TOWN_H);
     viewport_center_on(&view, g->player.x, g->player.y);
+    assert(elderwood_quest_talk(g) && game_quest_offer_active(g));
     renderer_begin_frame(r);
     game_draw(r, g, &view);
     renderer_end_frame(r);
-    assert(SDL_SaveBMP(surface, "/tmp/heartseed-tamsin-town.bmp") == 0);
-    assert(heartseed_talk(g) && game_quest_offer_active(g));
+    assert(SDL_SaveBMP(surface, "/tmp/elderwood-tamsin-offer.bmp") == 0);
     assert(game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0));
-    g->dialogue_active = 0;
-    elderwood_enter(g);
-    game_descend(g);
-    g->player.x = HEARTSEED_ORDERS_X + 1;
-    g->player.y = HEARTSEED_ORDERS_Y;
-    viewport_init(&view, width, r->tiles_y, ELDERWOOD_W, ELDERWOOD_H);
-    viewport_center_on(&view, g->player.x, g->player.y);
-    renderer_begin_frame(r);
-    game_draw(r, g, &view);
-    renderer_end_frame(r);
-    assert(SDL_SaveBMP(surface, "/tmp/heartseed-orders-camp.bmp") == 0);
-    assert(heartseed_interact(g));
-    game_descend(g);
-    game_descend(g);
-    g->player.x = HEARTSEED_X;
-    g->player.y = HEARTSEED_Y + 2;
-    viewport_center_on(&view, g->player.x, g->player.y);
-    renderer_begin_frame(r);
-    game_draw(r, g, &view);
-    renderer_end_frame(r);
-    assert(SDL_SaveBMP(surface, "/tmp/heartseed-bound-grove.bmp") == 0);
-    for (int i = 0; i < 3; i++) {
-        g->player.x = heartseed_stakes[i][0];
-        g->player.y = heartseed_stakes[i][1] + 1;
-        assert(heartseed_interact(g));
-    }
-    assert(g->heartseed_guardian == HEARTSEED_FREED);
-    g->player.x = HEARTSEED_X;
-    g->player.y = HEARTSEED_Y + 1;
-    viewport_center_on(&view, g->player.x, g->player.y);
-    renderer_begin_frame(r);
-    game_draw(r, g, &view);
-    renderer_end_frame(r);
-    assert(SDL_SaveBMP(surface, "/tmp/heartseed-freed-grove.bmp") == 0);
-    assert(heartseed_interact(g) && g->heartseed_quest_state == 2);
+    elderwood_defeat(g);
+    assert(g->elderwood_quest_state == 2);
     QuestJournalScreen journal;
     quest_journal_init(&journal);
+    journal.tab = QUEST_TAB_COMPLETED;
     renderer_begin_frame(r);
     quest_journal_draw(r, g, &journal);
     renderer_end_frame(r);
-    assert(SDL_SaveBMP(surface, "/tmp/heartseed-journal.bmp") == 0);
-    puts("PASS: Heartseed NPC, orders, root arch, bindings, guardian release and quest journal render in the native game renderer.");
+    assert(SDL_SaveBMP(surface, "/tmp/elderwood-completed-journal.bmp") == 0);
+    assert(elderwood_quest_talk(g) && g->elderwood_quest_state == 3);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/elderwood-tamsin-reward.bmp") == 0);
+    puts("PASS: Ranger Tamsin's boss quest, completed journal and reward render in the native renderer.");
 }
 
 static void test_stormbell_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
@@ -1966,7 +1941,7 @@ int main(void) {
     test_boss_camera_lean(&renderer, game, surface);
     test_northroad_renderer(&renderer, game, surface);
     test_giants_renderer(&renderer, game, surface);
-    test_heartseed_renderer(&renderer, game, surface);
+    test_elderwood_quest_renderer(&renderer, game, surface);
     test_stormbell_renderer(&renderer, game, surface);
     test_war_machine_renderer(&renderer, game, surface);
     test_crown_quest_renderer(&renderer, game, surface);

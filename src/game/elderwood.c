@@ -4,6 +4,7 @@
 #include "crownroad_north.h"
 #include "approach.h"
 #include "heartseed.h"
+#include "elderwood_quest.h"
 #include "town_road.h"
 #include "stillbury_routes.h"
 #include <stdlib.h>
@@ -354,7 +355,6 @@ static void load_floor(GameState *g) {
         g->max_elderwood_level_reached = g->level;
     }
     g->floor_item_count = 0;
-    heartseed_prepare(g);
 }
 
 void elderwood_enter(GameState *g) {
@@ -426,9 +426,6 @@ int elderwood_travel(GameState *g, int x, int y) {
 }
 
 int elderwood_interact(GameState *g) {
-    if (heartseed_interact(g)) {
-        return 1;
-    }
     if (g->location != LOCATION_ELDERWOOD) {
         return 0;
     }
@@ -600,9 +597,6 @@ int elderwood_tick(GameState *g, Enemy *enemy, int *damage) {
     int dx = g->player.x - enemy->x;
     int dy = g->player.y - enemy->y;
     int distance = abs(dx) + abs(dy);
-    if (heartseed_is_guardian(g, enemy) && distance > 6) {
-        return 1;
-    }
     if (distance > 12) {
         return 1;
     }
@@ -637,6 +631,7 @@ void elderwood_defeat(GameState *g) {
         g->score += 2000;
         push_message(g, "Elderthorn falls. The eastern road to the Sunken Coast opens!");
     }
+    elderwood_quest_sync(g);
 }
 
 int northern_approach(const GameState *g) {

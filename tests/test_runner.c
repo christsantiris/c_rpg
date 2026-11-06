@@ -24,6 +24,7 @@ void test_labyrinth_arc(void);
 void test_stillbury_routes(void);
 void test_coastal_quest(void);
 void test_storm_mage(void);
+void test_elderwood_quest(void);
 void test_map(void);
 void test_map_tiles(void);
 void test_viewport(void);
@@ -111,6 +112,7 @@ int main(void) {
     test_stillbury_routes();
     test_coastal_quest();
     test_storm_mage();
+    test_elderwood_quest();
     test_boss_gates();
     test_royal_evidence();
     test_eastern_arc();
