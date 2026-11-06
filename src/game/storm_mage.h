@@ -25,7 +25,6 @@ int storm_mage_beside(const GameState *g, int x, int y);
 int storm_mage_hostile(const GameState *g, const Enemy *e);
 void storm_mage_follow(GameState *g, int old_x, int old_y);
 void storm_mage_turn(GameState *g);
-void storm_mage_gain_xp(GameState *g, int xp);
 void storm_mage_take_hit(GameState *g, const Enemy *e);
 int storm_mage_revive(GameState *g, int hp);
 int storm_mage_talk(GameState *g, int x, int y);

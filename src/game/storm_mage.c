@@ -209,23 +209,6 @@ void storm_mage_turn(GameState *g) {
     mage->y = by;
 }
 
-void storm_mage_gain_xp(GameState *g, int xp) {
-    StormMage *mage = &g->storm_mage;
-    if (mage->state != STORM_MAGE_FOLLOWING || xp <= 0) {
-        return;
-    }
-    mage->experience += xp;
-    while (mage->level < 50 && mage->experience >= mage->level * 100) {
-        mage->experience -= mage->level * 100;
-        mage->level++;
-        mage->hp = storm_mage_max_hp(g);
-        mage->mp = storm_mage_max_mp(g);
-        char message[MAX_MESSAGE_LEN];
-        snprintf(message, sizeof(message), "Soren reaches Mage level %d.", mage->level);
-        push_message(g, message);
-    }
-}
-
 void storm_mage_take_hit(GameState *g, const Enemy *e) {
     StormMage *mage = &g->storm_mage;
     if (mage->state != STORM_MAGE_FOLLOWING) {

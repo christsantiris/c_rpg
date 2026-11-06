@@ -50,7 +50,8 @@ present from the start; its services require a recruited companion.
 Traveler Neris in Oakhaven's square and Fisher Tovan in Dawnmere's Alehouse
 tell of **Soren**, a mage imprisoned at **Stormwatch Headland**. Take Dawnmere's
 eastern road and defeat the Tempest Matriarch to free him. He offers to join
-as a **level 1 Mage with Fireball**, fighting alongside Aldric and gaining XP.
+as a **level 1 Mage with Fireball**, fighting alongside Aldric. He stays at
+level 1; party progression is deferred to a later update.
 If declined or dismissed, he waits at Dawnmere's Alehouse. Fallen companions
 can be selected individually for resurrection at Soulstone Shrine.
 

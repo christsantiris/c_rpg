@@ -202,8 +202,13 @@ static void combat(GameState *g) {
     g->storm_mage.mp = 0;
     storm_mage_turn(g);
     ASSERT("an exhausted mage uses his staff instead of casting without mana", g->enemies[0].hp == 195 && !g->storm_mage.mp);
+    g->storm_mage.hp = 43;
+    g->storm_mage.mp = 80;
     player_gain_xp(g, 100);
-    ASSERT("Soren grows from level 1 with the player's XP without reducing the player's reward", g->storm_mage.level == 2 && g->storm_mage.experience == 0 && storm_mage_max_hp(g) == 80 && storm_mage_max_mp(g) == 115 && g->storm_mage.hp == 80);
+    ASSERT("player XP levels the player while Soren stays at level 1 without healing or gaining mana", g->player.level == 2 && g->player.experience == 0 && g->storm_mage.level == 1 && g->storm_mage.experience == 0 && storm_mage_max_hp(g) == 70 && storm_mage_max_mp(g) == 100 && g->storm_mage.hp == 43 && g->storm_mage.mp == 80);
+    g->enemies[0].hp = 200;
+    storm_mage_turn(g);
+    ASSERT("Soren's Fireball damage and cost stay fixed after the player levels up", g->enemies[0].hp == 173 && g->storm_mage.mp == 60);
     g->storm_mage.hp = 1;
     g->player.x = 12;
     g->aldric_x = 14;
@@ -321,10 +326,10 @@ static void persistence_and_travel(GameState *g, GameState *loaded) {
     player_gain_xp(loaded, 144);
     storm_mage_talk(loaded, loaded->storm_mage.x, loaded->storm_mage.y);
     storm_mage_handle_key(loaded, SDL_SCANCODE_Y, 0);
-    ASSERT("dismissal preserves the mage's earned level and experience", loaded->storm_mage.state == STORM_MAGE_WAITING && loaded->storm_mage.level == 2 && loaded->storm_mage.experience == 44 && save_game(loaded, MAGE_SLOT) && load_game(g, MAGE_SLOT) && g->storm_mage.state == STORM_MAGE_WAITING);
+    ASSERT("dismissal and saving keep Soren at level 1 with no accumulated XP", loaded->storm_mage.state == STORM_MAGE_WAITING && loaded->storm_mage.level == 1 && loaded->storm_mage.experience == 0 && save_game(loaded, MAGE_SLOT) && load_game(g, MAGE_SLOT) && g->storm_mage.state == STORM_MAGE_WAITING);
     recruit(g);
     follow_aldric(g);
-    ASSERT("both companions cross the Alehouse's actual doorway together", route_path(g, 20, 22) && g->location == LOCATION_DAWNMERE && g->storm_mage.level == 2 && g->storm_mage.experience == 44 && map_is_walkable(&g->map, g->storm_mage.x, g->storm_mage.y) && !aldric_at(g, g->storm_mage.x, g->storm_mage.y));
+    ASSERT("both companions cross the Alehouse's actual doorway together", route_path(g, 20, 22) && g->location == LOCATION_DAWNMERE && g->storm_mage.level == 1 && g->storm_mage.experience == 0 && map_is_walkable(&g->map, g->storm_mage.x, g->storm_mage.y) && !aldric_at(g, g->storm_mage.x, g->storm_mage.y));
     ASSERT("the returning party can enter the Alehouse through its real doorway", route_path(g, 28, 11) && route_path(g, 28, 10) && g->location == LOCATION_ALEHOUSE && route_path(g, STORM_GUIDE_DAWN_X + 1, STORM_GUIDE_DAWN_Y));
     ASSERT("rumor NPCs acknowledge Soren's rescue instead of still calling him a prisoner", storm_mage_talk(g, STORM_GUIDE_DAWN_X, STORM_GUIDE_DAWN_Y) && strstr(g->dialogue_text, "traveling in your party"));
     g->dialogue_active = 0;
@@ -332,7 +337,7 @@ static void persistence_and_travel(GameState *g, GameState *loaded) {
     ASSERT("the two-companion party can reach the river skiff", route_path(g, RIVER_SOUTH_X, RIVER_SOUTH_Y));
     action_resolve_player(g, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("boarding carries both companions without leaving attackable actors on the bank", mangrove_aboard(g) && g->storm_mage.x == g->player.x && g->storm_mage.y == g->player.y && !storm_mage_at(g, g->player.x, g->player.y));
-    ASSERT("the mage's level and party membership survive saving mid-crossing", route_path(g, 30, 20) && save_game(g, MAGE_SLOT) && load_game(loaded, MAGE_SLOT) && mangrove_aboard(loaded) && loaded->storm_mage.level == 2 && loaded->aldric_party_state == ALDRIC_FOLLOWING);
+    ASSERT("the mage's fixed level and party membership survive saving mid-crossing", route_path(g, 30, 20) && save_game(g, MAGE_SLOT) && load_game(loaded, MAGE_SLOT) && mangrove_aboard(loaded) && loaded->storm_mage.level == 1 && !loaded->storm_mage.experience && loaded->aldric_party_state == ALDRIC_FOLLOWING);
     ASSERT("the loaded skiff reaches Stillbury's shore", route_path(loaded, RIVER_NORTH_X, RIVER_NORTH_Y + 1));
     action_resolve_player(loaded, (Action){ACTION_INTERACT, 0, 0});
     ASSERT("docking places both companions on walkable ground without overlap", !mangrove_aboard(loaded) && map_is_walkable(&loaded->map, loaded->storm_mage.x, loaded->storm_mage.y) && !aldric_at(loaded, loaded->storm_mage.x, loaded->storm_mage.y));
@@ -343,6 +348,14 @@ static void persistence_and_travel(GameState *g, GameState *loaded) {
     ASSERT("sea voyages place both companions at the new landing before the next player action", abs(loaded->storm_mage.x - loaded->player.x) + abs(loaded->storm_mage.y - loaded->player.y) <= 3 && abs(loaded->aldric_x - loaded->player.x) + abs(loaded->aldric_y - loaded->player.y) <= 2 && map_is_walkable(&loaded->map, loaded->storm_mage.x, loaded->storm_mage.y) && !aldric_at(loaded, loaded->storm_mage.x, loaded->storm_mage.y));
     game_leave_island(loaded);
     ASSERT("return voyages retain the mage's wounds and mana and place both companions beside the docks", loaded->location == LOCATION_RIVER_CROSSING && loaded->storm_mage.hp == 43 && loaded->storm_mage.mp == 21 && abs(loaded->storm_mage.x - loaded->player.x) + abs(loaded->storm_mage.y - loaded->player.y) <= 3 && map_is_walkable(&loaded->map, loaded->storm_mage.x, loaded->storm_mage.y) && !aldric_at(loaded, loaded->storm_mage.x, loaded->storm_mage.y));
+    loaded->storm_mage.level = 3;
+    loaded->storm_mage.experience = 44;
+    loaded->storm_mage.hp = 85;
+    loaded->storm_mage.mp = 125;
+    ASSERT("saves from the progression draft load Soren at level 1 within fixed HP and MP limits", save_game(loaded, MAGE_SLOT) && load_game(g, MAGE_SLOT) && g->storm_mage.level == 1 && !g->storm_mage.experience && g->storm_mage.hp == 70 && g->storm_mage.mp == 100 && g->storm_mage.recruited);
+    loaded->storm_mage.hp = 43;
+    loaded->storm_mage.mp = 21;
+    ASSERT("removing draft progression preserves wounds and mana instead of healing Soren", save_game(loaded, MAGE_SLOT) && load_game(g, MAGE_SLOT) && g->storm_mage.level == 1 && !g->storm_mage.experience && g->storm_mage.hp == 43 && g->storm_mage.mp == 21);
     ASSERT("a malformed mage level is rejected instead of resetting the companion", save_game(loaded, MAGE_SLOT) && rewrite_save(0) && !load_game(g, MAGE_SLOT));
 }
 
@@ -403,7 +416,7 @@ void test_storm_mage(void) {
     loaded->storm_mage.mp = 21;
     ASSERT("both companions and the mage's wounds and mana survive saving", save_game(loaded, MAGE_SLOT) && load_game(g, MAGE_SLOT) && g->storm_mage.hp == 43 && g->storm_mage.mp == 21 && g->aldric_party_state == ALDRIC_FOLLOWING);
     combat(g);
-    ASSERT("death, earned level and mana remain persistent", save_game(g, MAGE_SLOT) && load_game(loaded, MAGE_SLOT) && loaded->storm_mage.state == STORM_MAGE_DEAD && loaded->storm_mage.level == 2 && !loaded->storm_mage.hp && loaded->storm_mage.mp == g->storm_mage.mp);
+    ASSERT("death, fixed level and mana remain persistent", save_game(g, MAGE_SLOT) && load_game(loaded, MAGE_SLOT) && loaded->storm_mage.state == STORM_MAGE_DEAD && loaded->storm_mage.level == 1 && !loaded->storm_mage.hp && loaded->storm_mage.mp == g->storm_mage.mp);
     resurrection_targets(g, loaded);
     persistence_and_travel(g, loaded);
     remove("saves/savegame_99278.json");

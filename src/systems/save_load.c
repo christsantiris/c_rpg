@@ -1969,7 +1969,19 @@ static int load_storm_mage(const cJSON *root, GameState *g, int version) {
             return 0;
         }
     }
-    return storm_mage_valid(g);
+    if (!storm_mage_valid(g)) {
+        return 0;
+    }
+    // Earlier drafts allowed progression. Keep their saves usable with fixed level 1 stats.
+    mage->level = 1;
+    mage->experience = 0;
+    if (mage->hp > storm_mage_max_hp(g)) {
+        mage->hp = storm_mage_max_hp(g);
+    }
+    if (mage->mp > storm_mage_max_mp(g)) {
+        mage->mp = storm_mage_max_mp(g);
+    }
+    return 1;
 }
 
 int save_game(const GameState *g, int slot) {
