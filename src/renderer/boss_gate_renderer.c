@@ -20,7 +20,7 @@ static int theme(Location area) {
 
 void boss_gate_draw_bank(Renderer *r, const GameState *g, int sx, int sy, int x, int y) {
     const TownApproach *route = approach_route(g);
-    Location area = northern_approach(g) ? y > 22 ? LOCATION_ELDERWOOD : LOCATION_CATACOMBS : route ? route->area : LOCATION_FOREST;
+    Location area = northern_approach(g) ? y > 22 ? LOCATION_SWAMP : LOCATION_CATACOMBS : route ? route->area : LOCATION_FOREST;
     unsigned int seed = (unsigned int)x * 73856093u ^ (unsigned int)y * 19349663u;
     int neighbors = 0;
     if (y > 0 && g->map.tiles[y - 1][x] == TILE_ROAD_BANK) {

@@ -183,6 +183,17 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             line1 = "STRAIGHT: AREA / LEFT: NEXT TOWN";
             line2 = "RIGHT: BOSS CHAMBER";
         }
+        if (approach_bridge_road(g)) {
+            title = "BRIDGE / QUARRY FORK";
+            line1 = "WEST: BRIDGE / EAST: STILLBURY";
+            line2 = "NORTH: QUARRY / LABYRINTH";
+        }
+        if (g->approach_route == APPROACH_ELDERWOOD_ROAD) {
+            line1 = "WEST: STILLBURY / EAST: COAST";
+        }
+        if (g->approach_route == APPROACH_COAST_ROAD) {
+            line2 = "WEST: ELDERWOOD / STILLBURY";
+        }
         const BossGateRule *rule = route ? boss_gate_rule(route->area) : NULL;
         if (rule && rule->policy == BOSS_GATE_ROAD && !northern_approach(g)) {
             snprintf(status, sizeof(status), boss_gate_open(g, route->area) ? "PASSAGE SECURED IN BOTH DIRECTIONS" : "ROAD CLOSED: DEFEAT %s", rule->boss);
@@ -190,9 +201,9 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         }
         if (northern_approach(g)) {
             title = "NORTHERN ROAD";
-            line1 = "NORTH: CASTLE / SOUTH: RAPIDS";
-            snprintf(status, sizeof(status), "ELDERWOOD: %s / CATACOMBS: %s",
-                boss_gate_open(g, LOCATION_ELDERWOOD) ? "OPEN" : "CLOSED",
+            line1 = "NORTH: CASTLE / SOUTH: STILLBURY";
+            snprintf(status, sizeof(status), "BLACKWATER: %s / CATACOMBS: %s",
+                boss_gate_open(g, LOCATION_SWAMP) ? "OPEN" : "CLOSED",
                 boss_gate_open(g, LOCATION_CATACOMBS) ? "OPEN" : "CLOSED");
             line2 = status;
         }
@@ -310,12 +321,12 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         snprintf(status, sizeof(status), "%s %s: %d FOES LEFT", g->level == TEMPLE_DEPTH ? "TREASURE" : "STAIRS", remaining > 0 ? "SEALED" : "OPEN", remaining);
         line2 = status;
     } else if (g->location == LOCATION_LABYRINTH) {
-        title = "ROOK'S LABYRINTH";
-        line1 = "FIVE FLOORS; ONE RUNE PER FLOOR";
-        line2 = "FALSE STAIRS LEAD TO DEAD ENDS";
+        title = "LABYRINTH";
+        line1 = "FIND THE MINOTAUR ON FLOOR 5";
+        line2 = "RETREAT REMAINS AVAILABLE";
         if (g->level == LABYRINTH_DEPTH) {
             title = "THE MINOTAUR'S VAULT";
-            line1 = "LIGHT FIVE RUNES TO OPEN THE GATE";
+            line1 = "SLAY THE MINOTAUR";
             line2 = "BAIT CHARGES INTO STONE TO STAGGER";
         }
     } else if (g->location == LOCATION_CATACOMBS) {

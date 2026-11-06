@@ -1,5 +1,7 @@
 #include "town_life.h"
 #include "spice_skiff.h"
+#include "coastal_travel.h"
+#include "storm_mage.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -129,6 +131,7 @@ void town_life_generate(Map *map, Location interior, int *sx, int *sy) {
             map->tiles[12][x] = TILE_TAVERN_TABLE;
             map->tiles[12][x + 16] = TILE_TAVERN_TABLE;
         }
+        map->tiles[STORM_GUIDE_DAWN_Y][STORM_GUIDE_DAWN_X] = TILE_NPC_STORM_GUIDE;
     }
     map->tiles[RESIDENT_Y][RESIDENT_X] = TILE_NPC_RESIDENT;
 }
@@ -161,7 +164,12 @@ int town_life_talk(GameState *g, int greeting) {
     snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "%s", b->speaker);
     snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s",
         b->after && (g->defeated_bosses & b->victory) ? b->after : b->before);
-    if (b->town == LOCATION_TOWN2 && g->royal_reported_actions) {
+    if (b->town == LOCATION_TOWN2 && coastal_trade_restored(g)) {
+        snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s%s", g->location == LOCATION_BUTCHER ?
+            "Ships are bringing supplies again! You freed the coast and restored its lights. Stillbury owes you a welcome." :
+            "Coastal leather shipments are reaching us again. You have my thanks, and you're welcome in my shop.",
+            g->royal_reported_actions ? " The customs officers still have your name; take care near their checkpoint." : "");
+    } else if (b->town == LOCATION_TOWN2 && g->royal_reported_actions) {
         snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s", g->location == LOCATION_BUTCHER ?
             "My family in Dawnmere says you freed them. Some here still trust the King; I don't trust his customs officers. Keep away from the checkpoint if you can." :
             "They say you fought the Crown. I sell boots, not rebellion. I'll trade, but don't bring the King's soldiers to my door.");

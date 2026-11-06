@@ -1,19 +1,19 @@
-# Elderwood Forest and the northern castle road
+# Elderwood Forest and the eastern coastal road
 
-Oakhaven's north exit reaches a safe cobblestone road through dense Elderwood
-trees, matching Crown Road North beyond it. The road opens into clearings at
-both ends and around each landmark. A living woodland sprite stands beside it; touching the landmark starts Elderwood at level 1. Elderthorn
-blocks the road farther north. Defeating it opens the route to a separate Royal
-Catacombs sprite. Defeating the Grave Marshal opens the remaining passage into
-Castle Grounds. The existing Crown Roads remain available.
+Stillbury's east gate leads onto a safe cobblestone road through Elderwood.
+A living woodland landmark beside the road starts its five-stage adventure.
+Elderthorn blocks onward passage east to Sunken Coast. Defeating him opens
+that road permanently; Blackwater's victory is independent.
+Retreat from Elderwood or Sunken Coast returns to this eastern route and
+Stillbury. The final Elderwood exit emerges north of its landmark onto a trail
+that bends east toward the coast, preserving the crossing direction. The northern road instead passes through Blackwater Swamp and the
+Royal Catacombs beneath the castle.
 
-The same road connects both directions without reversing or flipping its map.
-Physical retreat from either adventure returns beside its own entrance. Entering
-Elderwood or Catacombs from either end always starts at level 1. Returning to the
-Castle end from a Castle-origin expedition remains possible before either boss
-is defeated. Completing the route from either end requires defeating both
-Elderthorn and the Grave Marshal. Each section has a visible checkpoint and
-independent victory requirement. See [boss gates](boss-gates.md).
+Elderwood's entrances and exits lie on the actual south and north map boundaries.
+Travel and retreat keep the direction of the crossing step. Save version 243
+extends old active and cached markers in place, preserving exploration,
+brambles, wounds, loot and quest progress. Ranger Tamsin offers the boss-only **Clear Elderwood** quest in Stillbury.
+This quest adds no new Malakar clue; later story evidence remains a separate change.
 
 Elderwood is drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 × 18
 tiles around the player, and its charges and roots, which reach at most seven
@@ -66,32 +66,33 @@ their exploration, cut brambles, logs, quest objects and surviving enemies. A
 short path stays open to any enemy, item, portal or player standing in a removed
 corner. A three-tile trail links the rounded grove to its bramble flank.
 
-## The Stolen Heartseed
+## Clear Elderwood
 
-In V2, Tamsin has left Oakhaven and no one offers this quest until a later act
-places her. Existing quest progress is kept.
+**Ranger Tamsin** stands near Stillbury's eastern gate at `(34,13)`. She asks
+the player to defeat Elderthorn in Elderwood 5 and clear the forest of evil.
+Accepting uses one of the three active quest slots. There are no collection,
+binding, or rescue objectives. Elderthorn is reachable without accepting.
 
-Forester Tamsin stands beside Oakhaven's northern road. Talk with her and accept
-**The Stolen Heartseed**. Search the Dark Elf Archer camp in stage 2's western clearing
-for orders identifying the **golden-root grove in stage 4's eastern clearing**.
+Defeating Elderthorn opens the road to Sunken Coast and immediately moves the
+quest to **Completed**, freeing its active slot. This also works if the player
+never spoke to Tamsin. Elderthorn retains his existing 180-gold and 2,000-score
+boss reward. Speak to Tamsin in Stillbury afterward to claim her separate
+**120 gold and 800 score**, paid once. The journal shows the unclaimed reward;
+no trip back to Oakhaven is required.
 
-Use **Interact** (A by default) beside each of the grove's three violet-bound
-stakes. Each cut consumes an action while the guardian and Dark Elves remain
-dangerous. Cutting the last binding frees the bound Treefolk, cancels its warned
-attack, and awards its combat XP once as it leaves the grove. Defeating the
-guardian first also works: cut the remaining bindings to release the heartseed,
-without receiving a second guardian reward. Other Treefolk remain hostile.
+Save version **246** stores the new quest state and restores Tamsin to existing
+Stillbury maps. Existing Elderthorn victories receive an unclaimed quest reward
+without repeating the boss's loot. Pending offers, completion and payment
+survive save/load.
 
-Recover the seed from its stone resting place and bring it and the orders to
-Tamsin for **120 gold and 800 score**, paid once. Quest discoveries are tracked
-outside the pack, including discoveries made before acceptance. Neither this
-quest nor its reward changes Elderthorn's road unlock.
+**The Stolen Heartseed is retired.** New stages no longer create its orders,
+bindings, altar, or special guardians. Existing active and cached stages lose
+these props in place; saved enemies remain with their wounds, deaths, positions
+and XP values, using ordinary enemy names. Exploration, cut paths, loot and
+portal underlays are preserved. Old quest counters remain serialized solely
+for compatibility and do not occupy a journal entry or an active quest slot.
 
-Save version **204** preserves the orders, each severed binding, recovered seed,
-guardian outcome, encounter placement, and paid reward. Existing saves gain the
-NPC and quest locations while retaining their forest maps, cut paths, wounds,
-loot, exploration, portals, and earned victories. Cached quest stages gain their
-sites when next entered.
+See [quest validation](elderwood-quest-validation.md).
 
 ## Escaping and saves
 

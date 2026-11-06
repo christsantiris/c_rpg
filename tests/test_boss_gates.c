@@ -38,7 +38,7 @@ static int path(GameState *g, int tx, int ty, int walk) {
             int next = y * APPROACH_W + x;
             TileType tile = g->map.tiles[y][x];
             int transition = tile == TILE_APPROACH_AREA || tile == TILE_LABYRINTH_ENTRANCE ||
-                tile == TILE_NORTH_ELDERWOOD || tile == TILE_NORTH_CATACOMBS;
+                tile == TILE_NORTH_SWAMP || tile == TILE_NORTH_CATACOMBS;
             if (previous[next] >= 0 || (transition && next != target) || (!map_is_walkable(&g->map, x, y) && !(transition && next == target))) {
                 continue;
             }
@@ -116,14 +116,14 @@ static void town_connections(GameState *g) {
 static void northern_connections(GameState *g) {
     for (int flags = 0; flags < 4; flags++) {
         game_init(g);
-        g->elderwood_defeated = (flags & 1) != 0;
-        g->defeated_bosses = flags & 2 ? 1 << LOCATION_CATACOMBS : 0;
+        g->defeated_bosses = flags & 1 ? 1 << LOCATION_SWAMP : 0;
+        g->defeated_bosses |= flags & 2 ? 1 << LOCATION_CATACOMBS : 0;
         approach_enter_region(g, 14);
-        ASSERT("northern rapids never become a crossing to Oakhaven after either victory", !path(g, NORTH_ROAD_X, APPROACH_H - 1, 0));
+        ASSERT("both regional victories open the northern road to Stillbury", path(g, NORTH_ROAD_X, APPROACH_H - 1, 0) == (flags == 3));
         ASSERT("a northern expedition retains its castle retreat", path(g, NORTH_ROAD_X, 0, 0));
         ASSERT("castle-side travelers can enter the Catacombs before its checkpoint", path(g, NORTH_CAT_X, NORTH_CAT_Y - 5, 0));
-        if (flags & 2) {
-            ASSERT("Catacombs victory gives access to Elderwood from the castle", path(g, NORTH_ELDER_X, NORTH_ELDER_Y - 5, 0));
+        if (flags == 3) {
+            ASSERT("both victories let castle-side travelers revisit Blackwater at its visible doorway", path(g, NORTH_SWAMP_X, NORTH_SWAMP_Y, 0));
         }
     }
     game_init(g);
@@ -299,7 +299,7 @@ static void saved_connections(GameState *g, GameState *loaded) {
         ASSERT("older approach saves acquire both checkpoints while retaining health, money, quests and loot", save_game(g, GATE_SLOT) &&
             set_legacy_version() && load_game(loaded, GATE_SLOT) && loaded->gold == 789 && loaded->player.hp == 43 &&
             loaded->heartseed_quest_state == 1 && loaded->floor_items[0].active && map_is_explored(&loaded->map, NORTH_ROAD_X, 20) &&
-            loaded->map.tiles[NORTH_FOREST_BARRIER_Y][NORTH_ROAD_X] == TILE_ROAD_GATE_CLOSED &&
+            loaded->map.tiles[NORTH_SWAMP_BARRIER_Y][NORTH_ROAD_X] == TILE_ROAD_GATE_CLOSED &&
             loaded->map.tiles[NORTH_CAT_Y - 2][NORTH_ROAD_X] == TILE_ROAD_GATE_CLOSED);
         ASSERT("migrated checkpoints survive another save without opening a road or moving the player", save_game(loaded, GATE_SLOT) &&
             load_game(g, GATE_SLOT) && g->player.x == loaded->player.x && g->player.y == loaded->player.y &&
@@ -378,6 +378,7 @@ static void deferred_labyrinth(GameState *g, GameState *loaded) {
         game_enter_labyrinth(g);
         g->enemies[0].hp = 37;
         game_leave_labyrinth(g);
+        approach_enter_region(g, routes[n]);
         g->rook_quest_state = 1;
         g->rook_labyrinth_switches = 3;
         g->gold = 789;
@@ -411,8 +412,8 @@ static void deferred_labyrinth(GameState *g, GameState *loaded) {
         game_enter_labyrinth(g);
         ASSERT("a legacy save inside the deferred labyrinth remains loadable", save_game(g, GATE_SLOT) && load_game(loaded, GATE_SLOT) && loaded->location == LOCATION_LABYRINTH);
         game_leave_labyrinth(loaded);
-        ASSERT("a legacy labyrinth expedition can leave onto the real forest road and retreat", loaded->location == LOCATION_APPROACH && !labyrinth_entrances(loaded) &&
-            map_is_walkable(&loaded->map, loaded->player.x, loaded->player.y) && path(loaded, loaded->map.stairs_up_x, loaded->map.stairs_up_y, 1) && loaded->location == LOCATION_TOWN_ROAD);
+        ASSERT("a legacy labyrinth expedition returns to the quarry road and retreats onto the western fork", loaded->location == LOCATION_APPROACH && loaded->approach_route == APPROACH_QUARRY_ROAD && labyrinth_entrances(loaded) == 1 &&
+            map_is_walkable(&loaded->map, loaded->player.x, loaded->player.y) && path(loaded, loaded->map.stairs_up_x, loaded->map.stairs_up_y, 1) && approach_bridge_road(loaded));
     }
     remove("saves/savegame_99311.json");
 }

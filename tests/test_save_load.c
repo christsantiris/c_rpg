@@ -1291,7 +1291,7 @@ static void test_shortcut_fork_migration(void) {
         int ly = loaded.floor_items[0].y;
         TileType new_floor = approach_floor(approach_route(&loaded)->area);
         ASSERT("crossroads migration preserves accessible player and loot positions, exploration, and progress", ok && map_is_walkable(&loaded.map, loaded.player.x, loaded.player.y) && loaded.map.tiles[ly][lx] == TILE_ITEM && loaded.floor_items[0].active && loaded.floor_items[0].underlying_tile == new_floor && map_is_explored(&loaded.map, loaded.player.x, loaded.player.y) && loaded.gold == original.gold && loaded.score == original.score && loaded.defeated_bosses == original.defeated_bosses);
-        ASSERT("migrated crossroads and loot survive another save/load", save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) && original.location == LOCATION_APPROACH && (original.map.tiles[by][bx] == TILE_APPROACH_BOSS || original.map.tiles[by][bx] == TILE_APPROACH_DUNGEON_TOWN) && original.map.tiles[ly][lx] == TILE_ITEM);
+        ASSERT("migrated crossroads and loot survive another save/load", save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) && original.location == LOCATION_APPROACH && (original.map.tiles[by][bx] == TILE_APPROACH_BOSS || original.map.tiles[by][bx] == TILE_APPROACH_DUNGEON_TOWN || (original.approach_route == APPROACH_BLACKWATER_ROAD && original.map.tiles[by][bx] == TILE_NORTH_CASTLE)) && original.map.tiles[ly][lx] == TILE_ITEM);
         remove_test_save(LEGACY_SLOT);
         remove_test_save(MIGRATED_SLOT);
     }
@@ -1477,9 +1477,9 @@ static void test_retired_cast_migration(void) {
     original->dialogue_active = 1;
     snprintf(original->dialogue_speaker, sizeof(original->dialogue_speaker), "Rook");
     ok = save_game(original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 231) && load_game(loaded, LEGACY_SLOT);
-    ASSERT("older saves lose Rook, Mara and Ilya from the Inn but keep quest progress", ok &&
+    ASSERT("older saves restore Mara as the coastal introduction and retire Rook and Ilya without losing quest progress", ok &&
         loaded->map.tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] == TILE_TAVERN_FLOOR &&
-        loaded->map.tiles[MARA_TAVERN_Y][MARA_TAVERN_X] == TILE_TAVERN_FLOOR &&
+        loaded->map.tiles[MARA_TAVERN_Y][MARA_TAVERN_X] == TILE_NPC_MARA &&
         loaded->map.tiles[ILYA_TAVERN_Y][ILYA_TAVERN_X] == TILE_TAVERN_FLOOR &&
         loaded->mara_quest_state == 1 && !loaded->dialogue_active);
     remove_test_save(LEGACY_SLOT);

@@ -7,6 +7,7 @@
 #include "../game/town_road.h"
 #include "../game/necromancer.h"
 #include "../game/aldric.h"
+#include "../game/storm_mage.h"
 #include <stdio.h>
 
 static const Enemy *visible_necromancer(const GameState *g, const Viewport *v) {
@@ -201,7 +202,7 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
         SDL_snprintf(loc, sizeof(loc), g->temple_alignment
             ? "RUINED TEMPLE %d: MOON" : "RUINED TEMPLE %d: SUN", g->level);
     } else if (g->location == LOCATION_LABYRINTH) {
-        SDL_snprintf(loc, sizeof(loc), "ROOK'S LABYRINTH");
+        SDL_snprintf(loc, sizeof(loc), "LABYRINTH");
     } else {
         SDL_snprintf(loc, sizeof(loc), "DUNGEON %d", g->level);
     }
@@ -331,14 +332,28 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     renderer_draw_text(r, quick, x, y, game_quick_potion_count(g) ? value : dimmed, r->font_tiny);
     y += lh + gap;
     if (g->aldric_party_state == ALDRIC_DEAD) {
-        renderer_draw_text(r, "ALDRIC: DEAD", x, y, health_warning, r->font_tiny);
-        y += lh;
-        renderer_draw_text(r, "SOULSTONE SHRINE", x, y, dimmed, r->font_tiny);
+        int mage_present = g->storm_mage.state == STORM_MAGE_FOLLOWING || g->storm_mage.state == STORM_MAGE_DEAD;
+        renderer_draw_text(r, mage_present ? "ALDRIC DEAD: SHRINE" : "ALDRIC: DEAD", x, y, health_warning, r->font_tiny);
+        if (!mage_present) {
+            y += lh;
+            renderer_draw_text(r, "SOULSTONE SHRINE", x, y, dimmed, r->font_tiny);
+        }
         y += lh + gap;
     } else if (g->aldric_party_state == ALDRIC_FOLLOWING) {
         char ally[32];
         SDL_snprintf(ally, sizeof(ally), "ALDRIC HP: %d / %d", g->aldric_hp, ALDRIC_MAX_HP);
         renderer_draw_text(r, ally, x, y, g->aldric_hp * 4 <= ALDRIC_MAX_HP ? health_warning : value, r->font_tiny);
+        y += lh + gap;
+    }
+
+    if (g->storm_mage.state == STORM_MAGE_FOLLOWING || g->storm_mage.state == STORM_MAGE_DEAD) {
+        char mage[48];
+        if (g->storm_mage.state == STORM_MAGE_DEAD) {
+            SDL_snprintf(mage, sizeof(mage), "SOREN DEAD: SHRINE");
+        } else {
+            SDL_snprintf(mage, sizeof(mage), "SOREN L%d: %dHP %dMP", g->storm_mage.level, g->storm_mage.hp, g->storm_mage.mp);
+        }
+        renderer_draw_text(r, mage, x, y, g->storm_mage.hp * 4 <= storm_mage_max_hp(g) ? health_warning : value, r->font_tiny);
         y += lh + gap;
     }
 

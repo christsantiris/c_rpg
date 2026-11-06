@@ -145,7 +145,7 @@ static void road_layouts(GameState *g) {
         int oy = vertical ? g->map.stairs_up_y + (g->map.stairs_up_y ? -3 : 3) : g->map.stairs_up_y + 6;
         ASSERT("the road opens into a clearing at its town end, where its signpost stands", map_is_walkable(&g->map, ox, oy));
         if (northern_approach(g)) {
-            ASSERT("northern rapids block the former southern connection", !map_is_walkable(&g->map, NORTH_ROAD_X, APPROACH_H - 1));
+            ASSERT("the southern northern-road boundary returns to Stillbury", map_is_walkable(&g->map, NORTH_ROAD_X, APPROACH_H - 1));
         }
         if (route->area == LOCATION_SWAMP) {
             ASSERT("the swamp road's verges are bog mud rather than grass", tile_count(g, TILE_TOWN_FLOOR) == 0 &&

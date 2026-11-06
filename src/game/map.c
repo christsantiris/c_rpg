@@ -2,12 +2,13 @@
 #include <assert.h>
 #include "giants_crown.h"
 #include "map.h"
+#include "storm_mage.h"
 #include "stormbell.h"
 #include "crown_quest.h"
 #include "landscapes.h"
 #include "jail.h"
 #include "town_life.h"
-#include "heartseed.h"
+#include "elderwood_quest.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -37,8 +38,11 @@ int map_is_travel_tile(TileType tile) {
     }
     return (tile >= TILE_TOWN_ROAD_ENTRY_NORTH && tile <= TILE_TOWN_ROAD_EXIT_WEST) ||
         tile == TILE_APPROACH_TOWN || tile == TILE_APPROACH_AREA || tile == TILE_APPROACH_DUNGEON_TOWN ||
-        tile == TILE_LABYRINTH_ENTRANCE || tile == TILE_ROAD_GATE_OPEN || tile == TILE_ROAD_GATE_CLOSED ||
+        tile == TILE_LABYRINTH_ENTRANCE || tile == TILE_LABYRINTH_EXIT || tile == TILE_LABYRINTH_STAIRS || tile == TILE_ROAD_GATE_OPEN || tile == TILE_ROAD_GATE_CLOSED ||
         tile == TILE_FOREST_ENTRANCE || tile == TILE_FOREST_EXIT ||
+        tile == TILE_ELDERWOOD_ENTRANCE || tile == TILE_ELDERWOOD_EXIT ||
+        tile == TILE_SWAMP_ENTRANCE || tile == TILE_SWAMP_EXIT ||
+        tile == TILE_NORTH_SWAMP || tile == TILE_NORTH_CATACOMBS || tile == TILE_NORTH_STILLBURY || tile == TILE_NORTH_CASTLE ||
         tile == TILE_MOUNTAIN_ENTRANCE || tile == TILE_MOUNTAIN_EXIT || tile == TILE_BROKEN_FERRY;
 }
 
@@ -519,7 +523,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_ELDERWOOD_WALL &&
         m->tiles[y][x] != TILE_ELDERWOOD_BRAMBLE &&
         m->tiles[y][x] != TILE_ELDERWOOD_LOG &&
-        m->tiles[y][x] != TILE_NORTH_ELDERWOOD &&
+        m->tiles[y][x] != TILE_NORTH_SWAMP &&
         m->tiles[y][x] != TILE_NORTH_CATACOMBS &&
         m->tiles[y][x] != TILE_FOREST_WALL &&
         m->tiles[y][x] != TILE_FOREST_HIDDEN_TRAIL &&
@@ -568,6 +572,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_DAIN &&
         m->tiles[y][x] != TILE_NPC_ALDER &&
         m->tiles[y][x] != TILE_NPC_MARA &&
+        m->tiles[y][x] != TILE_NPC_STORM_GUIDE &&
         m->tiles[y][x] != TILE_NPC_BRENNA &&
  m->tiles[y][x] != TILE_NPC_ORIN &&
         m->tiles[y][x] != TILE_NPC_SELENE &&
@@ -1643,6 +1648,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     map_clear_town_harbor(m);
     m->tiles[TOWN_CAIN_Y][TOWN_CAIN_X] = TILE_NPC_CAIN;
     m->tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] = TILE_NPC_ALDRIC;
+    m->tiles[STORM_GUIDE_OAK_Y][STORM_GUIDE_OAK_X] = TILE_NPC_STORM_GUIDE;
     town_life_place(m, LOCATION_TOWN);
 
     // Spawn at the central crossroads.
@@ -1826,10 +1832,12 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     // Stillbury's Tavern stands east of the Healer, opening onto the square.
     map_place_town_inn(m);
     town_life_place(m, LOCATION_TOWN2);
+    m->tiles[RANGER_TAMSIN_Y][RANGER_TAMSIN_X] = TILE_NPC_TAMSIN;
     for (int y = 0; y < TOWN_H; y++) {
         m->tiles[y][0] = TILE_WALL;
         m->tiles[y][TOWN_W - 1] = TILE_WALL;
     }
+    m->tiles[0][20] = TILE_TOWN_EXIT;
     m->tiles[TOWN_H - 1][20] = TILE_TOWN_EXIT;
     *spawn_x = 20;
     *spawn_y = TOWN_H - 2;
@@ -1879,6 +1887,7 @@ void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
     }
     // Saltwind follows the river-facing northern waterfront.
     m->tiles[0][20] = TILE_TOWN_EXIT;
+    m->tiles[12][TOWN_W - 1] = TILE_TOWN_EXIT;
     town_life_place(m, LOCATION_DAWNMERE);
     m->tiles[SEREN_Y][SEREN_X] = TILE_NPC_SEREN;
     *spawn_x = 20;
@@ -2432,17 +2441,12 @@ void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *
         }
     }
 
-    m->tiles[dead_end_y[0]][dead_end_x[0]] =
-        switches & (1 << (level - 1)) ? TILE_LABYRINTH_SWITCH_ON :
-            TILE_LABYRINTH_SWITCH_OFF;
+    (void)switches; // Historical save data; the Minotaur no longer has a rune gate.
     if (level < LABYRINTH_DEPTH) {
         int main_stair = dead_end_count / 2;
-        int false_stair = dead_end_count - 1;
         m->stairs_down_x = dead_end_x[main_stair];
         m->stairs_down_y = dead_end_y[main_stair];
         m->tiles[m->stairs_down_y][m->stairs_down_x] = TILE_LABYRINTH_STAIRS;
-        m->tiles[dead_end_y[false_stair]][dead_end_x[false_stair]] =
-            TILE_LABYRINTH_STAIRS;
     } else {
         for (int x = 33; x <= 40; x++) {
             m->tiles[entry_y][x] = TILE_LABYRINTH_FLOOR;
@@ -2452,23 +2456,8 @@ void map_generate_labyrinth(Map *m, int level, int switches, int *spawn_x, int *
                 m->tiles[y][x] = TILE_LABYRINTH_FLOOR;
             }
         }
-        if (switches != (1 << LABYRINTH_SWITCH_COUNT) - 1) {
-            m->tiles[entry_y][35] = TILE_LABYRINTH_GATE;
-        }
-        m->tiles[entry_y][40] = TILE_LABYRINTH_RELIC;
         m->stairs_down_x = 40;
         m->stairs_down_y = entry_y;
-    }
-
-    if (level > 1) {
-        m->tiles[LABYRINTH_FALSE_EXIT_Y][LABYRINTH_FALSE_EXIT_X] =
-            TILE_LABYRINTH_EXIT;
-        m->tiles[LABYRINTH_FALSE_EXIT_Y][LABYRINTH_FALSE_EXIT_X + 1] =
-            TILE_LABYRINTH_FLOOR;
-        m->tiles[LABYRINTH_FALSE_EXIT_Y][LABYRINTH_FALSE_EXIT_X + 2] =
-            TILE_TRAP_REVEALED;
-        m->tiles[LABYRINTH_FALSE_EXIT_Y][LABYRINTH_FALSE_EXIT_X + 3] =
-            TILE_LABYRINTH_FLOOR;
     }
 
     m->tiles[entry_y][1] = TILE_LABYRINTH_EXIT;
@@ -2528,6 +2517,7 @@ static void map_generate_tavern_room(Map *m, int *spawn_x, int *spawn_y) {
 void map_generate_tavern(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y);
     m->tiles[BRAM_INN_Y][BRAM_INN_X] = TILE_NPC_BRAM;
+    m->tiles[MARA_TAVERN_Y][MARA_TAVERN_X] = TILE_NPC_MARA;
 }
 
 void map_place_tavern_brenna(Map *m) {
@@ -2536,6 +2526,7 @@ void map_place_tavern_brenna(Map *m) {
 
 void map_generate_inn(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_tavern_room(m, spawn_x, spawn_y);
+    m->tiles[ROOK_TAVERN_Y][ROOK_TAVERN_X] = TILE_NPC_ROOK;
     // Zara now travels between Oakhaven and the Sunscar caravan camp.
     m->tiles[BRENNA_INN_Y][BRENNA_INN_X] = TILE_NPC_BRENNA;
 }

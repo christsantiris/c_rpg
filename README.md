@@ -47,9 +47,17 @@ A level-10 Mage can buy the **400-gold Resurrection scroll** and perform the
 ritual directly at the shrine's marked circle for **80 MP**. The shrine is
 present from the start; its services require a recruited companion.
 
+Traveler Neris in Oakhaven's square and Fisher Tovan in Dawnmere's Alehouse
+tell of **Soren**, a mage imprisoned at **Stormwatch Headland**. Take Dawnmere's
+eastern road and defeat the Tempest Matriarch to free him. He offers to join
+as a **level 1 Mage with Fireball**, fighting alongside Aldric. He stays at
+level 1; party progression is deferred to a later update.
+If declined or dismissed, he waits at Dawnmere's Alehouse. Fallen companions
+can be selected individually for resurrection at Soulstone Shrine.
+
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/world-map.png?v=b1d08eaa71ee)](docs/world-map.png?v=b1d08eaa71ee)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=bf9e7f5b92a7)](docs/world-map.png?v=bf9e7f5b92a7)
 
 The V2 starting region contains Oakhaven, Goblin Mountains to its west, Haunted
 Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
@@ -61,6 +69,10 @@ coast below the dungeon is open sea.
 Act 3’s eastern route runs from occupied Dawnmere north into Saltwind Marsh on
 the river bank. Its skiff passage crosses the calm estuary to Stillbury on the
 opposite bank, where Act 4 begins.
+
+Dawnmere's eastern road also reaches **Stormwatch Headland**, an optional
+five-stage rescue adventure. Walk around the occupied town's walls to reach
+the road without fighting the garrison; liberating Dawnmere is not required.
 
 Act 3's western road runs from the Goblin Mountains west through Sunscar Wastes.
 Zara, scout Garran and historian Liora wait at its caravan camp.
@@ -75,16 +87,33 @@ reach the same town to begin Act 4. Attacking the tribute convoy, like liberatin
 Dawnmere, is reported to Stillbury. Defeating the Pharaoh or Jarl alone is not.
 See the [western quests and rewards](docs/act3-western.md).
 
-On Stillbury's bank, Stonewake Quarry lies between the river and the castle,
-Blackwater Swamp lies east of Stillbury, and Sunken Coast lies among the islands
-north of the estuary. None of the three is connected by road yet.
-Goblin Mountains, Sunscar Wastes and Frostfell now fill the enlarged western
-terrain left by those relocations. This changes the atlas footprint, not the
-number of combat stages.
+Stillbury's north gate leads through **Blackwater Swamp** toward the **Royal
+Catacombs** beneath the castle. Defeating the Swamp Demon opens the road to the
+Catacombs; defeating the Grave Marshal opens the final castle approach.
+The eastern gate leads through **Elderwood Forest**: defeating Elderthorn opens
+the onward road to **Sunken Coast**. **Ranger Tamsin**, near Stillbury's east
+gate, offers **Clear Elderwood**: defeat Elderthorn, then return to her for
+**120 gold and 800 score**. The boss objective moves straight to Completed;
+there are no Heartseed or rescue objectives. Physical retreat leads back to Stillbury.
+The western road forks before **Giant's Bridge**. Its northern branch reaches
+**Stonewake Quarry**, with an optional **Labyrinth** entrance beside that road.
+Neither the Jarl nor the Minotaur blocks the quarry branch. Rook offers
+**Slay the Minotaur** in Stillbury's Tavern; victory completes the quest
+immediately and reveals a prisoner register implicating Malakar's private office.
+See the [labyrinth arc](docs/labyrinth.md).
 
-The rest of the world is shown as provisional context and will be redesigned
-in later steps; later connections remain undecided.
-Rook's Labyrinth is deferred to a later arc and has no current world entrance.
+Mara introduces the Ruined Isle from Oakhaven's Inn without assigning a quest.
+Captain Rowan waits at **Stillbury's docks**, south of town beside the river
+skiff landing. He assigns **Relight the Drowned Beacons** and pays its reward
+there; no return to Oakhaven is needed. Defeating the Drowned Queen opens his
+ship's island passage independently of the beacons. Island voyages return to
+Stillbury's docks. Restoring all three beacons and defeating the Queen reopens
+coastal trade, warming civilian reactions without clearing the Crown's record.
+See the [coastal quest and travel notes](docs/coastal-quest.md).
+
+The atlas no longer labels the river mouth as Estuary. Geography south of the
+river stays fixed. Further Malakar evidence and the new island amulet remain
+separate story steps. The rest of the world is provisional context for later design.
 
 ## Controls
 
@@ -207,8 +236,7 @@ See the [parameter table](#debug-script-parameters) and
 [weapon-to-parameter mapping](#debug-weapon-names) below for exact accepted values.
 
 Select **New Game**, enter a name, and choose a class, or load an existing
-character. All four town-to-town roads, the Sunken Coast dock road and island sailing
-without a treasure map are open immediately. The deferred labyrinth has no
+character. Town-to-town roads and island sailing from Stillbury's docks are open immediately. The deferred labyrinth has no
 entrance, including in debug mode.
 Locked dungeon doors, mountain barriers, temple doors,
 quarry crane walkways and castle portcullises open as you explore. Each unused

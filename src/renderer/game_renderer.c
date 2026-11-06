@@ -59,6 +59,7 @@
 #include "../game/jail.h"
 #include "../game/elowen.h"
 #include "../game/aldric.h"
+#include "../game/storm_mage.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -583,8 +584,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int stormbell_prompt = stormbell_prompt_active(g);
     int shrine_prompt = resurrection_prompt_active(g);
     int escort_dialogue = strcmp(g->dialogue_speaker, "Elowen") == 0 ||
+        strcmp(g->dialogue_speaker, STORM_MAGE_SPEAKER) == 0 ||
         (g->aldric_party_state == ALDRIC_FOLLOWING && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0);
-    int dock_dialogue = coastal_approach(g) && strcmp(g->dialogue_speaker, "Captain Rowan") == 0;
+    int dock_dialogue = coastal_stillbury_docks(g) && strcmp(g->dialogue_speaker, "Captain Rowan") == 0;
     if (!g->dialogue_active ||
         (!escort_dialogue && !dock_dialogue && !approach_sunscar_road(g) && !approach_bridge_road(g) && !western_convoy_prompt(g) && !shortcut && !stormbell_prompt && !shrine_prompt && !town_life_is_interior(g->location) && g->location != LOCATION_TAVERN &&
         g->location != LOCATION_INN && g->location != LOCATION_HEALER && g->location != LOCATION_WITCH &&
@@ -652,6 +654,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     }
     if (aldric_prompt_active(g)) {
         hint = g->aldric_party_state == ALDRIC_FOLLOWING ? "Wait at the Inn? Y: Yes   N: No" : "Join your party? Y: Yes   N: No";
+    }
+    if (storm_mage_prompt_active(g)) {
+        hint = g->storm_mage.state == STORM_MAGE_FOLLOWING ? "Wait at the Alehouse? Y: Yes   N: No" : "Join your party? Y: Yes   N: No";
     }
     if (eastern_challenge_active(g)) {
         hint = "Y / Esc: Leave town\nN: Force your way in";
@@ -2334,7 +2339,7 @@ static void draw_labyrinth_exits(Renderer *r, const GameState *g, const Viewport
             if (tile == TILE_LABYRINTH_STAIRS) {
                 snprintf(label, sizeof(label), "DOWN: FLOOR %d", g->level + 1);
             } else if (g->level == 1) {
-                snprintf(label, sizeof(label), "FOREST ROAD");
+                snprintf(label, sizeof(label), "QUARRY ROAD / STILLBURY");
             } else {
                 snprintf(label, sizeof(label), "UP: FLOOR %d", g->level - 1);
             }
@@ -2365,10 +2370,19 @@ static void draw_labyrinth_exits(Renderer *r, const GameState *g, const Viewport
 }
 
 static void draw_adventure_exits(Renderer *r, const GameState *g, const Viewport *v) {
-    if ((g->location != LOCATION_FOREST && g->location != LOCATION_MOUNTAINS) || !r->font_tiny) {
+    if ((g->location != LOCATION_FOREST && g->location != LOCATION_MOUNTAINS && g->location != LOCATION_ELDERWOOD && g->location != LOCATION_SWAMP) || !r->font_tiny) {
         return;
     }
     int forest = g->location == LOCATION_FOREST;
+    int elder = g->location == LOCATION_ELDERWOOD;
+    int swamp = g->location == LOCATION_SWAMP;
+    TileType entrance = elder ? TILE_ELDERWOOD_ENTRANCE : swamp ? TILE_SWAMP_ENTRANCE : forest ? TILE_FOREST_ENTRANCE : TILE_MOUNTAIN_ENTRANCE;
+    TileType exit = elder ? TILE_ELDERWOOD_EXIT : swamp ? TILE_SWAMP_EXIT : forest ? TILE_FOREST_EXIT : TILE_MOUNTAIN_EXIT;
+    const char *name = elder ? "ELDERWOOD" : swamp ? "BLACKWATER" : forest ? "HAUNTED FOREST" : "GOBLIN MOUNTAINS";
+    const char *road = elder ? "ELDERWOOD" : swamp ? "BLACKWATER" : forest ? "FOREST" : "MOUNTAIN";
+    const char *boss = elder ? "ELDERTHORN" : swamp ? "SWAMP DEMON" : forest ? "NECROMANCER" : "GOBLIN KING";
+    int depth = elder ? ELDERWOOD_DEPTH : swamp ? SWAMP_DEPTH : forest ? FOREST_DEPTH : MOUNTAIN_DEPTH;
+    int edge_w = elder ? ELDERWOOD_W : swamp ? SWAMP_MAP_W : MAP_W;
     float zoom = game_camera_zoom(g);
     for (int y = v->cam_y; y < v->cam_y + v->tiles_y && y < MAP_H; y++) {
         for (int x = v->cam_x; x < v->cam_x + v->tiles_x && x < MAP_W; x++) {
@@ -2376,20 +2390,19 @@ static void draw_adventure_exits(Renderer *r, const GameState *g, const Viewport
             if (tile == TILE_ITEM) {
                 tile = floor_item_underlay(g, x, y);
             }
-            int onward = tile == (forest ? TILE_FOREST_EXIT : TILE_MOUNTAIN_EXIT);
-            if (!onward && tile != (forest ? TILE_FOREST_ENTRANCE : TILE_MOUNTAIN_ENTRANCE)) {
+            int onward = tile == exit;
+            if (!onward && tile != entrance) {
                 continue;
             }
             char label[64];
-            char direction = x == 0 ? 'W' : x == MAP_W - 1 ? 'E' : y == 0 ? 'N' : 'S';
+            char direction = x == 0 ? 'W' : x == edge_w - 1 ? 'E' : y == 0 ? 'N' : 'S';
             int stage = g->level + (onward ? 1 : -1);
-            int depth = forest ? FOREST_DEPTH : MOUNTAIN_DEPTH;
             if (onward && g->level == depth && !boss_gate_open(g, g->location)) {
-                snprintf(label, sizeof(label), "%c: DEFEAT %s", direction, forest ? "NECROMANCER" : "GOBLIN KING");
+                snprintf(label, sizeof(label), "%c: DEFEAT %s", direction, boss);
             } else if (stage < 1 || stage > depth) {
-                snprintf(label, sizeof(label), "%c: %s ROAD", direction, forest ? "FOREST" : "MOUNTAIN");
+                snprintf(label, sizeof(label), "%c: %s ROAD", direction, road);
             } else {
-                snprintf(label, sizeof(label), "%c: %s %d", direction, forest ? "HAUNTED FOREST" : "GOBLIN MOUNTAINS", stage);
+                snprintf(label, sizeof(label), "%c: %s %d", direction, name, stage);
             }
             int width;
             TTF_SizeText(r->font_tiny, label, &width, NULL);
@@ -2674,11 +2687,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_HEARTSEED_ALTAR:
                     draw_elderwood_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
-                case TILE_NORTH_ELDERWOOD:
+                case TILE_NORTH_SWAMP:
                 case TILE_NORTH_CATACOMBS:
                     draw_town_floor(r, sx, sy);
                     break;
-                case TILE_NORTH_OAKHAVEN:
+                case TILE_NORTH_STILLBURY:
                 case TILE_NORTH_CASTLE:
                     draw_town_path(r, sx, sy);
                     break;
@@ -3205,6 +3218,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_MARA, 0);
                     break;
+                case TILE_NPC_STORM_GUIDE:
+                    draw_npc_ground(r, g, sx, sy, x, y, g->location == LOCATION_TOWN ? TILE_TOWN_PATH : TILE_TAVERN_FLOOR);
+                    npc_draw(r, sx, sy, g->location == LOCATION_TOWN ? NPC_ART_NERIS : NPC_ART_TOVAN, 0);
+                    break;
                 case TILE_NPC_ROOK:
                     draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_ROOK, 0);
@@ -3562,6 +3579,12 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
+    if (g->location == LOCATION_APPROACH && g->approach_route == APPROACH_QUARRY_ROAD) {
+        draw_labyrinth_entrance(r, viewport_to_screen_x(v, QUARRY_LABYRINTH_X), viewport_to_screen_y(v, QUARRY_LABYRINTH_Y), 1);
+        draw_town_road_sign(r, viewport_to_screen_x(v, QUARRY_LABYRINTH_X), viewport_to_screen_y(v, QUARRY_LABYRINTH_Y + 2), "LABYRINTH");
+        draw_town_road_sign(r, viewport_to_screen_x(v, APPROACH_W / 2 + 2), viewport_to_screen_y(v, QUARRY_LABYRINTH_Y + 2), "N: STONEWAKE QUARRY");
+    }
+
     if (approach_sunscar_road(g)) {
         draw_town_road_sign(r, viewport_to_screen_x(v, g->map.stairs_down_x - 9), viewport_to_screen_y(v, g->map.stairs_down_y - 2), "SUNSCAR WASTES");
         draw_town_road_sign(r, viewport_to_screen_x(v, APPROACH_PEAKS_BRANCH_X + 2), viewport_to_screen_y(v, APPROACH_H / 2 - 12), "N: GIANT'S PEAKS");
@@ -3578,7 +3601,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         }
     }
 
-    if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_SWAMP) {
+    if (g->location == LOCATION_APPROACH && approach_route(g) && approach_route(g)->area == LOCATION_SWAMP && !northern_approach(g)) {
         draw_swamp_entrance(r, viewport_to_screen_x(v, g->map.stairs_down_x), viewport_to_screen_y(v, g->map.stairs_down_y));
         int open = g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP));
         if (open || approach_route(g)->town == LOCATION_TOWN2) {
@@ -3591,12 +3614,33 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     mangrove_draw_landmark(r, g, v);
     mangrove_draw_spice_quest(r, g, v);
-    if (coastal_approach(g)) {
-        int dock_x = viewport_to_screen_x(v, COAST_DOCK_X);
-        int dock_y = viewport_to_screen_y(v, COAST_DOCK_Y);
+    if (g->location == LOCATION_RIVER_CROSSING &&
+        (viewport_is_visible(v, STILLBURY_ROWAN_X, STILLBURY_ROWAN_Y) ||
+        viewport_is_visible(v, STILLBURY_DOCK_X, STILLBURY_DOCK_Y) ||
+        viewport_is_visible(v, STILLBURY_DOCK_ENTRY_X, STILLBURY_DOCK_ENTRY_Y))) {
+        int dock_x = viewport_to_screen_x(v, STILLBURY_DOCK_X);
+        int dock_y = viewport_to_screen_y(v, STILLBURY_DOCK_Y);
         draw_harbor(r, dock_x, dock_y);
-        renderer_draw_text(r, "DOCKS", dock_x * TILE_SIZE, (dock_y - 1) * TILE_SIZE,
+        int label_w;
+        float scale_x;
+        float scale_y;
+        SDL_RenderGetScale(r->sdl, &scale_x, &scale_y);
+        TTF_SizeText(r->font_tiny, "STILLBURY DOCKS", &label_w, NULL);
+        int label_x = dock_x * TILE_SIZE;
+        int right = (int)((r->screen_w - INFO_PANEL_W) / scale_x) - label_w - 4;
+        if (label_x > right) {
+            label_x = right;
+        }
+        if (label_x < 4) {
+            label_x = 4;
+        }
+        renderer_draw_text(r, "STILLBURY DOCKS", label_x, (dock_y - 1) * TILE_SIZE,
             (SDL_Color){220, 180, 60, 255}, r->font_tiny);
+    }
+    if (g->location == LOCATION_APPROACH && g->approach_route == APPROACH_ELDERWOOD_ROAD) {
+        SDL_Rect trees = {(viewport_to_screen_x(v, g->map.stairs_down_x) - 3) * TILE_SIZE,
+            (viewport_to_screen_y(v, g->map.stairs_down_y) - 5) * TILE_SIZE, 7 * TILE_SIZE, 6 * TILE_SIZE};
+        SDL_RenderCopy(r->sdl, r->elderwood_entrance_texture, NULL, &trees);
     }
     TownExitStyle entrance_style;
     if (g->location == LOCATION_APPROACH && !northern_approach(g) && approach_route(g) && approach_entrance_rows(approach_route(g)->area) &&
@@ -3750,7 +3794,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_sun_guardian_warnings(r, g, v);
     draw_red_dragon_warnings(r, g, v);
     draw_elderwood_warnings(r, g, v);
-    draw_heartseed_details(r, g, v);
     stormwatch_draw_warnings(r, g, v);
     stormbell_draw_details(r, g, v);
     giants_draw_details(r, g, v);
@@ -3999,13 +4042,22 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_town_road_sign(r, viewport_to_screen_x(v, sign_x), viewport_to_screen_y(v, sign_y), sign);
                 }
             }
-            int ends = approach_bridge_road(g) || approach_sunscar_road(g) ? 3 : 2;
+            int ends = approach_bridge_road(g) ? 4 : approach_sunscar_road(g) || g->approach_route == APPROACH_ELDERWOOD_ROAD ? 3 : 2;
             for (int end = 0; end < ends; end++) {
                 int x = end ? g->map.stairs_down_x : g->map.stairs_up_x;
                 int y = end ? g->map.stairs_down_y : g->map.stairs_up_y;
                 const char *name = end ? approach_area_name(route->area) : approach_origin_name(route);
+                if (end == 3) {
+                    x = BRIDGE_QUARRY_X;
+                    y = 0;
+                    name = "N: QUARRY / LABYRINTH";
+                }
                 if (end == 2) {
-                    if (approach_bridge_road(g)) {
+                    if (g->approach_route == APPROACH_ELDERWOOD_ROAD) {
+                        x = APPROACH_W - 1;
+                        y = APPROACH_H / 2;
+                        name = "E: SUNKEN COAST";
+                    } else if (approach_bridge_road(g)) {
                         x = APPROACH_BRIDGE_X;
                         y = 8;
                         name = "GIANT'S BRIDGE";
@@ -4425,6 +4477,35 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         bar.w = bar.w * g->aldric_hp / ALDRIC_MAX_HP;
         SDL_SetRenderDrawColor(r->sdl, 84, 200, 92, 255);
         SDL_RenderFillRect(r->sdl, &bar);
+    }
+    int mage_x = g->storm_mage.state <= STORM_MAGE_FREED ? STORM_MAGE_X : STORM_MAGE_INN_X;
+    int mage_y = g->storm_mage.state <= STORM_MAGE_FREED ? STORM_MAGE_Y : STORM_MAGE_INN_Y;
+    if (g->storm_mage.state == STORM_MAGE_FOLLOWING) {
+        mage_x = g->storm_mage.x;
+        mage_y = g->storm_mage.y;
+    }
+    if (storm_mage_at(g, mage_x, mage_y) && viewport_is_visible(v, mage_x, mage_y)) {
+        int sx = viewport_to_screen_x(v, mage_x);
+        int sy = viewport_to_screen_y(v, mage_y);
+        npc_draw(r, sx, sy, NPC_ART_STORM_MAGE, 0);
+        if (g->storm_mage.state == STORM_MAGE_CAPTIVE) {
+            SDL_SetRenderDrawColor(r->sdl, 172, 115, 226, 255);
+            SDL_Rect ward = {sx * TILE_SIZE, sy * TILE_SIZE - 4, TILE_SIZE, TILE_SIZE + 4};
+            SDL_RenderDrawRect(r->sdl, &ward);
+        }
+        int width;
+        TTF_SizeText(r->font_tiny, "SOREN", &width, NULL);
+        int lx = sx * TILE_SIZE + (TILE_SIZE - width) / 2;
+        renderer_draw_text(r, "SOREN", lx < 2 ? 2 : lx, (sy - 1) * TILE_SIZE,
+            (SDL_Color){238, 190, 111, 255}, r->font_tiny);
+        if (g->storm_mage.state == STORM_MAGE_FOLLOWING) {
+            SDL_Rect bar = {sx * TILE_SIZE + 2, sy * TILE_SIZE - 5, TILE_SIZE - 4, 3};
+            SDL_SetRenderDrawColor(r->sdl, 20, 52, 24, 255);
+            SDL_RenderFillRect(r->sdl, &bar);
+            bar.w = bar.w * g->storm_mage.hp / storm_mage_max_hp(g);
+            SDL_SetRenderDrawColor(r->sdl, 84, 200, 92, 255);
+            SDL_RenderFillRect(r->sdl, &bar);
+        }
     }
     // Draw player
     const Item *equipped_weapon = NULL;

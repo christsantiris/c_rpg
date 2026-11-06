@@ -35,25 +35,25 @@ void test_quest_journal(void) {
         entry.state == 3 && strcmp(entry.giver, "Alder") == 0);
     ASSERT("Alder's journal places both rangers on the first two stages", entry.stages[0] == 1 && entry.stages[1] == 2 && entry.objective_count == 2);
     g.rook_quest_state = 1;
-    ASSERT("Rook's labyrinth retrieval appears as an active quest",
+    ASSERT("Rook's Minotaur hunt appears as an active quest",
         quest_journal_count(&g, QUEST_TAB_ACTIVE) == 2 &&
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 1, &entry) &&
-        strcmp(entry.title, "The Ivory Rook") == 0 &&
+        strcmp(entry.title, "Slay the Minotaur") == 0 &&
         entry.objective_count == 1 && entry.reward_gold == ROOK_QUEST_REWARD &&
-        strstr(entry.summary_line_1, "Dawnmere") && strstr(entry.summary_line_2, "Oakhaven's Inn"));
+        strstr(entry.summary_line_1, "Stillbury") && strstr(entry.summary_line_2, "no return to Rook"));
     g.rook_quest_state = 2;
-    ASSERT("recovering the ivory rook completes the quest before claiming its reward",
+    ASSERT("legacy completed labyrinth quests remain completed",
         quest_journal_get_entry(&g, QUEST_TAB_COMPLETED, 2, &entry) &&
         entry.objective_complete[0] && entry.state == 2 &&
         quest_journal_count(&g, QUEST_TAB_COMPLETED) == 3);
     g.rook_quest_state = 3;
-    ASSERT("a returned ivory rook is retained in completed quests",
+    ASSERT("a slain Minotaur is retained in completed quests",
         quest_journal_count(&g, QUEST_TAB_COMPLETED) == 3);
     g.mara_quest_state = 1;
     g.mara_beacons_lit = MARA_BEACON_STAGE_2 | MARA_BEACON_STAGE_4;
-    ASSERT("Mara's journal shows stages two through four and preserved completion bits",
+    ASSERT("Rowan's journal shows stages two through four and preserved completion bits",
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 1, &entry) &&
-        strcmp(entry.giver, "Mara") == 0 && entry.stages[0] == 2 &&
+        strcmp(entry.giver, "Captain Rowan") == 0 && strstr(entry.summary_line_2, "Stillbury") && entry.stages[0] == 2 &&
         entry.stages[1] == 3 && entry.stages[2] == 4 &&
         entry.objective_complete[0] && !entry.objective_complete[1] && entry.objective_complete[2]);
     g.mara_quest_state = 0;

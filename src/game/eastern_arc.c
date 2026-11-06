@@ -4,6 +4,7 @@
 #include "town_life.h"
 #include "town_road.h"
 #include "stormbell.h"
+#include "coastal_travel.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -90,8 +91,16 @@ void eastern_refresh(GameState *g) {
                 restore_town_tile(g, x, 0, TILE_WALL);
                 restore_town_tile(g, x, TOWN_H - 1, TILE_WALL);
             }
+            restore_town_tile(g, 20, 0, TILE_TOWN_EXIT);
+            for (int y = 1; y <= 12; y++) {
+                restore_town_tile(g, 20, y, TILE_TOWN_PATH);
+            }
             restore_town_tile(g, 20, TOWN_H - 1, TILE_TOWN_EXIT);
             restore_town_tile(g, 0, 12, TILE_TOWN_EXIT);
+            restore_town_tile(g, TOWN_W - 1, 12, TILE_TOWN_EXIT);
+            for (int x = TOWN_W - 2; x >= 32; x--) {
+                restore_town_tile(g, x, 12, TILE_TOWN_PATH);
+            }
             for (int x = 1; x <= 7; x++) {
                 restore_town_tile(g, x, 12, TILE_TOWN_PATH);
             }
@@ -100,6 +109,10 @@ void eastern_refresh(GameState *g) {
     if (g->location == LOCATION_DAWNMERE) {
         restore_town_tile(g, 20, TOWN_H - 1, TILE_WALL);
         restore_town_tile(g, 20, 0, TILE_TOWN_EXIT);
+        restore_town_tile(g, TOWN_W - 1, 12, TILE_TOWN_EXIT);
+        for (int x = 32; x < TOWN_W - 1; x++) {
+            restore_town_tile(g, x, 12, TILE_TOWN_PATH);
+        }
         if (!g->dawnmere_liberated && g->map.tiles[SEREN_Y][SEREN_X] == TILE_NPC_SEREN) {
             g->map.tiles[SEREN_Y][SEREN_X] = map_dawnmere_ground(SEREN_X, SEREN_Y);
         }
@@ -339,13 +352,15 @@ int eastern_move(GameState *g, int x, int y) {
     }
     int west_checkpoint = x >= 5 && x <= 7 && y >= 10 && y <= 14;
     int south_checkpoint = x >= 17 && x <= 23 && y >= 17 && y <= 19;
-    if (g->location == LOCATION_TOWN2 && g->royal_reported_actions && !g->stillbury_challenge && (west_checkpoint || south_checkpoint)) {
+    int east_checkpoint = x >= 32 && x <= 34 && y >= 10 && y <= 14;
+    int north_checkpoint = x >= 17 && x <= 23 && y >= 4 && y <= 6;
+    if (g->location == LOCATION_TOWN2 && g->royal_reported_actions && !g->stillbury_challenge && (west_checkpoint || east_checkpoint || south_checkpoint || north_checkpoint)) {
         g->stillbury_prompt = 1;
         g->dialogue_active = 1;
         snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Royal Checkpoint");
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, "You are wanted for acts against the Crown. Surrender your passage. Y: submit and return to the gate. N: resist. Esc: withdraw.");
-        g->dialogue_x = west_checkpoint ? 7 : 20;
-        g->dialogue_y = west_checkpoint ? 12 : 17;
+        g->dialogue_x = west_checkpoint ? 7 : east_checkpoint ? 33 : 20;
+        g->dialogue_y = west_checkpoint || east_checkpoint ? 12 : north_checkpoint ? 5 : 17;
         return 1;
     }
     return 0;
@@ -414,14 +429,16 @@ int eastern_handle_key(GameState *g, int key, int repeat) {
             g->enemy_count = 3;
             for (int i = 0; i < 3; i++) {
                 int west = g->dialogue_x == 7;
-                game_spawn_enemy(g, &g->enemies[i], i == 2 ? ENEMY_ROAD_ARCHER : ENEMY_ROYAL_GUARD, west ? 8 + (i == 2) : 19 + i, west ? 11 + i : 16 - (i == 2));
+                int north = g->dialogue_y == 5;
+                int east = g->dialogue_x == 33;
+                game_spawn_enemy(g, &g->enemies[i], i == 2 ? ENEMY_ROAD_ARCHER : ENEMY_ROYAL_GUARD, west ? 8 + (i == 2) : east ? 32 - (i == 2) : 19 + i, west || east ? 11 + i : north ? 7 + (i == 2) : 16 - (i == 2));
                 g->enemies[i].boss_aux_y = 1;
             }
             eastern_store(g);
             push_message(g, "The checkpoint turns hostile. The gate behind you remains your retreat.");
         } else {
-            g->player.x = g->dialogue_x == 7 ? 2 : 20;
-            g->player.y = g->dialogue_x == 7 ? 12 : 22;
+            g->player.x = g->dialogue_x == 7 ? 2 : g->dialogue_x == 33 ? TOWN_W - 3 : 20;
+            g->player.y = g->dialogue_x == 7 || g->dialogue_x == 33 ? 12 : g->dialogue_y == 5 ? 2 : 22;
             push_message(g, "You withdraw toward the gate. Stillbury remains suspicious.");
         }
     }
@@ -455,6 +472,7 @@ void eastern_river_map(Map *map) {
     map->stairs_up_y = MANGROVE_H - 1;
     map->stairs_down_x = RIVER_NORTH_X;
     map->stairs_down_y = 0;
+    coastal_place_docks(map);
 }
 
 void eastern_river_enter(GameState *g, int from_town) {
@@ -504,6 +522,7 @@ void eastern_river_enter(GameState *g, int from_town) {
     }
     g->player.last_dx = 0;
     g->player.last_dy = from_town ? 1 : -1;
+    coastal_refresh_docks(g);
     push_message(g, "River passage: Saltwind south, Stillbury north. Board and dock with your Interact key.");
 }
 

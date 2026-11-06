@@ -1,3 +1,4 @@
+#include "game/elderwood_quest.h"
 #include "game/combat_feedback.h"
 #include "../../src/game/coast_exits.h"
 #include "game/boss_gates.h"
@@ -111,62 +112,36 @@ static void test_container_renderer(Renderer *r, GameState *g, SDL_Surface *surf
     puts("PASS: A opens/closes chests, P collects loose gold, and arrows still move; native renderer captures all chest states.");
 }
 
-static void test_heartseed_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
+static void test_elderwood_quest_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
     game_init(g);
-    g->player.x = TAMSIN_X + 1;
-    g->player.y = TAMSIN_Y;
+    game_enter_town2(g);
+    g->player.x = RANGER_TAMSIN_X - 1;
+    g->player.y = RANGER_TAMSIN_Y;
     Viewport view;
     int width = (r->screen_w - INFO_PANEL_W) / TILE_SIZE;
     viewport_init(&view, width, r->tiles_y, TOWN_W, TOWN_H);
     viewport_center_on(&view, g->player.x, g->player.y);
+    assert(elderwood_quest_talk(g) && game_quest_offer_active(g));
     renderer_begin_frame(r);
     game_draw(r, g, &view);
     renderer_end_frame(r);
-    assert(SDL_SaveBMP(surface, "/tmp/heartseed-tamsin-town.bmp") == 0);
-    assert(heartseed_talk(g) && game_quest_offer_active(g));
+    assert(SDL_SaveBMP(surface, "/tmp/elderwood-tamsin-offer.bmp") == 0);
     assert(game_handle_quest_offer_key(g, SDL_SCANCODE_Y, 0));
-    g->dialogue_active = 0;
-    elderwood_enter(g);
-    game_descend(g);
-    g->player.x = HEARTSEED_ORDERS_X + 1;
-    g->player.y = HEARTSEED_ORDERS_Y;
-    viewport_init(&view, width, r->tiles_y, ELDERWOOD_W, ELDERWOOD_H);
-    viewport_center_on(&view, g->player.x, g->player.y);
-    renderer_begin_frame(r);
-    game_draw(r, g, &view);
-    renderer_end_frame(r);
-    assert(SDL_SaveBMP(surface, "/tmp/heartseed-orders-camp.bmp") == 0);
-    assert(heartseed_interact(g));
-    game_descend(g);
-    game_descend(g);
-    g->player.x = HEARTSEED_X;
-    g->player.y = HEARTSEED_Y + 2;
-    viewport_center_on(&view, g->player.x, g->player.y);
-    renderer_begin_frame(r);
-    game_draw(r, g, &view);
-    renderer_end_frame(r);
-    assert(SDL_SaveBMP(surface, "/tmp/heartseed-bound-grove.bmp") == 0);
-    for (int i = 0; i < 3; i++) {
-        g->player.x = heartseed_stakes[i][0];
-        g->player.y = heartseed_stakes[i][1] + 1;
-        assert(heartseed_interact(g));
-    }
-    assert(g->heartseed_guardian == HEARTSEED_FREED);
-    g->player.x = HEARTSEED_X;
-    g->player.y = HEARTSEED_Y + 1;
-    viewport_center_on(&view, g->player.x, g->player.y);
-    renderer_begin_frame(r);
-    game_draw(r, g, &view);
-    renderer_end_frame(r);
-    assert(SDL_SaveBMP(surface, "/tmp/heartseed-freed-grove.bmp") == 0);
-    assert(heartseed_interact(g) && g->heartseed_quest_state == 2);
+    elderwood_defeat(g);
+    assert(g->elderwood_quest_state == 2);
     QuestJournalScreen journal;
     quest_journal_init(&journal);
+    journal.tab = QUEST_TAB_COMPLETED;
     renderer_begin_frame(r);
     quest_journal_draw(r, g, &journal);
     renderer_end_frame(r);
-    assert(SDL_SaveBMP(surface, "/tmp/heartseed-journal.bmp") == 0);
-    puts("PASS: Heartseed NPC, orders, root arch, bindings, guardian release and quest journal render in the native game renderer.");
+    assert(SDL_SaveBMP(surface, "/tmp/elderwood-completed-journal.bmp") == 0);
+    assert(elderwood_quest_talk(g) && g->elderwood_quest_state == 3);
+    renderer_begin_frame(r);
+    game_draw(r, g, &view);
+    renderer_end_frame(r);
+    assert(SDL_SaveBMP(surface, "/tmp/elderwood-tamsin-reward.bmp") == 0);
+    puts("PASS: Ranger Tamsin's boss quest, completed journal and reward render in the native renderer.");
 }
 
 static void test_stormbell_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
@@ -926,25 +901,24 @@ static void test_saltwind_renderer(Renderer *r, GameState *g, SDL_Surface *surfa
         renderer_end_frame(r);
         assert(creature_pixels(surface, x, y) != ground);
     }
-    approach_enter_region(g, 3);
-    assert(approach_coast_ground(COAST_ROWAN_X, COAST_ROWAN_Y) == TILE_COAST_SAND);
-    viewport_init(&view, r->tiles_x, r->tiles_y, APPROACH_W, APPROACH_H);
-    g->player.x = 44;
-    g->player.y = 18;
+    eastern_river_enter(g, 1);
+    viewport_init(&view, r->tiles_x, r->tiles_y, MANGROVE_W, MANGROVE_H);
+    g->player.x = STILLBURY_ROWAN_X - 1;
+    g->player.y = STILLBURY_ROWAN_Y;
     viewport_center_on(&view, g->player.x, g->player.y);
-    x = viewport_to_screen_x(&view, COAST_ROWAN_X) * TILE_SIZE;
-    y = viewport_to_screen_y(&view, COAST_ROWAN_Y) * TILE_SIZE;
-    g->map.tiles[COAST_ROWAN_Y][COAST_ROWAN_X] = TILE_COAST_SAND;
+    x = viewport_to_screen_x(&view, STILLBURY_ROWAN_X) * TILE_SIZE;
+    y = viewport_to_screen_y(&view, STILLBURY_ROWAN_Y) * TILE_SIZE;
+    g->map.tiles[STILLBURY_ROWAN_Y][STILLBURY_ROWAN_X] = TILE_TOWN_FLOOR;
     renderer_begin_frame(r);
     game_draw(r, g, &view);
     renderer_end_frame(r);
-    Uint32 sand = rendered_pixel(surface, x, y);
-    g->map.tiles[COAST_ROWAN_Y][COAST_ROWAN_X] = TILE_NPC_ROWAN;
+    Uint32 ground = rendered_pixel(surface, x, y);
+    g->map.tiles[STILLBURY_ROWAN_Y][STILLBURY_ROWAN_X] = TILE_NPC_ROWAN;
     renderer_begin_frame(r);
     game_draw(r, g, &view);
     renderer_end_frame(r);
-    assert(rendered_pixel(surface, x, y) == sand);
-    printf("PASS: all six Saltwind enemy sprites render in the adventure; Rowan preserves his beach underlay.\n");
+    assert(rendered_pixel(surface, x, y) == ground);
+    printf("PASS: all six Saltwind enemy sprites render; Rowan preserves his Stillbury shore underlay.\n");
 }
 
 static void test_regional_projectiles(Renderer *r, GameState *g, SDL_Surface *surface) {
@@ -1193,9 +1167,9 @@ static void test_one_way_escape(Renderer *r, GameState *g, SDL_Surface *surface)
 static void test_rowan_dialogue(Renderer *r, GameState *g, SDL_Surface *surface) {
     for (int mode = 0; mode < 4; mode++) {
         game_init(g);
-        approach_enter_region(g, 3);
-        g->player.x = COAST_ROWAN_X + 1;
-        g->player.y = COAST_ROWAN_Y;
+        eastern_river_enter(g, 1);
+        g->player.x = STILLBURY_ROWAN_X + 1;
+        g->player.y = STILLBURY_ROWAN_Y;
         if (mode > 0) {
             g->defeated_bosses |= 1 << LOCATION_COAST;
         }
@@ -1208,27 +1182,27 @@ static void test_rowan_dialogue(Renderer *r, GameState *g, SDL_Surface *surface)
             g->island_travel_unlocked = 1;
         }
         coastal_refresh_docks(g);
-        assert(coastal_approach(g) && g->map.tiles[COAST_ROWAN_Y][COAST_ROWAN_X] == TILE_NPC_ROWAN);
+        assert(coastal_stillbury_docks(g) && g->map.tiles[STILLBURY_ROWAN_Y][STILLBURY_ROWAN_X] == TILE_NPC_ROWAN);
         assert(map_is_walkable(&g->map, g->player.x, g->player.y));
         game_talk_to_rowan(g);
         assert(g->dialogue_active && strcmp(g->dialogue_speaker, "Captain Rowan") == 0);
-        assert(g->dialogue_x == COAST_ROWAN_X && g->dialogue_y == COAST_ROWAN_Y);
+        assert(g->dialogue_x == STILLBURY_ROWAN_X && g->dialogue_y == STILLBURY_ROWAN_Y);
         if (mode == 0) {
             assert(strstr(g->dialogue_text, "Drowned Queen") && !game_has_treasure_map(g) && !game_can_sail_to_island(g));
             assert(save_game(g, 99290) && load_game(g, 99290));
             game_talk_to_rowan(g);
         } else if (mode == 1) {
-            assert(game_has_treasure_map(g) && game_can_sail_to_island(g));
+            assert(!game_has_treasure_map(g) && game_can_sail_to_island(g));
             int inventory = g->inventory_count;
             game_talk_to_rowan(g);
             assert(g->inventory_count == inventory);
         } else if (mode == 2) {
-            assert(strstr(g->dialogue_text, "Make room") && !game_has_treasure_map(g));
+            assert(game_can_sail_to_island(g) && g->inventory_count == MAX_INVENTORY);
         } else {
-            assert(strstr(g->dialogue_text, "route is charted") && !game_has_treasure_map(g));
+            assert(strstr(g->dialogue_text, "Ruined Isle") && game_can_sail_to_island(g));
         }
         Viewport view;
-        viewport_init(&view, r->tiles_x, r->tiles_y, APPROACH_W, APPROACH_H);
+        viewport_init(&view, r->tiles_x, r->tiles_y, MANGROVE_W, MANGROVE_H);
         viewport_center_on(&view, g->player.x, g->player.y);
         renderer_begin_frame(r);
         game_draw(r, g, &view);
@@ -1248,7 +1222,7 @@ static void test_rowan_dialogue(Renderer *r, GameState *g, SDL_Surface *surface)
         snprintf(path, sizeof(path), "/tmp/rowan-docks-%d.bmp", mode);
         assert(SDL_SaveBMP(surface, path) == 0);
     }
-    puts("PASS: Rowan's dialogue visibly renders at the relocated docks before and after the Queen, after loading, with a full pack, and after charting the route.");
+    puts("PASS: Rowan's dialogue visibly renders at the relocated docks before and after the Queen, after loading, with a full pack, and after opening the route.");
 }
 
 static void test_town_gate_renderer(Renderer *r, GameState *g, SDL_Surface *surface) {
@@ -1803,42 +1777,32 @@ int main(void) {
     SDL_RenderPresent(sdl);
     game_return_to_approach(game);
     assert(northern_approach(game));
-    // Normal play still requires Rook's quest; the debug flag bypasses it.
+    // The restored labyrinth is optional and open before accepting Rook's quest.
     game_init(game);
-    assert(approach_enter(game, 0, 12));
-    game->player.x = APPROACH_LABYRINTH_X;
-    game->player.y = APPROACH_LABYRINTH_Y + 1;
-    action_resolve_player(game, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
-    assert(game->location == LOCATION_APPROACH && !game_labyrinth_is_open(game));
-    assert(game->player.y == APPROACH_LABYRINTH_Y + 1);
-    game_leave_approach(game);
-    visit_exterior_town(game);
-    game_enter_tavern(game);
+    assert(approach_enter_region(game, APPROACH_QUARRY_ROAD));
+    game->player.x = QUARRY_LABYRINTH_X;
+    game->player.y = QUARRY_LABYRINTH_Y + 1;
+    action_resolve_player(game, (Action){ACTION_MOVE, QUARRY_LABYRINTH_X, QUARRY_LABYRINTH_Y});
+    assert(game->location == LOCATION_LABYRINTH && game->level == 1 && !game->rook_quest_state);
+    assert(save_game(game, 2) && load_game(game, 2));
+    game_leave_labyrinth(game);
+    assert(game->location == LOCATION_APPROACH && game->approach_route == APPROACH_QUARRY_ROAD && game->labyrinth_entry_town == LOCATION_TOWN2);
+    assert(game->player.x == QUARRY_LABYRINTH_X && game->player.y == QUARRY_LABYRINTH_Y + 1);
+    game_enter_inn(game);
     game->player.x = ROOK_TAVERN_X;
     game->player.y = ROOK_TAVERN_Y + 1;
     game_talk_to_rook(game);
+    assert(game_quest_offer_active(game));
     game_handle_quest_offer_key(game, SDL_SCANCODE_Y, 0);
-    assert(game_labyrinth_is_open(game));
-    game_leave_tavern(game);
-    assert(approach_enter(game, 0, 12));
-    while (game->player.x > APPROACH_LABYRINTH_X) {
-        action_resolve_player(game, (Action){ACTION_MOVE, game->player.x - 1, game->player.y});
-    }
-    action_resolve_player(game, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y + 1});
-    action_resolve_player(game, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
-    assert(game->location == LOCATION_LABYRINTH && game->level == 1 && game->enemy_count > 0);
-    assert(save_game(game, 2) && load_game(game, 2));
-    game_leave_labyrinth(game);
-    assert(game->location == LOCATION_APPROACH && game->labyrinth_entry_town == LOCATION_TOWN);
-    assert(game->player.x == APPROACH_LABYRINTH_X && game->player.y == APPROACH_LABYRINTH_Y + 1);
+    assert(game->rook_quest_state == 1);
     game_init(game);
     debug_apply_loadout(game, &debug_config);
-    assert(game->debug_passages_unlocked && game->rook_quest_state == 0);
-    assert(approach_enter(game, 0, 12));
-    game->player.x = APPROACH_LABYRINTH_X;
-    game->player.y = APPROACH_LABYRINTH_Y + 1;
-    action_resolve_player(game, (Action){ACTION_MOVE, APPROACH_LABYRINTH_X, APPROACH_LABYRINTH_Y});
-    assert(game->location == LOCATION_LABYRINTH && game->rook_quest_state == 0);
+    assert(game->debug_passages_unlocked && !game->rook_quest_state && game_labyrinth_is_open(game));
+    assert(approach_enter_region(game, APPROACH_QUARRY_ROAD));
+    game->player.x = QUARRY_LABYRINTH_X;
+    game->player.y = QUARRY_LABYRINTH_Y + 1;
+    action_resolve_player(game, (Action){ACTION_MOVE, QUARRY_LABYRINTH_X, QUARRY_LABYRINTH_Y});
+    assert(game->location == LOCATION_LABYRINTH && !game->rook_quest_state);
     game_leave_labyrinth(game);
     // Loaded town exteriors preserve identity and equipment under the debug option.
     assert(town_road_enter(game, LOCATION_DAWNMERE, TOWN_SIDE_WEST, 0));
@@ -1858,7 +1822,7 @@ int main(void) {
     // Docks and sailing work immediately for new and loaded normal characters.
     for (int loaded = 0; loaded < 2; loaded++) {
         game_init(game);
-        assert(!game_harbor_unlocked(game) && !game_can_sail_to_island(game) && !game_labyrinth_is_open(game));
+        assert(!game_harbor_unlocked(game) && !game_can_sail_to_island(game) && game_labyrinth_is_open(game));
         game->gold = 393;
         game->inventory_count = 1;
         game->inventory[0] = item_make_greatsword();
@@ -1873,18 +1837,12 @@ int main(void) {
         assert(game_harbor_unlocked(game) && game_can_sail_to_island(game) && !game_has_treasure_map(game));
         assert(!game->defeated_bosses);
         assert(!game->rook_quest_state && !game->mara_quest_state && !game->temple_treasure_state && !game->island_travel_unlocked);
-        approach_enter_region(game, 3);
-        game->player.x = APPROACH_W / 2;
-        game->player.y = 16;
-        for (int x = game->player.x + 1; x < COAST_DOCK_X; x++) {
-            assert(game->map.tiles[16][x] == TILE_TOWN_PATH);
-            action_resolve_player(game, (Action){ACTION_MOVE, x, 16});
+        eastern_river_enter(game, 1);
+        for (int y = game->player.y + 1; y <= STILLBURY_DOCK_ENTRY_Y; y++) {
+            action_resolve_player(game, (Action){ACTION_MOVE, RIVER_NORTH_X, y});
         }
-        for (int y = 17; y <= COAST_DOCK_ENTRY_Y; y++) {
-            action_resolve_player(game, (Action){ACTION_MOVE, COAST_DOCK_X - 1, y});
-        }
-        for (int x = COAST_DOCK_X; x <= COAST_DOCK_ENTRY_X; x++) {
-            action_resolve_player(game, (Action){ACTION_MOVE, x, COAST_DOCK_ENTRY_Y});
+        for (int x = RIVER_NORTH_X + 1; x <= STILLBURY_DOCK_ENTRY_X; x++) {
+            action_resolve_player(game, (Action){ACTION_MOVE, x, STILLBURY_DOCK_ENTRY_Y});
         }
         assert(coastal_at_docks(game));
         HarborScreen harbor = {0};
@@ -1898,7 +1856,7 @@ int main(void) {
         assert(game->location == LOCATION_TEMPLE && game->level == 1 && game->enemy_count > 0);
         game_leave_temple(game);
         handle_harbor_result(HARBOR_SAIL_TOWN, game, &screen, &renderer, &viewport);
-        assert(coastal_at_docks(game));
+        assert(coastal_stillbury_docks(game) && game->player.x == STILLBURY_DOCK_ENTRY_X - 1);
         assert(save_game(game, 2));
         game->debug_passages_unlocked = 0;
         assert(load_game(game, 2) && game->debug_passages_unlocked && game_harbor_unlocked(game) && game_can_sail_to_island(game));
@@ -1983,7 +1941,7 @@ int main(void) {
     test_boss_camera_lean(&renderer, game, surface);
     test_northroad_renderer(&renderer, game, surface);
     test_giants_renderer(&renderer, game, surface);
-    test_heartseed_renderer(&renderer, game, surface);
+    test_elderwood_quest_renderer(&renderer, game, surface);
     test_stormbell_renderer(&renderer, game, surface);
     test_war_machine_renderer(&renderer, game, surface);
     test_crown_quest_renderer(&renderer, game, surface);

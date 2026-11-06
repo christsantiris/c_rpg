@@ -127,6 +127,17 @@ typedef struct {
 } Player;
 
 typedef struct {
+    int state;
+    int recruited;
+    int x;
+    int y;
+    int hp;
+    int mp;
+    int level; // Fixed at 1; retained for draft save compatibility.
+    int experience; // Fixed at 0 until companion progression is introduced.
+} StormMage;
+
+typedef struct {
     Map   map;
     Enemy enemies[LEVEL_CACHE_ENEMY_CAPACITY];
     int   enemy_count;
@@ -342,7 +353,8 @@ typedef struct {
     ElderwoodCache elderwood_cache[ELDERWOOD_DEPTH];
     int max_elderwood_level_reached;
     int elderwood_defeated;
-    int heartseed_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
+    int elderwood_quest_state; // 0 unaccepted, 1 active, 2 completed, 3 reward claimed.
+    int heartseed_quest_state; // Retired quest fields retained for save compatibility.
     int heartseed_progress; // Orders, all bindings cut, and seed recovered.
     int heartseed_bindings;
     int heartseed_sites; // Stage 2 camp and stage 4 grove have been populated.
@@ -441,7 +453,7 @@ typedef struct {
     Location labyrinth_entry_town;
     int       rook_quest_state;
     int innkeeper_quest_state; // Retired Mira quest; reserved for historical save data.
-    int       rook_labyrinth_switches;
+    int rook_labyrinth_switches; // Retired rune progress; retained for historical saves.
     int       rook_quest_completions;
     FloorItem floor_items[MAX_FLOOR_ITEMS];
     int       floor_item_count;
@@ -486,7 +498,9 @@ typedef struct {
     int aldric_y;
     int aldric_hp;
     int aldric_recruited;
+    StormMage storm_mage;
     int resurrection_prompt;
+    int resurrection_target;
     int dain_quest_state; // 0 offer, 1 halves, 2 turn-in, 3 boss offer, 4 boss active, 5 complete.
     int dain_map_fragments;
     int alder_quest_state; // 0 offer, 1 rangers, 2 turn-in, 3 boss offer, 4 boss active, 5 complete.
@@ -645,6 +659,7 @@ int game_quick_potion_count(const GameState *g);
 void action_resolve_enemies(GameState *g);
 void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots);
 void action_aldric_strike(GameState *g, Enemy *e);
+void action_storm_mage_attack(GameState *g, Enemy *e, int fireball);
 int kraken_tile_threatened(const GameState *g, const Enemy *e, int x, int y);
 
 void player_gain_xp(GameState *g, int xp);

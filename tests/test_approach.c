@@ -220,15 +220,15 @@ void test_approaches(void) {
         free(loaded);
         return;
     }
-    ASSERT("new routes append after reserved connection IDs", town_approach_count == APPROACH_PEAKS_NORTH_ROAD + 1);
+    ASSERT("new routes append after reserved connection IDs", town_approach_count == APPROACH_COAST_ROAD + 1);
     for (int unlocked = 0; unlocked < 2; unlocked++) {
         for (int i = 0; i < town_approach_count; i++) {
             const TownApproach *route = &town_approaches[i];
             if ((int)route->area < 0 || route->unplaced) {
                 continue;
             }
-            // The shared northern road has two landmarks and is covered by test_elderwood.
-            if (route->area == LOCATION_GIANTS_CROWN || route->area == LOCATION_IRONFANG || route->area == LOCATION_STORMWATCH || route->area == LOCATION_ELDERWOOD || route->area == LOCATION_CATACOMBS) {
+            // Shared and branching Act 4 roads have their own actual-travel tests.
+            if (i == APPROACH_BLACKWATER_ROAD || route->area == LOCATION_GIANTS_CROWN || route->area == LOCATION_IRONFANG || route->area == LOCATION_STORMWATCH || route->area == LOCATION_ELDERWOOD || route->area == LOCATION_CATACOMBS) {
                 continue;
             }
             approach_town(g, route);
@@ -322,7 +322,7 @@ void test_approaches(void) {
         if ((int)route->area < 0) {
             continue;
         }
-        if (i == APPROACH_PEAKS_NORTH_ROAD || route->area == LOCATION_DUNGEON || route->area == LOCATION_MOUNTAINS || route->area == LOCATION_CATACOMBS || !approach_entrance_rows(route->area)) {
+        if (i == 3 || i >= APPROACH_BLACKWATER_ROAD || i == APPROACH_PEAKS_NORTH_ROAD || route->area == LOCATION_DUNGEON || route->area == LOCATION_MOUNTAINS || route->area == LOCATION_CATACOMBS || !approach_entrance_rows(route->area)) {
             continue;
         }
         approach_town(g, route);
@@ -358,7 +358,7 @@ void test_approaches(void) {
         g->map.tiles[loot_y][loot_x] = TILE_ITEM;
         g->gold = 393;
         int migrated = save_game(g, slot) && legacy_approach_save(slot, 174) && load_game(loaded, slot);
-        ASSERT("saved corridor approaches adopt their themed entrance landmark", migrated && loaded->approach_route == i && loaded->map.stairs_down_x == door_x && loaded->map.stairs_down_y == door_y && loaded->map.tiles[door_y][door_x] == TILE_APPROACH_AREA && loaded->map.tiles[door_y + 1][door_x] == TILE_TOWN_PATH && loaded->map.tiles[ty][tx] == TILE_APPROACH_TOWN);
+        ASSERT("saved corridor approaches adopt their themed entrance landmark", migrated && loaded->approach_route == (i == 7 ? APPROACH_QUARRY_ROAD : i) && loaded->map.stairs_down_x == door_x && loaded->map.stairs_down_y == door_y && loaded->map.tiles[door_y][door_x] == TILE_APPROACH_AREA && loaded->map.tiles[door_y + 1][door_x] == TILE_TOWN_PATH && loaded->map.tiles[loaded->map.stairs_up_y][loaded->map.stairs_up_x] == TILE_APPROACH_TOWN);
         ASSERT("landmark migration preserves position, facing, exploration, loot and gold", migrated && loaded->player.x == g->player.x && loaded->player.y == g->player.y && loaded->player.last_dx == dx && loaded->player.last_dy == dy && map_is_explored(&loaded->map, g->player.x, g->player.y) && loaded->floor_items[0].active && loaded->map.tiles[loot_y][loot_x] == TILE_ITEM && loaded->floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded->gold == 393);
         if (migrated) {
             walk_town_approach(loaded);

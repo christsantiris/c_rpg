@@ -147,6 +147,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_CASTLE_TRAP_OPEN || tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT || tile == TILE_CASTLE_MUSTER ||
                         tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
                         tile == TILE_ELDERWOOD_ENTRANCE || tile == TILE_ELDERWOOD_EXIT ||
+                        tile == TILE_NORTH_SWAMP || tile == TILE_NORTH_CATACOMBS || tile == TILE_NORTH_STILLBURY || tile == TILE_NORTH_CASTLE ||
                         tile == TILE_RETURN_EXIT || tile == TILE_DUNGEON_KEY ||
                         tile == TILE_DUNGEON_STAIRS_SEALED || tile == TILE_DUNGEON_STAIRS_RETURN ||
                         tile == TILE_CRYPT_KEY || tile == TILE_CRYPT_CACHE ||
@@ -172,8 +173,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_HIGH_PASS_ENTRANCE ||
                         tile == TILE_HIGH_PASS_EXIT ||
                         tile == TILE_TUNNEL_EXIT || tile == TILE_JAIL_HATCH ||
-                        tile == TILE_NPC_TAMSIN || tile == TILE_HEARTSEED_ORDERS ||
-                        tile == TILE_HEARTSEED_STAKE || tile == TILE_HEARTSEED_ALTAR ||
+                        tile == TILE_NPC_TAMSIN ||
                         tile == TILE_NPC_ELOWEN || tile == TILE_NPC_DAIN ||
                         tile == TILE_NPC_ALDER || tile == TILE_NPC_MARA ||
                         tile == TILE_NPC_VEYRA || tile == TILE_WATCHFIRE_COLD || tile == TILE_WATCHFIRE_LIT ||
@@ -187,7 +187,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_NPC_ALDRIC ||
                         tile == TILE_NPC_ROWAN ||
                         tile == TILE_NPC_DRAGON_SEEKER ||
-                        tile == TILE_NPC_GUILD_SEEKER || tile == TILE_NPC_GARRAN || tile == TILE_NPC_LIORA || tile == TILE_NPC_EDDA ||
+                        tile == TILE_NPC_GUILD_SEEKER || tile == TILE_NPC_GARRAN || tile == TILE_NPC_LIORA || tile == TILE_NPC_EDDA || tile == TILE_NPC_STORM_GUIDE ||
                         tile == TILE_EMBERFORGE_MECHANISM || tile == TILE_EMBERFORGE_COLD || tile == TILE_EMBERFORGE_LIT ||
                         tile == TILE_COAST_BEACON_UNLIT ||
                         tile == TILE_COAST_BEACON_LIT ||

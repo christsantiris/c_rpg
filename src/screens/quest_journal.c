@@ -5,7 +5,7 @@
 #include "../game/catacombs.h"
 #include "../game/jail.h"
 #include "../game/elowen.h"
-#include "../game/heartseed.h"
+#include "../game/elderwood_quest.h"
 #include "../game/spice_skiff.h"
 #include "../game/stormbell.h"
 #include "../game/war_machine.h"
@@ -48,9 +48,9 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Haunted Forest", {1, 2}, 70, 500
     },
     {
-        "Relight the Drowned Beacons", "Mara",
+        "Relight the Drowned Beacons", "Captain Rowan",
         "Lower the tides and relight three guarded beacons.",
-        "Return and speak to Mara in Oakhaven's Inn.",
+        "Return to Captain Rowan at Stillbury's docks, south of town.",
         {"Light drowned beacon", "Light drowned beacon",
             "Light drowned beacon"},
         "Sunken Coast", {2, 3, 4}, 80, 600
@@ -63,11 +63,11 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Ruined Temple", {5, 0, 0}, 150, 2500
     },
     {
-        "The Ivory Rook", "Rook",
-        "Find the labyrinth on the road from Oakhaven to Dawnmere; light five runes and defeat the Minotaur.",
-        "Return the ivory rook to Rook in Oakhaven's Inn.",
-        {"Recover the ivory rook", "", ""},
-        "Rook's Labyrinth", {5, 0, 0}, ROOK_QUEST_REWARD, 500
+        "Slay the Minotaur", "Rook",
+        "People disappear into the labyrinth beside Stillbury's quarry road. Find and slay the Minotaur.",
+        "Completes on the boss's defeat; no return to Rook is needed.",
+        {"Slay the Minotaur", "", ""},
+        "Labyrinth", {5, 0, 0}, ROOK_QUEST_REWARD, 500
     },
     {
         "The Dragon's Hoard", "Ilya",
@@ -146,11 +146,11 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Royal Dungeon", {1, 0, 0, 0}, 0, 0, "Your belongings, arrows and gold"
     },
     {
-        "The Stolen Heartseed", "Forester Tamsin",
-        "Read the orders; find stage 4's eastern golden-root grove.",
-        "Cut three bindings, recover the seed; return to Tamsin in Oakhaven.",
-        {"Read Dark Elf orders", "Cut all three bindings", "Recover the heartseed"},
-        "Elderwood Forest", {2, 4, 4, 0}, HEARTSEED_REWARD_GOLD, HEARTSEED_REWARD_SCORE
+        "Clear Elderwood", RANGER_TAMSIN,
+        "Defeat Elderthorn to clear Elderwood and open the coastal road.",
+        "Claim your reward from Ranger Tamsin near Stillbury's east gate.",
+        {"Defeat Elderthorn"},
+        "Elderwood Forest", {ELDERWOOD_DEPTH}, ELDERWOOD_QUEST_GOLD, ELDERWOOD_QUEST_SCORE
     },
     {
         "The Missing Spice Skiff", "Spice Merchant Corvin",
@@ -239,7 +239,7 @@ static int quest_state(const GameState *g, int quest) {
         return g->spice_skiff_quest_state;
     }
     if (quest == 16) {
-        return g->heartseed_quest_state;
+        return g->elderwood_quest_state;
     }
     if (quest == 15) {
         return g->jail_gear_state;
@@ -313,7 +313,7 @@ static int quest_progress(const GameState *g, int quest) {
         return g->spice_skiff_progress;
     }
     if (quest == 16) {
-        return g->heartseed_progress;
+        return g->elderwood_defeated;
     }
     if (quest == 15) {
         return g->jail_gear_state == 3;
@@ -399,7 +399,7 @@ int quest_journal_get_boss(const GameState *g, int index, BossJournalEntry *entr
     };
     static const char *areas[JOURNAL_BOSS_COUNT] = {
         "Dungeon", "Haunted Forest", "Goblin Mountains", "Sunken Coast",
-        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Ashen Hollow", "Stonewake Quarry", "Rook's Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Saltwind Marsh", "Stormwatch Headland", "Ironfang Mines", "Giant's Peaks"
+        "Ruined Temple", "Blackwater Swamp", "Dragonspine", "Frostfell Wastes", "Sunscar Wastes", "Ashen Hollow", "Stonewake Quarry", "Labyrinth", "Royal Catacombs", "Castle: Iron Keep", "Castle: Crown Chapel", "Castle: Throne", "Elderwood Forest", "Saltwind Marsh", "Stormwatch Headland", "Ironfang Mines", "Giant's Peaks"
     };
     static const Location regions[JOURNAL_BOSS_COUNT] = {
         LOCATION_DUNGEON, LOCATION_FOREST, LOCATION_MOUNTAINS, LOCATION_COAST,

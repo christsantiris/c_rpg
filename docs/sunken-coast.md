@@ -1,7 +1,7 @@
 # Sunken Coast and Flooded Ruins
 
-The Sunken Coast is a five-stage adventure entered through the south town
-gate. It has an independent level cache and progression record, so visiting
+The Sunken Coast is a five-stage adventure reached east from Stillbury, through
+Elderwood Forest after defeating Elderthorn. It has an independent level cache and progression record, so visiting
 another region does not reset explored coast stages.
 
 The coast is drawn at the Crown Roads' 1.5× zoom: the camera shows about
@@ -10,14 +10,12 @@ at most six tiles, so their shots start on screen; the Drowned Queen wakes withi
 
 ## Coastal entrance path
 
-Oakhaven's south gate leads down a safe cobblestone path to a sandy shore.
-The sea fills the entire southern half of the approach, with a narrow stone
-causeway reaching the drowned shrine entrance. Entering the doorway starts
-Coast 1; retreat returns to the same causeway. The water beside it is impassable.
-
-Save version 177 adds the shoreline to older approach saves, keeping players
-and dropped loot on reachable ground without resetting exploration, quests,
-combat caches or boss victories. The entrance sprite itself is unchanged.
+Stillbury's eastern road passes through Elderwood and reaches the coastal
+entrance. Its cobblestone path leads to a drowned shrine on a sandy causeway;
+the surrounding sea is impassable. Enter the doorway to reach Coast 1. Retreat
+returns to this entrance, then west through the cleared forest toward Stillbury.
+Captain Rowan and the island departure dock are at Stillbury's river landing,
+not beside the coastal shrine.
 
 ## Progression
 
@@ -89,16 +87,22 @@ Every stage has two guarded rocky treasure shoals at opposite tide levels. Each
 cache grants `20 + 4 × stage` gold once. Stand on the cache and press `P` to
 collect it.
 
-In V2, Mara has left Oakhaven and no one offers this quest until a later act
-places her. Existing quest progress is kept.
+Mara introduces the Ruined Isle in Oakhaven's Inn and directs the player to
+Captain Rowan at Stillbury's docks. Her conversation uses no active quest slot.
+Rowan assigns **Relight the Drowned Beacons**, using the normal Y/N offer and
+three-active-quest limit. The three beacons appear on stages **2, 3 and 4** even
+before acceptance. Drain the blue channel, stand on a beacon and press `A`.
+Their guardians are led by a Giant Crab, Animated Statue and Sea Serpent.
+Discoveries count before acceptance, and accepting never resets explored Coast
+stages, enemy wounds or already lit beacons.
 
-Mara assigns **Relight the Drowned Beacons** in **Oakhaven's Inn**.
-The quest places beacons on stages 2, 3, and
-4. Drain the blue channel to reach each beacon, then stand on it and press `A`.
-The beacons are guarded by groups led by a Giant Crab, Animated Statue, and Sea
-Serpent. Accepting the quest starts a fresh coast expedition; a previously
-defeated Drowned Queen remains dead.
-Return to Mara in the Inn for 80 gold and 600 score once all three are lit.
+Lighting all three moves the quest to **Completed** and frees its active slot.
+Return to **Rowan at Stillbury's docks** for **80 gold and 600 score**, once.
+Mara cannot collect or pay this reward. The Queen is separate from the beacon
+objective: defeating her opens island voyages even without the quest or lights.
+Both the Queen's defeat and all three lit beacons restore ordinary coastal
+trade, improving Stillbury's civilian dialogue without clearing known attacks
+against the Crown. See [coastal quest validation](coastal-quest.md).
 
 Save version 84 compresses the former eight-stage coast into five stages.
 Existing beacon completion, boss victories, character progress, and active
@@ -162,8 +166,8 @@ floor. A full loot list reserves them in a named throne reliquary without deleti
 another item. An earned, unclaimed reward is restored there after a floor refresh.
 Interact beside the reliquary or press `P` on it; full inventory leaves it
 available. First claim is permanent, so later sale or dropping creates no copy.
-Victory still opens the coast exit and road to the docks; existing island travel
-requirements remain in effect.
+Victory opens the coast exit and Rowan's island passage from Stillbury's docks.
+A sea chart, beacon completion and spare inventory space are not required.
 
 Save version **127** records robes claim state and uses the existing enemy fields
 for phase, countdown, fixed wave bounds and both pocket targets. Throne terrain,

@@ -106,7 +106,10 @@ void draw_town_road(Renderer *r, const GameState *g, const Viewport *v) {
         }
         const char *area = approach_area_name(connection.area);
         if (g->road_town == LOCATION_TOWN2 && side == TOWN_SIDE_WEST) {
-            area = "GIANT'S BRIDGE";
+            area = "BRIDGE / QUARRY";
+        }
+        if (g->road_town == LOCATION_TOWN2 && side == TOWN_SIDE_NORTH) {
+            area = "BLACKWATER SWAMP";
         }
         int x;
         int y;

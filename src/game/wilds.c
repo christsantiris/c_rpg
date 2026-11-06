@@ -141,6 +141,29 @@ static void reeds(Map *m) {
     }
 }
 
+void map_swamp_south_entry(Map *m) {
+    if (m->stairs_up_y == SWAMP_MAP_H - 1 || m->room_count < 1) {
+        return;
+    }
+    int x;
+    int y;
+    map_room_center(&m->rooms[0], &x, &y);
+    if (x < 2 || x >= SWAMP_MAP_W - 2 || y < 1 || y >= SWAMP_MAP_H - 1) {
+        return;
+    }
+    m->tiles[m->stairs_up_y][m->stairs_up_x] = TILE_SWAMP_WALL;
+    for (int row = y; row < SWAMP_MAP_H - 1; row++) {
+        for (int col = x - 1; col <= x + 1; col++) {
+            if (m->tiles[row][col] == TILE_SWAMP_WATER || m->tiles[row][col] == TILE_SWAMP_WALL) {
+                m->tiles[row][col] = TILE_SWAMP_FLOOR;
+            }
+        }
+    }
+    m->stairs_up_x = x;
+    m->stairs_up_y = SWAMP_MAP_H - 1;
+    m->tiles[m->stairs_up_y][x] = TILE_SWAMP_ENTRANCE;
+}
+
 void map_generate_swamp(Map *m, int level) {
     // Bank loop, open lagoon, branching islets, and winding southern channel.
     static const int centers[4][9][2] = {
@@ -201,6 +224,9 @@ void map_generate_swamp(Map *m, int level) {
     }
     edges(m, TILE_SWAMP_WATER, TILE_SWAMP_FLOOR, TILE_SWAMP_ENTRANCE, TILE_SWAMP_EXIT);
     reeds(m);
+    if (level == 1) {
+        map_swamp_south_entry(m);
+    }
 }
 
 static int connected(const Map *m, int x, int y) {

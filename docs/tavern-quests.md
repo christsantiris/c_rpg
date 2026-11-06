@@ -19,8 +19,9 @@ Tomas's escape and confiscated-equipment recovery do not use these slots.
 Other dialogue bubbles are dismissed by
 movement. Bram runs Oakhaven's Inn, offering the Lich King warning and supply
 advice and the Save Elowen quest at its counter. Elowen lives there only after
-her rescue and reunion. Mara, Ilya, and Rook have left Oakhaven in V2; their
-quests keep their progress but have no giver until a later act places them.
+her rescue and reunion. Mara introduces the coastal adventure there; Ilya's
+quest awaits later placement.
+Rook now offers Slay the Minotaur in Stillbury's Tavern.
 After the Lich King's defeat, Alder and Dain arrive at Oakhaven's Inn with the
 eastward and westward adventure choices, and Aldric moves in from the square.
 Brenna remains in Stillbury's Tavern. Zara starts in Oakhaven's Inn after the Goblin King falls, then moves to the Sunscar caravan camp. Dawnmere's Alehouse has a generic
@@ -134,24 +135,22 @@ the rescues are turned in. The boss retains its existing loot and grants no
 extra NPC payment. Assignment, rescues, turn-in, follow-up and victory persist
 through save/load. This V2 rewrite uses fresh saves without a new migration.
 
-## Mara: Relight the Drowned Beacons
+## Mara and Rowan: Relight the Drowned Beacons
 
-In V2, Mara has left Oakhaven and no one offers this quest until a later act
-places her. Existing quest progress is kept.
+Mara is present in **Oakhaven's Inn** from the start. Her optional introduction
+points to the Ruined Isle and Captain Rowan at Stillbury's docks; it neither
+assigns a quest nor collects its reward.
 
-Mara waits in **Oakhaven's Inn**. Press `T`
-beside her to speak. She is a retired tidekeeper who carries a sheltered ember
-from the old coast lights. She asks the player to relight drowned beacons on
-Coast stages 2, 3, and 4. Each beacon stands inside a flooded side room and cannot be reached or
-lit until the stage's tide control drains the surrounding deep water. Stand on
-the exposed beacon and press `A` to light it.
+**Captain Rowan**, at the river landing south of Stillbury, offers the beacon
+quest with Y/N and the normal three-active-quest limit. Relight guarded beacons
+on **Sunken Coast 2, 3 and 4** after draining their channels. Beacons are present
+and record discoveries before acceptance. Acceptance preserves existing Coast
+stages, wounds, loot and lit beacons. All three lights move the quest to
+Completed, releasing the active slot. Rowan pays **80 gold and 600 score** once.
 
-The beacons are defended by groups led by a Giant Crab, Animated Statue, and
-Sea Serpent. Stages do not need to be cleared, and the Drowned Queen is not
-part of the objective. Lit beacons remain lit through backtracking, repeat
-expeditions, and save/load. Return to Mara in Oakhaven's Inn after
-lighting all three to receive 80 gold and 600 score once. Older saves return
-her to Oakhaven's Inn without changing quest progress.
+The Queen is not a beacon objective. Her defeat opens the island voyage from
+Stillbury independently; the beacons and Queen together reopen coastal trade
+and improve civilian reception. No Oakhaven return is required.
 
 ## Brenna: The Silent Expedition
 
@@ -176,11 +175,10 @@ Existing saves migrate automatically, including saves inside the Tavern.
 
 ## Docks Unlock
 
-The road to the docks appears after the Drowned Queen is defeated on the Sunken
-Coast. The other regional bosses and town quests are not required. Captain
-Rowan waits on the beach beside the Sunken Coast entrance, outside Oakhaven.
-He gives the Island Treasure Map when spoken to, enabling ship travel from the
-nearby coastal dock.
+Stillbury's docks are accessible before clearing Sunken Coast. Defeating the
+Drowned Queen unlocks Rowan's island voyage; no sea chart or other quest is
+required. Physical return voyages land back at Stillbury's docks. See the
+[harbor and island guide](harbor-and-ruined-isle.md).
 
 ## Nahla: The Buried Sun
 
@@ -240,40 +238,28 @@ Boss victories are permanent. Defeated bosses do not appear in later
 expeditions. In a replayed dungeon finale, the return passage remains available
 without requiring the absent Lich King to be defeated again.
 
-## Rook: The Ivory Rook
+## Rook: Slay the Minotaur
 
-In V2, Rook has left Oakhaven and no one offers this quest until a later act
-places him. The labyrinth entrance, label and world-map landmark are also
-removed for now. Existing quest progress is kept. The notes below describe the
-retained quest implementation for later placement.
+Rook stands in Stillbury's Tavern and offers a one-time boss quest with explicit
+Y acceptance / N decline. People arrested by the King's soldiers disappear
+into the labyrinth beside the quarry road north of town; rumors say the
+Minotaur consumes them. The ordinary three-active-quest limit applies.
 
-Speak with Rook in Oakhaven's Inn and press `Y` to accept his one-time
-retrieval quest. This opens the labyrinth gate beside the Haunted Forest
-entrance on the Oakhaven–Stillbury road. Take either town's forest gate and
-follow the path; entering the forest or defeating its boss is not required.
-Physical retreat returns to the same path. The gate remains sealed until the
-quest is assigned and stays open after completion. Explore five maze floors with enemies and
-look-alike stairs; some stairs lead only to a dead-end corridor and its return
-stair. Activate one rune on each floor to open the final vault, defeat the
-Minotaur, recover the ivory rook, and return to Rook for 40 gold and 500 score.
-The quest and boss are one-time, but the labyrinth remains open for further
-combat expeditions.
+Enter the optional landmark beside the north road, explore five maze floors,
+and defeat the Minotaur on floor 5. No quest acceptance is required to enter.
+The quarry stays reachable while the boss lives. Its death completes the active
+quest and pays **40 gold and 500 score** once, without returning to Rook.
+If defeated before acceptance, accepting Rook's offer acknowledges the existing
+victory immediately, even with three other quests active.
 
-The Minotaur guards floor 5's relic vault and pursues players with melee
-attacks once the runes open the gate. It has 120 base HP, 18 attack, 7 defense,
-and grants 250 base XP before the shared enemy scaling. Its guaranteed drop
-is the Warrior's Magic Shield. The Labyrinth entry in the Bosses journal
-records its defeat. Legacy Maze Warden enemies load as Minotaurs using the
-same saved enemy ID, preserving health, explored maps, runes, and quest or
-boss completion. A previously defeated Warden stays defeated.
+The guaranteed boss equipment remains **Labyrinth Aegis**, a Warrior shield
+with +9 defense and 25% block. Full inventories leave the reward claimable.
+The lair's **Labyrinth Intake Register** enters the Evidence journal on victory.
+It identifies Malakar's private office as authorizing the prisoner transfers
+under royal authority and withholding reports from the royal court. It does
+not reveal how the King is controlled.
 
-Save version 85 preserves existing seal progress and moves the former temple
-summit and labyrinth vault to level 5. Old labyrinth runes on floors 1 and 2
-keep their bits; the old third rune moves to floor 5. Expeditions that already
-reached the old vault receive credit for the two new intermediate runes.
-
-Save version **114** moves Dain to Ridgeshire's
-town center, and Zara to Stillbury's Tavern. Existing quest progress, rewards,
-exploration, and region caches are preserved. Saved maps remove the former NPC
-tiles and repair loot underlays; overlapping players and loot move beside the
-new positions. Stale dialogue from the moved NPCs is dismissed.
+The ivory rook retrieval, runes, puzzle gate, false stairs and NPC reward hand-in
+are retired. Maze exploration, normal stair retreat and the Minotaur's combat
+remain. Save version 242 repairs old active and cached maps in place, retaining
+wounds, discoveries, loot and victories. See [labyrinth details](labyrinth.md).

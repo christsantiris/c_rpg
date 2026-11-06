@@ -1,3 +1,4 @@
+#include "labyrinth_arc.h"
 #include "western_arc.h"
 #include "coast_exits.h"
 #include "boss_gates.h"
@@ -14,6 +15,7 @@
 #include "catacombs.h"
 #include "elderwood.h"
 #include "heartseed.h"
+#include "elderwood_quest.h"
 #include "spice_skiff.h"
 #include "stormbell.h"
 #include "war_machine.h"
@@ -22,6 +24,7 @@
 #include "lich.h"
 #include "elowen.h"
 #include "aldric.h"
+#include "storm_mage.h"
 #include "necromancer.h"
 #include "goblin_king.h"
 #include "drowned_queen.h"
@@ -966,7 +969,7 @@ static int quest_group_pending(const GameState *g) {
         }
         return !(g->alder_wardens_rescued & bit);
     }
-    if (g->location == LOCATION_COAST && g->mara_quest_state == 1) {
+    if (g->location == LOCATION_COAST) {
         int bit = g->level == 2 ? MARA_BEACON_STAGE_2 :
             (g->level == 3 ? MARA_BEACON_STAGE_3 :
             (g->level == 4 ? MARA_BEACON_STAGE_4 : 0));
@@ -1613,6 +1616,8 @@ void game_init(GameState *g) {
     g->aldric_y = -1;
     g->aldric_hp = ALDRIC_MAX_HP;
     g->aldric_recruited = 0;
+    storm_mage_init(g);
+    g->resurrection_target = 0;
     g->resurrection_prompt = 0;
     g->dain_quest_state = 0;
     g->dain_map_fragments = 0;
@@ -1627,6 +1632,7 @@ void game_init(GameState *g) {
     g->max_elderwood_level_reached = 1;
     g->elderwood_defeated = 0;
     g->heartseed_quest_state = 0;
+    g->elderwood_quest_state = 0;
     g->heartseed_progress = 0;
     g->heartseed_bindings = 0;
     g->heartseed_sites = 0;
@@ -1634,7 +1640,7 @@ void game_init(GameState *g) {
     g->spice_skiff_quest_state = 0;
     g->spice_skiff_progress = 0;
     g->retired_coast_item_count = 0;
-    g->elderwood_entry_town = LOCATION_CASTLE;
+    g->elderwood_entry_town = LOCATION_TOWN2;
     g->catacombs_entry_town = LOCATION_CASTLE;
     g->northern_portal_town = LOCATION_CASTLE;
     g->last_town_visited = LOCATION_TOWN;
@@ -2298,7 +2304,7 @@ static int mara_beacon_bit(int level) {
 }
 
 static int place_mara_beacon(GameState *g) {
-    if (g->location != LOCATION_COAST || g->mara_quest_state == 0) {
+    if (g->location != LOCATION_COAST) {
         return 0;
     }
     int bit = mara_beacon_bit(g->level);
@@ -3466,6 +3472,10 @@ void game_descend(GameState *g) {
     prepare_forest_arrival(g, 0);
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
+    if (g->location == LOCATION_SWAMP) {
+        g->player.x += g->map.stairs_up_x == 0 ? 1 : 0;
+        g->player.y -= g->map.stairs_up_y == SWAMP_MAP_H - 1 ? 1 : 0;
+    }
     sync_temple_floor_state(g);
 }
 
@@ -3529,6 +3539,9 @@ void game_ascend(GameState *g) {
     prepare_forest_arrival(g, 1);
     g->player.x = g->map.stairs_down_x;
     g->player.y = g->map.stairs_down_y;
+    if (g->location == LOCATION_SWAMP) {
+        g->player.x--;
+    }
     sync_temple_floor_state(g);
 }
 
@@ -3758,8 +3771,8 @@ void game_enter_swamp(GameState *g) {
     if (g->level > g->max_swamp_level_reached) {
         g->max_swamp_level_reached = g->level;
     }
-    g->player.x = g->map.stairs_up_x + 1;
-    g->player.y = g->map.stairs_up_y;
+    g->player.x = g->map.stairs_up_x;
+    g->player.y = g->map.stairs_up_y - 1;
     g->dialogue_active = 0;
     push_message(g, "Braided mudbanks cross blackwater channels. Reeds hide you from distant, unhurt foes.");
 }
@@ -3878,8 +3891,8 @@ int game_harbor_unlocked(const GameState *g) {
 
 static void offer_rook_quest(GameState *g) {
     snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-        "Take the road to Dawnmere through Oakhaven's east gate. The labyrinth is beside the Haunted Forest entrance. "
-        "Recover my ivory rook from the Minotaur, then return to Oakhaven's Inn.");
+        "People taken by the King's soldiers disappear into the labyrinth beside the quarry road north of Stillbury. "
+        "Nobody returns. They say a Minotaur feeds on them. Will you find it and slay it?");
 }
 
 void game_refresh_debug_passages(GameState *g) {
@@ -3892,12 +3905,12 @@ void game_refresh_debug_passages(GameState *g) {
     }
     if (northern_approach(g)) {
         for (int x = 1; x < ELDERWOOD_W - 1; x++) {
-            if (quest_object_tile(g, x, NORTH_FOREST_BARRIER_Y) == TILE_ELDERWOOD_WALL) {
-                set_quest_object_tile(g, x, NORTH_FOREST_BARRIER_Y, x == NORTH_ROAD_X ? TILE_TOWN_PATH : TILE_TOWN_FLOOR);
+            if (quest_object_tile(g, x, NORTH_SWAMP_BARRIER_Y) == TILE_ELDERWOOD_WALL) {
+                set_quest_object_tile(g, x, NORTH_SWAMP_BARRIER_Y, x == NORTH_ROAD_X ? TILE_TOWN_PATH : TILE_TOWN_FLOOR);
             }
         }
         set_quest_object_tile(g, NORTH_ROAD_X, 0, TILE_NORTH_CASTLE);
-        set_quest_object_tile(g, NORTH_ROAD_X, ELDERWOOD_H - 1, TILE_NORTH_OAKHAVEN);
+        set_quest_object_tile(g, NORTH_ROAD_X, ELDERWOOD_H - 1, TILE_NORTH_STILLBURY);
     }
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -4905,25 +4918,18 @@ static void load_labyrinth_floor(GameState *g) {
         g->level_cleared = 0;
         spawn_labyrinth_enemies(g);
     }
-    if (g->level == LABYRINTH_DEPTH && g->rook_quest_state >= 2) {
-        g->map.tiles[g->map.stairs_down_y][g->map.stairs_down_x] =
-            TILE_LABYRINTH_FLOOR;
-    }
-    if (g->level == LABYRINTH_DEPTH &&
-        g->rook_labyrinth_switches == (1 << LABYRINTH_SWITCH_COUNT) - 1) {
-        g->map.tiles[g->map.stairs_up_y][35] = TILE_LABYRINTH_FLOOR;
-    }
+    labyrinth_simplify_map(&g->map, g->level);
     g->floor_item_count = 0;
     minotaur_restore_reward(g);
 }
 
 int game_labyrinth_is_open(const GameState *g) {
-    return g->debug_passages_unlocked || g->rook_quest_state != 0;
+    (void)g;
+    return 1;
 }
 
 void game_enter_labyrinth(GameState *g) {
-    const TownApproach *route = approach_route(g);
-    g->labyrinth_entry_town = route && route->area == LOCATION_FOREST ? route->town : LOCATION_TOWN;
+    g->labyrinth_entry_town = LOCATION_TOWN2;
     g->approach_route = -1;
     g->location = LOCATION_LABYRINTH;
     start_expedition(g, g->labyrinth_cache, LABYRINTH_DEPTH);
@@ -4933,147 +4939,37 @@ void game_enter_labyrinth(GameState *g) {
     g->player.y = g->map.stairs_up_y;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
-    push_message(g, "You enter Rook's labyrinth.");
-    push_message(g, "Five runes open the deepest vault.");
-    push_message(g, "Press the interact key (A by default) on or beside rune switches to activate them.");
+    push_message(g, "You enter the labyrinth. The Minotaur lurks on floor 5.");
 }
 
 void game_change_labyrinth_floor(GameState *g, int descending, int false_stair) {
+    (void)false_stair;
+    if ((descending && g->level >= LABYRINTH_DEPTH) || (!descending && g->level <= 1)) {
+        return;
+    }
     clear_floor_loot(g);
     save_labyrinth_floor(g);
     g->level += descending ? 1 : -1;
     load_labyrinth_floor(g);
-    if (descending) {
-        g->player.x = false_stair ? LABYRINTH_FALSE_EXIT_X + 1 : 2;
-        g->player.y = false_stair ? LABYRINTH_FALSE_EXIT_Y :
-            g->map.stairs_up_y;
-    } else {
-        g->player.x = g->map.stairs_down_x;
-        g->player.y = g->map.stairs_down_y;
-        if (false_stair) {
-            for (int y = 0; y < LABYRINTH_H; y++) {
-                for (int x = 0; x < LABYRINTH_W; x++) {
-                    if (g->map.tiles[y][x] == TILE_LABYRINTH_STAIRS &&
-                        (x != g->map.stairs_down_x ||
-                        y != g->map.stairs_down_y)) {
-                        g->player.x = x;
-                        g->player.y = y;
-                    }
-                }
-            }
-        }
-    }
+    g->player.x = descending ? 2 : g->map.stairs_down_x;
+    g->player.y = descending ? g->map.stairs_up_y : g->map.stairs_down_y;
     g->dialogue_active = 0;
-    if (false_stair && descending) {
-        push_message(g, "The stairs end in a blind corridor.");
-    } else if (false_stair) {
-        push_message(g, "You return to the maze above.");
-    } else {
-        push_message(g, "You reach another level of the labyrinth.");
-    }
-}
-
-static int labyrinth_interaction_tile(TileType tile) {
-    return tile == TILE_LABYRINTH_SWITCH_OFF ||
-        tile == TILE_LABYRINTH_SWITCH_ON || tile == TILE_LABYRINTH_RELIC;
+    map_mark_explored(&g->map, g->player.x, g->player.y);
+    push_message(g, "You reach another level of the labyrinth.");
 }
 
 int game_has_labyrinth_interaction(const GameState *g) {
-    if (g->location != LOCATION_LABYRINTH) {
-        return 0;
-    }
-    static const int offsets[5][2] = {
-        {0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}
-    };
-    for (int i = 0; i < 5; i++) {
-        int x = g->player.x + offsets[i][0];
-        int y = g->player.y + offsets[i][1];
-        if (x >= 0 && x < MAP_W && y >= 0 && y < MAP_H &&
-            labyrinth_interaction_tile(g->map.tiles[y][x])) {
-            return 1;
-        }
-    }
+    (void)g;
     return 0;
 }
 
 int game_interact_labyrinth(GameState *g) {
-    if (g->location != LOCATION_LABYRINTH) {
-        return 0;
-    }
-    static const int offsets[5][2] = {
-        {0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}
-    };
-    for (int i = 0; i < 5; i++) {
-        int x = g->player.x + offsets[i][0];
-        int y = g->player.y + offsets[i][1];
-        if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
-            continue;
-        }
-        TileType tile = g->map.tiles[y][x];
-        if (tile == TILE_LABYRINTH_SWITCH_ON) {
-            push_message(g, "This labyrinth rune is already lit.");
-            return 1;
-        }
-        if (tile == TILE_LABYRINTH_SWITCH_OFF) {
-            g->map.tiles[y][x] = TILE_LABYRINTH_SWITCH_ON;
-            g->rook_labyrinth_switches |= 1 << (g->level - 1);
-            int lit = 0;
-            for (int floor = 0; floor < LABYRINTH_DEPTH; floor++) {
-                lit += (g->rook_labyrinth_switches >> floor) & 1;
-            }
-            if (lit == LABYRINTH_SWITCH_COUNT) {
-                for (int map_y = 0; map_y < MAP_H; map_y++) {
-                    for (int map_x = 0; map_x < MAP_W; map_x++) {
-                        if (g->map.tiles[map_y][map_x] ==
-                            TILE_LABYRINTH_GATE) {
-                            g->map.tiles[map_y][map_x] =
-                                TILE_LABYRINTH_FLOOR;
-                        }
-                    }
-                }
-                if (g->labyrinth_cache[LABYRINTH_DEPTH - 1].valid) {
-                    g->labyrinth_cache[LABYRINTH_DEPTH - 1].map.tiles[
-                        g->labyrinth_cache[LABYRINTH_DEPTH - 1].map.stairs_up_y][35] =
-                        TILE_LABYRINTH_FLOOR;
-                }
-                push_message(g, "The fifth rune opens the relic vault!");
-            } else {
-                char message[MAX_MESSAGE_LEN];
-                snprintf(message, sizeof(message),
-                    "Labyrinth rune lit: %d of %d.",
-                    lit, LABYRINTH_SWITCH_COUNT);
-                push_message(g, message);
-            }
-            return 1;
-        }
-        if (tile == TILE_LABYRINTH_RELIC) {
-            if (g->rook_quest_state != 1) {
-                push_message(g, "The empty pedestal holds nothing for you.");
-                return 1;
-            }
-            for (int enemy = 0; enemy < g->enemy_count; enemy++) {
-                if (g->enemies[enemy].active && g->enemies[enemy].is_boss) {
-                    push_message(g, "The Minotaur guards the ivory rook.");
-                    return 1;
-                }
-            }
-            g->rook_quest_state = 2;
-            g->map.tiles[y][x] = TILE_LABYRINTH_FLOOR;
-            push_message(g, "You recover Rook's stolen ivory rook.");
-            push_message(g, "Return it to Rook in Oakhaven's Inn.");
-            return 1;
-        }
-    }
+    (void)g;
     return 0;
 }
 
 void game_enter_island(GameState *g) {
-    for (int i = 0; i < g->inventory_count; i++) {
-        if (g->inventory[i].type == ITEM_TREASURE_MAP) {
-            game_remove_inventory_item(g, i);
-            break;
-        }
-    }
+    mangrove_store(g);
     g->island_travel_unlocked = 1;
     int spawn_x;
     int spawn_y;
@@ -5086,6 +4982,8 @@ void game_enter_island(GameState *g) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
+    aldric_follow(g, -1, -1);
+    storm_mage_follow(g, -1, -1);
     push_message(g, "You make landfall on the Ruined Isle.");
     push_message(g, "The island route is now open for return voyages.");
 }
@@ -5096,6 +4994,8 @@ void game_leave_island(GameState *g) {
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
     coastal_return_from_island(g);
+    aldric_follow(g, -1, -1);
+    storm_mage_follow(g, -1, -1);
 }
 
 static void cache_temple_level(GameState *g) {
@@ -5532,7 +5432,7 @@ static void return_to_town(GameState *g, Location destination) {
 static void enter_return_approach(GameState *g, Location area) {
     for (int i = 0; i < town_approach_count; i++) {
         const TownApproach *route = &town_approaches[i];
-        if (route->area != area || route->town != g->location) {
+        if (route->area != area || route->town != g->location || (area == LOCATION_GLASSDEEP && i != APPROACH_QUARRY_ROAD)) {
             continue;
         }
         if (approach_enter_region(g, i)) {
@@ -5558,15 +5458,13 @@ static void enter_return_approach(GameState *g, Location area) {
 
 void game_leave_labyrinth(GameState *g) {
     save_labyrinth_floor(g);
-    return_to_town(g, g->labyrinth_entry_town);
-    enter_return_approach(g, LOCATION_FOREST);
-    // A legacy expedition can retreat safely after its outdoor entrance is retired.
-    g->player.x = g->map.stairs_down_x;
-    g->player.y = g->map.stairs_up_y;
+    approach_enter_region(g, APPROACH_QUARRY_ROAD);
+    g->player.x = QUARRY_LABYRINTH_X;
+    g->player.y = QUARRY_LABYRINTH_Y + 1;
     g->player.last_dx = 0;
     g->player.last_dy = 1;
     map_mark_explored(&g->map, g->player.x, g->player.y);
-    push_message(g, "You emerge from Rook's labyrinth onto the forest road.");
+    push_message(g, "You emerge onto Stillbury's quarry road.");
 }
 
 void game_return_to_approach(GameState *g) {
@@ -5608,6 +5506,35 @@ void game_return_to_approach(GameState *g) {
         push_message(g, "You emerge onto the Sunscar road. It returns east to the Goblin Mountains.");
         return;
     }
+    if (g->location == LOCATION_SWAMP || g->location == LOCATION_COAST) {
+        Location area = g->location;
+        Location origin = g->swamp_entry_town;
+        int onward = area == LOCATION_SWAMP && g->level == SWAMP_DEPTH && boss_gate_open(g, LOCATION_SWAMP);
+        clear_floor_loot(g);
+        LevelCache *cache = active_cache(g);
+        cache[g->level - 1].map = g->map;
+        cache[g->level - 1].enemy_count = g->enemy_count;
+        memcpy(cache[g->level - 1].enemies, g->enemies, sizeof(Enemy) * g->enemy_count);
+        cache[g->level - 1].level_cleared = g->level_cleared;
+        cache[g->level - 1].valid = 1;
+        if (area == LOCATION_SWAMP) {
+            northern_return(g, origin == LOCATION_CASTLE ? LOCATION_CASTLE : LOCATION_TOWN2, 0);
+            if (onward) {
+                g->player.x = NORTH_SWAMP_X + 1;
+                g->player.y = NORTH_SWAMP_Y - 6;
+                g->player.last_dx = 1;
+                g->player.last_dy = 0;
+            }
+        } else {
+            approach_enter_region(g, APPROACH_COAST_ROAD);
+            g->player.x = g->map.stairs_down_x;
+            g->player.y = g->map.stairs_down_y + 1;
+            g->player.last_dx = 0;
+            g->player.last_dy = 1;
+        }
+        map_mark_explored(&g->map, g->player.x, g->player.y);
+        return;
+    }
     Location area = g->location;
     int lich_exit = area == LOCATION_DUNGEON && g->level == DUNGEON_DEPTH &&
         (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_DUNGEON)));
@@ -5615,17 +5542,8 @@ void game_return_to_approach(GameState *g) {
         (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_MOUNTAINS)));
     int forest_exit = area == LOCATION_FOREST && g->level == FOREST_DEPTH &&
         (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_FOREST)));
-    int swamp_exit = area == LOCATION_SWAMP && g->level == SWAMP_DEPTH &&
-        (g->debug_passages_unlocked || (g->defeated_bosses & (1 << LOCATION_SWAMP)));
     game_return_to_town(g);
     enter_return_approach(g, area);
-    if (swamp_exit && g->location == LOCATION_APPROACH) {
-        g->player.x = g->map.stairs_up_x;
-        g->player.y = g->map.stairs_down_y + 1;
-        g->player.last_dx = -1;
-        g->player.last_dy = 0;
-        push_message(g, "The road is open: north to Rosemoor, south to Stillbury.");
-    }
     if (forest_exit && g->location == LOCATION_APPROACH) {
         g->player.x = g->map.stairs_down_x;
         g->player.y = g->map.stairs_up_y;
@@ -5659,10 +5577,12 @@ void game_leave_approach_to_town(GameState *g, Location town) {
         return;
     }
     TownApproach destination = *route;
-    for (int i = 0; i < town_approach_count; i++) {
-        if (town_approaches[i].town == town && town_approaches[i].area == route->area) {
-            destination = town_approaches[i];
-            break;
+    if (route->town != town) {
+        for (int i = 0; i < town_approach_count; i++) {
+            if (town_approaches[i].town == town && town_approaches[i].area == route->area) {
+                destination = town_approaches[i];
+                break;
+            }
         }
     }
     if (town_road_enter(g, destination.town, town_road_side(destination.gate_x, destination.gate_y), 0)) {
@@ -6108,7 +6028,7 @@ int game_has_treasure_map(const GameState *g) {
 }
 
 int game_can_sail_to_island(const GameState *g) {
-    return g->debug_passages_unlocked || g->island_travel_unlocked || game_has_treasure_map(g);
+    return game_harbor_unlocked(g) || g->island_travel_unlocked;
 }
 
 static int island_interaction_tile(TileType tile) {
@@ -6154,7 +6074,7 @@ int game_interact_island(GameState *g) {
             return 1;
         }
         if (tile == TILE_ISLAND_MARKER) {
-            push_message(g, "The carved sun matches the symbol on your treasure map.");
+            push_message(g, "The carved sun marks the path to the ruined temple.");
             return 1;
         }
         if (tile == TILE_ISLAND_STATUE) {
@@ -6227,39 +6147,43 @@ void game_talk_to_nahla(GameState *g) {
 }
 
 void game_talk_to_rowan(GameState *g) {
-    g->dialogue_active = 1;
-    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Captain Rowan");
-    g->dialogue_x = COAST_ROWAN_X;
-    g->dialogue_y = COAST_ROWAN_Y;
-    if (game_harbor_unlocked(g)) {
-        const char *warning = temple_training_recommended(g)
-            ? " The ruined temple is dangerous. Clear the dungeon or mountains "
-              "for experience first, or sail now and turn back if needed."
-            : "";
-        if (g->island_travel_unlocked) {
-            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "The island route is charted. You may sail whenever you wish.%s",
-                warning);
-        } else if (game_has_treasure_map(g)) {
-            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "Keep the island map safe; it marks the ruined temple.%s",
-                warning);
-        } else if (g->inventory_count >= MAX_INVENTORY) {
-            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "I have an island map for you. Make room in your pack.%s",
-                warning);
-        } else {
-            g->inventory[g->inventory_count++] = item_make_treasure_map();
-            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "Take this island map. It marks the ruined temple.%s",
-                warning);
-            push_message(g, "Rowan gives you an Island Treasure Map.");
-        }
+    if (!coastal_stillbury_docks(g) || abs(g->player.x - STILLBURY_ROWAN_X) > 1 ||
+        abs(g->player.y - STILLBURY_ROWAN_Y) > 1) {
         return;
     }
-    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-        "The Drowned Queen keeps the coast too dangerous to sail. "
-        "Defeat her in the Sunken Coast, then return to these docks beside its entrance. I can take you to the island beyond these shores.");
+    g->dialogue_active = 1;
+    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Captain Rowan");
+    g->dialogue_x = STILLBURY_ROWAN_X;
+    g->dialogue_y = STILLBURY_ROWAN_Y;
+    const char *sailing = game_can_sail_to_island(g)
+        ? " The Queen is defeated. My ship here can take you to the Ruined Isle and bring you back to Stillbury."
+        : " The Drowned Queen prevents island voyages. Follow Stillbury's eastern road through Elderwood to Sunken Coast and defeat her.";
+    if (g->mara_quest_state == 0) {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "Our coastal trade needs its lights restored. Lower the tides and relight the three guarded beacons on Sunken Coast stages 2, 3 and 4. "
+            "Return to me at Stillbury's docks for 80 gold. Will you help?%s", sailing);
+    } else if (g->mara_quest_state == 1) {
+        int lit = 0;
+        for (int bit = 0; bit < 3; bit++) {
+            lit += !!(g->mara_beacons_lit & (1 << bit));
+        }
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "%d of 3 beacons are lit. The lights on Sunken Coast stages 2, 3 and 4 guide the trading ships. "
+            "Return here for your reward when all three burn.%s", lit, sailing);
+    } else if (g->mara_quest_state == 2) {
+        g->mara_quest_state = 3;
+        g->gold += 80;
+        g->score += 600;
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "The three beacons shine again. Here are your 80 gold, with the harbor's thanks.%s%s",
+            coastal_trade_restored(g) ? " Coastal trade can resume; Stillbury's merchants will remember your help." :
+            " The Queen must fall before ordinary trading ships can sail safely.", sailing);
+        push_message(g, "Reward collected: Relight the Drowned Beacons. +80 gold, +600 score.");
+    } else {
+        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+            "%s%s", coastal_trade_restored(g) ? "Trade sails again, thanks to you." :
+            "The beacons burn, but the Queen still threatens our trading ships.", sailing);
+    }
 }
 
 static void prepare_quest_expedition(GameState *g, Location location) {
@@ -6333,8 +6257,8 @@ static const QuestOffer quest_offers[] = {
         "Assigned: Passage Through Saltwind. Defeat Sszareth, paddle across the river and dock at Stillbury."},
     {"Spice Merchant Corvin", LOCATION_DAWNMERE_MERCHANT, offsetof(GameState, spice_skiff_quest_state), 0,
         "Assigned: The Missing Spice Skiff. Search the stranded skiff on Saltwind 2 and recover its cargo on Saltwind 3."},
-    {"Forester Tamsin", LOCATION_TOWN, offsetof(GameState, heartseed_quest_state), 0,
-        "Assigned: The Stolen Heartseed. Find Dark Elf orders in Elderwood 2 and the bound grove in Elderwood 4."},
+    {RANGER_TAMSIN, LOCATION_TOWN2, offsetof(GameState, elderwood_quest_state), 0,
+        "Assigned: Clear Elderwood. Defeat Elderthorn in Elderwood 5, then claim Ranger Tamsin's reward in Stillbury."},
     {"Huntmaster Selene", LOCATION_GUILD, offsetof(GameState, hunt_quest_state), 0, "Assigned: The Three Great Hunts. See your quest journal."},
     {"Marshal Veyra", LOCATION_TOWN_HALL, offsetof(GameState, watchfire_quest_state), 0, "Assigned: Watchfires of Ridgeshire. See your quest journal."},
     {"Bram", LOCATION_TAVERN, offsetof(GameState, elowen_quest_state), ELOWEN_MISSING, "Assigned: Save Elowen. Defeat the Lich King in Oakhaven's dungeon."},
@@ -6342,8 +6266,8 @@ static const QuestOffer quest_offers[] = {
     {"Alder", LOCATION_TAVERN, offsetof(GameState, alder_quest_state), 0, "Assigned: The Lost Rangers."},
     {"Dain", LOCATION_TAVERN, offsetof(GameState, dain_quest_state), REGIONAL_CHAIN_BOSS_OFFERED, "Assigned: Defeat the Goblin King."},
     {"Alder", LOCATION_TAVERN, offsetof(GameState, alder_quest_state), REGIONAL_CHAIN_BOSS_OFFERED, "Assigned: Defeat the Necromancer."},
-    {"Mara", LOCATION_TAVERN, offsetof(GameState, mara_quest_state), 0, "Assigned: Relight the Drowned Beacons."},
-    {"Rook", LOCATION_TAVERN, offsetof(GameState, rook_quest_state), 0, "Assigned: The Ivory Rook."},
+    {"Captain Rowan", LOCATION_RIVER_CROSSING, offsetof(GameState, mara_quest_state), 0, "Assigned: Relight the Drowned Beacons. Return to Rowan at Stillbury's docks for your reward."},
+    {"Rook", LOCATION_INN, offsetof(GameState, rook_quest_state), 0, "Assigned: Slay the Minotaur."},
     {"Ilya", LOCATION_TAVERN, offsetof(GameState, dragon_treasure_quest_state), 0, "Assigned: The Dragon's Hoard."},
     {"Nahla", LOCATION_ISLAND, offsetof(GameState, temple_treasure_state), 0, "Quest assigned: The Buried Sun."},
     {"Steward Hadrin", LOCATION_TOWN_HALL, offsetof(GameState, emberforge_quest_state), 0, "Assigned: Reclaim the Emberforge. See your quest journal."},
@@ -6401,6 +6325,10 @@ int game_active_quest_count(const GameState *g) {
 
 int game_quest_offer_at_limit(const GameState *g) {
     const QuestOffer *offer = current_quest_offer(g);
+    if (offer && offer->state_offset == offsetof(GameState, rook_quest_state) &&
+        (g->defeated_bosses & (1u << LOCATION_LABYRINTH))) {
+        return 0;
+    }
     return offer && offer->state_offset != offsetof(GameState, jail_quest_state) &&
         game_active_quest_count(g) >= MAX_ACTIVE_QUESTS;
 }
@@ -6438,19 +6366,16 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
         stormbell_accept(g);
     } else if (state == &g->spice_skiff_quest_state) {
         spice_skiff_accept(g);
-    } else if (state == &g->heartseed_quest_state) {
-        heartseed_accept(g);
+    } else if (state == &g->elderwood_quest_state) {
+        elderwood_quest_sync(g);
     } else if (state == &g->dain_quest_state && offer->offered_state == 0) {
         g->dain_map_fragments = 0;
     } else if (state == &g->alder_quest_state && offer->offered_state == 0) {
         g->alder_wardens_rescued = 0;
-    } else if (state == &g->mara_quest_state) {
-        g->mara_beacons_lit = 0;
-        prepare_quest_expedition(g, LOCATION_COAST);
+    } else if (state == &g->mara_quest_state && (g->mara_beacons_lit & 7) == 7) {
+        g->mara_quest_state = 2;
     } else if (state == &g->dragon_treasure_quest_state) {
         prepare_quest_expedition(g, LOCATION_DRAGONSPINE);
-    } else if (state == &g->rook_quest_state) {
-        g->rook_labyrinth_switches = 0;
     } else if (state == &g->catacombs_quest_state) {
         catacombs_accept_quest(g);
     } else if (state == &g->jail_quest_state) {
@@ -6459,7 +6384,7 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
     push_message(g, offer->message);
     update_oakhaven_boss_quests(g);
     if (state == &g->rook_quest_state) {
-        push_message(g, "The labyrinth on the road to Dawnmere is now open.");
+        labyrinth_complete_quest(g);
     }
     return 1;
 }
@@ -6690,48 +6615,13 @@ void game_talk_to_mara(GameState *g) {
     g->dialogue_speaker[MAX_SPEAKER_LEN - 1] = '\0';
     g->dialogue_x = MARA_TAVERN_X;
     g->dialogue_y = MARA_TAVERN_Y;
-    if (g->mara_quest_state == 0) {
-        strncpy(g->dialogue_text,
-            "On Sunken Coast, relight beacons on stages 2, 3, and 4; lower tides and defeat their guardians. Rowan's docks stand beside the entrance. Return to Oakhaven's Inn.",
-            MAX_DIALOGUE_LEN - 1);
-        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-        return;
-    }
-    if (g->mara_quest_state == 1) {
-        int lit = 0;
-        for (int bit = 0; bit < 3; bit++) {
-            if (g->mara_beacons_lit & (1 << bit)) {
-                lit++;
-            }
-        }
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "You have relit %d of 3 beacons. The remaining lights wait on coast stages 2, 3, and 4.",
-            lit);
-        char status[MAX_MESSAGE_LEN];
-        snprintf(status, sizeof(status), "Quest progress: %d/3 beacons.", lit);
-        push_message(g, status);
-        return;
-    }
-    if (g->mara_quest_state == 2) {
-        g->mara_quest_state = 3;
-        g->gold += 80;
-        g->score += 600;
-        strncpy(g->dialogue_text,
-            "All three flames shine across the drowned road. Sailors can find safe water again. Take this with my thanks.",
-            MAX_DIALOGUE_LEN - 1);
-        g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-        push_message(g, "Completed: Relight the Drowned Beacons.");
-        return;
-    }
-    strncpy(g->dialogue_text,
-        "The beacons still burn. Even this ruined coast can guide travelers home.",
-        MAX_DIALOGUE_LEN - 1);
-    g->dialogue_text[MAX_DIALOGUE_LEN - 1] = '\0';
-    push_message(g, "Mara's quest is already complete.");
+    snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
+        "Beyond the river, the Ruined Isle holds a powerful treasure of sun and moon. "
+        "In Stillbury, find Captain Rowan at the docks south of town. He knows the voyage, but the Drowned Queen keeps his ship in port.");
 }
 
 void game_talk_to_rook(GameState *g) {
-    if (g->location != LOCATION_TAVERN || abs(g->player.x - ROOK_TAVERN_X) > 1 || abs(g->player.y - ROOK_TAVERN_Y) > 1) {
+    if (g->location != LOCATION_INN || abs(g->player.x - ROOK_TAVERN_X) > 1 || abs(g->player.y - ROOK_TAVERN_Y) > 1) {
         return;
     }
     g->dialogue_active = 1;
@@ -6742,35 +6632,18 @@ void game_talk_to_rook(GameState *g) {
         offer_rook_quest(g);
     } else if (g->rook_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Find the labyrinth on the east road to Dawnmere by the Haunted Forest entrance. One rune per floor opens the "
-            "Minotaur's vault. Return my ivory rook to Oakhaven's Inn.");
-        push_message(g, "Rook is waiting for the ivory rook.");
-    } else if (g->rook_quest_state == 2) {
-        g->gold += ROOK_QUEST_REWARD;
-        g->score += 500;
-        g->rook_quest_state = 3;
-        g->rook_quest_completions++;
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "My ivory rook! Thank you for bringing it back. Please take %d gold "
-            "for your trouble.", ROOK_QUEST_REWARD);
-        char msg[MAX_MESSAGE_LEN];
-        snprintf(msg, sizeof(msg), "Completed: The Ivory Rook. %d gold awarded.",
-            ROOK_QUEST_REWARD);
-        push_message(g, msg);
+            "The labyrinth lies beside the quarry road north of Stillbury. Slay the Minotaur on floor 5. "
+            "The quarry road is open; entering the maze is your choice.");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Thank you for recovering my ivory rook.");
-        push_message(g, "Rook's quest is already complete.");
+            "The Minotaur is dead. The register shows Malakar's office ordered those prisoners sent into the maze. "
+            "The townsfolk blamed the King, but his arcanist must answer for this.");
     }
 }
 
 void game_light_coast_beacon(GameState *g, int x, int y) {
     if (g->location != LOCATION_COAST || x < 0 || x >= MAP_W || y < 0 ||
         y >= MAP_H || g->map.tiles[y][x] != TILE_COAST_BEACON_UNLIT) {
-        return;
-    }
-    if (g->mara_quest_state != 1) {
-        push_message(g, "An ancient drowned beacon stands here.");
         return;
     }
     for (int map_y = 0; map_y < MAP_H; map_y++) {
@@ -6797,8 +6670,13 @@ void game_light_coast_beacon(GameState *g, int x, int y) {
     snprintf(status, sizeof(status), "Beacon lit: %d/3.", lit);
     push_message(g, status);
     if ((g->mara_beacons_lit & 7) == 7) {
-        g->mara_quest_state = 2;
-        push_message(g, "All beacons lit. Return to Mara in Oakhaven's Inn.");
+        if (g->mara_quest_state < 2) {
+            g->mara_quest_state = 2;
+        }
+        push_message(g, "All beacons lit. Return to Captain Rowan at Stillbury's docks for your reward.");
+        if (coastal_trade_restored(g)) {
+            push_message(g, "With the Queen defeated and the beacons restored, Stillbury's coastal trade can resume.");
+        }
     }
 }
 

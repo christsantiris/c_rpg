@@ -217,7 +217,7 @@ void northroad_leave(GameState *g, int castle) {
     if (castle) {
         game_enter_town_gate(g, LOCATION_CASTLE, CROWNROAD_X, TOWN_H - 1);
     } else {
-        northern_return(g, g->northroad.from_castle ? LOCATION_CASTLE : LOCATION_TOWN, 1);
+        northern_return(g, g->northroad.from_castle ? LOCATION_CASTLE : LOCATION_TOWN2, 1);
         g->player.x = NORTH_ROAD_X;
         g->player.y = 1;
         g->player.last_dx = 0;

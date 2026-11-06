@@ -190,7 +190,7 @@ static void western_journey(GameState *g, GameState *loaded, int seed) {
     ASSERT("the bridge's eastward bank road reaches Stillbury from its western boundary", western_path(g, APPROACH_W - 1, APPROACH_BRIDGE_EXIT_Y, 1) && g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_TOWN2 && g->player.x == 1 && g->player.last_dx == 1 && !g->act4_arrived);
     town_road_entrance(TOWN_SIDE_WEST, &x, &y);
     ASSERT("walking into Stillbury begins Act 4 facing east", western_path(g, x, y, 1) && g->location == LOCATION_TOWN2 && g->act4_arrived && g->player.x == 1 && g->player.last_dx == 1);
-    ASSERT("Stillbury leaves its quarry, swamp and coast roads deferred", g->map.tiles[0][20] == TILE_WALL && g->map.tiles[12][TOWN_W - 1] == TILE_WALL);
+    ASSERT("Stillbury opens Blackwater north and Elderwood east", g->map.tiles[0][20] == TILE_TOWN_EXIT && g->map.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT);
     ASSERT("Stillbury's western gate allows retreat", western_path(g, 0, 12, 1) && g->location == LOCATION_TOWN_ROAD);
     town_road_exit(TOWN_SIDE_WEST, &x, &y);
     ASSERT("the western road returns onto the north bank facing west", western_path(g, x, y, 1) && approach_bridge_road(g) && g->player.x == APPROACH_W - 2 && g->player.last_dx == -1);

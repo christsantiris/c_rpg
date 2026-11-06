@@ -40,7 +40,7 @@ void royal_evidence_draw(Renderer *r, const GameState *g, const RoyalEvidence *d
     if (!document) {
         return;
     }
-    int compact = paper.h < 300;
+    int compact = paper.h < 300 || paper.w < 700;
     int padding = compact ? 12 : 26;
     int stamp = compact ? 32 : 64;
     SDL_Color ink = {49, 36, 30, 255};

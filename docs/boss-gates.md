@@ -11,12 +11,12 @@ directions; ordinary enemy respawns never close it again.
 | Oakhaven Dungeon | Local adventure | Lich King; returns north to Oakhaven |
 | Haunted Forest | Boss-gated road | Necromancer; Oakhaven ↔ Dawnmere |
 | Goblin Mountains | Boss-gated road | Goblin King; Oakhaven ↔ Sunscar Wastes |
-| Blackwater Swamp | Boss-gated road | Swamp Demon; Stillbury ↔ Rosemoor |
-| Elderwood Forest | Boss-gated road | Elderthorn; Elderwood section of the northern castle connection |
+| Blackwater Swamp | Boss-gated road | Swamp Demon; Stillbury ↔ Royal Catacombs |
+| Elderwood Forest | Boss-gated road | Elderthorn; Stillbury ↔ Sunken Coast |
 | Royal Catacombs | Boss-gated road | Grave Marshal; Catacombs section of the northern castle connection |
 | Sunken Coast | Boss-gated destination | Drowned Queen unlocks the docks; existing chart and sailing rules remain |
 | Castle interior | Internal progression | Existing Castellan, Royal Arcanist and Lord Veyr encounter rules |
-| Rook's Labyrinth | Deferred | No world entrance in V2; maze and quest implementation retained for a later arc |
+| Rook's Labyrinth | Optional adventure | Beside the western quarry road; Minotaur never blocks quarry travel |
 | Stonewake Quarry | Free travel | Quarry Colossus and quarry quest remain optional |
 | Saltwind Marsh | Boss-gated destination | Sszareth unlocks the final river launch; retreat and ordinary stage travel remain open |
 | Stormwatch Headland | Free travel | Tempest Matriarch does not seal the final departure |
@@ -61,10 +61,14 @@ then opens, and the saved victory keeps its guards absent on return or reload.
 The existing debug passage override also hides the guards. No new guards are
 added to the opposite towns' approaches.
 
-From Oakhaven, the northern connection encounters Elderwood before Catacombs.
-From Castle Grounds, it encounters Catacombs before Elderwood. Each checkpoint
-uses its own victory; both are needed to complete the entire journey.
-Retreat from a castle-side Catacombs attempt returns north of its closed gate.
+From Stillbury, the northern connection encounters Blackwater before Catacombs.
+From Castle Grounds, it encounters Catacombs before Blackwater. The Demon and
+Grave Marshal independently control those road sections. Retreat from a
+castle-side Catacombs attempt remains north of its closed gate.
+
+Elderwood now controls the separate eastern route to Sunken Coast. Stillbury's
+western bridge road forks north toward the quarry and optional labyrinth;
+neither the Jarl nor the Minotaur controls that branch.
 
 ## Saves and debug play
 
