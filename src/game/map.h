@@ -739,7 +739,8 @@ typedef enum {
     TILE_DARK_ELF_ROAD_GUARD,
     TILE_NPC_GARRAN,
     TILE_NPC_LIORA,
-    TILE_CARAVAN_CAMP
+    TILE_CARAVAN_CAMP,
+    TILE_NPC_STORM_GUIDE
 } TileType;
 
 typedef struct {

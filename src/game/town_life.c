@@ -1,6 +1,7 @@
 #include "town_life.h"
 #include "spice_skiff.h"
 #include "coastal_travel.h"
+#include "storm_mage.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -130,6 +131,7 @@ void town_life_generate(Map *map, Location interior, int *sx, int *sy) {
             map->tiles[12][x] = TILE_TAVERN_TABLE;
             map->tiles[12][x + 16] = TILE_TAVERN_TABLE;
         }
+        map->tiles[STORM_GUIDE_DAWN_Y][STORM_GUIDE_DAWN_X] = TILE_NPC_STORM_GUIDE;
     }
     map->tiles[RESIDENT_Y][RESIDENT_X] = TILE_NPC_RESIDENT;
 }

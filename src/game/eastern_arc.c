@@ -109,6 +109,10 @@ void eastern_refresh(GameState *g) {
     if (g->location == LOCATION_DAWNMERE) {
         restore_town_tile(g, 20, TOWN_H - 1, TILE_WALL);
         restore_town_tile(g, 20, 0, TILE_TOWN_EXIT);
+        restore_town_tile(g, TOWN_W - 1, 12, TILE_TOWN_EXIT);
+        for (int x = 32; x < TOWN_W - 1; x++) {
+            restore_town_tile(g, x, 12, TILE_TOWN_PATH);
+        }
         if (!g->dawnmere_liberated && g->map.tiles[SEREN_Y][SEREN_X] == TILE_NPC_SEREN) {
             g->map.tiles[SEREN_Y][SEREN_X] = map_dawnmere_ground(SEREN_X, SEREN_Y);
         }

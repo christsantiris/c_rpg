@@ -23,6 +23,7 @@
 #include "lich.h"
 #include "elowen.h"
 #include "aldric.h"
+#include "storm_mage.h"
 #include "necromancer.h"
 #include "goblin_king.h"
 #include "drowned_queen.h"
@@ -1614,6 +1615,8 @@ void game_init(GameState *g) {
     g->aldric_y = -1;
     g->aldric_hp = ALDRIC_MAX_HP;
     g->aldric_recruited = 0;
+    storm_mage_init(g);
+    g->resurrection_target = 0;
     g->resurrection_prompt = 0;
     g->dain_quest_state = 0;
     g->dain_map_fragments = 0;
@@ -4977,6 +4980,8 @@ void game_enter_island(GameState *g) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
+    aldric_follow(g, -1, -1);
+    storm_mage_follow(g, -1, -1);
     push_message(g, "You make landfall on the Ruined Isle.");
     push_message(g, "The island route is now open for return voyages.");
 }
@@ -4987,6 +4992,8 @@ void game_leave_island(GameState *g) {
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
     coastal_return_from_island(g);
+    aldric_follow(g, -1, -1);
+    storm_mage_follow(g, -1, -1);
 }
 
 static void cache_temple_level(GameState *g) {
@@ -6770,6 +6777,7 @@ static int level_up_mp_gain(const Player *p) {
 }
 
 void player_gain_xp(GameState *g, int xp) {
+    storm_mage_gain_xp(g, xp);
     g->player.experience += xp;
 
     while (g->player.experience >= g->player.experience_next &&

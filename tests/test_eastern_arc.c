@@ -126,7 +126,7 @@ static void occupation(GameState *g, GameState *loaded) {
     ASSERT("Captain Rusk leads the waterfront command", strcmp(g->enemies[DAWNMERE_RUSK].name, "Captain Rusk") == 0 && g->enemies[DAWNMERE_RUSK].max_hp == 150);
     ASSERT("forcing a way in starts only the checkpoint squad's attack", eastern_handle_key(g, SDL_SCANCODE_N, 0) && !eastern_challenge_active(g) && g->location == LOCATION_DAWNMERE && g->dawnmere_alerted &&
         g->enemies[DAWNMERE_SQUAD - 1].boss_aux_x && !g->enemies[DAWNMERE_SQUAD].boss_aux_x && recent_message(g, "force your way into Dawnmere"));
-    ASSERT("Dawnmere has a north waterfront gate and no southern or eastern branch", g->map.tiles[0][20] == TILE_TOWN_EXIT && g->map.tiles[24][20] == TILE_WALL && g->map.tiles[12][TOWN_W - 1] == TILE_WALL);
+    ASSERT("Dawnmere has the northern waterfront and eastern Stormwatch gates, with no southern branch", g->map.tiles[0][20] == TILE_TOWN_EXIT && g->map.tiles[24][20] == TILE_WALL && g->map.tiles[12][TOWN_W - 1] == TILE_TOWN_EXIT);
     int before = g->player.x;
     g->player.x = 20;
     g->player.y = 1;
@@ -367,13 +367,13 @@ static void checkpoint_choice(GameState *g, GameState *loaded) {
     ASSERT("the challenge waits for an answer instead of letting the player walk past", eastern_challenge_active(g) && eastern_handle_key(g, SDL_SCANCODE_D, 0) && eastern_challenge_active(g) && g->player.x == x && g->player.y == y);
     ASSERT("an unanswered challenge survives save/load", save_game(g, EASTERN_SLOT) && load_game(loaded, EASTERN_SLOT) && eastern_challenge_active(loaded));
     ASSERT("leaving town returns to the road outside the west gate without a fight", eastern_handle_key(g, SDL_SCANCODE_Y, 0) && g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_DAWNMERE &&
-        !g->dawnmere_alerted && !g->dialogue_active && recent_message(g, "walk around the town to the Saltwind road"));
+        !g->dawnmere_alerted && !g->dialogue_active && recent_message(g, "Saltwind north, Stormwatch Headland east"));
     town_road_entrance(TOWN_SIDE_WEST, &x, &y);
     ASSERT("every west gate arrival repeats the challenge", journey_to(g, x, y) && g->location == LOCATION_DAWNMERE && eastern_challenge_active(g));
     ASSERT("Esc also leaves town", eastern_handle_key(g, SDL_SCANCODE_ESCAPE, 0) && g->location == LOCATION_TOWN_ROAD && !g->dawnmere_alerted);
     town_road_enter(g, LOCATION_DAWNMERE, TOWN_SIDE_NORTH, 0);
     town_road_entrance(TOWN_SIDE_NORTH, &x, &y);
-    ASSERT("the held waterfront gate also stays closed from outside, leaving the challenged west gate as the way in", !journey_to(g, x, y) && g->location == LOCATION_TOWN_ROAD && recent_message(g, "holds the waterfront gate"));
+    ASSERT("the held waterfront gate also stays closed from outside, leaving the challenged west gate as the way in", !journey_to(g, x, y) && g->location == LOCATION_TOWN_ROAD && recent_message(g, "garrison holds this gate"));
 }
 
 static void garrison_warnings(GameState *g) {
@@ -440,7 +440,7 @@ static void garrison_reinforcement(GameState *g, GameState *loaded) {
 static void dawnmere_bypass(GameState *g) {
     game_init(g);
     town_road_enter(g, LOCATION_DAWNMERE, TOWN_SIDE_WEST, 0);
-    ASSERT("arriving outside occupied Dawnmere offers the road around town", recent_message(g, "walk around the town to the Saltwind road"));
+    ASSERT("arriving outside occupied Dawnmere offers both roads around town", recent_message(g, "Saltwind north, Stormwatch Headland east"));
     int x;
     int y;
     town_road_exit(TOWN_SIDE_NORTH, &x, &y);

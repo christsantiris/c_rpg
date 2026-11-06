@@ -51,7 +51,7 @@ int town_road_connection(Location town, TownSide side, TownApproach *connection)
         }
         return 0;
     }
-    if (town == LOCATION_DAWNMERE && side != TOWN_SIDE_WEST) {
+    if (town == LOCATION_DAWNMERE && side != TOWN_SIDE_WEST && side != TOWN_SIDE_EAST) {
         return 0;
     }
     for (int i = 0; i < town_approach_count; i++) {
@@ -178,7 +178,7 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
     } else if (town == LOCATION_TOWN2) {
         snprintf(message, sizeof(message), "Stillbury: north to Blackwater; east to Elderwood; west to Giant's Bridge and the quarry fork; south to the skiff.");
     } else if (town == LOCATION_DAWNMERE && !g->dawnmere_liberated) {
-        snprintf(message, sizeof(message), "Dawnmere is occupied. Enter at the west gate, or walk around the town to the Saltwind road north.");
+        snprintf(message, sizeof(message), "Dawnmere is occupied. West gate: town. Walk around: Saltwind north, Stormwatch Headland east.");
     } else {
         snprintf(message, sizeof(message), "%s: approach the town to enter, or walk around it to another road.", approach_town_name(town));
     }
@@ -212,12 +212,12 @@ int town_road_depart(GameState *g, int x, int y) {
     return town_road_enter(g, g->location, town_road_side(x, y), 1);
 }
 
-// Occupied Dawnmere's garrison holds the waterfront gate from outside as well.
+// Occupied Dawnmere's garrison holds the north and east gates from outside as well.
 static int gate_held(GameState *g, TownSide side) {
-    if (g->road_town != LOCATION_DAWNMERE || side != TOWN_SIDE_NORTH || g->dawnmere_liberated) {
+    if (g->road_town != LOCATION_DAWNMERE || (side != TOWN_SIDE_NORTH && side != TOWN_SIDE_EAST) || g->dawnmere_liberated) {
         return 0;
     }
-    push_message(g, "The garrison holds the waterfront gate. Walk around to the west gate to enter Dawnmere.");
+    push_message(g, "The garrison holds this gate. Walk around to the west gate to enter Dawnmere.");
     return 1;
 }
 

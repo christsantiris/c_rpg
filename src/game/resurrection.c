@@ -1,5 +1,7 @@
 #include "resurrection.h"
 #include "aldric.h"
+#include "party.h"
+#include "storm_mage.h"
 #include "elowen.h"
 #include "town_road.h"
 #include "combat_feedback.h"
@@ -83,6 +85,9 @@ void resurrection_place(GameState *g) {
     if (g->aldric_party_state == ALDRIC_FOLLOWING && !map_is_walkable(&g->map, g->aldric_x, g->aldric_y)) {
         aldric_follow(g, -1, -1);
     }
+    if (g->storm_mage.state == STORM_MAGE_FOLLOWING && !map_is_walkable(&g->map, g->storm_mage.x, g->storm_mage.y)) {
+        storm_mage_follow(g, -1, -1);
+    }
     if (g->elowen_quest_state == ELOWEN_RESCUED && !map_is_walkable(&g->map, g->elowen_x, g->elowen_y)) {
         elowen_follow(g, -1, -1);
     }
@@ -107,15 +112,20 @@ static int knows_resurrection(const GameState *g) {
 }
 
 static int has_party(const GameState *g) {
-    return g->aldric_recruited || g->aldric_party_state == ALDRIC_FOLLOWING || g->aldric_party_state == ALDRIC_DEAD;
+    for (int i = 0; i < PARTY_MEMBER_COUNT; i++) {
+        if (party_recruited(g, i)) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 static void offer(GameState *g, int prompt, const char *text) {
     g->resurrection_prompt = prompt;
     g->dialogue_active = 1;
-    g->dialogue_x = prompt == RESURRECTION_SPELL_CONFIRM ? SOULSTONE_X : SOULSTONE_WARLOCK_X;
-    g->dialogue_y = prompt == RESURRECTION_SPELL_CONFIRM ? SOULSTONE_Y : SOULSTONE_WARLOCK_Y;
-    snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "%s", prompt == RESURRECTION_SPELL_CONFIRM ? "Soulstone Shrine" : speaker);
+    g->dialogue_x = (prompt == RESURRECTION_SPELL_CONFIRM || prompt == RESURRECTION_SPELL_TARGET) ? SOULSTONE_X : SOULSTONE_WARLOCK_X;
+    g->dialogue_y = (prompt == RESURRECTION_SPELL_CONFIRM || prompt == RESURRECTION_SPELL_TARGET) ? SOULSTONE_Y : SOULSTONE_WARLOCK_Y;
+    snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "%s", (prompt == RESURRECTION_SPELL_CONFIRM || prompt == RESURRECTION_SPELL_TARGET) ? "Soulstone Shrine" : speaker);
     snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s", text);
 }
 
@@ -125,10 +135,11 @@ int resurrection_talk(GameState *g) {
     }
     char text[MAX_DIALOGUE_LEN];
     const char *status = !has_party(g) ? "Recruit a companion before using these services." :
-        g->aldric_party_state == ALDRIC_DEAD ? "Aldric's spirit awaits resurrection." : "Your companions are alive.";
+        party_fallen_count(g) ? "Fallen companions await resurrection." : "Your companions are alive.";
     snprintf(text, sizeof(text),
-        "This shrine can restore a fallen companion to life.\n%s\nGold: %d\n1 Resurrect Aldric: %d gold\n2 Resurrection scroll: %d gold (Mage level %d)\nEnter / Esc: Leave",
-        status, g->gold, RESURRECTION_GOLD, RESURRECTION_SCROLL_GOLD, RESURRECTION_LEVEL);
+        "This shrine can restore a fallen companion to life.\n%s\nGold: %d\n%s2 Resurrection scroll: %d gold (Mage level %d)\nEnter / Esc: Leave",
+        status, g->gold, party_fallen_count(g) ? "1 Resurrect fallen companion: 200 gold\n" : "",
+        RESURRECTION_SCROLL_GOLD, RESURRECTION_LEVEL);
     offer(g, RESURRECTION_SERVICE, text);
     return 1;
 }
@@ -155,7 +166,7 @@ static int spell_ready(GameState *g) {
         push_message(g, "Resurrection requires peace at the shrine.");
         return 0;
     }
-    if (g->aldric_party_state != ALDRIC_DEAD) {
+    if (!party_fallen_count(g)) {
         push_message(g, "No fallen party member needs resurrection.");
         return 0;
     }
@@ -166,19 +177,47 @@ static int spell_ready(GameState *g) {
     return 1;
 }
 
+static void confirm_target(GameState *g, int magic) {
+    char text[MAX_DIALOGUE_LEN];
+    int hp = party_max_hp(g, g->resurrection_target);
+    if (magic) {
+        snprintf(text, sizeof(text), "Resurrect %s with %d / %d HP for %d MP?\nY: Perform ritual\nN / Esc: Cancel",
+            party_name(g->resurrection_target), hp / 2, hp, action_spell_mp_cost(g, ritual_spell(g)));
+    } else {
+        snprintf(text, sizeof(text), "Resurrect %s at full health for %d gold?\nY: Pay and resurrect\nN / Esc: Cancel",
+            party_name(g->resurrection_target), RESURRECTION_GOLD);
+    }
+    offer(g, magic ? RESURRECTION_SPELL_CONFIRM : RESURRECTION_PAID_CONFIRM, text);
+}
+
+static void select_target(GameState *g, int magic) {
+    int count = party_fallen_count(g);
+    if (count == 1) {
+        g->resurrection_target = party_fallen_at(g, 0);
+        confirm_target(g, magic);
+        return;
+    }
+    char text[MAX_DIALOGUE_LEN];
+    int used = snprintf(text, sizeof(text), "Choose a fallen companion:\n");
+    for (int i = 0; i < count && used < (int)sizeof(text); i++) {
+        used += snprintf(text + used, sizeof(text) - used, "%d %s\n", i + 1, party_name(party_fallen_at(g, i)));
+    }
+    if (used < (int)sizeof(text)) {
+        snprintf(text + used, sizeof(text) - used, "Enter / Esc: Cancel");
+    }
+    offer(g, magic ? RESURRECTION_SPELL_TARGET : RESURRECTION_PAID_TARGET, text);
+}
+
 int resurrection_offer_spell(GameState *g) {
     if (!spell_ready(g)) {
         return 0;
     }
-    char text[MAX_DIALOGUE_LEN];
-    snprintf(text, sizeof(text), "Resurrect Aldric with %d / %d HP for %d MP?\nY: Perform ritual\nN / Esc: Cancel",
-        ALDRIC_MAX_HP / 2, ALDRIC_MAX_HP, action_spell_mp_cost(g, ritual_spell(g)));
-    offer(g, RESURRECTION_SPELL_CONFIRM, text);
+    select_target(g, 1);
     return 1;
 }
 
 int resurrection_prompt_active(const GameState *g) {
-    return resurrection_available(g) && g->resurrection_prompt >= RESURRECTION_SERVICE && g->resurrection_prompt <= RESURRECTION_SPELL_CONFIRM &&
+    return resurrection_available(g) && g->resurrection_prompt >= RESURRECTION_SERVICE && g->resurrection_prompt <= RESURRECTION_SPELL_TARGET &&
         g->dialogue_active && (strcmp(g->dialogue_speaker, speaker) == 0 || strcmp(g->dialogue_speaker, "Soulstone Shrine") == 0);
 }
 
@@ -224,13 +263,22 @@ int resurrection_handle_key(GameState *g, int key, int repeat) {
             return 1;
         }
         if (key == SDL_SCANCODE_1) {
-            if (g->aldric_party_state != ALDRIC_DEAD) {
+            if (!party_fallen_count(g)) {
                 push_message(g, "No fallen party member needs resurrection.");
             } else {
-                offer(g, RESURRECTION_PAID_CONFIRM, "Resurrect Aldric at full health for 200 gold?\nY: Pay and resurrect\nN / Esc: Cancel");
+                select_target(g, 0);
             }
         } else if (key == SDL_SCANCODE_2 && scroll_ready(g)) {
             offer(g, RESURRECTION_SCROLL_CONFIRM, "Buy Scroll: Resurrection for 400 gold? Read it from your inventory to learn the spell.\nY: Buy\nN / Esc: Cancel");
+        }
+        return 1;
+    }
+    if (prompt == RESURRECTION_PAID_TARGET || prompt == RESURRECTION_SPELL_TARGET) {
+        int index = key - SDL_SCANCODE_1;
+        int target = index >= 0 && index < 9 ? party_fallen_at(g, index) : -1;
+        if (target >= 0) {
+            g->resurrection_target = target;
+            confirm_target(g, prompt == RESURRECTION_SPELL_TARGET);
         }
         return 1;
     }
@@ -242,7 +290,8 @@ int resurrection_handle_key(GameState *g, int key, int repeat) {
             return 1;
         }
         int cost = action_spell_mp_cost(g, ritual_spell(g));
-        if (!aldric_revive(g, ALDRIC_MAX_HP / 2)) {
+        if (!party_fallen(g, g->resurrection_target) ||
+            !party_revive(g, g->resurrection_target, party_max_hp(g, g->resurrection_target) / 2)) {
             return 1;
         }
         g->player.mp -= cost;
@@ -263,7 +312,8 @@ int resurrection_handle_key(GameState *g, int key, int repeat) {
                 push_message(g, "Resurrection costs 200 gold. Return when you can pay.");
                 return 1;
             }
-            if (!aldric_revive(g, ALDRIC_MAX_HP)) {
+            if (!party_fallen(g, g->resurrection_target) ||
+                !party_revive(g, g->resurrection_target, party_max_hp(g, g->resurrection_target))) {
                 return 1;
             }
             g->gold -= RESURRECTION_GOLD;
@@ -271,5 +321,5 @@ int resurrection_handle_key(GameState *g, int key, int repeat) {
     }
     g->resurrection_prompt = RESURRECTION_NONE;
     g->dialogue_active = 0;
-    return prompt == RESURRECTION_SPELL_CONFIRM ? 2 : 1;
+    return (prompt == RESURRECTION_SPELL_CONFIRM || prompt == RESURRECTION_SPELL_TARGET) ? 2 : 1;
 }
