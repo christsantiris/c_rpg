@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "giants_crown.h"
 #include "map.h"
+#include "storm_mage.h"
 #include "stormbell.h"
 #include "crown_quest.h"
 #include "landscapes.h"
@@ -571,6 +572,7 @@ int map_is_walkable(const Map *m, int x, int y) {
         m->tiles[y][x] != TILE_NPC_DAIN &&
         m->tiles[y][x] != TILE_NPC_ALDER &&
         m->tiles[y][x] != TILE_NPC_MARA &&
+        m->tiles[y][x] != TILE_NPC_STORM_GUIDE &&
         m->tiles[y][x] != TILE_NPC_BRENNA &&
  m->tiles[y][x] != TILE_NPC_ORIN &&
         m->tiles[y][x] != TILE_NPC_SELENE &&
@@ -1646,6 +1648,7 @@ void map_generate_town(Map *m, int *spawn_x, int *spawn_y) {
     map_clear_town_harbor(m);
     m->tiles[TOWN_CAIN_Y][TOWN_CAIN_X] = TILE_NPC_CAIN;
     m->tiles[TOWN_ALDRIC_Y][TOWN_ALDRIC_X] = TILE_NPC_ALDRIC;
+    m->tiles[STORM_GUIDE_OAK_Y][STORM_GUIDE_OAK_X] = TILE_NPC_STORM_GUIDE;
     town_life_place(m, LOCATION_TOWN);
 
     // Spawn at the central crossroads.
@@ -1883,6 +1886,7 @@ void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
     }
     // Saltwind follows the river-facing northern waterfront.
     m->tiles[0][20] = TILE_TOWN_EXIT;
+    m->tiles[12][TOWN_W - 1] = TILE_TOWN_EXIT;
     town_life_place(m, LOCATION_DAWNMERE);
     m->tiles[SEREN_Y][SEREN_X] = TILE_NPC_SEREN;
     *spawn_x = 20;

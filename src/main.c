@@ -15,6 +15,8 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "renderer/renderer.h"
 #include "game/elowen.h"
 #include "game/aldric.h"
+#include "game/storm_mage.h"
+#include "game/party.h"
 #include "game/royal_evidence.h"
 #include "game/eastern_arc.h"
 #include "renderer/royal_evidence_renderer.h"
@@ -779,10 +781,10 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (screen == SCREEN_PLAYING) {
-                        int was_dead = game.aldric_party_state == ALDRIC_DEAD;
+                        int fallen_before = party_fallen_count(&game);
                         int ritual = resurrection_handle_key(&game, sc, event.key.repeat);
                         if (ritual) {
-                            if (was_dead && game.aldric_party_state == ALDRIC_FOLLOWING) {
+                            if (party_fallen_count(&game) < fallen_before) {
                                 sfx_play_heal();
                             }
                             if (ritual == 2) {
@@ -812,6 +814,9 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (screen == SCREEN_PLAYING && aldric_handle_key(&game, sc, event.key.repeat)) {
+                        break;
+                    }
+                    if (screen == SCREEN_PLAYING && storm_mage_handle_key(&game, sc, event.key.repeat)) {
                         break;
                     }
                     if (screen == SCREEN_PLAYING && game_handle_glassdeep_prompt_key(&game, sc, event.key.repeat)) {
@@ -1117,6 +1122,15 @@ int main(int argc, char **argv) {
                                 screen = SCREEN_HELP;
                                 break;
                             case CONTROL_TALK: {
+                                int facing_x = game.player.x + game.player.last_dx;
+                                int facing_y = game.player.y + game.player.last_dy;
+                                if (storm_mage_at(&game, facing_x, facing_y) && storm_mage_talk(&game, facing_x, facing_y)) {
+                                    break;
+                                }
+                                if (aldric_at(&game, facing_x, facing_y)) {
+                                    aldric_talk(&game, facing_x, facing_y);
+                                    break;
+                                }
                                 if (town_life_near_shopkeeper(&game)) {
                                     game.dialogue_active = 0;
                                     ShopType type = game.location == LOCATION_COBBLER ? SHOP_TYPE_COBBLER : game.location == LOCATION_BELT_MAKER ? SHOP_TYPE_BELT_MAKER :
@@ -1152,7 +1166,9 @@ int main(int argc, char **argv) {
                                             ty < 0 || ty >= MAP_H) {
                                             continue;
                                         }
-                                        if (game.map.tiles[ty][tx] ==
+                                        if (storm_mage_talk(&game, tx, ty)) {
+                                            found = 1;
+                                        } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ELOWEN) {
                                             game_talk_to_elowen(&game);
                                             found = 1;
@@ -1365,7 +1381,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (western_convoy_prompt(&game) || game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (western_convoy_prompt(&game) || game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
                         break;
                     }
 
@@ -1626,7 +1642,7 @@ int main(int argc, char **argv) {
             entry_gate.active || enemy_shots.count > 0 || !(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) ||
             game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) ||
             game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) ||
-            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game);
+            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game);
         if (update_stormwatch_clock(&game, &wind_clock, SDL_GetTicks(), wind_paused)) {
             viewport_center_on(&viewport, game.player.x, game.player.y);
             needs_redraw = 1;

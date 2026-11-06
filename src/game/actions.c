@@ -20,6 +20,7 @@
 #include "lich.h"
 #include "elowen.h"
 #include "aldric.h"
+#include "storm_mage.h"
 #include "necromancer.h"
 #include "goblin_king.h"
 #include "drowned_queen.h"
@@ -2282,6 +2283,10 @@ static void resolve_player_action(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_MOVE) {
+        if (storm_mage_at(g, a.target_x, a.target_y) && g->storm_mage.state != STORM_MAGE_FOLLOWING) {
+            push_message(g, "A mage stands here. Press your Talk key beside him.");
+            return;
+        }
         if (eastern_move(g, a.target_x, a.target_y)) {
             return;
         }
@@ -3032,6 +3037,8 @@ void action_resolve_player(GameState *g, Action a) {
     eastern_store(g);
     int old_x = g->player.x;
     int old_y = g->player.y;
+    int mage_lead_x = g->aldric_party_state == ALDRIC_FOLLOWING ? g->aldric_x : old_x;
+    int mage_lead_y = g->aldric_party_state == ALDRIC_FOLLOWING ? g->aldric_y : old_y;
     int dx = a.target_x - old_x;
     int dy = a.target_y - old_y;
     Location location = g->location;
@@ -3052,6 +3059,10 @@ void action_resolve_player(GameState *g, Action a) {
         g->elowen_y = -1;
         g->aldric_x = -1;
         g->aldric_y = -1;
+        g->storm_mage.x = -1;
+        g->storm_mage.y = -1;
+        mage_lead_x = -1;
+        mage_lead_y = -1;
         old_x = -1;
         old_y = -1;
     }
@@ -3060,6 +3071,7 @@ void action_resolve_player(GameState *g, Action a) {
     int lead_old_y = escort ? g->elowen_y : old_y;
     elowen_follow(g, old_x, old_y);
     aldric_follow(g, lead_old_x, lead_old_y);
+    storm_mage_follow(g, mage_lead_x, mage_lead_y);
 }
 
 int action_use_inventory_item(GameState *g, int index, EnemyProjectiles *shots) {
@@ -3092,7 +3104,7 @@ int action_drink_quick_potion(GameState *g, EnemyProjectiles *shots) {
 }
 
 static int enemy_position_occupied(const GameState *g, int skip, int x, int y) {
-    if (jail_prisoner_at(g, x, y) || aldric_at(g, x, y)) {
+    if (jail_prisoner_at(g, x, y) || aldric_at(g, x, y) || storm_mage_at(g, x, y)) {
         return 1;
     }
     for (int i = 0; i < g->enemy_count; i++) {
@@ -3490,7 +3502,7 @@ static int necromancer_revive(GameState *g, int necromancer_index) {
 }
 
 static int enemy_blocks_line_of_sight(const GameState *g, int shooter_index, int x, int y) {
-    if (aldric_at(g, x, y)) {
+    if (aldric_at(g, x, y) || storm_mage_at(g, x, y)) {
         return 1;
     }
     for (int i = 0; i < g->enemy_count; i++) {
@@ -3903,7 +3915,8 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
         int adjacent = abs_int(dx) <= 1 && abs_int(dy) <= 1 &&
             !(dx == 0 && dy == 0);
         int beside_aldric = !enemy_is_major_boss(e) && aldric_beside(g, e->x, e->y);
-        if (!enemy_is_major_boss(e) && !adjacent && !beside_aldric && !pursuers[i] &&
+        int beside_mage = !enemy_is_major_boss(e) && storm_mage_beside(g, e->x, e->y);
+        if (!enemy_is_major_boss(e) && !adjacent && !beside_aldric && !beside_mage && !pursuers[i] &&
             !(enemy_holds_firing_line(g, e) && enemy_firing_line_acts(g, i, e))) {
             continue;
         }
@@ -4217,6 +4230,10 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
             aldric_take_hit(g, e);
             continue;
         }
+        if (beside_mage) {
+            storm_mage_take_hit(g, e);
+            continue;
+        }
 
         if (enemy_tactics_move(g, i) >= 0) {
             continue;
@@ -4300,11 +4317,89 @@ void action_aldric_strike(GameState *g, Enemy *e) {
     push_message(g, msg);
 }
 
+static int mage_blast_reaches(const Map *map, int x, int y, int tx, int ty, int radius) {
+    int dx = (tx > x) - (tx < x);
+    int dy = (ty > y) - (ty < y);
+    if (abs(tx - x) + abs(ty - y) > radius) {
+        return 0;
+    }
+    // Rank I's radius is two. A diagonal blast needs at least one open corner.
+    if (dx && dy) {
+        return map_is_walkable(map, x + dx, y) || map_is_walkable(map, x, y + dy);
+    }
+    while (x != tx || y != ty) {
+        x += dx;
+        y += dy;
+        if (!map_is_walkable(map, x, y)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+void action_storm_mage_attack(GameState *g, Enemy *target, int fireball) {
+    StormMage *mage = &g->storm_mage;
+    Spell spell = spell_make_fireball();
+    if (mage->state != STORM_MAGE_FOLLOWING || !storm_mage_hostile(g, target) || (fireball && mage->mp < spell.mp_cost)) {
+        return;
+    }
+    int x = target->x;
+    int y = target->y;
+    if (fireball) {
+        mage->mp -= spell.mp_cost;
+        combat_feedback_add(g, FEEDBACK_MANA_LOSS, FEEDBACK_NOW, mage->x, mage->y, spell.mp_cost);
+        if (g->trail_frames <= 0) {
+            int dx = (x > mage->x) - (x < mage->x);
+            int dy = (y > mage->y) - (y < mage->y);
+            set_trail(g, mage->x, mage->y, x, y, dx, dy, abs(x - mage->x) + abs(y - mage->y), 220, 100, 20, TRAIL_EFFECT_FIREBALL);
+        }
+        #ifndef TEST_BUILD
+        sfx_play_fireball();
+        #endif
+    }
+    int hits = 0;
+    // Snapshot damage before a kill can level the mage up.
+    int damage = fireball ? spell.damage + mage->level * 2 : 5 + (mage->level - 1) * 2;
+    for (int i = 0; i < g->enemy_count; i++) {
+        Enemy *e = &g->enemies[i];
+        if (!storm_mage_hostile(g, e) || (!fireball && e != target) ||
+            (fireball && !mage_blast_reaches(&g->map, x, y, e->x, e->y, spell.radius))) {
+            continue;
+        }
+        int dmg = damage;
+        if (!fireball) {
+            dmg -= stormwatch_defense(e, mage->x, mage->y);
+            dmg = northroad_weapon_damage(g, e, dmg > 0 ? dmg : 1);
+        }
+        dmg = catacombs_enemy_damage(g, e, dmg);
+        dmg = castle_enemy_damage(g, e, dmg);
+        dmg = lich_enemy_damage(g, e, dmg);
+        dmg = sun_guardian_enemy_damage(g, e, dmg);
+        e->hp -= dmg;
+        combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, dmg);
+        if (e->hp <= 0) {
+            e->active = 0;
+            drop_loot(g, e, 0);
+            player_gain_xp(g, e->experience);
+            g->score += e->revived ? 0 : enemy_score(e->type);
+        }
+        hits++;
+    }
+    game_update_level_progress(g);
+    char message[MAX_MESSAGE_LEN];
+    snprintf(message, sizeof(message), fireball ? "Soren casts Fireball: %d enemies hit." : "Soren strikes with his staff: %d enemy hit.", hits);
+    push_message(g, message);
+}
+
 void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots) {
     if (!g->game_won && g->location != LOCATION_APPROACH && g->location != LOCATION_TOWN_ROAD) {
         aldric_turn(g);
+        if (!g->game_won) {
+            storm_mage_turn(g);
+        }
     }
     resolve_enemy_actions(g, shots);
     elowen_follow(g, -1, -1);
     aldric_follow(g, -1, -1);
+    storm_mage_follow(g, -1, -1);
 }

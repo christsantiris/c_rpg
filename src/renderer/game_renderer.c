@@ -59,6 +59,7 @@
 #include "../game/jail.h"
 #include "../game/elowen.h"
 #include "../game/aldric.h"
+#include "../game/storm_mage.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -583,6 +584,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int stormbell_prompt = stormbell_prompt_active(g);
     int shrine_prompt = resurrection_prompt_active(g);
     int escort_dialogue = strcmp(g->dialogue_speaker, "Elowen") == 0 ||
+        strcmp(g->dialogue_speaker, STORM_MAGE_SPEAKER) == 0 ||
         (g->aldric_party_state == ALDRIC_FOLLOWING && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0);
     int dock_dialogue = coastal_stillbury_docks(g) && strcmp(g->dialogue_speaker, "Captain Rowan") == 0;
     if (!g->dialogue_active ||
@@ -652,6 +654,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     }
     if (aldric_prompt_active(g)) {
         hint = g->aldric_party_state == ALDRIC_FOLLOWING ? "Wait at the Inn? Y: Yes   N: No" : "Join your party? Y: Yes   N: No";
+    }
+    if (storm_mage_prompt_active(g)) {
+        hint = g->storm_mage.state == STORM_MAGE_FOLLOWING ? "Wait at the Alehouse? Y: Yes   N: No" : "Join your party? Y: Yes   N: No";
     }
     if (eastern_challenge_active(g)) {
         hint = "Y / Esc: Leave town\nN: Force your way in";
@@ -3213,6 +3218,10 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_MARA, 0);
                     break;
+                case TILE_NPC_STORM_GUIDE:
+                    draw_npc_ground(r, g, sx, sy, x, y, g->location == LOCATION_TOWN ? TILE_TOWN_PATH : TILE_TAVERN_FLOOR);
+                    npc_draw(r, sx, sy, g->location == LOCATION_TOWN ? NPC_ART_NERIS : NPC_ART_TOVAN, 0);
+                    break;
                 case TILE_NPC_ROOK:
                     draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
                     npc_draw(r, sx, sy, NPC_ART_ROOK, 0);
@@ -4469,6 +4478,35 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         bar.w = bar.w * g->aldric_hp / ALDRIC_MAX_HP;
         SDL_SetRenderDrawColor(r->sdl, 84, 200, 92, 255);
         SDL_RenderFillRect(r->sdl, &bar);
+    }
+    int mage_x = g->storm_mage.state <= STORM_MAGE_FREED ? STORM_MAGE_X : STORM_MAGE_INN_X;
+    int mage_y = g->storm_mage.state <= STORM_MAGE_FREED ? STORM_MAGE_Y : STORM_MAGE_INN_Y;
+    if (g->storm_mage.state == STORM_MAGE_FOLLOWING) {
+        mage_x = g->storm_mage.x;
+        mage_y = g->storm_mage.y;
+    }
+    if (storm_mage_at(g, mage_x, mage_y) && viewport_is_visible(v, mage_x, mage_y)) {
+        int sx = viewport_to_screen_x(v, mage_x);
+        int sy = viewport_to_screen_y(v, mage_y);
+        npc_draw(r, sx, sy, NPC_ART_STORM_MAGE, 0);
+        if (g->storm_mage.state == STORM_MAGE_CAPTIVE) {
+            SDL_SetRenderDrawColor(r->sdl, 172, 115, 226, 255);
+            SDL_Rect ward = {sx * TILE_SIZE, sy * TILE_SIZE - 4, TILE_SIZE, TILE_SIZE + 4};
+            SDL_RenderDrawRect(r->sdl, &ward);
+        }
+        int width;
+        TTF_SizeText(r->font_tiny, "SOREN", &width, NULL);
+        int lx = sx * TILE_SIZE + (TILE_SIZE - width) / 2;
+        renderer_draw_text(r, "SOREN", lx < 2 ? 2 : lx, (sy - 1) * TILE_SIZE,
+            (SDL_Color){238, 190, 111, 255}, r->font_tiny);
+        if (g->storm_mage.state == STORM_MAGE_FOLLOWING) {
+            SDL_Rect bar = {sx * TILE_SIZE + 2, sy * TILE_SIZE - 5, TILE_SIZE - 4, 3};
+            SDL_SetRenderDrawColor(r->sdl, 20, 52, 24, 255);
+            SDL_RenderFillRect(r->sdl, &bar);
+            bar.w = bar.w * g->storm_mage.hp / storm_mage_max_hp(g);
+            SDL_SetRenderDrawColor(r->sdl, 84, 200, 92, 255);
+            SDL_RenderFillRect(r->sdl, &bar);
+        }
     }
     // Draw player
     const Item *equipped_weapon = NULL;

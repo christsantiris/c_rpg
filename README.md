@@ -47,9 +47,16 @@ A level-10 Mage can buy the **400-gold Resurrection scroll** and perform the
 ritual directly at the shrine's marked circle for **80 MP**. The shrine is
 present from the start; its services require a recruited companion.
 
+Traveler Neris in Oakhaven's square and Fisher Tovan in Dawnmere's Alehouse
+tell of **Soren**, a mage imprisoned at **Stormwatch Headland**. Take Dawnmere's
+eastern road and defeat the Tempest Matriarch to free him. He offers to join
+as a **level 1 Mage with Fireball**, fighting alongside Aldric and gaining XP.
+If declined or dismissed, he waits at Dawnmere's Alehouse. Fallen companions
+can be selected individually for resurrection at Soulstone Shrine.
+
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/world-map.png?v=a714ec5ef68c)](docs/world-map.png?v=a714ec5ef68c)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=bf9e7f5b92a7)](docs/world-map.png?v=bf9e7f5b92a7)
 
 The V2 starting region contains Oakhaven, Goblin Mountains to its west, Haunted
 Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
@@ -61,6 +68,10 @@ coast below the dungeon is open sea.
 Act 3’s eastern route runs from occupied Dawnmere north into Saltwind Marsh on
 the river bank. Its skiff passage crosses the calm estuary to Stillbury on the
 opposite bank, where Act 4 begins.
+
+Dawnmere's eastern road also reaches **Stormwatch Headland**, an optional
+five-stage rescue adventure. Walk around the occupied town's walls to reach
+the road without fighting the garrison; liberating Dawnmere is not required.
 
 Act 3's western road runs from the Goblin Mountains west through Sunscar Wastes.
 Zara, scout Garran and historian Liora wait at its caravan camp.

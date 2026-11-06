@@ -1,5 +1,7 @@
 #include "../game/labyrinth_arc.h"
 #include "../game/stillbury_routes.h"
+#include "../game/storm_mage.h"
+#include "../game/party.h"
 #include "../game/western_arc.h"
 #include "../game/coast_exits.h"
 #include "../game/boss_gates.h"
@@ -1942,6 +1944,34 @@ static void migrate_stormwatch_road(GameState *g) {
     }
 }
 
+static cJSON *serialize_storm_mage(const GameState *g) {
+    cJSON *object = cJSON_CreateObject();
+    const StormMage *mage = &g->storm_mage;
+    const char *keys[] = {"state", "recruited", "x", "y", "hp", "mp", "level", "experience"};
+    const int values[] = {mage->state, mage->recruited, mage->x, mage->y, mage->hp, mage->mp, mage->level, mage->experience};
+    for (int i = 0; i < 8; i++) {
+        cJSON_AddNumberToObject(object, keys[i], values[i]);
+    }
+    return object;
+}
+
+static int load_storm_mage(const cJSON *root, GameState *g, int version) {
+    storm_mage_init(g);
+    if (version < 245) {
+        return 1;
+    }
+    const cJSON *object = cJSON_GetObjectItem(root, "storm_mage");
+    StormMage *mage = &g->storm_mage;
+    const char *keys[] = {"state", "recruited", "x", "y", "hp", "mp", "level", "experience"};
+    int *values[] = {&mage->state, &mage->recruited, &mage->x, &mage->y, &mage->hp, &mage->mp, &mage->level, &mage->experience};
+    for (int i = 0; i < 8; i++) {
+        if (!stormwatch_number(object, keys[i], values[i])) {
+            return 0;
+        }
+    }
+    return storm_mage_valid(g);
+}
+
 int save_game(const GameState *g, int slot) {
     if (!western_valid(g) || !eastern_valid(g) || !containers_valid(g) || !crown_quest_valid(g) || !war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
         return 0;
@@ -1951,7 +1981,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 244);
+    cJSON_AddNumberToObject(root, "save_version", 245);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -2189,7 +2219,9 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "aldric_y", g->aldric_y);
     cJSON_AddNumberToObject(root, "aldric_hp", g->aldric_hp);
     cJSON_AddNumberToObject(root, "aldric_recruited", g->aldric_recruited);
+    cJSON_AddItemToObject(root, "storm_mage", serialize_storm_mage(g));
     cJSON_AddNumberToObject(root, "resurrection_prompt", g->resurrection_prompt);
+    cJSON_AddNumberToObject(root, "resurrection_target", g->resurrection_target);
     cJSON_AddNumberToObject(root, "dain_quest_state", g->dain_quest_state);
     cJSON_AddNumberToObject(root, "dain_map_fragments",
         g->dain_map_fragments);
@@ -4289,6 +4321,10 @@ int load_game(GameState *g, int slot) {
 
     cJSON *version_item = cJSON_GetObjectItem(root, "save_version");
     int save_version = version_item ? version_item->valueint : 1;
+    if (!load_storm_mage(root, g, save_version)) {
+        cJSON_Delete(root);
+        return 0;
+    }
     if (!load_eastern(root, g, save_version) || !load_giants(root, g, save_version) || !load_northroad(root, g, save_version) || !load_ironfang(root, g, save_version) || !load_stormwatch(root, g, save_version) || !load_mangroves(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
@@ -4806,11 +4842,17 @@ int load_game(GameState *g, int slot) {
     g->aldric_recruited = (recruited && recruited->valueint) || g->aldric_party_state != ALDRIC_WAITING;
     cJSON *ritual = cJSON_GetObjectItem(root, "resurrection_prompt");
     if (save_version >= 234 && (!cJSON_IsNumber(ritual) || ritual->valuedouble != ritual->valueint ||
-        ritual->valueint < RESURRECTION_NONE || ritual->valueint > RESURRECTION_SPELL_CONFIRM)) {
+        ritual->valueint < RESURRECTION_NONE || ritual->valueint > RESURRECTION_SPELL_TARGET)) {
         cJSON_Delete(root);
         return 0;
     }
     g->resurrection_prompt = ritual ? ritual->valueint : RESURRECTION_NONE;
+    g->resurrection_target = PARTY_ALDRIC;
+    if (save_version >= 245 && (!stormwatch_number(root, "resurrection_target", &g->resurrection_target) ||
+        g->resurrection_target < 0 || g->resurrection_target >= PARTY_MEMBER_COUNT)) {
+        cJSON_Delete(root);
+        return 0;
+    }
     if (g->aldric_party_state == ALDRIC_DEAD) {
         g->aldric_hp = 0;
         g->aldric_x = -1;
@@ -7202,6 +7244,7 @@ int load_game(GameState *g, int slot) {
     approach_retire_labyrinth(g);
     labyrinth_migrate(g, save_version);
     stillbury_routes_migrate(g, save_version);
+    storm_mage_migrate(g, save_version);
     game_repair_outdoor_entries(g);
     town_road_refresh_oakhaven(g);
     aldric_place(g);
