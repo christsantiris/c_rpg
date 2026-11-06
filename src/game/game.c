@@ -6777,7 +6777,6 @@ static int level_up_mp_gain(const Player *p) {
 }
 
 void player_gain_xp(GameState *g, int xp) {
-    storm_mage_gain_xp(g, xp);
     g->player.experience += xp;
 
     while (g->player.experience >= g->player.experience_next &&

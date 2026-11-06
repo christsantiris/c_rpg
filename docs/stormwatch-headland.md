@@ -78,8 +78,9 @@ the boss also gives 450 combat XP. Victory appears in the boss journal.
 
 ## Persistence and testing
 
-Save version **245** adds Soren's recruitment, position, HP, MP, level and XP,
-plus the selected resurrection target. Older saves gain the two rumor NPCs and
+Save version **245** adds Soren's recruitment, position, HP, MP, reserved
+level/XP fields (fixed at 1 and 0), and the selected resurrection target.
+Older saves gain the two rumor NPCs and
 the reopened eastern road. Existing Matriarch victories free Soren without
 repeating the fight or awarding its rewards again. Active and cached expeditions
 retain their enemies, wounds, loot and exploration.
@@ -112,18 +113,19 @@ talk to Soren and answer **Y/N** to his recruitment offer. Captivity has
 drained his strength: he joins as a **level 1 Mage**, with **70 HP, 100 MP**
 and **Fireball I**. Declining sends him to Dawnmere's Alehouse at `(28,14)`.
 Speaking to him there allows recruitment, dismissal and later re-recruitment
-without resetting his progress.
+without resetting his recruitment status.
 
 He follows alongside Aldric and automatically seeks a clear firing lane.
-Fireball uses the existing spell's damage and level scaling, range 4,
+Fireball deals **27 damage** at his fixed level 1, with range 4,
 radius 2 and 20-MP cost. Walls stop the blast and it does not hurt allies.
 When out of mana, he fights with his staff. He never initiates combat against
 unalerted Dawnmere troops or a neutral tribute convoy.
 
-While traveling, he gains the same XP awarded to the player without reducing
-the player's reward. Each level requires `100 × current level` XP; growth
-adds 10 max HP and follows the player's Mage MP curve. Leveling restores
-his HP/MP, as does entering a peaceful town. Death persists until resurrection;
+Soren stays at **level 1**, with **70 max HP and 100 max MP**, and earns no XP.
+The player receives their normal XP rewards. Companion progression is deferred
+to a later update. Entering a peaceful town restores his HP/MP; earning player
+XP does not. Earlier draft saves with a leveled Soren load at level 1, keeping
+his wounds and mana within these limits. Death persists until resurrection;
 alive companions are never resurrection targets. The existing shrine service
 and the player's Resurrection spell can choose either fallen companion.
 Soren joins knowing Fireball only; he does not cast Resurrection.
@@ -131,7 +133,7 @@ Soren joins knowing Fireball only; he does not cast Resurrection.
 Validation covers all five stages across three seeds, walking through actual
 entrances, retreat and onward transitions with either shutter state. Regression
 checks cover recruitment and decline, joint travel with Aldric, combat and
-neutral soldiers, XP, individual resurrection targets, legacy saves, doors,
+neutral soldiers, fixed stats across player level-ups, individual resurrection targets, legacy saves, doors,
 skiff crossings and island voyages. Native renderer checks at **1280×720** and
 **640×480** cover both rumor NPCs, the fort approach, captive ward, recruitment,
 party status, Fireball and shrine selection. An existing local save was loaded

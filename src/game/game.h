@@ -133,8 +133,8 @@ typedef struct {
     int y;
     int hp;
     int mp;
-    int level;
-    int experience;
+    int level; // Fixed at 1; retained for draft save compatibility.
+    int experience; // Fixed at 0 until companion progression is introduced.
 } StormMage;
 
 typedef struct {
