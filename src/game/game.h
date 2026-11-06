@@ -353,7 +353,8 @@ typedef struct {
     ElderwoodCache elderwood_cache[ELDERWOOD_DEPTH];
     int max_elderwood_level_reached;
     int elderwood_defeated;
-    int heartseed_quest_state; // 0 unaccepted, 1 active, 2 ready, 3 rewarded.
+    int elderwood_quest_state; // 0 unaccepted, 1 active, 2 completed, 3 reward claimed.
+    int heartseed_quest_state; // Retired quest fields retained for save compatibility.
     int heartseed_progress; // Orders, all bindings cut, and seed recovered.
     int heartseed_bindings;
     int heartseed_sites; // Stage 2 camp and stage 4 grove have been populated.

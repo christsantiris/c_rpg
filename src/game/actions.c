@@ -15,7 +15,6 @@
 #include "stormbell.h"
 #include "catacombs.h"
 #include "elderwood.h"
-#include "heartseed.h"
 #include "castle.h"
 #include "lich.h"
 #include "elowen.h"
@@ -334,7 +333,6 @@ static int melee_gold_bonus(const GameState *g) {
 
 static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
     enemy->poison_turns = 0;
-    heartseed_record_death(g, enemy);
     if (enemy->type == ENEMY_LAST_JARL) {
         giants_defeat(g);
         return;
@@ -1025,9 +1023,6 @@ int game_has_regional_interaction(const GameState *g) {
         return 1;
     }
     if (containers_hint(g)) {
-        return 1;
-    }
-    if (heartseed_hint(g)) {
         return 1;
     }
     if (northroad_has_interaction(g)) {

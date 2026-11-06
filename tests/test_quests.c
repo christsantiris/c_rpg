@@ -361,7 +361,7 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
         {"Brother Oswin", LOCATION_TOWN_HALL, &g->catacombs_quest_state},
         {"Marshal Veyra", LOCATION_TOWN_HALL, &g->watchfire_quest_state},
         {"Huntmaster Selene", LOCATION_GUILD, &g->hunt_quest_state},
-        {"Forester Tamsin", LOCATION_TOWN, &g->heartseed_quest_state},
+        {"Ranger Tamsin", LOCATION_TOWN2, &g->elderwood_quest_state},
         {"Spice Merchant Corvin", LOCATION_DAWNMERE_MERCHANT, &g->spice_skiff_quest_state},
         {"Watchkeeper Seren", LOCATION_ALEHOUSE, &g->dawnmere_quest_state},
         {"Watchkeeper Seren", LOCATION_DAWNMERE, &g->saltwind_quest_state},

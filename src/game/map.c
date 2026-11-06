@@ -8,7 +8,7 @@
 #include "landscapes.h"
 #include "jail.h"
 #include "town_life.h"
-#include "heartseed.h"
+#include "elderwood_quest.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -1832,6 +1832,7 @@ void map_generate_town2(Map *m, int *spawn_x, int *spawn_y) {
     // Stillbury's Tavern stands east of the Healer, opening onto the square.
     map_place_town_inn(m);
     town_life_place(m, LOCATION_TOWN2);
+    m->tiles[RANGER_TAMSIN_Y][RANGER_TAMSIN_X] = TILE_NPC_TAMSIN;
     for (int y = 0; y < TOWN_H; y++) {
         m->tiles[y][0] = TILE_WALL;
         m->tiles[y][TOWN_W - 1] = TILE_WALL;

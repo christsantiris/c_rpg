@@ -5,7 +5,7 @@
 #include "../game/catacombs.h"
 #include "../game/jail.h"
 #include "../game/elowen.h"
-#include "../game/heartseed.h"
+#include "../game/elderwood_quest.h"
 #include "../game/spice_skiff.h"
 #include "../game/stormbell.h"
 #include "../game/war_machine.h"
@@ -146,11 +146,11 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Royal Dungeon", {1, 0, 0, 0}, 0, 0, "Your belongings, arrows and gold"
     },
     {
-        "The Stolen Heartseed", "Forester Tamsin",
-        "Read the orders; find stage 4's eastern golden-root grove.",
-        "Cut three bindings, recover the seed; return to Tamsin in Oakhaven.",
-        {"Read Dark Elf orders", "Cut all three bindings", "Recover the heartseed"},
-        "Elderwood Forest", {2, 4, 4, 0}, HEARTSEED_REWARD_GOLD, HEARTSEED_REWARD_SCORE
+        "Clear Elderwood", RANGER_TAMSIN,
+        "Defeat Elderthorn to clear Elderwood and open the coastal road.",
+        "Claim your reward from Ranger Tamsin near Stillbury's east gate.",
+        {"Defeat Elderthorn"},
+        "Elderwood Forest", {ELDERWOOD_DEPTH}, ELDERWOOD_QUEST_GOLD, ELDERWOOD_QUEST_SCORE
     },
     {
         "The Missing Spice Skiff", "Spice Merchant Corvin",
@@ -239,7 +239,7 @@ static int quest_state(const GameState *g, int quest) {
         return g->spice_skiff_quest_state;
     }
     if (quest == 16) {
-        return g->heartseed_quest_state;
+        return g->elderwood_quest_state;
     }
     if (quest == 15) {
         return g->jail_gear_state;
@@ -313,7 +313,7 @@ static int quest_progress(const GameState *g, int quest) {
         return g->spice_skiff_progress;
     }
     if (quest == 16) {
-        return g->heartseed_progress;
+        return g->elderwood_defeated;
     }
     if (quest == 15) {
         return g->jail_gear_state == 3;

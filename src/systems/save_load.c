@@ -37,6 +37,7 @@
 #include "../game/elderwood.h"
 #include "../game/catacombs.h"
 #include "../game/heartseed.h"
+#include "../game/elderwood_quest.h"
 #include "../game/aldric.h"
 #include "../game/resurrection.h"
 #include "../game/spice_skiff.h"
@@ -1993,7 +1994,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 245);
+    cJSON_AddNumberToObject(root, "save_version", 246);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -2177,6 +2178,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "max_elderwood_level_reached", g->max_elderwood_level_reached);
     cJSON_AddNumberToObject(root, "elderwood_defeated", g->elderwood_defeated);
     cJSON_AddNumberToObject(root, "heartseed_quest_state", g->heartseed_quest_state);
+    cJSON_AddNumberToObject(root, "elderwood_quest_state", g->elderwood_quest_state);
     cJSON_AddNumberToObject(root, "heartseed_progress", g->heartseed_progress);
     cJSON_AddNumberToObject(root, "heartseed_bindings", g->heartseed_bindings);
     cJSON_AddNumberToObject(root, "heartseed_sites", g->heartseed_sites);
@@ -4333,6 +4335,12 @@ int load_game(GameState *g, int slot) {
 
     cJSON *version_item = cJSON_GetObjectItem(root, "save_version");
     int save_version = version_item ? version_item->valueint : 1;
+    g->elderwood_quest_state = 0;
+    if (save_version >= 246 && (!stormwatch_number(root, "elderwood_quest_state", &g->elderwood_quest_state) ||
+        g->elderwood_quest_state < 0 || g->elderwood_quest_state > 3)) {
+        cJSON_Delete(root);
+        return 0;
+    }
     if (!load_storm_mage(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
@@ -7257,6 +7265,7 @@ int load_game(GameState *g, int slot) {
     labyrinth_migrate(g, save_version);
     stillbury_routes_migrate(g, save_version);
     storm_mage_migrate(g, save_version);
+    elderwood_quest_migrate(g);
     game_repair_outdoor_entries(g);
     town_road_refresh_oakhaven(g);
     aldric_place(g);

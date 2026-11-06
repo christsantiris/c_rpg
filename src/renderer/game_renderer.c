@@ -3794,7 +3794,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_sun_guardian_warnings(r, g, v);
     draw_red_dragon_warnings(r, g, v);
     draw_elderwood_warnings(r, g, v);
-    draw_heartseed_details(r, g, v);
     stormwatch_draw_warnings(r, g, v);
     stormbell_draw_details(r, g, v);
     giants_draw_details(r, g, v);
