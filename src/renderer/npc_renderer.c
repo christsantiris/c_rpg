@@ -298,7 +298,10 @@ static const NpcLook npc_looks[NPC_ART_COUNT] = {
     [NPC_ART_TAMSIN] = {NPC_HOOD, NPC_COAT, RGB(71, 101, 48), RGB(89, 69, 43), RGB(112, 62, 33), RGB(202, 153, 112), RGB(210, 185, 100)},
     [NPC_ART_WARLOCK] = {NPC_HOOD, NPC_ROBE, RGB(71, 43, 99), RGB(56, 36, 82), RGB(178, 171, 183), RGB(193, 161, 140), RGB(127, 215, 201)},
     [NPC_ART_GARRAN] = {NPC_HOOD, NPC_COAT, RGB(117, 98, 62), RGB(80, 76, 49), RGB(74, 49, 29), RGB(190, 142, 102), RGB(201, 159, 89)},
-    [NPC_ART_LIORA] = {NPC_HAIR, NPC_ROBE, RGB(108, 70, 102), RGB(86, 62, 86), RGB(62, 40, 31), RGB(177, 119, 83), RGB(214, 181, 111)}
+    [NPC_ART_LIORA] = {NPC_HAIR, NPC_ROBE, RGB(108, 70, 102), RGB(86, 62, 86), RGB(62, 40, 31), RGB(177, 119, 83), RGB(214, 181, 111)},
+    [NPC_ART_STORM_MAGE] = {NPC_HAT, NPC_ROBE, RGB(145, 49, 38), RGB(104, 35, 41), RGB(211, 202, 178), RGB(193, 150, 114), RGB(232, 178, 67)},
+    [NPC_ART_NERIS] = {NPC_HOOD, NPC_COAT, RGB(101, 70, 134), RGB(76, 60, 99), RGB(92, 53, 35), RGB(202, 156, 118), RGB(198, 162, 92)},
+    [NPC_ART_TOVAN] = {NPC_CAP, NPC_COAT, RGB(44, 107, 103), RGB(61, 79, 91), RGB(153, 134, 110), RGB(186, 142, 101), RGB(205, 182, 125)}
 };
 #undef RGB
 
@@ -385,6 +388,9 @@ static void npc_accessories(NpcCanvas *c, NpcArt art) {
             npc_prop(c, 20, 5, "ooo/LLo/.lo/.Lo/.lo/.Lo/.lo/.Lo/.lo/oFF/.lo/.Lo/.lo/.Lo/.lo/.Lo/.lo/.oo");
             npc_prop(c, 2, 14, ".oooo/oWWwo/oWwwo/oWwwo/oWWwo/.oooo");
             npc_prop(c, 9, 9, "TTtth/.TTth/..Th");
+            break;
+        case NPC_ART_STORM_MAGE:
+            npc_prop(c, 20, 2, ".G./GYG/.G./.L./.l./.L./.l./.L./.l./oFF/.l./.L./.l./.L./.l./.L./.l./.L./.l./.oo");
             break;
         case NPC_ART_ROWAN:
             npc_prop(c, 4, 10, "GGG........GGG/Gg..........Gg");

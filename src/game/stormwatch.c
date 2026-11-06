@@ -2,6 +2,8 @@
 #include "containers.h"
 #include "stormwatch.h"
 #include "stormbell.h"
+#include "storm_mage.h"
+#include "aldric.h"
 #include "approach.h"
 #include "combat_feedback.h"
 #include <stdlib.h>
@@ -200,6 +202,9 @@ void stormwatch_store(GameState *g) {
 }
 
 static int occupied(const GameState *g, const Enemy *self, int x, int y) {
+    if (storm_mage_at(g, x, y) || aldric_at(g, x, y)) {
+        return 1;
+    }
     if (self && x == g->player.x && y == g->player.y) {
         return 1;
     }
@@ -659,6 +664,8 @@ void stormwatch_defeat(GameState *g) {
         g->gold += 220;
         g->score += 2600;
         push_message(g, "The Tempest Matriarch falls! You recover 220 gold.");
+        storm_mage_sync(g);
+        push_message(g, "The Matriarch's binding breaks. Speak to the freed mage in her court.");
     }
 }
 

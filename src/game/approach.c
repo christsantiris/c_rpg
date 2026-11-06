@@ -33,7 +33,7 @@ const TownApproach town_approaches[] = {
     {-1, -1, 0, 0}, // The dungeon is now local to Oakhaven.
     {-1, -1, 0, 0}, // Northern rapids have no crossing here.
     {-1, -1, 0, 0}, // Retired coastal route 17.
-    {LOCATION_DAWNMERE, LOCATION_STORMWATCH, TOWN_W - 1, 12, 1},
+    {LOCATION_DAWNMERE, LOCATION_STORMWATCH, TOWN_W - 1, 12},
     {LOCATION_TOWN4, LOCATION_IRONFANG, TOWN_W - 1, 12},
     {LOCATION_TOWN3, LOCATION_GIANTS_CROWN, 0, ROSEMOOR_ASHEN_GATE_Y, 1},
     // The Sunscar road starts at the Goblin Mountains pass rather than a town gate.

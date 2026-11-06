@@ -4,6 +4,7 @@
 #include "mangrove.h"
 #include "combat_feedback.h"
 #include "elowen.h"
+#include "storm_mage.h"
 #include "town_road.h"
 #include <SDL2/SDL.h>
 #include <stdio.h>
@@ -29,7 +30,7 @@ static int near_player(const GameState *g, int x, int y) {
 }
 
 static int follow_space(const GameState *g, int x, int y) {
-    if (!map_is_walkable(&g->map, x, y) || (x == g->player.x && y == g->player.y) || elowen_at(g, x, y)) {
+    if (!map_is_walkable(&g->map, x, y) || (x == g->player.x && y == g->player.y) || elowen_at(g, x, y) || storm_mage_at(g, x, y)) {
         return 0;
     }
     for (int i = 0; i < g->enemy_count; i++) {

@@ -2,6 +2,8 @@
 
 Follow Dawnmere's eastern road, where grass turns to boulder-strewn gravel near
 the headland, and walk into the watchfort sprite to enter.
+The exterior road remains reachable around the town walls during the occupation;
+rescuing the mage does not require attacking royal troops.
 Stormwatch is a five-stage coastal fort region with warm grass, gray masonry,
 cliffs, animated teal water, side lookouts and searchable supply chests.
 The approach uses travel music; the adventure uses the dungeon theme.
@@ -76,6 +78,12 @@ the boss also gives 450 combat XP. Victory appears in the boss journal.
 
 ## Persistence and testing
 
+Save version **245** adds Soren's recruitment, position, HP, MP, level and XP,
+plus the selected resurrection target. Older saves gain the two rumor NPCs and
+the reopened eastern road. Existing Matriarch victories free Soren without
+repeating the fight or awarding its rewards again. Active and cached expeditions
+retain their enemies, wounds, loot and exploration.
+
 Save version 199 stores all five compact maps, exploration, actors, enemy attack
 states, loot underlays, searched supplies, shutter positions, wind clocks,
 declared warning masks, the elapsed fraction of the current second, next
@@ -90,6 +98,44 @@ leaving awards no boss victory or rewards. Shutters and wind retain their normal
 behavior. See [boss gates](boss-gates.md).
 
 See the [approved design](stormwatch-headland-proposal.md).
+
+## Rescue Mage Soren
+
+Traveler Neris waits in Oakhaven's square at `(17,13)`. Fisher Tovan waits in
+Dawnmere's Alehouse at `(12,14)`. Either points to the powerful mage held by
+the Tempest Matriarch. These are independent leads, use no quest slots and
+are not required to find or rescue him.
+
+Soren is visible inside a violet ward at `(46,12)` in Matriarch's Court. He
+cannot be attacked while captive. Defeating the Matriarch breaks the ward;
+talk to Soren and answer **Y/N** to his recruitment offer. Captivity has
+drained his strength: he joins as a **level 1 Mage**, with **70 HP, 100 MP**
+and **Fireball I**. Declining sends him to Dawnmere's Alehouse at `(28,14)`.
+Speaking to him there allows recruitment, dismissal and later re-recruitment
+without resetting his progress.
+
+He follows alongside Aldric and automatically seeks a clear firing lane.
+Fireball uses the existing spell's damage and level scaling, range 4,
+radius 2 and 20-MP cost. Walls stop the blast and it does not hurt allies.
+When out of mana, he fights with his staff. He never initiates combat against
+unalerted Dawnmere troops or a neutral tribute convoy.
+
+While traveling, he gains the same XP awarded to the player without reducing
+the player's reward. Each level requires `100 × current level` XP; growth
+adds 10 max HP and follows the player's Mage MP curve. Leveling restores
+his HP/MP, as does entering a peaceful town. Death persists until resurrection;
+alive companions are never resurrection targets. The existing shrine service
+and the player's Resurrection spell can choose either fallen companion.
+Soren joins knowing Fireball only; he does not cast Resurrection.
+
+Validation covers all five stages across three seeds, walking through actual
+entrances, retreat and onward transitions with either shutter state. Regression
+checks cover recruitment and decline, joint travel with Aldric, combat and
+neutral soldiers, XP, individual resurrection targets, legacy saves, doors,
+skiff crossings and island voyages. Native renderer checks at **1280×720** and
+**640×480** cover both rumor NPCs, the fort approach, captive ward, recruitment,
+party status, Fireball and shrine selection. An existing local save was loaded
+and rendered without writing to the original save files.
 
 ## The Silent Stormbell
 
