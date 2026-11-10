@@ -20,6 +20,7 @@
 #include "elowen.h"
 #include "aldric.h"
 #include "storm_mage.h"
+#include "garran.h"
 #include "necromancer.h"
 #include "goblin_king.h"
 #include "drowned_queen.h"
@@ -2278,6 +2279,10 @@ static void resolve_player_action(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_MOVE) {
+        if (garran_at(g, a.target_x, a.target_y) && g->garran.state != GARRAN_FOLLOWING) {
+            push_message(g, "Garran stands here. Press your Talk key beside him.");
+            return;
+        }
         if (storm_mage_at(g, a.target_x, a.target_y) && g->storm_mage.state != STORM_MAGE_FOLLOWING) {
             push_message(g, "A mage stands here. Press your Talk key beside him.");
             return;
@@ -3034,6 +3039,8 @@ void action_resolve_player(GameState *g, Action a) {
     int old_y = g->player.y;
     int mage_lead_x = g->aldric_party_state == ALDRIC_FOLLOWING ? g->aldric_x : old_x;
     int mage_lead_y = g->aldric_party_state == ALDRIC_FOLLOWING ? g->aldric_y : old_y;
+    int rogue_lead_x = g->storm_mage.state == STORM_MAGE_FOLLOWING ? g->storm_mage.x : mage_lead_x;
+    int rogue_lead_y = g->storm_mage.state == STORM_MAGE_FOLLOWING ? g->storm_mage.y : mage_lead_y;
     int dx = a.target_x - old_x;
     int dy = a.target_y - old_y;
     Location location = g->location;
@@ -3056,6 +3063,10 @@ void action_resolve_player(GameState *g, Action a) {
         g->aldric_y = -1;
         g->storm_mage.x = -1;
         g->storm_mage.y = -1;
+        g->garran.x = -1;
+        g->garran.y = -1;
+        rogue_lead_x = -1;
+        rogue_lead_y = -1;
         mage_lead_x = -1;
         mage_lead_y = -1;
         old_x = -1;
@@ -3067,6 +3078,7 @@ void action_resolve_player(GameState *g, Action a) {
     elowen_follow(g, old_x, old_y);
     aldric_follow(g, lead_old_x, lead_old_y);
     storm_mage_follow(g, mage_lead_x, mage_lead_y);
+    garran_follow(g, rogue_lead_x, rogue_lead_y);
 }
 
 int action_use_inventory_item(GameState *g, int index, EnemyProjectiles *shots) {
@@ -3099,7 +3111,7 @@ int action_drink_quick_potion(GameState *g, EnemyProjectiles *shots) {
 }
 
 static int enemy_position_occupied(const GameState *g, int skip, int x, int y) {
-    if (jail_prisoner_at(g, x, y) || aldric_at(g, x, y) || storm_mage_at(g, x, y)) {
+    if (jail_prisoner_at(g, x, y) || aldric_at(g, x, y) || storm_mage_at(g, x, y) || garran_at(g, x, y)) {
         return 1;
     }
     for (int i = 0; i < g->enemy_count; i++) {
@@ -3497,7 +3509,7 @@ static int necromancer_revive(GameState *g, int necromancer_index) {
 }
 
 static int enemy_blocks_line_of_sight(const GameState *g, int shooter_index, int x, int y) {
-    if (aldric_at(g, x, y) || storm_mage_at(g, x, y)) {
+    if (aldric_at(g, x, y) || storm_mage_at(g, x, y) || garran_at(g, x, y)) {
         return 1;
     }
     for (int i = 0; i < g->enemy_count; i++) {
@@ -3911,7 +3923,8 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
             !(dx == 0 && dy == 0);
         int beside_aldric = !enemy_is_major_boss(e) && aldric_beside(g, e->x, e->y);
         int beside_mage = !enemy_is_major_boss(e) && storm_mage_beside(g, e->x, e->y);
-        if (!enemy_is_major_boss(e) && !adjacent && !beside_aldric && !beside_mage && !pursuers[i] &&
+        int beside_rogue = !enemy_is_major_boss(e) && garran_beside(g, e->x, e->y);
+        if (!enemy_is_major_boss(e) && !adjacent && !beside_aldric && !beside_mage && !beside_rogue && !pursuers[i] &&
             !(enemy_holds_firing_line(g, e) && enemy_firing_line_acts(g, i, e))) {
             continue;
         }
@@ -4230,6 +4243,11 @@ static void resolve_enemy_actions(GameState *g, EnemyProjectiles *shots) {
             continue;
         }
 
+        if (beside_rogue) {
+            garran_take_hit(g, e);
+            continue;
+        }
+
         if (enemy_tactics_move(g, i) >= 0) {
             continue;
         }
@@ -4386,15 +4404,51 @@ void action_storm_mage_attack(GameState *g, Enemy *target, int fireball) {
     push_message(g, message);
 }
 
+void action_garran_attack(GameState *g, Enemy *e, int bow) {
+    if (g->garran.state != GARRAN_FOLLOWING || !storm_mage_hostile(g, e)) {
+        return;
+    }
+    int damage = (bow ? GARRAN_BOW_ATTACK : GARRAN_DAGGER_ATTACK) - stormwatch_defense(e, g->garran.x, g->garran.y);
+    damage = northroad_weapon_damage(g, e, damage > 0 ? damage : 1);
+    damage = catacombs_enemy_damage(g, e, damage);
+    damage = castle_enemy_damage(g, e, damage);
+    damage = lich_enemy_damage(g, e, damage);
+    damage = sun_guardian_enemy_damage(g, e, damage);
+    if (bow && g->trail_frames <= 0) {
+        int dx = (e->x > g->garran.x) - (e->x < g->garran.x);
+        int dy = (e->y > g->garran.y) - (e->y < g->garran.y);
+        set_trail(g, g->garran.x, g->garran.y, e->x, e->y, dx, dy,
+            abs(e->x - g->garran.x) + abs(e->y - g->garran.y), 180, 155, 95, TRAIL_EFFECT_WEAPON_ARROW);
+    }
+    e->hp -= damage;
+    combat_feedback_add(g, FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, damage);
+    char message[MAX_MESSAGE_LEN];
+    if (e->hp <= 0) {
+        e->active = 0;
+        drop_loot(g, e, 0);
+        player_gain_xp(g, e->experience);
+        g->score += e->revived ? 0 : enemy_score(e->type);
+        game_update_level_progress(g);
+        snprintf(message, sizeof(message), "Garran killed %s!", e->name);
+    } else {
+        snprintf(message, sizeof(message), "Garran's %s hit %s: %d dmg", bow ? "arrow" : "dagger", e->name, damage);
+    }
+    push_message(g, message);
+}
+
 void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots) {
     if (!g->game_won && g->location != LOCATION_APPROACH && g->location != LOCATION_TOWN_ROAD) {
         aldric_turn(g);
         if (!g->game_won) {
             storm_mage_turn(g);
         }
+        if (!g->game_won) {
+            garran_turn(g);
+        }
     }
     resolve_enemy_actions(g, shots);
     elowen_follow(g, -1, -1);
     aldric_follow(g, -1, -1);
     storm_mage_follow(g, -1, -1);
+    garran_follow(g, -1, -1);
 }

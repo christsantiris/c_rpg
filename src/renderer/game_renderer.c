@@ -60,6 +60,7 @@
 #include "../game/elowen.h"
 #include "../game/aldric.h"
 #include "../game/storm_mage.h"
+#include "../game/garran.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -584,6 +585,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int stormbell_prompt = stormbell_prompt_active(g);
     int shrine_prompt = resurrection_prompt_active(g);
     int escort_dialogue = strcmp(g->dialogue_speaker, "Elowen") == 0 ||
+        garran_dialogue(g) ||
         strcmp(g->dialogue_speaker, STORM_MAGE_SPEAKER) == 0 ||
         (g->aldric_party_state == ALDRIC_FOLLOWING && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0);
     int dock_dialogue = coastal_stillbury_docks(g) && strcmp(g->dialogue_speaker, "Captain Rowan") == 0;
@@ -658,13 +660,16 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     if (storm_mage_prompt_active(g)) {
         hint = g->storm_mage.state == STORM_MAGE_FOLLOWING ? "Wait at the Alehouse? Y: Yes   N: No" : "Join your party? Y: Yes   N: No";
     }
+    if (garran_dialogue(g) && (g->garran.prompt != GARRAN_QUEST || !quest_offer)) {
+        hint = garran_hint(g);
+    }
     if (eastern_challenge_active(g)) {
         hint = "Y / Esc: Leave town\nN: Force your way in";
     }
     if (shortcut && strcmp(g->dialogue_speaker, "Take shortcut?") == 0) {
         hint = "Enter: Travel   Esc: Stay";
     }
-    if (g->location == LOCATION_HEALER || g->location == LOCATION_WITCH) {
+    if (!garran_dialogue(g) && (g->location == LOCATION_HEALER || g->location == LOCATION_WITCH)) {
         int missing = g->location == LOCATION_HEALER ? g->player.max_hp - g->player.hp : g->player.max_mp - g->player.mp;
         hint = missing > 0 ? "1/2/3: Choose   Esc: Close\n* Not enough gold" : "Enter or Esc: Close";
     }
@@ -4503,6 +4508,30 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             SDL_SetRenderDrawColor(r->sdl, 20, 52, 24, 255);
             SDL_RenderFillRect(r->sdl, &bar);
             bar.w = bar.w * g->storm_mage.hp / storm_mage_max_hp(g);
+            SDL_SetRenderDrawColor(r->sdl, 84, 200, 92, 255);
+            SDL_RenderFillRect(r->sdl, &bar);
+        }
+    }
+    int rogue_x;
+    int rogue_y;
+    if (garran_position(g, &rogue_x, &rogue_y) && viewport_is_visible(v, rogue_x, rogue_y) &&
+        (g->garran.state == GARRAN_FOLLOWING || g->location == LOCATION_INN)) {
+        int sx = viewport_to_screen_x(v, rogue_x);
+        int sy = viewport_to_screen_y(v, rogue_y);
+        npc_draw(r, sx, sy, NPC_ART_GARRAN, 0);
+        int width;
+        TTF_SizeText(r->font_tiny, "GARRAN", &width, NULL);
+        int lx = sx * TILE_SIZE + (TILE_SIZE - width) / 2;
+        int ly = sy * TILE_SIZE - TTF_FontHeight(r->font_tiny) - 7;
+        int right = v->tiles_x * TILE_SIZE - width - 2;
+        lx = lx > right ? right : lx;
+        renderer_draw_text(r, "GARRAN", lx < 2 ? 2 : lx, ly < 2 ? 2 : ly,
+            (SDL_Color){213, 200, 148, 255}, r->font_tiny);
+        if (g->garran.state == GARRAN_FOLLOWING) {
+            SDL_Rect bar = {sx * TILE_SIZE + 2, sy * TILE_SIZE - 5, TILE_SIZE - 4, 3};
+            SDL_SetRenderDrawColor(r->sdl, 20, 52, 24, 255);
+            SDL_RenderFillRect(r->sdl, &bar);
+            bar.w = bar.w * g->garran.hp / GARRAN_MAX_HP;
             SDL_SetRenderDrawColor(r->sdl, 84, 200, 92, 255);
             SDL_RenderFillRect(r->sdl, &bar);
         }

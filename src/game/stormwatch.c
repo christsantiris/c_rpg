@@ -3,6 +3,7 @@
 #include "stormwatch.h"
 #include "stormbell.h"
 #include "storm_mage.h"
+#include "garran.h"
 #include "aldric.h"
 #include "approach.h"
 #include "combat_feedback.h"
@@ -202,7 +203,7 @@ void stormwatch_store(GameState *g) {
 }
 
 static int occupied(const GameState *g, const Enemy *self, int x, int y) {
-    if (storm_mage_at(g, x, y) || aldric_at(g, x, y)) {
+    if (storm_mage_at(g, x, y) || aldric_at(g, x, y) || garran_at(g, x, y)) {
         return 1;
     }
     if (self && x == g->player.x && y == g->player.y) {

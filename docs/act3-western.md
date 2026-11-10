@@ -15,8 +15,40 @@ Inn. On the first visit to the Sunscar road, Zara moves to the caravan camp.
 Players who skip that Oakhaven conversation can still meet her at the camp and
 accept her quest there. She offers only The King's Tribute. Garran and Liora
 have separate conversations and explicit `Y` acceptance / `N` decline.
+Garran's first conversation has separate choices for **the Jarl's blockade**
+and **joining the party**. Selecting the blockade topic opens its existing
+explicit Y/N quest offer; recruiting him never accepts it automatically.
 The usual three-active-quest limit applies. Finished objectives free a slot
 before any reward hand-in.
+
+## Garran, caravan Rogue
+
+Garran is available on the first visit to the caravan camp, before entering
+Sunscar. Select conversation option **2**, then confirm **Y**, to recruit him
+for free. Declining keeps him available. Recruitment uses no active quest slot
+and requires neither a boss victory nor hostility toward the Crown.
+
+He has **90 HP, 4 defense, a 14-attack shortbow with range 5, and a 10-attack
+dagger**. Attacks subtract enemy defense and respect regional protection rules.
+His bow needs a clear cardinal firing lane and never fires through the player,
+other companions or enemies ahead of the target. Adjacent enemies are fought
+with his dagger. He carries unlimited personal arrows and never consumes the
+player's ammunition. Kills give XP and normal loot to the player; Garran's
+strength remains fixed until companion progression is developed.
+
+He follows alongside Aldric and Soren through doors, stages, town portals,
+river skiffs and island voyages. He never initiates combat against neutral
+royal troops. The existing Jarl quest can also be discussed while he travels.
+Use **2**, then **Y**, at camp or Stillbury's Tavern to ask him to wait there.
+After reaching Stillbury together, its Tavern becomes his default waiting home.
+Dismissal and recruitment preserve wounds; ordinary peaceful town-road recovery
+works as it does for the other living companions. Death requires resurrection
+at Soulstone Shrine, with Garran available in both paid and Mage target selection.
+
+Save version **247** preserves membership, wounds, death, position, waiting home
+and the current conversation choice. Older saves add him unrecruited at camp
+and preserve a pending Jarl quest offer, existing quests, maps, loot and wounds.
+See [Garran validation](garran-validation.md) for checks and renderer review.
 
 ## The King's Tribute and the Crown
 

@@ -16,6 +16,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/elowen.h"
 #include "game/aldric.h"
 #include "game/storm_mage.h"
+#include "game/garran.h"
 #include "game/party.h"
 #include "game/royal_evidence.h"
 #include "game/eastern_arc.h"
@@ -810,6 +811,9 @@ int main(int argc, char **argv) {
                     if (screen == SCREEN_PLAYING && stormbell_handle_key(&game, sc, event.key.repeat)) {
                         break;
                     }
+                    if (screen == SCREEN_PLAYING && garran_handle_key(&game, sc, event.key.repeat)) {
+                        break;
+                    }
                     if (screen == SCREEN_PLAYING && game_handle_quest_offer_key(&game, sc, event.key.repeat)) {
                         break;
                     }
@@ -1124,6 +1128,9 @@ int main(int argc, char **argv) {
                             case CONTROL_TALK: {
                                 int facing_x = game.player.x + game.player.last_dx;
                                 int facing_y = game.player.y + game.player.last_dy;
+                                if (garran_talk(&game, facing_x, facing_y)) {
+                                    break;
+                                }
                                 if (storm_mage_at(&game, facing_x, facing_y) && storm_mage_talk(&game, facing_x, facing_y)) {
                                     break;
                                 }
@@ -1166,7 +1173,7 @@ int main(int argc, char **argv) {
                                             ty < 0 || ty >= MAP_H) {
                                             continue;
                                         }
-                                        if (storm_mage_talk(&game, tx, ty)) {
+                                        if (garran_talk(&game, tx, ty) || storm_mage_talk(&game, tx, ty)) {
                                             found = 1;
                                         } else if (game.map.tiles[ty][tx] ==
                                             TILE_NPC_ELOWEN) {
@@ -1266,6 +1273,9 @@ int main(int argc, char **argv) {
                                 if (!found && game.aldric_party_state == ALDRIC_FOLLOWING &&
                                     abs(game.aldric_x - px) <= 1 && abs(game.aldric_y - py) <= 1) {
                                     aldric_talk(&game, game.aldric_x, game.aldric_y);
+                                    found = 1;
+                                }
+                                if (!found && game.garran.state == GARRAN_FOLLOWING && garran_talk(&game, game.garran.x, game.garran.y)) {
                                     found = 1;
                                 }
                                 if (!found) {
@@ -1381,7 +1391,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (western_convoy_prompt(&game) || game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (western_convoy_prompt(&game) || game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || garran_dialogue(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
                         break;
                     }
 
@@ -1642,7 +1652,7 @@ int main(int argc, char **argv) {
             entry_gate.active || enemy_shots.count > 0 || !(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) ||
             game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) ||
             game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) ||
-            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game);
+            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || garran_dialogue(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game);
         if (update_stormwatch_clock(&game, &wind_clock, SDL_GetTicks(), wind_paused)) {
             viewport_center_on(&viewport, game.player.x, game.player.y);
             needs_redraw = 1;

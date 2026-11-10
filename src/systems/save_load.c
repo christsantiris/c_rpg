@@ -1,6 +1,7 @@
 #include "../game/labyrinth_arc.h"
 #include "../game/stillbury_routes.h"
 #include "../game/storm_mage.h"
+#include "../game/garran.h"
 #include "../game/party.h"
 #include "../game/western_arc.h"
 #include "../game/coast_exits.h"
@@ -1985,7 +1986,40 @@ static int load_storm_mage(const cJSON *root, GameState *g, int version) {
     return 1;
 }
 
+static cJSON *serialize_garran(const GameState *g) {
+    cJSON *object = cJSON_CreateObject();
+    const CaravanRogue *rogue = &g->garran;
+    const char *keys[] = {"state", "recruited", "x", "y", "hp", "home", "prompt"};
+    const int values[] = {rogue->state, rogue->recruited, rogue->x, rogue->y, rogue->hp, rogue->home, rogue->prompt};
+    for (int i = 0; i < 7; i++) {
+        cJSON_AddNumberToObject(object, keys[i], values[i]);
+    }
+    return object;
+}
+
+static int load_garran(const cJSON *root, GameState *g, int version) {
+    garran_init(g);
+    if (version < 247) {
+        // Earlier Garran conversations offered only the Jarl quest.
+        g->garran.prompt = GARRAN_QUEST;
+        return 1;
+    }
+    const cJSON *object = cJSON_GetObjectItem(root, "garran");
+    CaravanRogue *rogue = &g->garran;
+    const char *keys[] = {"state", "recruited", "x", "y", "hp", "home", "prompt"};
+    int *values[] = {&rogue->state, &rogue->recruited, &rogue->x, &rogue->y, &rogue->hp, &rogue->home, &rogue->prompt};
+    for (int i = 0; i < 7; i++) {
+        if (!stormwatch_number(object, keys[i], values[i])) {
+            return 0;
+        }
+    }
+    return garran_valid(g);
+}
+
 int save_game(const GameState *g, int slot) {
+    if (!garran_valid(g)) {
+        return 0;
+    }
     if (!western_valid(g) || !eastern_valid(g) || !containers_valid(g) || !crown_quest_valid(g) || !war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
         return 0;
     }
@@ -1994,7 +2028,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 246);
+    cJSON_AddNumberToObject(root, "save_version", 247);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -2234,6 +2268,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "aldric_hp", g->aldric_hp);
     cJSON_AddNumberToObject(root, "aldric_recruited", g->aldric_recruited);
     cJSON_AddItemToObject(root, "storm_mage", serialize_storm_mage(g));
+    cJSON_AddItemToObject(root, "garran", serialize_garran(g));
     cJSON_AddNumberToObject(root, "resurrection_prompt", g->resurrection_prompt);
     cJSON_AddNumberToObject(root, "resurrection_target", g->resurrection_target);
     cJSON_AddNumberToObject(root, "dain_quest_state", g->dain_quest_state);
@@ -4341,7 +4376,7 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
-    if (!load_storm_mage(root, g, save_version)) {
+    if (!load_storm_mage(root, g, save_version) || !load_garran(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -7265,6 +7300,7 @@ int load_game(GameState *g, int slot) {
     labyrinth_migrate(g, save_version);
     stillbury_routes_migrate(g, save_version);
     storm_mage_migrate(g, save_version);
+    garran_sync(g);
     elderwood_quest_migrate(g);
     game_repair_outdoor_entries(g);
     town_road_refresh_oakhaven(g);

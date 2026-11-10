@@ -389,6 +389,13 @@ static void npc_accessories(NpcCanvas *c, NpcArt art) {
             npc_prop(c, 2, 14, ".oooo/oWWwo/oWwwo/oWwwo/oWWwo/.oooo");
             npc_prop(c, 9, 9, "TTtth/.TTth/..Th");
             break;
+        case NPC_ART_GARRAN:
+            // Shortbow, quiver and a sheathed dagger distinguish the caravan Rogue.
+            npc_prop(c, 19, 3, "lo/Lo/.Lo/.lo/..Lo/..lo/...Lo/...lo/..Lo/..lo/.Lo/.lo/Lo/lo");
+            npc_prop(c, 22, 4, "w/w/w/w/w/w/w/w/w/w/w/w");
+            npc_prop(c, 2, 9, "N.N/LoL/lll/LoL/lll/LoL/lll/ooo");
+            npc_prop(c, 16, 16, "nN/lo/Lo/lo/oo");
+            break;
         case NPC_ART_STORM_MAGE:
             npc_prop(c, 20, 2, ".G./GYG/.G./.L./.l./.L./.l./.L./.l./oFF/.l./.L./.l./.L./.l./.L./.l./.L./.l./.oo");
             break;

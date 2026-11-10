@@ -1,9 +1,10 @@
 #include "party.h"
 #include "aldric.h"
 #include "storm_mage.h"
+#include "garran.h"
 
 const char *party_name(int member) {
-    const char *names[PARTY_MEMBER_COUNT] = {"Aldric", STORM_MAGE_NAME};
+    const char *names[PARTY_MEMBER_COUNT] = {"Aldric", STORM_MAGE_NAME, "Garran"};
     return member >= 0 && member < PARTY_MEMBER_COUNT ? names[member] : "Companion";
 }
 
@@ -11,12 +12,13 @@ int party_recruited(const GameState *g, int member) {
     if (member == PARTY_ALDRIC) {
         return g->aldric_recruited || g->aldric_party_state == ALDRIC_FOLLOWING || g->aldric_party_state == ALDRIC_DEAD;
     }
-    return member == PARTY_SOREN && g->storm_mage.recruited;
+    return (member == PARTY_SOREN && g->storm_mage.recruited) || (member == PARTY_GARRAN && g->garran.recruited);
 }
 
 int party_fallen(const GameState *g, int member) {
     return member == PARTY_ALDRIC ? g->aldric_party_state == ALDRIC_DEAD :
-        member == PARTY_SOREN && g->storm_mage.state == STORM_MAGE_DEAD;
+        (member == PARTY_SOREN && g->storm_mage.state == STORM_MAGE_DEAD) ||
+        (member == PARTY_GARRAN && g->garran.state == GARRAN_DEAD);
 }
 
 int party_fallen_count(const GameState *g) {
@@ -37,9 +39,9 @@ int party_fallen_at(const GameState *g, int index) {
 }
 
 int party_max_hp(const GameState *g, int member) {
-    return member == PARTY_ALDRIC ? ALDRIC_MAX_HP : member == PARTY_SOREN ? storm_mage_max_hp(g) : 0;
+    return member == PARTY_ALDRIC ? ALDRIC_MAX_HP : member == PARTY_SOREN ? storm_mage_max_hp(g) : member == PARTY_GARRAN ? GARRAN_MAX_HP : 0;
 }
 
 int party_revive(GameState *g, int member, int hp) {
-    return member == PARTY_ALDRIC ? aldric_revive(g, hp) : member == PARTY_SOREN ? storm_mage_revive(g, hp) : 0;
+    return member == PARTY_ALDRIC ? aldric_revive(g, hp) : member == PARTY_SOREN ? storm_mage_revive(g, hp) : member == PARTY_GARRAN ? garran_revive(g, hp) : 0;
 }
