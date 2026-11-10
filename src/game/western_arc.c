@@ -1,6 +1,8 @@
 #include "western_arc.h"
 #include "approach.h"
 #include "crown_quest.h"
+#include "garran.h"
+#include "storm_mage.h"
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -118,6 +120,7 @@ static void prepare_convoy(GameState *g) {
 }
 
 void western_prepare(GameState *g) {
+    garran_sync(g);
     if (g->location == LOCATION_TAVERN) {
         if (g->zara_at_camp) {
             if (g->map.tiles[ZARA_OAKHAVEN_Y][ZARA_OAKHAVEN_X] == TILE_NPC_GUILD_SEEKER) {
@@ -136,6 +139,8 @@ void western_prepare(GameState *g) {
         }
         int occupied = g->player.x >= 40 && g->player.x <= 52 && g->player.y >= 29 && g->player.y <= 34;
         occupied |= g->aldric_x >= 40 && g->aldric_x <= 52 && g->aldric_y >= 29 && g->aldric_y <= 34;
+        occupied |= g->garran.state == GARRAN_FOLLOWING && g->garran.x >= 40 && g->garran.x <= 52 && g->garran.y >= 29 && g->garran.y <= 34;
+        occupied |= g->storm_mage.state == STORM_MAGE_FOLLOWING && g->storm_mage.x >= 40 && g->storm_mage.x <= 52 && g->storm_mage.y >= 29 && g->storm_mage.y <= 34;
         occupied |= g->elowen_x >= 40 && g->elowen_x <= 52 && g->elowen_y >= 29 && g->elowen_y <= 34;
         for (int i = 0; i < g->floor_item_count; i++) {
             const FloorItem *item = &g->floor_items[i];
@@ -151,7 +156,9 @@ void western_prepare(GameState *g) {
             }
         }
         place_npc(g, CAMP_ZARA_X, CAMP_ZARA_Y, TILE_NPC_GUILD_SEEKER);
-        place_npc(g, CAMP_GARRAN_X, CAMP_GARRAN_Y, TILE_NPC_GARRAN);
+        if (g->garran.state == GARRAN_WAITING && g->garran.home == GARRAN_CAMP) {
+            place_npc(g, CAMP_GARRAN_X, CAMP_GARRAN_Y, TILE_NPC_GARRAN);
+        }
         place_npc(g, CAMP_LIORA_X, CAMP_LIORA_Y, TILE_NPC_LIORA);
     }
     if (approach_bridge_road(g)) {
@@ -217,11 +224,7 @@ int western_talk(GameState *g) {
         }
         return 1;
     }
-    if (camp && near(g, CAMP_GARRAN_X, CAMP_GARRAN_Y)) {
-        dialogue(g, "Caravan Scout Garran", CAMP_GARRAN_X, CAMP_GARRAN_Y, g->jarl_quest_state == 1 ?
-            "Follow the road north to Giant's Peaks. Defeat the Last Jarl in the fifth stage to open onward passage to Stillbury. No return to me is required." : g->jarl_quest_state == 3 ?
-            "The Jarl's blockade is broken. Follow the road from Giant's Peaks to Giant's Bridge, then cross to Stillbury. Your work here is complete." :
-            "The Last Jarl blocks the road to Stillbury under a royal charter. Follow the desert road north to Giant's Peaks. Will you defeat him on stage 5 and open the pass? His defeat completes this task immediately. The bridge itself is unguarded; travelers from Stillbury face his blockade on the far side too.");
+    if (camp && near(g, CAMP_GARRAN_X, CAMP_GARRAN_Y) && garran_talk(g, CAMP_GARRAN_X, CAMP_GARRAN_Y)) {
         return 1;
     }
     if (camp && near(g, CAMP_LIORA_X, CAMP_LIORA_Y)) {

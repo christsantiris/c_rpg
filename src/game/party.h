@@ -3,7 +3,7 @@
 
 #include "game.h"
 
-enum { PARTY_ALDRIC, PARTY_SOREN, PARTY_MEMBER_COUNT };
+enum { PARTY_ALDRIC, PARTY_SOREN, PARTY_GARRAN, PARTY_MEMBER_COUNT };
 
 const char *party_name(int member);
 int party_recruited(const GameState *g, int member);

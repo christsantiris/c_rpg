@@ -8,6 +8,7 @@
 #include "../game/necromancer.h"
 #include "../game/aldric.h"
 #include "../game/storm_mage.h"
+#include "../game/garran.h"
 #include <stdio.h>
 
 static const Enemy *visible_necromancer(const GameState *g, const Viewport *v) {
@@ -77,7 +78,9 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     int y  = 10;
     int compact = r->tiles_y * TILE_SIZE < 528;
     int lh = compact ? 12 : 16;
-    int gap = compact ? 4 : 6;
+    int rogue_present = g->garran.state == GARRAN_FOLLOWING || g->garran.state == GARRAN_DEAD;
+    // Keep every companion visible at the minimum window height.
+    int gap = compact ? (rogue_present ? 0 : 4) : 6;
     // On very short windows, keep the encounter warning above the character details.
     int boss_at_top = necromancer && r->tiles_y * TILE_SIZE < 528;
     if (boss_at_top) {
@@ -332,7 +335,8 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
     renderer_draw_text(r, quick, x, y, game_quick_potion_count(g) ? value : dimmed, r->font_tiny);
     y += lh + gap;
     if (g->aldric_party_state == ALDRIC_DEAD) {
-        int mage_present = g->storm_mage.state == STORM_MAGE_FOLLOWING || g->storm_mage.state == STORM_MAGE_DEAD;
+        int mage_present = g->storm_mage.state == STORM_MAGE_FOLLOWING || g->storm_mage.state == STORM_MAGE_DEAD ||
+            g->garran.state == GARRAN_FOLLOWING || g->garran.state == GARRAN_DEAD;
         renderer_draw_text(r, mage_present ? "ALDRIC DEAD: SHRINE" : "ALDRIC: DEAD", x, y, health_warning, r->font_tiny);
         if (!mage_present) {
             y += lh;
@@ -354,6 +358,17 @@ static void info_panel_draw_context(Renderer *r, const GameState *g, int harbor,
             SDL_snprintf(mage, sizeof(mage), "SOREN L%d: %dHP %dMP", g->storm_mage.level, g->storm_mage.hp, g->storm_mage.mp);
         }
         renderer_draw_text(r, mage, x, y, g->storm_mage.hp * 4 <= storm_mage_max_hp(g) ? health_warning : value, r->font_tiny);
+        y += lh + gap;
+    }
+
+    if (g->garran.state == GARRAN_FOLLOWING || g->garran.state == GARRAN_DEAD) {
+        char rogue[48];
+        if (g->garran.state == GARRAN_DEAD) {
+            SDL_snprintf(rogue, sizeof(rogue), "GARRAN DEAD: SHRINE");
+        } else {
+            SDL_snprintf(rogue, sizeof(rogue), "GARRAN HP: %d / %d", g->garran.hp, GARRAN_MAX_HP);
+        }
+        renderer_draw_text(r, rogue, x, y, g->garran.hp * 4 <= GARRAN_MAX_HP ? health_warning : value, r->font_tiny);
         y += lh + gap;
     }
 

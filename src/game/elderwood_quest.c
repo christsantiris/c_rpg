@@ -2,6 +2,7 @@
 #include "aldric.h"
 #include "elowen.h"
 #include "storm_mage.h"
+#include "garran.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -49,7 +50,7 @@ static void open_tile(const GameState *g, int *x, int *y) {
                 if (abs(dx) + abs(dy) != radius || !map_is_walkable(&g->map, px, py) ||
                     map_is_travel_tile(g->map.tiles[py][px]) || g->map.tiles[py][px] == TILE_ITEM ||
                     g->map.tiles[py][px] == TILE_PORTAL || (g->player.x == px && g->player.y == py) ||
-                    aldric_at(g, px, py) || storm_mage_at(g, px, py) || elowen_at(g, px, py)) {
+                    aldric_at(g, px, py) || storm_mage_at(g, px, py) || garran_at(g, px, py) || elowen_at(g, px, py)) {
                     continue;
                 }
                 int occupied = 0;
@@ -98,6 +99,9 @@ void elderwood_quest_migrate(GameState *g) {
     g->map.tiles[y][x] = TILE_NPC_TAMSIN;
     if (aldric_at(g, x, y)) {
         aldric_follow(g, -1, -1);
+    }
+    if (garran_at(g, x, y)) {
+        garran_follow(g, -1, -1);
     }
     if (storm_mage_at(g, x, y)) {
         storm_mage_follow(g, -1, -1);

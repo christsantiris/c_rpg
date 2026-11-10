@@ -1,5 +1,6 @@
 #include "enemy_tactics.h"
 #include "aldric.h"
+#include "garran.h"
 #include "eastern_arc.h"
 #include "western_arc.h"
 #include <stdlib.h>
@@ -28,7 +29,7 @@ static int dark_elf(const Enemy *e) {
 }
 
 static int occupied(const GameState *g, int index, int x, int y) {
-    if ((x == g->player.x && y == g->player.y) || aldric_at(g, x, y)) {
+    if ((x == g->player.x && y == g->player.y) || aldric_at(g, x, y) || garran_at(g, x, y)) {
         return 1;
     }
     for (int i = 0; i < g->enemy_count; i++) {

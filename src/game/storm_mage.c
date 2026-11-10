@@ -1,5 +1,6 @@
 #include "storm_mage.h"
 #include "aldric.h"
+#include "garran.h"
 #include "combat_feedback.h"
 #include "eastern_arc.h"
 #include "elowen.h"
@@ -58,7 +59,7 @@ int storm_mage_beside(const GameState *g, int x, int y) {
 
 static int open_space(const GameState *g, int x, int y) {
     if (!map_is_walkable(&g->map, x, y) || map_is_travel_tile(g->map.tiles[y][x]) ||
-        (x == g->player.x && y == g->player.y) || aldric_at(g, x, y) || elowen_at(g, x, y)) {
+        (x == g->player.x && y == g->player.y) || aldric_at(g, x, y) || garran_at(g, x, y) || elowen_at(g, x, y)) {
         return 0;
     }
     for (int i = 0; i < g->enemy_count; i++) {
@@ -140,7 +141,7 @@ static int firing_lane(const GameState *g, int x, int y, const Enemy *target) {
         int px = x + dx * step;
         int py = y + dy * step;
         if (!map_is_walkable(&g->map, px, py) || (px == g->player.x && py == g->player.y) ||
-            aldric_at(g, px, py) || elowen_at(g, px, py)) {
+            aldric_at(g, px, py) || garran_at(g, px, py) || elowen_at(g, px, py)) {
             return 0;
         }
         for (int i = 0; i < g->enemy_count; i++) {

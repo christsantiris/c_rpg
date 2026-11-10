@@ -55,6 +55,12 @@ level 1; party progression is deferred to a later update.
 If declined or dismissed, he waits at Dawnmere's Alehouse. Fallen companions
 can be selected individually for resurrection at Soulstone Shrine.
 
+**Garran**, a Rogue at Sunscar's caravan camp, can join before entering the wastes.
+Talk to him and choose **2**, then **Y** to recruit him for free. He fights with
+his own arrows and a dagger, alongside Aldric and Soren. His Jarl quest is a
+separate conversation choice. He can wait at camp or, after arriving together,
+Stillbury's Tavern. His combat strength stays fixed for this version.
+
 ## World Map
 
 [![Final world map of the Castle of No Return](docs/world-map.png?v=bf9e7f5b92a7)](docs/world-map.png?v=bf9e7f5b92a7)

@@ -5,6 +5,7 @@
 #include "game/royal_evidence.h"
 #include "game/eastern_arc.h"
 #include "game/aldric.h"
+#include "game/garran.h"
 #include "screens/quest_journal.h"
 #include "systems/save_load.h"
 #include "cJSON.h"
@@ -95,6 +96,7 @@ void test_western_arc(void) {
     approach_enter_region(&g, APPROACH_SUNSCAR_ROAD);
     ASSERT("Zara and the two additional NPCs meet at the caravan camp", g.zara_at_camp && g.map.tiles[CAMP_ZARA_Y][CAMP_ZARA_X] == TILE_NPC_GUILD_SEEKER && g.map.tiles[CAMP_GARRAN_Y][CAMP_GARRAN_X] == TILE_NPC_GARRAN && g.map.tiles[CAMP_LIORA_Y][CAMP_LIORA_X] == TILE_NPC_LIORA);
     visit_camp_npc(&g, CAMP_GARRAN_X, CAMP_GARRAN_Y);
+    garran_handle_key(&g, SDL_SCANCODE_1, 0);
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     visit_camp_npc(&g, CAMP_LIORA_X, CAMP_LIORA_Y);
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
@@ -237,6 +239,7 @@ void test_western_arc(void) {
     giants_defeat(&g);
     approach_enter_region(&g, APPROACH_SUNSCAR_ROAD);
     visit_camp_npc(&g, CAMP_GARRAN_X, CAMP_GARRAN_Y);
+    garran_handle_key(&g, SDL_SCANCODE_1, 0);
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);
     visit_camp_npc(&g, CAMP_LIORA_X, CAMP_LIORA_Y);
     game_handle_quest_offer_key(&g, SDL_SCANCODE_Y, 0);

@@ -25,6 +25,7 @@
 #include "elowen.h"
 #include "aldric.h"
 #include "storm_mage.h"
+#include "garran.h"
 #include "necromancer.h"
 #include "goblin_king.h"
 #include "drowned_queen.h"
@@ -1617,6 +1618,7 @@ void game_init(GameState *g) {
     g->aldric_hp = ALDRIC_MAX_HP;
     g->aldric_recruited = 0;
     storm_mage_init(g);
+    garran_init(g);
     g->resurrection_target = 0;
     g->resurrection_prompt = 0;
     g->dain_quest_state = 0;
@@ -4258,6 +4260,7 @@ void game_enter_inn(GameState *g) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
+    garran_sync(g);
     push_message(g, "You enter Stillbury's Tavern.");
 }
 
@@ -4984,6 +4987,7 @@ void game_enter_island(GameState *g) {
     g->dialogue_active = 0;
     aldric_follow(g, -1, -1);
     storm_mage_follow(g, -1, -1);
+    garran_follow(g, -1, -1);
     push_message(g, "You make landfall on the Ruined Isle.");
     push_message(g, "The island route is now open for return voyages.");
 }
@@ -4996,6 +5000,7 @@ void game_leave_island(GameState *g) {
     coastal_return_from_island(g);
     aldric_follow(g, -1, -1);
     storm_mage_follow(g, -1, -1);
+    garran_follow(g, -1, -1);
 }
 
 static void cache_temple_level(GameState *g) {
@@ -6283,7 +6288,7 @@ static const QuestOffer quest_offers[] = {
 
 // Existing saved dialogue and quest state also preserve an unanswered offer.
 static const QuestOffer *current_quest_offer(const GameState *g) {
-    if (!g->dialogue_active) {
+    if (!g->dialogue_active || (garran_dialogue(g) && g->garran.prompt != GARRAN_QUEST)) {
         return NULL;
     }
     for (size_t i = 0; i < sizeof(quest_offers) / sizeof(quest_offers[0]); i++) {
@@ -6297,6 +6302,9 @@ static const QuestOffer *current_quest_offer(const GameState *g) {
         int place = g->location == offer->location;
         if (offer->state_offset == offsetof(GameState, tribute_quest_state)) {
             place = place || approach_sunscar_road(g);
+        }
+        if (offer->state_offset == offsetof(GameState, jarl_quest_state)) {
+            place = garran_dialogue(g) && g->garran.prompt == GARRAN_QUEST;
         }
         if (place && *state == offer->offered_state &&
             strcmp(g->dialogue_speaker, offer->speaker) == 0) {

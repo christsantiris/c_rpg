@@ -2,6 +2,7 @@
 #include "aldric.h"
 #include "party.h"
 #include "storm_mage.h"
+#include "garran.h"
 #include "elowen.h"
 #include "town_road.h"
 #include "combat_feedback.h"
@@ -87,6 +88,9 @@ void resurrection_place(GameState *g) {
     }
     if (g->storm_mage.state == STORM_MAGE_FOLLOWING && !map_is_walkable(&g->map, g->storm_mage.x, g->storm_mage.y)) {
         storm_mage_follow(g, -1, -1);
+    }
+    if (g->garran.state == GARRAN_FOLLOWING && !map_is_walkable(&g->map, g->garran.x, g->garran.y)) {
+        garran_follow(g, -1, -1);
     }
     if (g->elowen_quest_state == ELOWEN_RESCUED && !map_is_walkable(&g->map, g->elowen_x, g->elowen_y)) {
         elowen_follow(g, -1, -1);

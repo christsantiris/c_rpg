@@ -1,6 +1,7 @@
 #include "western_arc_renderer.h"
 #include "../game/western_arc.h"
 #include "../game/approach.h"
+#include "../game/garran.h"
 #include "world_props.h"
 #include "controls_renderer.h"
 
@@ -37,7 +38,9 @@ void western_draw_details(Renderer *r, const GameState *g, const Viewport *v) {
             SDL_RenderCopy(r->sdl, r->caravan_camp_texture, NULL, &dest);
         }
         label(r, v, CAMP_ZARA_X, CAMP_ZARA_Y, "ZARA");
-        label(r, v, CAMP_GARRAN_X, CAMP_GARRAN_Y, "GARRAN");
+        if (g->garran.state == GARRAN_WAITING && garran_at(g, CAMP_GARRAN_X, CAMP_GARRAN_Y)) {
+            label(r, v, CAMP_GARRAN_X, CAMP_GARRAN_Y, "GARRAN / ROGUE");
+        }
         label(r, v, CAMP_LIORA_X, CAMP_LIORA_Y, "LIORA");
         label(r, v, 46, 35, "CARAVAN CAMP");
     }

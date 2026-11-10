@@ -138,6 +138,16 @@ typedef struct {
 } StormMage;
 
 typedef struct {
+    int state;
+    int recruited;
+    int x;
+    int y;
+    int hp;
+    int home;
+    int prompt;
+} CaravanRogue;
+
+typedef struct {
     Map   map;
     Enemy enemies[LEVEL_CACHE_ENEMY_CAPACITY];
     int   enemy_count;
@@ -499,6 +509,7 @@ typedef struct {
     int aldric_hp;
     int aldric_recruited;
     StormMage storm_mage;
+    CaravanRogue garran;
     int resurrection_prompt;
     int resurrection_target;
     int dain_quest_state; // 0 offer, 1 halves, 2 turn-in, 3 boss offer, 4 boss active, 5 complete.
@@ -660,6 +671,7 @@ void action_resolve_enemies(GameState *g);
 void action_resolve_enemies_with_projectiles(GameState *g, EnemyProjectiles *shots);
 void action_aldric_strike(GameState *g, Enemy *e);
 void action_storm_mage_attack(GameState *g, Enemy *e, int fireball);
+void action_garran_attack(GameState *g, Enemy *e, int bow);
 int kraken_tile_threatened(const GameState *g, const Enemy *e, int x, int y);
 
 void player_gain_xp(GameState *g, int xp);
