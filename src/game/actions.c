@@ -6,6 +6,7 @@
 #include "ironfang.h"
 #include "crownroad_north.h"
 #include "stonewake.h"
+#include "quarry_quest.h"
 #include "actions.h"
 #include "eastern_arc.h"
 #include "restoration.h"
@@ -411,7 +412,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             push_message(g, "The Grave Marshal falls. The passage to the castle opens!");
         }
         if (type == ENEMY_PRISM_SOVEREIGN) {
-            push_message(g, "The Quarry Colossus shatters. The path to Stillbury opens!");
+            push_message(g, "The Quarry Colossus shatters. Restore the machinery so Stonewake's workers can return!");
         }
 
     }
@@ -540,7 +541,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
             return;
         }
         if (type == ENEMY_PRISM_SOVEREIGN) {
-            g->prism_sovereign_reward_pending = PRISM_ROBES_PENDING | PRISM_POTION_PENDING;
+            quarry_record_defeat(g);
             if (g->floor_item_count < MAX_FLOOR_ITEMS) {
                 place_gold_drop(g, x, y, gold);
             } else {
@@ -1509,7 +1510,7 @@ static void resolve_player_action(GameState *g, Action a) {
         if (mangrove_interact(g)) {
             return;
         }
-        if (containers_interact(g)) {
+        if (quarry_reward_interact(g, 0) || containers_interact(g)) {
             return;
         }
         if (elderwood_interact(g)) {
@@ -1604,7 +1605,7 @@ static void resolve_player_action(GameState *g, Action a) {
     }
 
     if (a.type == ACTION_PICK_UP) {
-        if (containers_pickup(g)) {
+        if (quarry_reward_interact(g, 1) || containers_pickup(g)) {
             return;
         }
         if (g->map.tiles[g->player.y][g->player.x] == TILE_DRAGON_TREASURE) {
@@ -3050,6 +3051,7 @@ void action_resolve_player(GameState *g, Action a) {
     resolve_player_action(g, a);
     eastern_update(g);
     western_update(g);
+    quarry_update(g);
     if (location != g->location || level != g->level || route != g->approach_route || road_town != g->road_town) {
         // Travel handlers return before the ordinary movement-facing update.
         // A doorway or boundary crossing keeps the direction of that step.

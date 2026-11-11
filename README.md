@@ -41,11 +41,12 @@ documents in the journal's **Evidence** tab; they use no inventory or quest
 slots. Alder and Dain can help interpret the discoveries on an optional return
 to the Inn. See [Act 2's story payoff](docs/act2-story-payoff-plan.md).
 
-Soulstone Shrine stands beside the path north of Oakhaven, before the broken
-ferry. Its warlock offers resurrection for **200 gold per fallen companion**.
+Soulstone Shrines stand north of Oakhaven before the broken ferry, and on
+Stillbury’s western quarry road beside the workers’ camp. Each warlock offers
+resurrection for **200 gold per fallen companion**.
 A level-10 Mage can buy the **400-gold Resurrection scroll** and perform the
-ritual directly at the shrine's marked circle for **80 MP**. The shrine is
-present from the start; its services require a recruited companion.
+ritual directly at either shrine's marked circle for **80 MP**. Both shrines work
+before their local quests are cleared; their services require a recruited companion.
 
 Traveler Neris in Oakhaven's square and Fisher Tovan in Dawnmere's Alehouse
 tell of **Soren**, a mage imprisoned at **Stormwatch Headland**. Take Dawnmere's
@@ -63,7 +64,7 @@ Stillbury's Tavern. His combat strength stays fixed for this version.
 
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/world-map.png?v=acdca7c9a496)](docs/world-map.png?v=acdca7c9a496)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=874f0934ebe2)](docs/world-map.png?v=874f0934ebe2)
 
 The V2 starting region contains Oakhaven, Goblin Mountains to its west, Haunted
 Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
@@ -107,6 +108,12 @@ The western road forks before **Giant's Bridge**. Its northern branch reaches
 Neither the Jarl nor the Minotaur blocks the quarry branch. Rook offers
 **Slay the Minotaur** in Stillbury's Tavern; victory completes the quest
 immediately and reveals a prisoner register implicating Malakar's private office.
+Surveyor Orin at the western workers’ camp offers **Reclaim the Quarry**. Repair
+three mechanisms and defeat the Quarry Colossus to restore Stillbury’s friendly
+welcome. Return for **120 gold, 1,000 score**, and one choice of warhammer,
+Quarryman’s Bow or Prismweave Robes. The Colossus strongbox separately offers one
+Strength or Intelligence potion. See [quarry rewards](docs/stonewake-quarry.md).
+
 The quarry and Labyrinth are local adventures for rewards and experience; cliffs
 prevent onward travel to Rosemoor. Northern cliffs also separate Elderwood and
 Sunken Coast from Ridgeshire. See the [labyrinth arc](docs/labyrinth.md).

@@ -4,6 +4,7 @@
 #include "elderwood.h"
 #include "giants_crown.h"
 #include "jail.h"
+#include "quarry_quest.h"
 #include "town_road.h"
 #include <stdlib.h>
 
@@ -34,6 +35,7 @@ void stillbury_routes_prepare(GameState *g) {
             }
         }
     }
+    quarry_prepare(g);
     if (northern_approach(g)) {
         if (boss_gate_open(g, LOCATION_SWAMP)) {
             // The eastern exit emerges above the demon's checkpoint, then bends toward the Catacombs.

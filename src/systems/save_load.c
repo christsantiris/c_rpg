@@ -2,6 +2,7 @@
 #include "../game/stillbury_routes.h"
 #include "../game/storm_mage.h"
 #include "../game/garran.h"
+#include "../game/quarry_quest.h"
 #include "../game/party.h"
 #include "../game/western_arc.h"
 #include "../game/coast_exits.h"
@@ -1549,7 +1550,7 @@ static cJSON *serialize_eastern(const GameState *g) {
         cJSON_AddItemToObject(arc, "dawnmere_enemies", serialize_enemies(active ? g->enemies : cache->enemies, active ? g->enemy_count : cache->enemy_count));
         cJSON_AddItemToObject(arc, "dawnmere_loot", serialize_castle_loot(active ? g->floor_items : g->dawnmere_loot, active ? g->floor_item_count : g->dawnmere_loot_count));
     }
-    const Enemy *guards = g->location == LOCATION_TOWN2 && g->stillbury_guards_initialized ? g->enemies : g->stillbury_guards;
+    const Enemy *guards = g->location == LOCATION_TOWN2 && g->stillbury_challenge == 2 && g->stillbury_guards_initialized ? g->enemies : g->stillbury_guards;
     cJSON_AddItemToObject(arc, "stillbury_guards", serialize_enemies(guards, g->stillbury_guards_initialized ? 3 : 0));
     MangroveState river = g->river_boat;
     if (g->location == LOCATION_RIVER_CROSSING) {
@@ -2017,7 +2018,7 @@ static int load_garran(const cJSON *root, GameState *g, int version) {
 }
 
 int save_game(const GameState *g, int slot) {
-    if (!garran_valid(g)) {
+    if (!garran_valid(g) || !quarry_valid(g)) {
         return 0;
     }
     if (!western_valid(g) || !eastern_valid(g) || !containers_valid(g) || !crown_quest_valid(g) || !war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
@@ -2028,7 +2029,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 248);
+    cJSON_AddNumberToObject(root, "save_version", 249);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -2138,6 +2139,9 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "cinder_lord_reward_pending", g->cinder_lord_reward_pending);
     cJSON_AddNumberToObject(root, "prism_sovereign_reward_pending", g->prism_sovereign_reward_pending);
     cJSON_AddNumberToObject(root, "stonewake_warhammer_state", g->stonewake_warhammer_state);
+    cJSON_AddNumberToObject(root, "quarry_equipment", g->quarry_equipment);
+    cJSON_AddNumberToObject(root, "quarry_potion", g->quarry_potion);
+    cJSON_AddNumberToObject(root, "quarry_prompt", g->quarry_prompt);
     cJSON_AddNumberToObject(root, "sun_guardian_reward_state", g->sun_guardian_reward_state);
     cJSON_AddNumberToObject(root, "red_dragon_reward_state", g->red_dragon_reward_state);
     cJSON_AddNumberToObject(player, "known_spell_count", g->player.known_spell_count);
@@ -4492,8 +4496,8 @@ int load_game(GameState *g, int slot) {
         glassdeep_quest->valueint < 0 || glassdeep_quest->valueint > 3 ||
         glassdeep_progress->valueint < 0 || glassdeep_progress->valueint > 7 ||
         glassdeep_encounters->valueint < 0 || glassdeep_encounters->valueint > 7 ||
-        (glassdeep_quest->valueint == 0 && (glassdeep_progress->valueint || glassdeep_encounters->valueint)) ||
-        (glassdeep_quest->valueint == 1 && glassdeep_progress->valueint == 7) ||
+        (save_version < 249 && glassdeep_quest->valueint == 0 && (glassdeep_progress->valueint || glassdeep_encounters->valueint)) ||
+        (save_version < 249 && glassdeep_quest->valueint == 1 && glassdeep_progress->valueint == 7) ||
         (glassdeep_quest->valueint >= 2 && glassdeep_progress->valueint != 7)) {
         cJSON_Delete(root);
         return 0;
@@ -4803,6 +4807,14 @@ int load_game(GameState *g, int slot) {
         return 0;
     }
     g->stonewake_warhammer_state = save_version >= 194 ? hammer->valueint : 0;
+    g->quarry_equipment = QUARRY_NONE;
+    g->quarry_potion = QUARRY_POTION_NONE;
+    g->quarry_prompt = QUARRY_MENU;
+    if (save_version >= 249 && (!stormwatch_number(root, "quarry_equipment", &g->quarry_equipment) ||
+        !stormwatch_number(root, "quarry_potion", &g->quarry_potion) || !stormwatch_number(root, "quarry_prompt", &g->quarry_prompt) || !quarry_valid(g))) {
+        cJSON_Delete(root);
+        return 0;
+    }
     cJSON *prism_reward = cJSON_GetObjectItem(root, "prism_sovereign_reward_pending");
     cJSON *guardian_reward = cJSON_GetObjectItem(root, "sun_guardian_reward_state");
     cJSON *dragon_reward = cJSON_GetObjectItem(root, "red_dragon_reward_state");
@@ -7299,6 +7311,10 @@ int load_game(GameState *g, int slot) {
     approach_retire_labyrinth(g);
     labyrinth_migrate(g, save_version);
     stillbury_routes_migrate(g, save_version);
+    if (!quarry_migrate(g, save_version)) {
+        cJSON_Delete(root);
+        return 0;
+    }
     storm_mage_migrate(g, save_version);
     garran_sync(g);
     elderwood_quest_migrate(g);

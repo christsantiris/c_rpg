@@ -8,9 +8,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+int eastern_stillbury_hostile(const GameState *g) {
+    return g->royal_reported_actions && g->glassdeep_quest_state < 2;
+}
+
 int eastern_town_combat(const GameState *g) {
     return (g->location == LOCATION_DAWNMERE && !g->dawnmere_liberated) ||
-        (g->location == LOCATION_TOWN2 && g->royal_reported_actions);
+        (g->location == LOCATION_TOWN2 && eastern_stillbury_hostile(g));
 }
 
 void eastern_init(GameState *g) {
@@ -244,14 +248,15 @@ void eastern_enter_town(GameState *g) {
     if (g->location == LOCATION_TOWN2) {
         eastern_refresh(g);
         g->act4_arrived = 1;
-        if (!g->royal_reported_actions) {
+        if (!eastern_stillbury_hostile(g)) {
             g->last_town_visited = LOCATION_TOWN2;
         }
-        if (g->stillbury_challenge == 2 && g->stillbury_guards_initialized) {
+        if (eastern_stillbury_hostile(g) && g->stillbury_challenge == 2 && g->stillbury_guards_initialized) {
             g->enemy_count = 3;
             memcpy(g->enemies, g->stillbury_guards, sizeof(g->stillbury_guards));
         }
-        push_message(g, g->royal_reported_actions ? "Act 4: Stillbury. The Crown knows your actions. Its checkpoint will demand surrender." :
+        push_message(g, eastern_stillbury_hostile(g) ? "Act 4: Stillbury. The Crown knows your actions. Its checkpoint will demand surrender." :
+            g->glassdeep_quest_state >= 2 ? "Stillbury welcomes you! Restoring Stonewake has earned the town's gratitude and free passage." :
             "Act 4: Stillbury. Loyalist banners hang above a welcoming customs gate.");
     }
 }
@@ -354,7 +359,7 @@ int eastern_move(GameState *g, int x, int y) {
     int south_checkpoint = x >= 17 && x <= 23 && y >= 17 && y <= 19;
     int east_checkpoint = x >= 32 && x <= 34 && y >= 10 && y <= 14;
     int north_checkpoint = x >= 17 && x <= 23 && y >= 4 && y <= 6;
-    if (g->location == LOCATION_TOWN2 && g->royal_reported_actions && !g->stillbury_challenge && (west_checkpoint || east_checkpoint || south_checkpoint || north_checkpoint)) {
+    if (g->location == LOCATION_TOWN2 && eastern_stillbury_hostile(g) && !g->stillbury_challenge && (west_checkpoint || east_checkpoint || south_checkpoint || north_checkpoint)) {
         g->stillbury_prompt = 1;
         g->dialogue_active = 1;
         snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Royal Checkpoint");
@@ -589,7 +594,7 @@ void eastern_migrate(GameState *g) {
 
 int eastern_valid(const GameState *g) {
     if (g->dawnmere_cache.enemy_count < 0 || g->dawnmere_cache.enemy_count > DAWNMERE_GARRISON ||
-        (g->stillbury_guards_initialized && g->stillbury_challenge != 2) ||
+        (g->stillbury_guards_initialized && g->stillbury_challenge != 2 && g->glassdeep_quest_state < 2) ||
         (!g->stillbury_guards_initialized && g->stillbury_challenge == 2)) {
         return 0;
     }

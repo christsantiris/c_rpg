@@ -23,6 +23,8 @@
 #include "town_road_renderer.h"
 #include "../game/town_road.h"
 #include "../game/resurrection.h"
+#include "../game/quarry_quest.h"
+#include "quarry_quest_renderer.h"
 #include "sprites.h"
 #include "world_props.h"
 #include "goblin_king_renderer.h"
@@ -410,8 +412,10 @@ static void draw_oswin(Renderer *r, int sx, int sy) {
     npc_draw(r, sx, sy, NPC_ART_OSWIN, 0);
 }
 
-static void draw_frostfell_quest_tile(Renderer *r, int sx, int sy, int x, int y, TileType tile) {
-    if (tile == TILE_NPC_BRENNA || tile == TILE_NPC_ORIN) {
+static void draw_frostfell_quest_tile(Renderer *r, const GameState *g, int sx, int sy, int x, int y, TileType tile) {
+    if (quarry_road(g)) {
+        draw_approach_ground(r, g, sx, sy, x, y);
+    } else if (tile == TILE_NPC_BRENNA || tile == TILE_NPC_ORIN) {
         draw_tavern_floor(r, sx, sy);
     } else {
         draw_frostfell_floor(r, sx, sy, x, y);
@@ -585,7 +589,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int stormbell_prompt = stormbell_prompt_active(g);
     int shrine_prompt = resurrection_prompt_active(g);
     int escort_dialogue = strcmp(g->dialogue_speaker, "Elowen") == 0 ||
-        garran_dialogue(g) ||
+        garran_dialogue(g) || quarry_dialogue(g) ||
         strcmp(g->dialogue_speaker, STORM_MAGE_SPEAKER) == 0 ||
         (g->aldric_party_state == ALDRIC_FOLLOWING && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0);
     int dock_dialogue = coastal_stillbury_docks(g) && strcmp(g->dialogue_speaker, "Captain Rowan") == 0;
@@ -662,6 +666,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     }
     if (garran_dialogue(g) && (g->garran.prompt != GARRAN_QUEST || !quest_offer)) {
         hint = garran_hint(g);
+    }
+    if (quarry_dialogue(g) && g->quarry_prompt) {
+        hint = "Number: Choose reward   Esc: Choose later";
     }
     if (eastern_challenge_active(g)) {
         hint = "Y / Esc: Leave town\nN: Force your way in";
@@ -1898,7 +1905,7 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
     } else if (underlay == TILE_SWAMP_FLOOR) {
         draw_swamp_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_FROST_JOURNAL || underlay == TILE_NPC_FROST_SURVIVOR) {
-        draw_frostfell_quest_tile(r, screen_x, screen_y, map_x, map_y, underlay);
+        draw_frostfell_quest_tile(r, g, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_FROST_FLOOR) {
         draw_frostfell_floor(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_DESERT_FLOOR || underlay == TILE_DESERT_ENTRANCE ||
@@ -2832,7 +2839,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_NPC_FROST_SURVIVOR:
                 case TILE_NPC_BRENNA:
                 case TILE_NPC_ORIN:
-                    draw_frostfell_quest_tile(r, sx, sy, x, y, g->map.tiles[y][x]);
+                    draw_frostfell_quest_tile(r, g, sx, sy, x, y, g->map.tiles[y][x]);
                     break;
                 case TILE_DESERT_OASIS:
                 case TILE_DESERT_OASIS_DRY:
@@ -3238,7 +3245,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     npc_draw(r, sx, sy, NPC_ART_ROOK, 0);
                     break;
                 case TILE_CARAVAN_CAMP:
-                    draw_desert_floor(r, sx, sy, x, y);
+                    if (quarry_road(g)) {
+                        draw_approach_ground(r, g, sx, sy, x, y);
+                    } else {
+                        draw_desert_floor(r, sx, sy, x, y);
+                    }
                     break;
                 case TILE_NPC_GARRAN:
                 case TILE_NPC_LIORA:
@@ -3564,6 +3575,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
 
     draw_town_road(r, g, v);
+    quarry_draw_details(r, g, v);
     boss_gate_draw_banks(r, g, v);
     draw_northern_road(r, g, v);
     boss_gate_draw(r, g, v);
@@ -4316,9 +4328,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         TTF_SizeText(r->font_tiny, "HUNTMASTER SELENE", &width, NULL);
         renderer_draw_text(r, "HUNTMASTER SELENE", viewport_to_screen_x(v, GUILD_SELENE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, GUILD_SELENE_Y - 1) * TILE_SIZE, (SDL_Color){237, 186, 82, 255}, r->font_tiny);
-        TTF_SizeText(r->font_tiny, "ORIN", &width, NULL);
-        renderer_draw_text(r, "ORIN", viewport_to_screen_x(v, GUILD_ORIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
-            viewport_to_screen_y(v, GUILD_ORIN_Y - 1) * TILE_SIZE, area_label_color(LOCATION_GLASSDEEP), r->font_tiny);
     }
 
     if (g->location == LOCATION_ISLAND) {

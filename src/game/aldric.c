@@ -183,7 +183,7 @@ void aldric_take_hit(GameState *g, const Enemy *e) {
     g->aldric_hp = 0;
     g->aldric_x = -1;
     g->aldric_y = -1;
-    snprintf(msg, sizeof(msg), "Aldric has died. Seek Soulstone Shrine north of Oakhaven for resurrection.");
+    snprintf(msg, sizeof(msg), "Aldric has died. Seek a Soulstone Shrine north of Oakhaven or west of Stillbury.");
     push_message_kind(g, msg, MESSAGE_DAMAGE_TAKEN);
 }
 

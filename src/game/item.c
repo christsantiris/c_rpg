@@ -585,6 +585,8 @@ void item_apply_legacy_metadata(Item *item) {
         definition = item_make_bow();
     } else if (strcmp(item->name, "Shortbow") == 0) {
         definition = item_make_shortbow();
+    } else if (strcmp(item->name, "Quarryman's Bow") == 0) {
+        definition = item_make_quarry_bow();
     } else if (strcmp(item->name, "Longbow") == 0) {
         definition = item_make_longbow();
     } else if (strcmp(item->name, "Crossbow") == 0) {
@@ -884,6 +886,17 @@ Item item_make_stone_warhammer(void) {
     item.max_hp_bonus = 30;
     item.value = 1000;
     set_weapon_metadata(&item, WEAPON_FAMILY_HAMMER, WEAPON_HANDS_TWO, ITEM_RARITY_RARE, ITEM_CLASS_ALL, ITEM_VISUAL_STONE_WARHAMMER);
+    return item;
+}
+
+Item item_make_quarry_bow(void) {
+    Item item = item_make_bow();
+    snprintf(item.name, sizeof(item.name), "Quarryman's Bow");
+    item.attack_bonus = 9;
+    item.range = 6;
+    item.max_hp_bonus = 20;
+    item.value = 1000;
+    set_weapon_metadata(&item, WEAPON_FAMILY_BOW, WEAPON_HANDS_TWO, ITEM_RARITY_RARE, ITEM_CLASS_ROGUE, ITEM_VISUAL_LONGBOW);
     return item;
 }
 

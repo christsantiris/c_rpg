@@ -1,5 +1,6 @@
 #include "prism_sovereign.h"
 #include "stonewake.h"
+#include "quarry_quest.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -323,7 +324,7 @@ void prism_sovereign_restore_reward(GameState *g) {
     for (int y = room->y; y < room->y + room->h; y++) {
         for (int x = room->x; x < room->x + room->w; x++) {
             if (reliquary(tile_at(g, x, y))) {
-                if (!g->prism_sovereign_reward_pending) {
+                if (!g->prism_sovereign_reward_pending && g->quarry_potion != QUARRY_POTION_PENDING) {
                     set_tile(g, x, y, tile_at(g, x, y) == TILE_PRISM_PAVED_RELIQUARY ? TILE_GLASSDEEP_RUIN : TILE_GLASSDEEP_FLOOR);
                 } else {
                     cache = 1;
@@ -331,7 +332,7 @@ void prism_sovereign_restore_reward(GameState *g) {
             }
         }
     }
-    if (cache || !g->prism_sovereign_reward_pending) {
+    if (cache || (!g->prism_sovereign_reward_pending && g->quarry_potion != QUARRY_POTION_PENDING)) {
         return;
     }
     int bx = -1;
@@ -349,7 +350,7 @@ void prism_sovereign_restore_reward(GameState *g) {
     }
     if (bx >= 0) {
         set_tile(g, bx, by, tile_at(g, bx, by) == TILE_GLASSDEEP_RUIN ? TILE_PRISM_PAVED_RELIQUARY : TILE_PRISM_RELIQUARY);
-        push_message(g, "Quarry Colossus rewards wait in the quarry strongbox. Open with Interact, then Pick Up the released loot.");
+        push_message(g, g->quarry_potion == QUARRY_POTION_PENDING ? "The quarry strongbox holds a potion choice. Use Interact beside it or Pick Up on it." : "Your previously earned Colossus rewards wait in the quarry strongbox.");
     }
 }
 
@@ -362,7 +363,7 @@ static TileType interaction_at(const GameState *g, int *x, int *y, int pickup) {
         *x = g->player.x + offsets[n][0];
         *y = g->player.y + offsets[n][1];
         TileType tile = tile_at(g, *x, *y);
-        if ((reliquary(tile) && g->prism_sovereign_reward_pending) || (!pickup && reflector(tile))) {
+        if ((reliquary(tile) && (g->prism_sovereign_reward_pending || g->quarry_potion == QUARRY_POTION_PENDING)) || (!pickup && reflector(tile))) {
             return tile;
         }
     }
@@ -383,6 +384,9 @@ static int interact_at(GameState *g, int pickup) {
         return 0;
     }
     if (reliquary(tile)) {
+        if (quarry_reward_interact(g, pickup)) {
+            return 1;
+        }
         for (int flag = PRISM_ROBES_PENDING; flag <= PRISM_POTION_PENDING; flag <<= 1) {
             if ((g->prism_sovereign_reward_pending & flag) && g->inventory_count < MAX_INVENTORY) {
                 Item reward = flag == PRISM_ROBES_PENDING ? item_make_prismweave_robes() : item_make_strength_potion();

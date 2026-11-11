@@ -1,6 +1,7 @@
 #include "town_road_renderer.h"
 #include "../game/town_road.h"
 #include "../game/resurrection.h"
+#include "../game/quarry_quest.h"
 #include "npc_renderer.h"
 #include "info_panel.h"
 #include "sprites.h"
@@ -28,7 +29,7 @@ static void route_label(Renderer *r, const GameState *g, const Viewport *v, int 
     SDL_Rect backing = {px - 4, py - 4, width + 8, TTF_FontHeight(r->font_tiny) + 8};
     // Slide sideways off the Soulstone Warlock so no Oakhaven road label hides him.
     SDL_Rect warlock = {viewport_to_screen_x(v, SOULSTONE_WARLOCK_X) * TILE_SIZE, viewport_to_screen_y(v, SOULSTONE_WARLOCK_Y) * TILE_SIZE, TILE_SIZE, TILE_SIZE};
-    if (g->road_town == LOCATION_TOWN && SDL_HasIntersection(&backing, &warlock)) {
+    if (resurrection_available(g) && SDL_HasIntersection(&backing, &warlock)) {
         int east = warlock.x + TILE_SIZE + 6;
         int west = warlock.x - width - 6;
         px = (px + width / 2 >= warlock.x + TILE_SIZE / 2 && east <= right) || west < 8 ? east : west;
@@ -41,7 +42,23 @@ static void route_label(Renderer *r, const GameState *g, const Viewport *v, int 
     renderer_draw_text(r, text, px, py, (SDL_Color){241, 215, 147, 255}, r->font_tiny);
 }
 
+static void draw_shrine(Renderer *r, const GameState *g, const Viewport *v) {
+    if (r->soulstone_shrine_texture) {
+        SDL_Rect shrine = {viewport_to_screen_x(v, SOULSTONE_ART_X) * TILE_SIZE,
+            viewport_to_screen_y(v, SOULSTONE_ART_Y) * TILE_SIZE, 7 * TILE_SIZE, 5 * TILE_SIZE};
+        SDL_RenderCopy(r->sdl, r->soulstone_shrine_texture, NULL, &shrine);
+    }
+    npc_draw(r, viewport_to_screen_x(v, SOULSTONE_WARLOCK_X), viewport_to_screen_y(v, SOULSTONE_WARLOCK_Y), NPC_ART_WARLOCK, 0);
+    if (viewport_is_visible(v, SOULSTONE_RITUAL_X, SOULSTONE_RITUAL_Y)) {
+        route_label(r, g, v, SOULSTONE_X - 1, SOULSTONE_ART_Y + 5, quarry_road(g) ? "WESTERN SOULSTONE SHRINE" : "SOULSTONE SHRINE", 10);
+    }
+}
+
 void draw_town_road(Renderer *r, const GameState *g, const Viewport *v) {
+    if (quarry_road(g)) {
+        draw_shrine(r, g, v);
+        return;
+    }
     if (g->location != LOCATION_TOWN_ROAD) {
         return;
     }
@@ -68,12 +85,7 @@ void draw_town_road(Renderer *r, const GameState *g, const Viewport *v) {
                 viewport_to_screen_y(v, OAKHAVEN_FERRY_ART_Y) * TILE_SIZE, 7 * TILE_SIZE, 6 * TILE_SIZE};
             SDL_RenderCopy(r->sdl, r->broken_ferry_texture, NULL, &ferry);
         }
-        if (r->soulstone_shrine_texture) {
-            SDL_Rect shrine = {viewport_to_screen_x(v, SOULSTONE_ART_X) * TILE_SIZE,
-                viewport_to_screen_y(v, SOULSTONE_ART_Y) * TILE_SIZE, 7 * TILE_SIZE, 5 * TILE_SIZE};
-            SDL_RenderCopy(r->sdl, r->soulstone_shrine_texture, NULL, &shrine);
-        }
-        npc_draw(r, viewport_to_screen_x(v, SOULSTONE_WARLOCK_X), viewport_to_screen_y(v, SOULSTONE_WARLOCK_Y), NPC_ART_WARLOCK, 0);
+        draw_shrine(r, g, v);
     }
     SDL_Rect destination = {viewport_to_screen_x(v, TOWN_SPRITE_X) * TILE_SIZE,
         viewport_to_screen_y(v, TOWN_SPRITE_Y) * TILE_SIZE, TOWN_SPRITE_W * TILE_SIZE, TOWN_SPRITE_H * TILE_SIZE};
@@ -86,9 +98,6 @@ void draw_town_road(Renderer *r, const GameState *g, const Viewport *v) {
     TTF_SizeText(r->font_small, name, &width, NULL);
     renderer_draw_text(r, name, destination.x + (destination.w - width) / 2, destination.y - 28, label, r->font_small);
     if (g->road_town == LOCATION_TOWN) {
-        if (viewport_is_visible(v, SOULSTONE_RITUAL_X, SOULSTONE_RITUAL_Y)) {
-            route_label(r, g, v, SOULSTONE_X - 1, SOULSTONE_ART_Y + 5, "SOULSTONE SHRINE", 10);
-        }
         if (OAKHAVEN_FERRY_X >= v->cam_x && OAKHAVEN_FERRY_X < v->cam_x + v->tiles_x && g->player.y < TOWN_SPRITE_Y) {
             route_label(r, g, v, OAKHAVEN_FERRY_X, OAKHAVEN_FERRY_ART_Y - 1, "N: BROKEN FERRY / NO CROSSING", 0);
         }

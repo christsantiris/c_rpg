@@ -43,6 +43,7 @@
 #include "town_road.h"
 #include "regional_terrain.h"
 #include "stonewake.h"
+#include "quarry_quest.h"
 #include "landscapes.h"
 
 #include <stdlib.h>
@@ -1656,6 +1657,9 @@ void game_init(GameState *g) {
     g->frostfell_quest_encounters = 0;
     g->glassdeep_quest_state = 0;
     g->stonewake_warhammer_state = 0;
+    g->quarry_equipment = QUARRY_NONE;
+    g->quarry_potion = QUARRY_POTION_NONE;
+    g->quarry_prompt = QUARRY_MENU;
     g->glassdeep_quest_progress = 0;
     g->glassdeep_quest_encounters = 0;
     g->catacombs_quest_state = 0;
@@ -2604,7 +2608,7 @@ static int spawn_quest_guard(GameState *g, EnemyType type, int cx, int cy, const
     int slot = g->enemy_count;
     // Catacomb corpses may still revive; adding guards must preserve their slots.
     for (int i = 0; i < g->enemy_count; i++) {
-        if (g->location != LOCATION_CATACOMBS && !g->enemies[i].active && strcmp(g->enemies[i].name, name) != 0) {
+        if (g->location != LOCATION_CATACOMBS && g->location != LOCATION_GLASSDEEP && !g->enemies[i].active && strcmp(g->enemies[i].name, name) != 0) {
             slot = i;
             break;
         }
@@ -2713,7 +2717,7 @@ static const char *glassdeep_inscription(const GameState *g) {
 
 static void place_glassdeep_quest_encounter(GameState *g) {
     int bit = glassdeep_quest_bit(g);
-    if (!bit || !g->glassdeep_quest_state || !g->map.room_count) {
+    if (!bit || !g->map.room_count) {
         return;
     }
     int x = -1;
@@ -2801,6 +2805,10 @@ found:
         }
     }
     g->glassdeep_quest_encounters |= bit;
+}
+
+void game_refresh_quarry_stage(GameState *g) {
+    place_glassdeep_quest_encounter(g);
 }
 
 static void place_catacombs_quest_encounter(GameState *g) {
@@ -4003,7 +4011,7 @@ void game_leave_tavern(GameState *g) {
 }
 
 void game_enter_town2(GameState *g) {
-    if (!g->royal_reported_actions) {
+    if (!eastern_stillbury_hostile(g)) {
         g->last_town_visited = LOCATION_TOWN2;
     }
     int spawn_x;
@@ -4525,36 +4533,11 @@ void game_talk_to_selene(GameState *g) {
 }
 
 void game_talk_to_orin(GameState *g) {
-    if (g->location != LOCATION_GUILD || abs(g->player.x - GUILD_ORIN_X) > 1 || abs(g->player.y - GUILD_ORIN_Y) > 1) {
-        return;
-    }
-    g->dialogue_active = 1;
-    g->dialogue_x = GUILD_ORIN_X;
-    g->dialogue_y = GUILD_ORIN_Y;
-    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Surveyor Orin");
-    if (g->glassdeep_quest_state == 0) {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Stonewake Quarry lies south of Stillbury. Reclaim the West Winch on stage 2, Workshop Hoist on 3, and Main Gantry on 4. Return here for 120 gold and a Magic Stone Warhammer.");
-    } else if (g->glassdeep_quest_state == 1) {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Clear the machinery's guards on Stonewake stages 2, 3 and 4, then press A beside each mechanism to repair it. Cranes lower optional walkways; the permanent ramps always remain open. Return to me here in Rosemoor's Guild.");
-    } else {
-        if (g->glassdeep_quest_state == 2) {
-            g->glassdeep_quest_state = 3;
-            g->gold += GLASSDEEP_REWARD_GOLD;
-            g->score += GLASSDEEP_REWARD_SCORE;
-            g->stonewake_warhammer_state = 1;
-            push_message(g, "Completed: Reclaim the Quarry. 120 gold and 1,000 score awarded.");
-        }
-        stonewake_claim_warhammer(g);
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, g->stonewake_warhammer_state == 1 ?
-            "The quarry can work again. Your Magic Stone Warhammer is safe with me. Make room in your pack and speak to me again to collect it." :
-            "The quarry can work again! The runed stone warhammer strengthens its wielder: 30 maximum HP while equipped. The Guild thanks you.");
-    }
+    quarry_talk(g);
 }
 
 static int glassdeep_resonator_target(const GameState *g, int *x, int *y) {
-    if (!glassdeep_quest_bit(g) || !g->glassdeep_quest_state) {
+    if (!glassdeep_quest_bit(g)) {
         return 0;
     }
     const int offsets[5][2] = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}};
@@ -4615,8 +4598,8 @@ int game_interact_glassdeep(GameState *g) {
         snprintf(message, sizeof(message), "%s repaired!", glassdeep_resonator_name(g));
         push_message(g, message);
         if (g->glassdeep_quest_progress == 7) {
-            g->glassdeep_quest_state = 2;
-            push_message(g, "All three mechanisms repaired. Return to Surveyor Orin in Rosemoor's Guild.");
+            quarry_update(g);
+            push_message(g, g->glassdeep_quest_state >= 2 ? "Stonewake is restored. Orin waits at the western workers' camp." : "Machinery repaired. Defeat the Quarry Colossus on stage 5 to make Stonewake safe.");
         }
         return 1;
     }
@@ -4631,7 +4614,7 @@ int game_interact_glassdeep(GameState *g) {
 int game_glassdeep_prompt_active(const GameState *g) {
     int x;
     int y;
-    return g->dialogue_active && g->glassdeep_quest_state == 1 &&
+    return g->dialogue_active &&
         glassdeep_resonator_target(g, &x, &y) && x == g->dialogue_x && y == g->dialogue_y &&
         !(g->glassdeep_quest_progress & glassdeep_quest_bit(g)) &&
         strcmp(g->dialogue_speaker, glassdeep_resonator_name(g)) == 0;
@@ -4671,8 +4654,8 @@ int game_handle_glassdeep_prompt_key(GameState *g, int key, int repeat) {
     snprintf(message, sizeof(message), "%s restored!", glassdeep_resonator_name(g));
     push_message(g, message);
     if (g->glassdeep_quest_progress == 7) {
-        g->glassdeep_quest_state = 2;
-        push_message(g, "All three resonators shine. Return to Surveyor Orin in Rosemoor's Adventurer's Guild.");
+        quarry_update(g);
+        push_message(g, "Machinery repaired. Defeat the Quarry Colossus on stage 5, then return to Orin at the western camp.");
     }
     return 1;
 }
@@ -5602,7 +5585,7 @@ void game_enter_town_gate(GameState *g, Location town, int x, int y) {
     eastern_store(g);
     return_to_town(g, town);
     if (town_road_index(town) >= 0 && !(town == LOCATION_DAWNMERE && !g->dawnmere_liberated) &&
-        !(town == LOCATION_TOWN2 && g->royal_reported_actions)) {
+        !(town == LOCATION_TOWN2 && eastern_stillbury_hostile(g))) {
         g->last_town_visited = town;
     }
     g->approach_route = -1;
@@ -5808,7 +5791,7 @@ void game_open_town_portal(GameState *g) {
     g->portal_origin_tile = g->map.tiles[g->player.y][g->player.x];
     g->return_portal_town = town_road_index(g->last_town_visited) >= 0 ? g->last_town_visited : LOCATION_TOWN;
     if ((g->return_portal_town == LOCATION_DAWNMERE && !g->dawnmere_liberated) ||
-        (g->return_portal_town == LOCATION_TOWN2 && g->royal_reported_actions)) {
+        (g->return_portal_town == LOCATION_TOWN2 && eastern_stillbury_hostile(g))) {
         g->return_portal_town = g->dawnmere_liberated ? LOCATION_DAWNMERE : LOCATION_TOWN;
         g->last_town_visited = g->return_portal_town;
     }
@@ -6280,8 +6263,8 @@ static const QuestOffer quest_offers[] = {
     {"Steward Hadrin", LOCATION_TOWN_HALL, offsetof(GameState, emberforge_quest_state), 0, "Assigned: Reclaim the Emberforge. See your quest journal."},
     {"Quartermaster Brenna", LOCATION_INN, offsetof(GameState, frostfell_quest_state), 0,
         "Assigned: The Silent Expedition. Recover the journal on Frostfell stage 2 and rescue the surveyor on stage 4."},
-    {"Surveyor Orin", LOCATION_GUILD, offsetof(GameState, glassdeep_quest_state), 0,
-        "Assigned: Reclaim the Quarry. Repair machinery on Stonewake stages 2, 3 and 4."},
+    {"Surveyor Orin", LOCATION_APPROACH, offsetof(GameState, glassdeep_quest_state), 0,
+        "Assigned: Reclaim the Quarry. Repair machinery on stages 2, 3 and 4, defeat the Colossus on 5, and return to Orin at the western camp."},
     {"Brother Oswin", LOCATION_TOWN_HALL, offsetof(GameState, catacombs_quest_state), 0,
         "Assigned: Rest for the Forgotten. See your quest journal."},
     {"Tomas", LOCATION_JAIL, offsetof(GameState, jail_quest_state), 1,
@@ -6304,6 +6287,9 @@ static const QuestOffer *current_quest_offer(const GameState *g) {
         int place = g->location == offer->location;
         if (offer->state_offset == offsetof(GameState, tribute_quest_state)) {
             place = place || approach_sunscar_road(g);
+        }
+        if (offer->state_offset == offsetof(GameState, glassdeep_quest_state)) {
+            place = quarry_road(g);
         }
         if (offer->state_offset == offsetof(GameState, jarl_quest_state)) {
             place = garran_dialogue(g) && g->garran.prompt == GARRAN_QUEST;
@@ -6393,6 +6379,7 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
     }
     push_message(g, offer->message);
     update_oakhaven_boss_quests(g);
+    quarry_update(g);
     if (state == &g->rook_quest_state) {
         labyrinth_complete_quest(g);
     }

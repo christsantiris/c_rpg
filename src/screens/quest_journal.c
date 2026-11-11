@@ -1,4 +1,5 @@
 #include "../game/western_arc.h"
+#include "../game/quarry_quest.h"
 #include "quest_journal.h"
 #include "../game/royal_evidence.h"
 #include <SDL2/SDL.h>
@@ -101,10 +102,10 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
     },
     {
         "Reclaim the Quarry", "Surveyor Orin",
-        "Reclaim guarded machinery on quarry stages 2, 3 and 4.",
-        "Return and speak to Orin in Rosemoor's Adventurer's Guild.",
-        {"Repair West Winch", "Repair Workshop Hoist", "Repair Main Gantry"},
-        "Stonewake Quarry", {2, 3, 4}, GLASSDEEP_REWARD_GOLD, GLASSDEEP_REWARD_SCORE, "Magic Stone Warhammer"
+        "Restore three mechanisms and defeat the Quarry Colossus.",
+        "Return to Orin at the workers' camp on Stillbury's western quarry road.",
+        {"Repair West Winch", "Repair Workshop Hoist", "Repair Main Gantry", "Defeat the Quarry Colossus"},
+        "Stonewake Quarry", {2, 3, 4, 5}, GLASSDEEP_REWARD_GOLD, GLASSDEEP_REWARD_SCORE, "Choose warhammer, bow or robes"
     },
     {
         "Rest for the Forgotten", "Brother Oswin",
@@ -355,7 +356,7 @@ static int quest_progress(const GameState *g, int quest) {
         return g->frostfell_quest_progress;
     }
     if (quest == 10) {
-        return g->glassdeep_quest_progress;
+        return g->glassdeep_quest_progress | ((g->defeated_bosses & (1u << LOCATION_GLASSDEEP)) || g->glassdeep_quest_state >= 2 ? 8 : 0);
     }
 
     if (quest == 11) {
@@ -450,7 +451,7 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         entry->objective_count = definition->stages[3] ? 4 : definition->stages[2] ? 3 : definition->stages[1] ? 2 : 1;
         entry->reward_gold = definition->reward_gold;
         entry->reward_score = definition->reward_score;
-        entry->reward_item = definition->reward_item;
+        entry->reward_item = quest == 10 && g->quarry_equipment == QUARRY_LEGACY ? "Magic Stone Warhammer" : definition->reward_item;
         entry->state = state;
         for (int objective = 0; objective < 4; objective++) {
             entry->objectives[objective] =

@@ -234,6 +234,7 @@ Item item_make_enchanter_robes(void);
 Item item_make_archmage_robes(void);
 Item item_make_prismweave_robes(void);
 Item item_make_stone_warhammer(void);
+Item item_make_quarry_bow(void);
 Item item_make_crown_chapel_vestments(void);
 Item item_make_sunwarden_mantle(void);
 Item item_make_necromancer_cloak(void);

@@ -219,7 +219,7 @@ void garran_take_hit(GameState *g, const Enemy *e) {
         rogue->state = GARRAN_DEAD;
         rogue->x = -1;
         rogue->y = -1;
-        snprintf(message, sizeof(message), "Garran has died. Seek Soulstone Shrine north of Oakhaven for resurrection.");
+        snprintf(message, sizeof(message), "Garran has died. Seek a Soulstone Shrine north of Oakhaven or west of Stillbury.");
     } else {
         snprintf(message, sizeof(message), "%s hits Garran: %d dmg", e->name, damage);
     }
