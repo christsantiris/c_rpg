@@ -530,6 +530,9 @@ typedef struct {
     int glassdeep_quest_state;
     int glassdeep_quest_progress;
     int glassdeep_quest_encounters;
+    int quarry_equipment; // Pending choice, claimed equipment, or grandfathered warhammer.
+    int quarry_potion; // Pending choice, claimed potion, or grandfathered boss loot.
+    int quarry_prompt; // Persistent Orin/strongbox reward conversation.
     int catacombs_quest_state;
     int catacombs_quest_progress;
     int catacombs_quest_encounters;

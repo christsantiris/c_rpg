@@ -17,6 +17,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/aldric.h"
 #include "game/storm_mage.h"
 #include "game/garran.h"
+#include "game/quarry_quest.h"
 #include "game/party.h"
 #include "game/royal_evidence.h"
 #include "game/eastern_arc.h"
@@ -811,6 +812,9 @@ int main(int argc, char **argv) {
                     if (screen == SCREEN_PLAYING && stormbell_handle_key(&game, sc, event.key.repeat)) {
                         break;
                     }
+                    if (screen == SCREEN_PLAYING && quarry_handle_key(&game, sc, event.key.repeat)) {
+                        break;
+                    }
                     if (screen == SCREEN_PLAYING && garran_handle_key(&game, sc, event.key.repeat)) {
                         break;
                     }
@@ -1146,7 +1150,7 @@ int main(int argc, char **argv) {
                                     screen = SCREEN_SHOP;
                                     break;
                                 }
-                                if (eastern_talk(&game) || resurrection_talk(&game) || restoration_talk(&game) || town_life_talk(&game, 0)) {
+                                if (quarry_talk(&game) || eastern_talk(&game) || resurrection_talk(&game) || restoration_talk(&game) || town_life_talk(&game, 0)) {
                                     break;
                                 }
                                 if (western_talk(&game) || crown_quest_talk(&game) || stormbell_talk(&game) || elderwood_quest_talk(&game) || jail_talk_nearby(&game)) {
@@ -1391,7 +1395,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (western_convoy_prompt(&game) || game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || garran_dialogue(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (western_convoy_prompt(&game) || game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || garran_dialogue(&game) || (quarry_dialogue(&game) && game.quarry_prompt) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
                         break;
                     }
 
@@ -1652,7 +1656,7 @@ int main(int argc, char **argv) {
             entry_gate.active || enemy_shots.count > 0 || !(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) ||
             game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) ||
             game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) ||
-            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || garran_dialogue(&game) || restoration_prompt_active(&game) || resurrection_prompt_active(&game);
+            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || garran_dialogue(&game) || (quarry_dialogue(&game) && game.quarry_prompt) || restoration_prompt_active(&game) || resurrection_prompt_active(&game);
         if (update_stormwatch_clock(&game, &wind_clock, SDL_GetTicks(), wind_paused)) {
             viewport_center_on(&viewport, game.player.x, game.player.y);
             needs_redraw = 1;

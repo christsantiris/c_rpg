@@ -227,7 +227,7 @@ void storm_mage_take_hit(GameState *g, const Enemy *e) {
         mage->state = STORM_MAGE_DEAD;
         mage->x = -1;
         mage->y = -1;
-        snprintf(message, sizeof(message), "Soren has died. Seek Soulstone Shrine north of Oakhaven for resurrection.");
+        snprintf(message, sizeof(message), "Soren has died. Seek a Soulstone Shrine north of Oakhaven or west of Stillbury.");
     } else {
         snprintf(message, sizeof(message), "%s hits Soren: %d dmg", e->name, damage);
     }
@@ -271,7 +271,7 @@ int storm_mage_talk(GameState *g, int x, int y) {
         if (g->storm_mage.state == STORM_MAGE_FOLLOWING) {
             text = "You freed Soren! It is good to see him traveling in your party. The Matriarch could not extinguish his fire.";
         } else if (g->storm_mage.state == STORM_MAGE_DEAD) {
-            text = "I heard Soren has fallen. Soulstone Shrine, north of Oakhaven, can resurrect a lost companion.";
+            text = "I heard Soren has fallen. The shrines north of Oakhaven and west of Stillbury can resurrect a lost companion.";
         } else if (g->storm_mage.state == STORM_MAGE_WAITING) {
             text = "Soren is free and waiting at Dawnmere's Alehouse. Speak to him there if you want a mage to join your party.";
         } else if (g->stormwatch_defeated) {

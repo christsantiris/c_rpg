@@ -89,26 +89,47 @@ Operating a nearby crane during a windup drops/jars its load, interrupts the
 attack and opens a two-action recovery. A five-action interrupt cooldown
 prevents repeatedly toggling a crane from locking the boss down indefinitely.
 Warnings, recovery, phase, cooldown and wounds survive saves. The inherited
-strongbox reward remains Prismweave Robes and a Strength Potion; it waits if
-the pack is full. The quest warhammer is a separate reward from Orin.
+strongbox offers **one Potion of Strength or Potion of Intelligence**. Interact
+beside it or use Pick Up while standing on it, then press 1 or 2. A full pack
+leaves the choice pending. Quest equipment comes separately from Orin.
 
 ## Reclaim the Quarry
 
-Surveyor Orin in **Rosemoor's Adventurer's Guild** assigns this quest. Clear the
-guards and press Action beside the West Winch on stage 2, Workshop Hoist on 3
-and Main Gantry on 4. Each mechanism repairs directly; the old tone-selection
-puzzles are retired. The objectives can be completed in any order. The
-Colossus is optional for this quest.
+Surveyor Orin shelters with displaced quarry workers at the **workers’ camp on
+Stillbury’s western quarry road**, beside the western Soulstone Shrine. Stillbury
+needs Stonewake’s stone to repair its walls, roads and river landing. This is an
+optional Act 4 recovery adventure; it never opens a road to Rosemoor or the castle.
 
-Return to Orin for **120 gold, 1,000 score and Magic Stone Warhammer**:
+Accept with Y, or explore first. Clear each machine’s defenders and press Action
+beside the West Winch on stage 2, Workshop Hoist on 3 and Main Gantry on 4. The
+mechanisms repair directly; legacy maps retain their existing tone interactions.
+Repairs and the Colossus defeat count in either order, including before accepting
+the quest. Defeating every ordinary enemy is unnecessary.
 
-- +8 attack, rare, two handed, usable by all classes.
-- **+30 maximum HP while equipped**, shown in equipment comparison.
-- Equipping does not heal; unequipping clamps current HP to the reduced maximum.
-- Weapon swaps, save/load and Royal Guard confiscation apply/remove the bonus
-  consistently. No permanent base-HP increase is granted.
-- With a full pack, Orin holds the hammer until a later conversation. Currency
-  and equipment each pay once. The journal lists the equipment reward.
+**All three repairs plus the Colossus defeat complete the quest immediately** and
+release its active quest slot. Stillbury welcomes you again: civilians thank you,
+its checkpoints allow passage, and it becomes a safe Return to Town destination
+once revisited. The Crown’s historical record remains intact. Completion is
+permanent, including when ordinary enemies return during a later expedition.
+
+Return to Orin for **120 gold, 1,000 score and ONE equipment choice**:
+
+| Key | Reward | Properties |
+| --- | --- | --- |
+| 1 | Magic Stone Warhammer | +8 attack, +30 maximum HP; rare, two handed, all classes. |
+| 2 | Quarryman’s Bow | +9 attack, range 6, +20 maximum HP; rare, two handed, Rogue. |
+| 3 | Prismweave Robes | +3 defense, +35 maximum MP, 12% spell cost reduction; Mage. |
+
+Equipment bonuses apply only while equipped. Equipping does not heal; removing
+HP equipment clamps current HP to the new maximum. Esc defers an equipment or
+potion choice. Full packs leave the reward safely pending; choices, payment and
+claims survive saving, and selling or dropping a reward never grants another.
+
+The western shrine uses the same native shrine art, warlock and services as the
+Oakhaven shrine. It works **before any quarry objective**: 200 gold resurrects a
+fallen companion at full health; a level-10 Mage who knows Resurrection can use
+the ritual circle for 80 MP and half health. The warlock also sells the existing
+400-gold scroll. Both shrines remain available independently.
 
 The Three Great Hunts retains Shardwarden's group on stage 4, now in Stonewake.
 Existing hunt and quarry quest progress is retained.
@@ -146,6 +167,17 @@ identifiers retain their old numeric meanings for compatibility. Retired creatur
 IDs are reserved; save version 222 migrates actors to the approved shared types
 without resetting wounds, deaths, exploration, loot or quest progress.
 
-Crown Road North and the Catacombs structural overhaul are separate follow-up
-change sets. Stormwatch/eastern Dawnmere development remains a later design.
+Save version **249** adds persistent equipment and potion choices and their
+pending dialogue. Older completed quarry quests keep their completion, currency
+and earned warhammer; older boss victories keep their existing robes/potion loot
+and never gain a second strongbox choice. Active and cached machinery is repaired
+in place without resetting exploration, enemy wounds, loot or crane settings.
+Orin moves out of Rosemoor’s Guild. New rewards apply to unfinished objectives.
+Local saves are backed up before migration checks.
 
+The canonical [world map](world-map.png) marks the western shrine beside the local
+quarry/Labyrinth road. Its northern escarpment and sole northern route to the
+castle are unchanged. Act V remains provisional.
+
+
+See [quarry recovery validation and native screenshots](quarry-recovery/validation.md).

@@ -1,4 +1,5 @@
 #include "containers.h"
+#include "quarry_quest.h"
 #include "mangrove.h"
 #include "minotaur.h"
 #include "jail.h"
@@ -202,7 +203,13 @@ const char *containers_hint(const GameState *g) {
     int y;
     int kind;
     int opened;
-    return target(g, &x, &y, &kind, &opened) ? (opened ? "A: CLOSE CHEST" : "A: OPEN CHEST") : NULL;
+    if (target(g, &x, &y, &kind, &opened)) {
+        if (kind == TILE_PRISM_RELIQUARY && g->quarry_potion == QUARRY_POTION_PENDING) {
+            return "A: CHOOSE POTION";
+        }
+        return opened ? "A: CLOSE CHEST" : "A: OPEN CHEST";
+    }
+    return NULL;
 }
 
 static int pending(const GameState *g, int kind) {

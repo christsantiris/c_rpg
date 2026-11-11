@@ -5,6 +5,7 @@
 #include "garran.h"
 #include "elowen.h"
 #include "town_road.h"
+#include "quarry_quest.h"
 #include "combat_feedback.h"
 #include <SDL2/SDL.h>
 #include <stdlib.h>
@@ -14,7 +15,7 @@
 static const char *speaker = "Soulstone Warlock";
 
 int resurrection_available(const GameState *g) {
-    return g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_TOWN;
+    return (g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_TOWN) || quarry_road(g);
 }
 
 static int near_warlock(const GameState *g) {
@@ -51,6 +52,10 @@ static void move_landmark_loot(GameState *g, FloorItem *item) {
 }
 
 static void marker(GameState *g, int x, int y, TileType tile) {
+    if (g->map.tiles[y][x] == TILE_PORTAL) {
+        g->portal_origin_tile = tile;
+        return;
+    }
     g->map.tiles[y][x] = tile;
     for (int i = 0; i < g->floor_item_count; i++) {
         FloorItem *item = &g->floor_items[i];
@@ -78,6 +83,9 @@ void resurrection_place(GameState *g) {
     marker(g, SOULSTONE_RITUAL_X, SOULSTONE_RITUAL_Y, TILE_SOULSTONE_RITUAL);
     marker(g, SOULSTONE_X, SOULSTONE_Y, TILE_SOULSTONE_SHRINE);
     marker(g, SOULSTONE_WARLOCK_X, SOULSTONE_WARLOCK_Y, TILE_NPC_WARLOCK);
+    map_mark_explored(&g->map, SOULSTONE_X, SOULSTONE_Y);
+    map_mark_explored(&g->map, SOULSTONE_RITUAL_X, SOULSTONE_RITUAL_Y);
+    map_mark_explored(&g->map, SOULSTONE_WARLOCK_X, SOULSTONE_WARLOCK_Y);
     // Only relocate an actor if an older save stood on a newly solid landmark.
     if (!map_is_walkable(&g->map, g->player.x, g->player.y)) {
         g->player.x = SOULSTONE_RITUAL_X;
@@ -159,7 +167,7 @@ static const Spell *ritual_spell(const GameState *g) {
 static int spell_ready(GameState *g) {
     if (!resurrection_available(g) || g->player.x != SOULSTONE_RITUAL_X || g->player.y != SOULSTONE_RITUAL_Y ||
         g->map.tiles[SOULSTONE_RITUAL_Y][SOULSTONE_RITUAL_X] != TILE_SOULSTONE_RITUAL) {
-        push_message(g, "Resurrection requires the ritual circle at Soulstone Shrine, north of Oakhaven.");
+        push_message(g, "Resurrection requires a Soulstone ritual circle: north of Oakhaven or on Stillbury's western quarry road.");
         return 0;
     }
     if (g->player.player_class != CLASS_MAGE || g->player.level < RESURRECTION_LEVEL || !ritual_spell(g)) {

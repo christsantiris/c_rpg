@@ -14,6 +14,7 @@
 #define RIVER_NORTH_Y 7
 
 int eastern_town_combat(const GameState *g);
+int eastern_stillbury_hostile(const GameState *g);
 void eastern_init(GameState *g);
 void eastern_migrate(GameState *g);
 void eastern_reinforce(GameState *g);

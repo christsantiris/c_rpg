@@ -164,7 +164,9 @@ int town_life_talk(GameState *g, int greeting) {
     snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "%s", b->speaker);
     snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s",
         b->after && (g->defeated_bosses & b->victory) ? b->after : b->before);
-    if (b->town == LOCATION_TOWN2 && coastal_trade_restored(g)) {
+    if (b->town == LOCATION_TOWN2 && g->glassdeep_quest_state >= 2) {
+        snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s", "Stonewake's workers have returned, and our walls and roads can be repaired again. You restored Stillbury's quarry. You are welcome here, whatever the Crown once said of you.");
+    } else if (b->town == LOCATION_TOWN2 && coastal_trade_restored(g)) {
         snprintf(g->dialogue_text, sizeof(g->dialogue_text), "%s%s", g->location == LOCATION_BUTCHER ?
             "Ships are bringing supplies again! You freed the coast and restored its lights. Stillbury owes you a welcome." :
             "Coastal leather shipments are reaching us again. You have my thanks, and you're welcome in my shop.",

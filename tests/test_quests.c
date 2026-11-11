@@ -2,6 +2,7 @@
 #include "game/coastal_travel.h"
 #include "approach_checks.h"
 #include "test_utils.h"
+#include "game/quarry_quest.h"
 #include "../src/game/game.h"
 #include "../src/game/town_life.h"
 #include "../src/systems/save_load.h"
@@ -357,7 +358,7 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
         {"Nahla", LOCATION_ISLAND, &g->temple_treasure_state},
         {"Steward Hadrin", LOCATION_TOWN_HALL, &g->emberforge_quest_state},
         {"Quartermaster Brenna", LOCATION_INN, &g->frostfell_quest_state},
-        {"Surveyor Orin", LOCATION_GUILD, &g->glassdeep_quest_state},
+        {"Surveyor Orin", LOCATION_APPROACH, &g->glassdeep_quest_state},
         {"Brother Oswin", LOCATION_TOWN_HALL, &g->catacombs_quest_state},
         {"Marshal Veyra", LOCATION_TOWN_HALL, &g->watchfire_quest_state},
         {"Huntmaster Selene", LOCATION_GUILD, &g->hunt_quest_state},
@@ -383,6 +384,9 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
             *offers[(i + j) % count].state = 1;
         }
         g->location = offers[i].location;
+        if (offers[i].state == &g->glassdeep_quest_state) {
+            g->approach_route = APPROACH_QUARRY_ROAD;
+        }
         g->dialogue_active = 1;
         snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "%s", offers[i].speaker);
         g->level_cache[3].valid = 1;
@@ -474,7 +478,7 @@ void test_quest_offer_controls(void) {
         {game_talk_to_nahla, LOCATION_ISLAND, ISLAND_NAHLA_X, ISLAND_NAHLA_Y, &g.temple_treasure_state},
         {game_talk_to_steward, LOCATION_TOWN_HALL, HALL_STEWARD_X, HALL_STEWARD_Y, &g.emberforge_quest_state},
         {game_talk_to_brenna, LOCATION_INN, BRENNA_INN_X, BRENNA_INN_Y, &g.frostfell_quest_state},
-        {game_talk_to_orin, LOCATION_GUILD, GUILD_ORIN_X, GUILD_ORIN_Y, &g.glassdeep_quest_state},
+        {game_talk_to_orin, LOCATION_APPROACH, QUARRY_ORIN_X, QUARRY_ORIN_Y, &g.glassdeep_quest_state},
         {game_talk_to_oswin, LOCATION_TOWN_HALL, HALL_OSWIN_X, HALL_OSWIN_Y, &g.catacombs_quest_state}
     };
     for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
@@ -482,6 +486,9 @@ void test_quest_offer_controls(void) {
         game_init(&g);
         g.defeated_bosses = 1 << LOCATION_DUNGEON;
         g.location = cases[i].location;
+        if (cases[i].state == &g.glassdeep_quest_state) {
+            approach_enter_region(&g, APPROACH_QUARRY_ROAD);
+        }
         g.player.x = cases[i].x;
         g.player.y = cases[i].y + 1;
         if (cases[i].state == &g.tribute_quest_state) {
