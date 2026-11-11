@@ -402,7 +402,7 @@ void test_approaches(void) {
         }
     }
     ASSERT("every open tile across a wide town gate leads onto its approach", wide_gates);
-    ASSERT("Dragonspine is north of Ridgeshire and Ashen is behind the castle", town_approaches[12].area == LOCATION_DRAGONSPINE && town_approaches[12].gate_x == RIDGESHIRE_DRAGON_GATE_X && town_approaches[12].gate_y == 0 && town_approaches[13].area == LOCATION_ASHEN && town_approaches[13].town == LOCATION_CASTLE && town_approaches[13].gate_x == CASTLE_ASHEN_GATE_X && town_approaches[13].gate_y == 0);
+    ASSERT("Dragonspine is north of Ridgeshire and Ashen is west of Rosemoor", town_approaches[12].area == LOCATION_DRAGONSPINE && town_approaches[12].gate_x == RIDGESHIRE_DRAGON_GATE_X && town_approaches[12].gate_y == 0 && town_approaches[13].area == LOCATION_ASHEN && town_approaches[13].town == LOCATION_TOWN3 && town_approaches[13].gate_x == 0 && town_approaches[13].gate_y == ROSEMOOR_ASHEN_GATE_Y);
     for (int index = 12; index <= 13; index++) {
         const TownApproach *route = &town_approaches[index];
         int dragon = route->area == LOCATION_DRAGONSPINE;
@@ -469,7 +469,7 @@ void test_approaches(void) {
             ASSERT("relocated approaches save again without rotating a second time", save_game(loaded, slot) && load_game(g, slot) && g->player.x == px && g->player.y == py && g->approach_route == index);
             if (returning) {
                 walk_return_approach(g);
-                ASSERT("migrated return paths reach the new Ridgeshire gate", g->location == route->town && g->player.x == (dragon ? RIDGESHIRE_DRAGON_GATE_X : CASTLE_ASHEN_GATE_X) && g->player.y == 1);
+                ASSERT("migrated return paths reach the region's actual town gate", g->location == route->town && g->player.x == (dragon ? RIDGESHIRE_DRAGON_GATE_X : 1) && g->player.y == (dragon ? 1 : ROSEMOOR_ASHEN_GATE_Y));
             } else {
                 walk_town_approach(g);
                 ASSERT("migrated outbound paths still enter the original combat region", g->location == route->area);

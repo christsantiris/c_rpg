@@ -1,13 +1,14 @@
 # Castle of No Return
 
 The six-floor castle interior is implemented and ready for play testing.
-Reach the safe grounds through either Crown Road, approach the north castle
-entrance, and confirm entry. The south gate leads onto the northern road, past the Royal Catacombs
-and Elderwood toward Oakhaven.
+First reach the grounds from Stillbury through Blackwater Swamp, the Royal
+Catacombs and Crown Road North, then approach the castle entrance and confirm
+entry. The lateral Crown Roads reach Rosemoor and Ridgeshire for later
+adventures. The south gate provides retreat along the northern route to Stillbury.
 
 The grounds also contain the **Royal Dungeon** and a townsman who secretly reports
 you to the Royal Guards when spoken to with `T`. This one-time arrest begins
-an optional dungeon escape and prisoner escort to Ridgeshire; it does not reset
+an optional dungeon escape and prisoner escort to Stillbury; it does not reset
 castle victories or equipment. See [Royal Dungeon](royal-dungeon.md).
 
 The interior is drawn at the Crown Roads' 1.5× zoom: the camera shows about

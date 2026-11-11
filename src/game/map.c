@@ -1897,6 +1897,7 @@ void map_generate_dawnmere(Map *m, int *spawn_x, int *spawn_y) {
 void map_generate_town3(Map *m, int *spawn_x, int *spawn_y) {
     map_generate_town_square(m);
     map_place_town3_frost_gate(m);
+    map_place_town3_ashen_gate(m);
     for (int y = TOWN3_CROWN_GATE_Y - 2; y <= TOWN3_CROWN_GATE_Y + 2; y++) {
         m->tiles[y][TOWN_W - 1] = TILE_TOWN_EXIT;
     }
@@ -1941,7 +1942,6 @@ void map_generate_castle(Map *m, int *spawn_x, int *spawn_y) {
     }
     m->tiles[TOWN_H - 1][CROWNROAD_X] = TILE_TOWN_EXIT;
     jail_place_castle(m);
-    giants_place_castle_road(m);
     *spawn_x = CROWNROAD_X;
     *spawn_y = CASTLE_ROAD_Y;
 }

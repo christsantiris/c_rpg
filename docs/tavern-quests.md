@@ -195,8 +195,8 @@ In V2, Ilya has left Oakhaven and no one offers this quest until a later act
 places her. Existing quest progress is kept.
 
 Ilya waits alongside Elowen and Mara in **Oakhaven's Inn**. Press
-`T` beside her, then `Y` to accept the quest. Travel north through the mountains
-to Ridgeshire, then take its north gate to Dragonspine. Recover the golden goblet
+`T` beside her, then `Y` to accept the quest. Reach Castle Grounds through Stillbury's northern route, then follow Crown Road
+West to Ridgeshire and take its north gate to Dragonspine. Recover the golden goblet
 on stage 5 by standing on it and pressing `P` (Pick up), then return to Ilya in the Inn
 for one **Potion of Strength and 600 score**. Make room in your pack before
 turning it in. The potion permanently adds 1 base attack when consumed. Older
@@ -208,13 +208,13 @@ Tomas waits in the **Royal Dungeon on the castle grounds**. A seemingly ordinary
 townsman has the Royal Guards arrest you when spoken to with `T`; approaching or
 bumping into him does not trigger it. Speak to Tomas with `T` inside the cell,
 then press `Y` to accept. He reveals a hidden escape hatch and asks for help
-reaching Ridgeshire, because the tunnel's smugglers, spiders, and rats are too
+reaching Stillbury, because the tunnel's smugglers, spiders, and rats are too
 dangerous for him alone.
 
 Step onto the hatch to enter the single-level **Escape Tunnel**. Tomas follows
 your cleared route; press `Space` to spend a turn letting him catch up. Enemies
 still act while you wait. Reach the eastern exit together to emerge in central
-Ridgeshire and collect **100 gold and 750 score** automatically. Arrest and
+Stillbury and collect **100 gold and 750 score** automatically. Arrest and
 reward happen only once. See [Royal Dungeon](royal-dungeon.md).
 
 ## Quest expeditions

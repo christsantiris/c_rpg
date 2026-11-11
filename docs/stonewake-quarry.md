@@ -1,7 +1,8 @@
 # Stonewake Quarry
 
-Stonewake replaces Glassdeep Caverns on Stillbury's southern road, where grass
-gathers stone flecks and a few boulders near the quarry. Walk into its limestone
+Stonewake replaces Glassdeep Caverns on the northern branch of Stillbury's
+western bridge road, beside the optional Labyrinth. Cliffs block onward travel
+to Rosemoor; this is a local adventure for equipment and experience. Walk into its limestone
 quarry landmark to start stage 1; the rail ramps at the northern
 and southern boundaries use the standard area travel controls. The final exit
 returns to Stillbury's quarry approach even while the Quarry Colossus lives.

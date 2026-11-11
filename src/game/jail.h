@@ -31,6 +31,7 @@ int jail_gear_nearby(const GameState *g);
 int jail_recover_gear(GameState *g);
 void jail_migrate_castle(GameState *g);
 void jail_migrate_tunnel(GameState *g);
+void jail_migrate_destination(GameState *g, int version);
 int jail_talk_nearby(GameState *g);
 int jail_move_exit(GameState *g, int x, int y);
 void jail_follow(GameState *g);

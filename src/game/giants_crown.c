@@ -514,39 +514,20 @@ int giants_valid(const GameState *g) {
     return 1;
 }
 
-void giants_place_castle_road(Map *map) {
-    for (int x = CASTLE_ASHEN_GATE_X; x <= CROWNROAD_X; x++) {
-        map->tiles[CASTLE_ROAD_Y][x] = TILE_TOWN_PATH;
-    }
-    for (int y = 1; y < CASTLE_ROAD_Y; y++) {
-        map->tiles[y][CASTLE_ASHEN_GATE_X] = TILE_TOWN_PATH;
-    }
-    map->tiles[0][CASTLE_ASHEN_GATE_X] = TILE_TOWN_EXIT;
-}
-
 static void relocate_point(const Map *old, const Map *map, int *x, int *y) {
     int vertical = old->stairs_up_y == 0 || old->stairs_up_y == APPROACH_H - 1;
     int dx = vertical ? 0 : old->stairs_up_x == 0 ? 1 : -1;
     int dy = vertical ? old->stairs_up_y == 0 ? 1 : -1 : 0;
     int along = (*x - old->stairs_up_x) * dx + (*y - old->stairs_up_y) * dy;
     int side = (*y - old->stairs_up_y) * dx - (*x - old->stairs_up_x) * dy;
-    *x = map->stairs_up_x + side;
-    *y = map->stairs_up_y - along;
+    int new_vertical = map->stairs_up_y == 0 || map->stairs_up_y == APPROACH_H - 1;
+    int new_dx = new_vertical ? 0 : map->stairs_up_x == 0 ? 1 : -1;
+    int new_dy = new_vertical ? map->stairs_up_y == 0 ? 1 : -1 : 0;
+    *x = map->stairs_up_x + along * new_dx - side * new_dy;
+    *y = map->stairs_up_y + along * new_dy + side * new_dx;
 }
 
 void giants_migrate_geography(GameState *g) {
-    if (g->location == LOCATION_CASTLE) {
-        // Preserve dropped objects while exposing the new perimeter path.
-        giants_place_castle_road(&g->map);
-        for (int n = 0; n < g->floor_item_count; n++) {
-            FloorItem *item = &g->floor_items[n];
-            if (item->active && ((item->x == CASTLE_ASHEN_GATE_X && item->y < CASTLE_ROAD_Y) ||
-                (item->y == CASTLE_ROAD_Y && item->x >= CASTLE_ASHEN_GATE_X && item->x <= CROWNROAD_X))) {
-                item->underlying_tile = g->map.tiles[item->y][item->x];
-                g->map.tiles[item->y][item->x] = TILE_ITEM;
-            }
-        }
-    }
     if (g->location == LOCATION_APPROACH && g->approach_route == ASHEN_APPROACH_ROUTE) {
         Map old = g->map;
         FloorItem loot[MAX_FLOOR_ITEMS];

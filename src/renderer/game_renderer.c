@@ -255,7 +255,7 @@ static void draw_town_gates(Renderer *r, const GameState *g, const Viewport *v) 
         TownApproach gate;
         if (g->location == LOCATION_CASTLE) {
             if (side == TOWN_SIDE_NORTH) {
-                gate = (TownApproach){LOCATION_CASTLE, LOCATION_ASHEN, CASTLE_ASHEN_GATE_X, 0};
+                continue;
             } else if (side == TOWN_SIDE_SOUTH) {
                 gate = (TownApproach){LOCATION_CASTLE, LOCATION_CATACOMBS, CROWNROAD_X, TOWN_H - 1};
             } else {
@@ -2375,19 +2375,21 @@ static void draw_labyrinth_exits(Renderer *r, const GameState *g, const Viewport
 }
 
 static void draw_adventure_exits(Renderer *r, const GameState *g, const Viewport *v) {
-    if ((g->location != LOCATION_FOREST && g->location != LOCATION_MOUNTAINS && g->location != LOCATION_ELDERWOOD && g->location != LOCATION_SWAMP) || !r->font_tiny) {
+    if ((g->location != LOCATION_FOREST && g->location != LOCATION_MOUNTAINS && g->location != LOCATION_ELDERWOOD && g->location != LOCATION_SWAMP && g->location != LOCATION_ASHEN && g->location != LOCATION_ESCAPE_TUNNEL) || !r->font_tiny) {
         return;
     }
     int forest = g->location == LOCATION_FOREST;
     int elder = g->location == LOCATION_ELDERWOOD;
     int swamp = g->location == LOCATION_SWAMP;
-    TileType entrance = elder ? TILE_ELDERWOOD_ENTRANCE : swamp ? TILE_SWAMP_ENTRANCE : forest ? TILE_FOREST_ENTRANCE : TILE_MOUNTAIN_ENTRANCE;
-    TileType exit = elder ? TILE_ELDERWOOD_EXIT : swamp ? TILE_SWAMP_EXIT : forest ? TILE_FOREST_EXIT : TILE_MOUNTAIN_EXIT;
-    const char *name = elder ? "ELDERWOOD" : swamp ? "BLACKWATER" : forest ? "HAUNTED FOREST" : "GOBLIN MOUNTAINS";
-    const char *road = elder ? "ELDERWOOD" : swamp ? "BLACKWATER" : forest ? "FOREST" : "MOUNTAIN";
+    int tunnel = g->location == LOCATION_ESCAPE_TUNNEL;
+    int ashen = g->location == LOCATION_ASHEN;
+    TileType entrance = tunnel ? TILE_JAIL_HATCH : ashen ? TILE_ASHEN_ENTRANCE : elder ? TILE_ELDERWOOD_ENTRANCE : swamp ? TILE_SWAMP_ENTRANCE : forest ? TILE_FOREST_ENTRANCE : TILE_MOUNTAIN_ENTRANCE;
+    TileType exit = tunnel ? TILE_TUNNEL_EXIT : ashen ? TILE_ASHEN_EXIT : elder ? TILE_ELDERWOOD_EXIT : swamp ? TILE_SWAMP_EXIT : forest ? TILE_FOREST_EXIT : TILE_MOUNTAIN_EXIT;
+    const char *name = ashen ? "ASHEN HOLLOW" : elder ? "ELDERWOOD" : swamp ? "BLACKWATER" : forest ? "HAUNTED FOREST" : "GOBLIN MOUNTAINS";
+    const char *road = ashen ? "ROSEMOOR" : elder ? "ELDERWOOD" : swamp ? "BLACKWATER" : forest ? "FOREST" : "MOUNTAIN";
     const char *boss = elder ? "ELDERTHORN" : swamp ? "SWAMP DEMON" : forest ? "NECROMANCER" : "GOBLIN KING";
-    int depth = elder ? ELDERWOOD_DEPTH : swamp ? SWAMP_DEPTH : forest ? FOREST_DEPTH : MOUNTAIN_DEPTH;
-    int edge_w = elder ? ELDERWOOD_W : swamp ? SWAMP_MAP_W : MAP_W;
+    int depth = ashen ? ASHEN_DEPTH : elder ? ELDERWOOD_DEPTH : swamp ? SWAMP_DEPTH : forest ? FOREST_DEPTH : MOUNTAIN_DEPTH;
+    int edge_w = tunnel ? ESCAPE_TUNNEL_W : elder ? ELDERWOOD_W : ashen || swamp ? SWAMP_MAP_W : MAP_W;
     float zoom = game_camera_zoom(g);
     for (int y = v->cam_y; y < v->cam_y + v->tiles_y && y < MAP_H; y++) {
         for (int x = v->cam_x; x < v->cam_x + v->tiles_x && x < MAP_W; x++) {
@@ -2402,7 +2404,9 @@ static void draw_adventure_exits(Renderer *r, const GameState *g, const Viewport
             char label[64];
             char direction = x == 0 ? 'W' : x == edge_w - 1 ? 'E' : y == 0 ? 'N' : 'S';
             int stage = g->level + (onward ? 1 : -1);
-            if (onward && g->level == depth && !boss_gate_open(g, g->location)) {
+            if (tunnel) {
+                snprintf(label, sizeof(label), "%c: %s", direction, onward ? "STILLBURY" : "BARRED HATCH");
+            } else if (onward && g->level == depth && !boss_gate_open(g, g->location)) {
                 snprintf(label, sizeof(label), "%c: DEFEAT %s", direction, boss);
             } else if (stage < 1 || stage > depth) {
                 snprintf(label, sizeof(label), "%c: %s ROAD", direction, road);
@@ -2718,7 +2722,9 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_MOUNTAIN_FLOOR:
                     draw_mountain_floor(r, sx, sy, x, y); break;
                 case TILE_MOUNTAIN_WALL:
-                    if (g->location == LOCATION_APPROACH && approach_route(g) &&
+                    if (g->location == LOCATION_APPROACH && g->approach_route == APPROACH_QUARRY_ROAD && y <= 12) {
+                        draw_glassdeep_wall(r, sx, sy, x, y);
+                    } else if (g->location == LOCATION_APPROACH && approach_route(g) &&
                         (approach_route(g)->area == LOCATION_GLASSDEEP || approach_route(g)->area == LOCATION_GIANTS_CROWN ||
                         approach_route(g)->area == LOCATION_STORMWATCH)) {
                         // Stonewake, Giant's Peaks and Stormwatch roads scatter boulders rather than rock walls.
@@ -3737,7 +3743,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, TOWN_APOTHECARY_Y));
     }
     if (g->location == LOCATION_CASTLE) {
-        draw_town_road_sign(r, viewport_to_screen_x(v, 2), viewport_to_screen_y(v, 4), "ASHEN HOLLOW");
         jail_draw_building(r, v);
         draw_castle_front(r,
             viewport_to_screen_x(v, TOWN_MOAT_X),
@@ -3974,6 +3979,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             viewport_to_screen_y(v, TOWN_GUILD_Y - 1) * TILE_SIZE,
             label, r->font_tiny);
         draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), "FROSTFELL WASTES");
+        draw_town_road_sign(r, viewport_to_screen_x(v, 2), viewport_to_screen_y(v, ROSEMOOR_ASHEN_GATE_Y - 2), "ASHEN HOLLOW");
         TTF_SizeText(r->font_tiny, "CROWN ROAD EAST", &width, NULL);
         renderer_draw_text(r, "CROWN ROAD EAST",
             viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,

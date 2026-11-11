@@ -21,7 +21,7 @@ assigns **Recover Your Equipment** when anything was confiscated.
 The player appears in a barred stone cell with fellow prisoner **Tomas**;
 guards stand beyond the bars.
 Speak to Tomas with **T**, then **Y** to accept **Guide Tomas Home**. He
-explains that a loose flagstone conceals a tunnel to central Ridgeshire, but he
+explains that a loose flagstone conceals a tunnel to central Stillbury, but he
 cannot escape alone because smugglers, spiders, and rats occupy it. Accepting
 his offer reveals a visible ladder hatch in the cell's southeast corner. Before
 acceptance, the flagstone looks like ordinary floor and cannot enter the tunnel.
@@ -58,7 +58,7 @@ with an explanatory message and no mana cost. Ordinary Teleport remains usable,
 but cannot transport Tomas; he must walk and catch up.
 
 Reaching the eastern exit together brings both characters to the center of
-**Ridgeshire**. Tomas automatically gives **100 gold and 750 score**. His quest
+**Stillbury**. Tomas automatically gives **100 gold and 750 score**. His quest
 moves to the Completed journal tab. Speaking to him again, saving/loading, and
 returning to the informant cannot repeat the reward or arrest.
 
@@ -120,7 +120,7 @@ For play testing:
    conversation, save/load, and enter the tunnel to confirm it cannot duplicate.
 5. Try Teleport, Space, and an early exit attempt while Tomas is behind you.
 6. Save/load mid-escort; confirm enemy damage, loot, and Tomas's position persist.
-7. Reach central Ridgeshire together and check the reward and Completed journal.
+7. Reach central Stillbury together and check the reward and Completed journal.
 8. Return to the dungeon's front gate. Fight a guard, retreat, and save/load; verify
    that its damage and any dropped loot remain when reentering.
 9. Defeat all three guards, then interact with the chest with a full pack and
