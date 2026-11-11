@@ -116,8 +116,8 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
     {
         "Guide Tomas Home", "Tomas",
         "Escape through the hidden tunnel and escort Tomas home.",
-        "Tomas rewards you on arrival in Ridgeshire's town center.",
-        {"Find the secret tunnel", "Escort Tomas to Ridgeshire"},
+        "Tomas rewards you on arrival in Stillbury's town center.",
+        {"Find the secret tunnel", "Escort Tomas to Stillbury"},
         "Escape Tunnel", {1, 1, 0, 0}, ESCAPE_REWARD_GOLD, ESCAPE_REWARD_SCORE
     },
     {

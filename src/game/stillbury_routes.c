@@ -2,7 +2,10 @@
 #include "approach.h"
 #include "boss_gates.h"
 #include "elderwood.h"
+#include "giants_crown.h"
+#include "jail.h"
 #include "town_road.h"
+#include <stdlib.h>
 
 static void trail_tile(GameState *g, int x, int y) {
     g->map.tiles[y][x] = TILE_TOWN_PATH;
@@ -18,6 +21,18 @@ static void trail_tile(GameState *g, int x, int y) {
 void stillbury_routes_prepare(GameState *g) {
     if (g->location != LOCATION_APPROACH) {
         return;
+    }
+    if (g->approach_route == APPROACH_QUARRY_ROAD || g->approach_route == APPROACH_ELDERWOOD_ROAD || g->approach_route == APPROACH_COAST_ROAD) {
+        // The escarpment has no northern passage. Retile only solid scenery so
+        // existing trails, actors, loot and return anchors stay usable.
+        for (int y = 0; y <= 12; y++) {
+            for (int x = 0; x < APPROACH_W; x++) {
+                TileType tile = g->map.tiles[y][x];
+                if (y <= 8 + x / 4 % 5 && (tile == TILE_WALL || tile == TILE_FOREST_WALL || tile == TILE_ELDERWOOD_WALL || tile == TILE_ROAD_BANK)) {
+                    g->map.tiles[y][x] = TILE_MOUNTAIN_WALL;
+                }
+            }
+        }
     }
     if (northern_approach(g)) {
         if (boss_gate_open(g, LOCATION_SWAMP)) {
@@ -94,6 +109,51 @@ int stillbury_routes_travel(GameState *g, int x, int y) {
 }
 
 void stillbury_routes_migrate(GameState *g, int version) {
+    if (g->location == LOCATION_CASTLE) {
+        // Remove the retired Ashen spur without replacing the grounds or loot.
+        for (int y = 1; y < CASTLE_ROAD_Y; y++) {
+            if (g->map.tiles[y][CASTLE_ASHEN_GATE_X] == TILE_TOWN_PATH) {
+                g->map.tiles[y][CASTLE_ASHEN_GATE_X] = TILE_TOWN_FLOOR;
+            }
+        }
+        g->map.tiles[0][CASTLE_ASHEN_GATE_X] = TILE_WALL;
+        if (g->player.x == CASTLE_ASHEN_GATE_X && g->player.y == 0) {
+            g->player.y = 1;
+        }
+        for (int i = 0; i < g->floor_item_count; i++) {
+            FloorItem *item = &g->floor_items[i];
+            if (item->active && item->x == CASTLE_ASHEN_GATE_X && item->y < CASTLE_ROAD_Y) {
+                item->y = item->y ? item->y : 1;
+                item->underlying_tile = TILE_TOWN_FLOOR;
+                g->map.tiles[item->y][item->x] = TILE_ITEM;
+            }
+        }
+    }
+    if (version < 248) {
+        if (g->location == LOCATION_SWAMP_ROAD || g->location == LOCATION_HIGH_PASS) {
+            g->swamp_entry_town = LOCATION_TOWN2;
+            g->mountain_entry_town = LOCATION_TOWN;
+            approach_migrate_roads(g);
+        }
+        if (g->location == LOCATION_APPROACH && g->approach_route == 13) {
+            // The existing Ashen expedition and caches remain intact; only its
+            // safe approach now returns west through Rosemoor instead of the castle.
+            approach_refresh_entrance(g);
+        }
+        if (g->location == LOCATION_TOWN3) {
+            map_set_rosemoor_swamp_road(&g->map, 0);
+            map_place_town3_ashen_gate(&g->map);
+            for (int i = 0; i < g->floor_item_count; i++) {
+                FloorItem *item = &g->floor_items[i];
+                if (item->active && item->x == 0 && abs(item->y - ROSEMOOR_ASHEN_GATE_Y) <= 2) {
+                    item->underlying_tile = TILE_TOWN_EXIT;
+                }
+            }
+        }
+        if (g->location == LOCATION_TOWN_ROAD && g->road_town == LOCATION_TOWN3) {
+            town_road_migrate(g);
+        }
+    }
     if (g->swamp_cache[0].valid) {
         map_swamp_south_entry(&g->swamp_cache[0].map);
     }
@@ -161,7 +221,7 @@ void stillbury_routes_migrate(GameState *g, int version) {
         (g->portal_y == 1 && g->portal_origin_tile == TILE_ELDERWOOD_EXIT))) {
         g->portal_origin_tile = TILE_ELDERWOOD_FLOOR;
     }
-    if (version < 243) {
+    if (version < 248) {
         g->elderwood_entry_town = LOCATION_TOWN2;
         if (g->catacombs_entry_town == LOCATION_TOWN) {
             g->catacombs_entry_town = LOCATION_TOWN2;
@@ -230,4 +290,5 @@ void stillbury_routes_migrate(GameState *g, int version) {
         }
     }
     stillbury_routes_prepare(g);
+    jail_migrate_destination(g, version);
 }

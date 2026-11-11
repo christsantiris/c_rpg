@@ -1,7 +1,7 @@
 # Crown Road North
 
-The northern castle connection runs from Oakhaven through Elderwood Forest and
-Royal Catacombs, then across Crown Road North into Castle Grounds. Elderthorn
+The northern castle connection runs from Stillbury through Blackwater Swamp and
+the Royal Catacombs, then across Crown Road North into Castle Grounds. the Swamp Demon
 and the Grave Marshal gate their own sections from both directions; Crown Road
 North has no additional boss gate. See [boss gates](boss-gates.md). The castle's south
 gate enters the road from its northern end; its southern exit returns beside
@@ -60,6 +60,6 @@ to Town is a one-way escape to the last town entered, with no return portal.
 
 Save version **202** stores the road map, patrols, supplies, floor loot and
 entry side. Older saves gain the route without resetting regional victories,
-quests or equipment. Debug passage unlocks bypass the Elderwood and Catacombs
+quests or equipment. Debug passage unlocks bypass the Blackwater and Catacombs
 requirements without granting their victory credit.
 

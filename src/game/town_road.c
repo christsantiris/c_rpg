@@ -176,7 +176,7 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing) {
     if (town == LOCATION_TOWN && side == TOWN_SIDE_NORTH) {
         snprintf(message, sizeof(message), "Soulstone Shrine lies west of the path. North: broken ferry, no crossing. South: Oakhaven.");
     } else if (town == LOCATION_TOWN2) {
-        snprintf(message, sizeof(message), "Stillbury: north to Blackwater; east to Elderwood; west to Giant's Bridge and the quarry fork; south to the skiff.");
+        snprintf(message, sizeof(message), "Stillbury: north through Blackwater and Catacombs to Castle; east Elderwood and coast; west Bridge, quarry and maze; south docks.");
     } else if (town == LOCATION_DAWNMERE && !g->dawnmere_liberated) {
         snprintf(message, sizeof(message), "Dawnmere is occupied. West gate: town. Walk around: Saltwind north, Stormwatch Headland east.");
     } else {

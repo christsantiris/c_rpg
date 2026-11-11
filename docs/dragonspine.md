@@ -1,9 +1,8 @@
 # Dragonspine and High Pass
 
-The Goblin Mountains connect Dawnmere and Ridgeshire through a safe road.
-Enter the mountain cave from either town to climb five levels from the foot.
-Defeating the level-5 Goblin King opens the road north to Ridgeshire and south
-to Dawnmere. The summit exit returns onto that road.
+Ridgeshire is reached from Castle Grounds by Crown Road West. Its former
+southern mountain connection is closed; neither Dawnmere nor Stillbury's
+coastal adventures lead there.
 Ridgeshire's north gate leads along a safe approach through rock walls to
 Dragonspine, placing its snowy peaks at the northern edge of the world alongside
 Frostfell Wastes. See [road scenery](road-scenery.md).

@@ -3474,7 +3474,7 @@ void game_descend(GameState *g) {
     prepare_forest_arrival(g, 0);
     g->player.x = g->map.stairs_up_x;
     g->player.y = g->map.stairs_up_y;
-    if (g->location == LOCATION_SWAMP) {
+    if (g->location == LOCATION_SWAMP || g->location == LOCATION_ASHEN) {
         g->player.x += g->map.stairs_up_x == 0 ? 1 : 0;
         g->player.y -= g->map.stairs_up_y == SWAMP_MAP_H - 1 ? 1 : 0;
     }
@@ -3543,6 +3543,8 @@ void game_ascend(GameState *g) {
     g->player.y = g->map.stairs_down_y;
     if (g->location == LOCATION_SWAMP) {
         g->player.x--;
+    } else if (g->location == LOCATION_ASHEN) {
+        g->player.y++;
     }
     sync_temple_floor_state(g);
 }
@@ -3808,7 +3810,7 @@ void game_enter_ashen(GameState *g) {
         generate_active_level(g);
     }
     g->player.x = g->map.stairs_up_x;
-    g->player.y = g->map.stairs_up_y;
+    g->player.y = g->map.stairs_up_y - 1;
     g->dialogue_active = 0;
     push_message(g, "Lava heats the crossings. Diversion valves turn them into lasting basalt paths.");
     push_message(g, "Press the interact key (A by default) on or beside diversion valves, forge mechanisms, furnaces or sluices to use them.");
@@ -4382,7 +4384,7 @@ void game_talk_to_veyra(GameState *g) {
             "Our warning fires are dark. Restore the watchfires in Goblin Mountains 5, Ashen Hollow 3, and Dragonspine 3, in any order. Defeat their guards, then press A beside each. Return for 180 gold.");
     } else if (g->watchfire_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Watchfires: Mountains 5 %s; Ashen Hollow 3 %s; Dragonspine 3 %s. Ashen lies north of Castle Grounds. Defeat the guards, then press A beside each fire. Bosses are optional.",
+            "Watchfires: Mountains 5 %s; Ashen Hollow 3 %s; Dragonspine 3 %s. Reach Ashen from Rosemoor's west gate. Defeat the guards, then press A beside each fire. Bosses are optional.",
             g->watchfire_quest_progress & 1 ? "lit" : "dark", g->watchfire_quest_progress & 2 ? "lit" : "dark", g->watchfire_quest_progress & 4 ? "lit" : "dark");
     } else if (g->watchfire_quest_state == 2) {
         g->watchfire_quest_state = 3;
@@ -4407,7 +4409,7 @@ void game_talk_to_steward(GameState *g) {
     g->dialogue_y = HALL_STEWARD_Y;
     if (g->emberforge_quest_state == 0) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Ashen Hollow lies north of Castle Grounds. Recover the forge mechanism on stage 2, then repair the furnace on stage 4. Defeat the guards and press A beside each. Return for 100 gold.");
+            "Reach Ashen Hollow from Rosemoor's west gate. Recover the forge mechanism on stage 2, then repair the furnace on stage 4. Defeat the guards and press A beside each. Return for 100 gold.");
     } else if (g->emberforge_quest_state == 1) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN, g->emberforge_progress & EMBERFORGE_MECHANISM_RECOVERED ?
             "You have the mechanism. Defeat the Obsidian Guardians at the Emberforge on Ashen Hollow stage 4, "
@@ -5656,7 +5658,7 @@ void game_return_to_town(GameState *g) {
     } else if (g->location == LOCATION_DESERT) {
         destination = LOCATION_TOWN;
     } else if (g->location == LOCATION_ASHEN) {
-        destination = LOCATION_CASTLE;
+        destination = LOCATION_TOWN3;
     } else if (g->location == LOCATION_FROSTFELL || g->location == LOCATION_GIANTS_CROWN) {
         destination = LOCATION_TOWN3;
     } else if (g->location == LOCATION_DRAGONSPINE || g->location == LOCATION_HIGH_PASS) {

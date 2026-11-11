@@ -334,6 +334,23 @@ void jail_migrate_tunnel(GameState *g) {
     }
 }
 
+void jail_migrate_destination(GameState *g, int version) {
+    if (g->location == LOCATION_ESCAPE_TUNNEL) {
+        map_mark_explored(&g->map, 0, 14);
+        map_mark_explored(&g->map, ESCAPE_TUNNEL_W - 1, 14);
+    }
+    if (version >= 248 || !g->dialogue_active || strcmp(g->dialogue_speaker, "Tomas") != 0) {
+        return;
+    }
+    if (g->location == LOCATION_JAIL || g->location == LOCATION_ESCAPE_TUNNEL) {
+        // Refresh a pending offer without changing acceptance, escort progress
+        // or saved positions and enemy wounds along the tunnel.
+        jail_talk_nearby(g);
+    } else if (g->jail_quest_state == 3) {
+        g->dialogue_active = 0;
+    }
+}
+
 static void enter_tunnel(GameState *g) {
     g->location = LOCATION_ESCAPE_TUNNEL;
     g->level = 1;
@@ -354,16 +371,17 @@ static void enter_tunnel(GameState *g) {
     g->prisoner_x = 1;
     g->prisoner_y = 14;
     populate_tunnel(g);
+    jail_migrate_destination(g, 248);
     // Also supply older saves that accepted the escort before receiving a blade.
     give_smuggled_dagger(g);
-    push_message(g, "Tomas follows. Clear the tunnel east to Ridgeshire; Space lets him catch up.");
+    push_message(g, "Tomas follows. Clear the tunnel east to Stillbury; Space lets him catch up.");
     push_message(g, "The passage narrows deeper in; armed smugglers guard the long route home.");
     push_message(g, "Tomas pulls the hatch shut behind you so the guards cannot follow.");
 }
 
 int jail_prisoner_at(const GameState *g, int x, int y) {
     return ((g->location == LOCATION_ESCAPE_TUNNEL && g->jail_quest_state == 2) ||
-        (g->location == LOCATION_TOWN4 && g->jail_quest_state == 3)) && g->prisoner_x == x && g->prisoner_y == y;
+        (g->location == LOCATION_TOWN2 && g->jail_quest_state == 3)) && g->prisoner_x == x && g->prisoner_y == y;
 }
 
 int jail_talk_nearby(GameState *g) {
@@ -381,12 +399,12 @@ int jail_talk_nearby(GameState *g) {
         }
         give_smuggled_dagger(g);
         dialogue(g, "Tomas", g->jail_quest_state == 1 ?
-            "A flagstone hides a tunnel to central Ridgeshire. Smugglers, spiders, and rats make it too dangerous for me alone. Lead me home for a reward; I will reveal the hatch and follow you." :
-            "Step onto the revealed hatch to enter the tunnel. I will follow you to Ridgeshire. Clear the way; Space lets me catch up.", JAIL_PRISONER_X, JAIL_PRISONER_Y);
+            "A flagstone hides a tunnel to central Stillbury. Smugglers, spiders, and rats make it too dangerous for me alone. Lead me home for a reward; I will reveal the hatch and follow you." :
+            "Step onto the revealed hatch to enter the tunnel. I will follow you to Stillbury. Clear the way; Space lets me catch up.", JAIL_PRISONER_X, JAIL_PRISONER_Y);
         return 1;
     }
     if (jail_prisoner_at(g, g->prisoner_x, g->prisoner_y) && near(g->player.x, g->player.y, g->prisoner_x, g->prisoner_y)) {
-        dialogue(g, "Tomas", g->location == LOCATION_TOWN4 ? "Home at last. Thank you for guiding me out of that dungeon." :
+        dialogue(g, "Tomas", g->location == LOCATION_TOWN2 ? "Home at last. Thank you for guiding me out of that dungeon." :
             "I will stay behind you. Clear the way; Space lets me catch up if you move too far ahead.", g->prisoner_x, g->prisoner_y);
         return 1;
     }
@@ -440,17 +458,17 @@ int jail_move_exit(GameState *g, int x, int y) {
             game_refresh_debug_passages(g);
             return 1;
         }
-        push_message(g, "The hatch is barred from this side. The way out is east, to Ridgeshire.");
+        push_message(g, "The hatch is barred from this side. The way out is east, to Stillbury.");
         return 1;
     }
     if (x != ESCAPE_TUNNEL_W - 1 || y != 14) {
         return 0;
     }
     if (!g->debug_passages_unlocked && (g->jail_quest_state != 2 || !near(g->player.x, g->player.y, g->prisoner_x, g->prisoner_y))) {
-        push_message(g, "Wait for Tomas. You must reach Ridgeshire together.");
+        push_message(g, "Wait for Tomas. You must reach Stillbury together.");
         return 1;
     }
-    game_enter_town4(g);
+    game_enter_town2(g);
     g->level = 1;
     g->player.x = 20;
     g->player.y = 12;
@@ -466,7 +484,7 @@ int jail_move_exit(GameState *g, int x, int y) {
     g->jail_quest_state = 3;
     g->gold += ESCAPE_REWARD_GOLD;
     g->score += ESCAPE_REWARD_SCORE;
-    dialogue(g, "Tomas", "We made it to Ridgeshire! Take 100 gold as thanks for bringing me home. I can finally see my family again.", g->prisoner_x, g->prisoner_y);
+    dialogue(g, "Tomas", "We made it to Stillbury! Take 100 gold as thanks for bringing me home. I can finally see my family again.", g->prisoner_x, g->prisoner_y);
     push_message(g, "Completed: Guide Tomas Home. +100 gold, +750 score.");
     return 1;
 }

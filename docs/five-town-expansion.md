@@ -1,5 +1,10 @@
 # Five-town world expansion
 
+Historical implementation notes: the route diagrams below are superseded by
+[Act 4 geography](stillbury-act4-geography.md) and the canonical README atlas.
+Only Stillbury’s northern route first reaches Castle Grounds; Rosemoor and
+Ridgeshire branch from the castle. Later Act 5 story design remains provisional.
+
 Status: The five-town expansion and safe regional entrances are implemented.
 Elderwood Forest replaces the planned Windscar Highlands north of Oakhaven.
 Its five stages and the relocated Catacombs form a third route to Castle Grounds,

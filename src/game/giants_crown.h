@@ -25,7 +25,6 @@ int giants_tick(GameState *g, Enemy *enemy, int *damage);
 int giants_attack_marks(const Enemy *enemy, int x, int y);
 void giants_defeat(GameState *g);
 int giants_valid(const GameState *g);
-void giants_place_castle_road(Map *map);
 void giants_migrate_geography(GameState *g);
 
 #endif

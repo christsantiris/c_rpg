@@ -28,7 +28,7 @@ const TownApproach town_approaches[] = {
     {-1, -1, 0, 0}, // Retired garden route; saved indices remain stable.
     {LOCATION_TOWN2, LOCATION_MOUNTAINS, TOWN_W - 1, 12, 1},
     {LOCATION_TOWN4, LOCATION_DRAGONSPINE, RIDGESHIRE_DRAGON_GATE_X, 0},
-    {LOCATION_CASTLE, LOCATION_ASHEN, CASTLE_ASHEN_GATE_X, 0},
+    {LOCATION_TOWN3, LOCATION_ASHEN, 0, ROSEMOOR_ASHEN_GATE_Y},
     {LOCATION_CASTLE, LOCATION_CATACOMBS, CROWNROAD_X, TOWN_H - 1},
     {-1, -1, 0, 0}, // The dungeon is now local to Oakhaven.
     {-1, -1, 0, 0}, // Northern rapids have no crossing here.

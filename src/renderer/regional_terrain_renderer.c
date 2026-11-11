@@ -189,10 +189,15 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             line2 = "NORTH: QUARRY / LABYRINTH";
         }
         if (g->approach_route == APPROACH_ELDERWOOD_ROAD) {
-            line1 = "WEST: STILLBURY / EAST: COAST";
+            line1 = "EAST: COAST / NORTH: CLIFFS";
         }
         if (g->approach_route == APPROACH_COAST_ROAD) {
+            line1 = "COAST ENTRANCE / NORTH: CLIFFS";
             line2 = "WEST: ELDERWOOD / STILLBURY";
+        }
+        if (g->approach_route == APPROACH_QUARRY_ROAD) {
+            line1 = "LOCAL QUARRY / LABYRINTH";
+            line2 = "CLIFFS NORTH / STILLBURY SOUTH";
         }
         const BossGateRule *rule = route ? boss_gate_rule(route->area) : NULL;
         if (rule && rule->policy == BOSS_GATE_ROAD && !northern_approach(g)) {

@@ -2768,7 +2768,7 @@ static void resolve_player_action(GameState *g, Action a) {
                 g->score += g->level * 100;
             } else if (boss_gate_crossing(g, LOCATION_ASHEN)) {
                 game_return_to_approach(g);
-                push_message(g, "You return toward Castle Grounds through the volcanic pass.");
+                push_message(g, "You return toward Rosemoor through the volcanic pass.");
             }
             return;
         }

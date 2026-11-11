@@ -63,7 +63,7 @@ Stillbury's Tavern. His combat strength stays fixed for this version.
 
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/world-map.png?v=bf9e7f5b92a7)](docs/world-map.png?v=bf9e7f5b92a7)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=acdca7c9a496)](docs/world-map.png?v=acdca7c9a496)
 
 The V2 starting region contains Oakhaven, Goblin Mountains to its west, Haunted
 Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
@@ -93,8 +93,9 @@ reach the same town to begin Act 4. Attacking the tribute convoy, like liberatin
 Dawnmere, is reported to Stillbury. Defeating the Pharaoh or Jarl alone is not.
 See the [western quests and rewards](docs/act3-western.md).
 
-Stillbury's north gate leads through **Blackwater Swamp** toward the **Royal
-Catacombs** beneath the castle. Defeating the Swamp Demon opens the road to the
+Stillbury's north gate is the **only first approach to Castle Grounds**. It leads
+through **Blackwater Swamp**, the **Royal Catacombs**, and **Crown Road North**,
+the toughest of the three Crown Roads. Defeating the Swamp Demon opens the road to the
 Catacombs; defeating the Grave Marshal opens the final castle approach.
 The eastern gate leads through **Elderwood Forest**: defeating Elderthorn opens
 the onward road to **Sunken Coast**. **Ranger Tamsin**, near Stillbury's east
@@ -106,7 +107,9 @@ The western road forks before **Giant's Bridge**. Its northern branch reaches
 Neither the Jarl nor the Minotaur blocks the quarry branch. Rook offers
 **Slay the Minotaur** in Stillbury's Tavern; victory completes the quest
 immediately and reveals a prisoner register implicating Malakar's private office.
-See the [labyrinth arc](docs/labyrinth.md).
+The quarry and Labyrinth are local adventures for rewards and experience; cliffs
+prevent onward travel to Rosemoor. Northern cliffs also separate Elderwood and
+Sunken Coast from Ridgeshire. See the [labyrinth arc](docs/labyrinth.md).
 
 Mara introduces the Ruined Isle from Oakhaven's Inn without assigning a quest.
 Captain Rowan waits at **Stillbury's docks**, south of town beside the river
@@ -119,7 +122,12 @@ See the [coastal quest and travel notes](docs/coastal-quest.md).
 
 The atlas no longer labels the river mouth as Estuary. Geography south of the
 river stays fixed. Further Malakar evidence and the new island amulet remain
-separate story steps. The rest of the world is provisional context for later design.
+separate story steps. Rosemoor and Ridgeshire are reached from Castle Grounds through their respective
+Crown Roads. Rosemoor provides access to Frostfell and Ashen Hollow; Ridgeshire
+provides access to Dragonspine and Ironfang Mines. Ashen Hollow no longer has an
+entrance from Castle Grounds. The prison escape tunnel leads one way back to
+Stillbury. Act 5 stories and the castle finale remain provisional for later design.
+See [Act 4 geography](docs/stillbury-act4-geography.md).
 
 ## Controls
 

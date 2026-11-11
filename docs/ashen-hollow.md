@@ -1,11 +1,11 @@
 # Ashen Hollow
 
-A path around the western side of Castle Grounds reaches the north gate and
-the five-stage volcanic region behind the castle. Beyond the gate the approach
+Rosemoor's west gate leads to the five-stage volcanic region of Ashen Hollow.
+It has no entrance from Castle Grounds. Beyond the gate the approach
 road leaves green woods for charred dead trees, then basalt split by lava pools
 around the entrance; see [road scenery](road-scenery.md). Enter each stage from
 its south edge and advance through the north exit. The south entrance backtracks;
-on stage 1 it returns to the approach back to Castle Grounds' north gate. Ordinary
+on stage 1 it returns to the approach back to Rosemoor's west gate. Ordinary
 enemies do not block stage travel.
 
 The hollow is drawn at the Crown Roads' 1.5× zoom: the camera shows about 30 ×
@@ -17,7 +17,7 @@ smoke rolls east from the summit. The mountain fills a 7×9 tile footprint;
 save version 217 moves anyone saved on its newly raised summit onto the road.
 
 The Cinder Lord guards the last clearing on stage 5. That stage's north exit
-remains open while he lives and returns to the approach back to Castle Grounds
+remains open while he lives and returns to the approach back to Rosemoor
 without introducing another town. See [boss gates](boss-gates.md). The boss guarantees **Embercleaver** and the original **Potion of Strength**,
 granting 1 permanent base attack when consumed. Its defeat appears in the boss
 journal. Surviving ordinary enemies do not block the return exit after victory.
@@ -146,7 +146,7 @@ arena clocks.
 ## Reclaim the Emberforge
 
 Steward Hadrin assigns this one-time quest inside Ridgeshire's Town Hall,
-northeast of the crossroads. Ashen Hollow is reached through Castle Grounds' north gate. Approach him and press **T**. The town wants to
+northeast of the crossroads. Ashen Hollow is reached through Rosemoor's west gate. Approach him and press **T**. The town wants to
 reclaim the abandoned furnace that once supplied its miners and craftspeople.
 
 | Stage | Objective | Added defenders |
