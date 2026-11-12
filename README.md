@@ -64,7 +64,7 @@ Stillbury's Tavern. His combat strength stays fixed for this version.
 
 ## World Map
 
-[![Final world map of the Castle of No Return](docs/world-map.png?v=874f0934ebe2)](docs/world-map.png?v=874f0934ebe2)
+[![Final world map of the Castle of No Return](docs/world-map.png?v=4ab1f192db91)](docs/world-map.png?v=4ab1f192db91)
 
 The V2 starting region contains Oakhaven, Goblin Mountains to its west, Haunted
 Forest to its east, and Oakhaven's dungeon to its south. The north gate leads
@@ -130,7 +130,7 @@ See the [coastal quest and travel notes](docs/coastal-quest.md).
 The atlas no longer labels the river mouth as Estuary. Geography south of the
 river stays fixed. Further Malakar evidence and the new island amulet remain
 separate story steps. Rosemoor and Ridgeshire are reached from Castle Grounds through their respective
-Crown Roads. Rosemoor provides access to Frostfell and Ashen Hollow; Ridgeshire
+Crown Roads: **west to Rosemoor**, **east to Ridgeshire**. Rosemoor provides access to Frostfell and Ashen Hollow; Ridgeshire
 provides access to Dragonspine and Ironfang Mines. Ashen Hollow no longer has an
 entrance from Castle Grounds. The prison escape tunnel leads one way back to
 Stillbury. Act 5 stories and the castle finale remain provisional for later design.
@@ -194,6 +194,7 @@ inventory actions.
 - [Ashen Hollow](docs/ashen-hollow.md)
 - [Giant's Peaks](docs/giants-peaks.md)
 - [Stonewake Quarry](docs/stonewake-quarry.md)
+- [Act 5 navigation foundation](docs/act5-navigation.md)
 - [Complete enemy names and area mapping](docs/enemy-roster.md)
 - [Elderwood Forest and the northern road](docs/elderwood-forest.md)
 - [Royal Catacombs](docs/catacombs.md)

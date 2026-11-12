@@ -1,3 +1,4 @@
+#include "act5_routes.h"
 #include "coast_exits.h"
 #include <assert.h>
 #include "giants_crown.h"
@@ -2320,6 +2321,9 @@ void map_generate_frostfell(Map *m, int level) {
     }
     place_thin_ice_shortcuts(m, level);
     place_slick_ice_patches(m, level);
+    if (level == 1) {
+        act5_shape_entry(m, LOCATION_FROSTFELL);
+    }
 }
 
 void map_generate_forest_road(Map *m) {

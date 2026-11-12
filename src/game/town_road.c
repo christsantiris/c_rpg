@@ -72,6 +72,23 @@ int town_road_connection(Location town, TownSide side, TownApproach *connection)
     return 0;
 }
 
+void town_road_reveal_gates(GameState *g) {
+    if (g->location == LOCATION_CROWNROAD || g->location == LOCATION_CROWNROAD_WEST) {
+        map_mark_explored(&g->map, 0, CROWNROAD_Y);
+        map_mark_explored(&g->map, CROWNROAD_W - 1, CROWNROAD_Y);
+    } else if (g->location == LOCATION_CASTLE) {
+        map_mark_explored(&g->map, 0, CASTLE_ROAD_Y);
+        map_mark_explored(&g->map, TOWN_W - 1, CASTLE_ROAD_Y);
+    } else if (g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4) {
+        for (int side = 0; side < 4; side++) {
+            TownApproach route;
+            if (town_road_connection(g->location, side, &route)) {
+                map_mark_explored(&g->map, route.gate_x, route.gate_y);
+            }
+        }
+    }
+}
+
 void town_road_entrance(TownSide side, int *x, int *y) {
     *x = TOWN_ROAD_W / 2 + dx[side] * (TOWN_SPRITE_W / 2);
     *y = TOWN_ROAD_H / 2 + dy[side] * (TOWN_SPRITE_H / 2);
@@ -129,6 +146,13 @@ static void generate_town_road(GameState *g) {
             g->map.tiles[y][x] = TILE_TOWN_PATH;
         }
         g->map.tiles[ey][ex] = TILE_TOWN_ROAD_EXIT_NORTH + side;
+        if (g->road_town == LOCATION_TOWN3 || g->road_town == LOCATION_TOWN4) {
+            int gx;
+            int gy;
+            town_road_entrance(side, &gx, &gy);
+            map_mark_explored(&g->map, gx, gy);
+            map_mark_explored(&g->map, ex, ey);
+        }
     }
     resurrection_place(g);
 }

@@ -1244,7 +1244,11 @@ static void test_shared_town_gate_migration(void) {
         map_mark_explored(&original.map, px, py);
         int ok = save_game(&original, LEGACY_SLOT) && rewrite_save_version(LEGACY_SLOT, 154) && load_game(&loaded, LEGACY_SLOT);
         ASSERT("legacy shortcut gate and paving retire without trapping the saved player", ok && loaded.map.tiles[y][x] == TILE_WALL && loaded.player.x == px && loaded.player.y == py && map_is_walkable(&loaded.map, px, py));
-        ASSERT("retired gate migration preserves character progress and exploration", ok && loaded.player.hp == 17 && loaded.gold == original.gold && loaded.score == original.score && loaded.defeated_bosses == original.defeated_bosses && memcmp(loaded.map.explored, original.map.explored, sizeof(original.map.explored)) == 0);
+        int exploration_preserved = 1;
+        for (int byte = 0; byte < MAP_EXPLORED_BYTES; byte++) {
+            exploration_preserved &= (loaded.map.explored[byte] & original.map.explored[byte]) == original.map.explored[byte];
+        }
+        ASSERT("retired gate migration preserves character progress and exploration", ok && loaded.player.hp == 17 && loaded.gold == original.gold && loaded.score == original.score && loaded.defeated_bosses == original.defeated_bosses && exploration_preserved);
         ASSERT("loot on a retired gate and spur remains accessible with its metadata", ok && loaded.floor_items[0].active && loaded.floor_items[1].active && loaded.floor_items[0].x == px && loaded.floor_items[0].y == py && loaded.floor_items[0].underlying_tile == TILE_TOWN_FLOOR && loaded.floor_items[1].underlying_tile == TILE_TOWN_FLOOR && loaded.floor_items[1].item.sharpened && loaded.map.tiles[py][px] == TILE_ITEM);
         ASSERT("migrated town gates and loot survive another save/load", save_game(&loaded, MIGRATED_SLOT) && load_game(&original, MIGRATED_SLOT) && original.map.tiles[y][x] == TILE_WALL && original.floor_items[0].underlying_tile == TILE_TOWN_FLOOR && original.floor_items[1].item.sharpened);
         remove_test_save(LEGACY_SLOT);

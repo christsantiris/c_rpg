@@ -1,3 +1,4 @@
+#include "../game/act5_routes.h"
 #include "../game/labyrinth_arc.h"
 #include "../game/stillbury_routes.h"
 #include "../game/storm_mage.h"
@@ -2029,7 +2030,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 249);
+    cJSON_AddNumberToObject(root, "save_version", 250);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -7319,6 +7320,7 @@ int load_game(GameState *g, int slot) {
     garran_sync(g);
     elderwood_quest_migrate(g);
     game_repair_outdoor_entries(g);
+    act5_routes_migrate(g);
     town_road_refresh_oakhaven(g);
     aldric_place(g);
     if (save_version < 234 && g->aldric_party_state == ALDRIC_DEAD && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0) {

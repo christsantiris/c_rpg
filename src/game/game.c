@@ -1,3 +1,4 @@
+#include "act5_routes.h"
 #include "labyrinth_arc.h"
 #include "western_arc.h"
 #include "coast_exits.h"
@@ -3090,6 +3091,7 @@ static void place_hunt_encounter(GameState *g) {
 }
 
 void game_refresh_quest_encounters(GameState *g) {
+    act5_reveal_exits(g);
     western_prepare(g);
     elowen_prepare(g);
     if (g->location == LOCATION_DUNGEON) {
@@ -3132,6 +3134,7 @@ void game_refresh_quest_encounters(GameState *g) {
     }
     containers_restore(g);
     coast_exits_repair(g);
+    act5_reveal_exits(g);
 }
 
 static void generate_active_level(GameState *g) {
@@ -3215,6 +3218,7 @@ static void generate_active_level(GameState *g) {
     }
     place_hunt_encounter(g);
     coast_exits_repair(g);
+    act5_reveal_exits(g);
     game_update_level_progress(g);
 }
 
@@ -4210,9 +4214,10 @@ void game_enter_crownroad(GameState *g, Location road, int from_castle) {
     }
     g->floor_item_count = 0;
     g->dialogue_active = 0;
+    town_road_reveal_gates(g);
     push_message(g, road == LOCATION_CROWNROAD ?
-        "Crown Road East links Rosemoor to the Castle of No Return." :
-        "Crown Road West links Ridgeshire to the Castle of No Return.");
+        "Crown Road West links Rosemoor to the Castle of No Return." :
+        "Crown Road East links Ridgeshire to the Castle of No Return.");
 }
 
 static void save_crownroad_cache(GameState *g) {
@@ -4252,6 +4257,7 @@ void game_leave_crownroad(GameState *g, Location destination) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
+    town_road_reveal_gates(g);
     push_message(g, destination == LOCATION_CASTLE ?
         "You reach the grounds of the Castle of No Return." :
         (destination == LOCATION_TOWN4 ? "You return to Ridgeshire." : "You return to Rosemoor."));
@@ -5416,6 +5422,7 @@ static void return_to_town(GameState *g, Location destination) {
     }
     g->dialogue_active = 0;
     eastern_enter_town(g);
+    town_road_reveal_gates(g);
     game_recover_retired_items(g);
 }
 
@@ -6395,7 +6402,7 @@ void game_talk_to_royal_guard(GameState *g, int x, int y) {
     if (g->location == LOCATION_TOWN4) {
         if (y < TOWN4_CROWN_GATE_Y) {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "Traveler, Crown Road West is dangerous. Bandits, archers and "
+                "Traveler, Crown Road East is dangerous. Bandits, archers and "
                 "horsemen roam the route. Stay alert, but we will not stop you.");
         } else {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
@@ -6405,13 +6412,13 @@ void game_talk_to_royal_guard(GameState *g, int x, int y) {
         }
     } else if (y < TOWN3_CROWN_GATE_Y) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Halt, traveler. Beyond this gate Crown Road East swarms with "
+            "Halt, traveler. Beyond this gate Crown Road West swarms with "
             "bandits, archers and horsemen. Few who walk it return.");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "We will not stop you, but grow stronger first. Brave Blackwater "
             "Swamp, the labyrinth and the lands near OakHaven before "
-            "Crown Road East.");
+            "Crown Road West.");
     }
     push_message(g, "The Royal Guards recommend exploring other areas first.");
 }
