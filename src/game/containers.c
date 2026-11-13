@@ -15,6 +15,7 @@
 #include "prism_sovereign.h"
 #include "sun_guardian.h"
 #include "red_dragon.h"
+#include "ridgeshire.h"
 #include <stdlib.h>
 
 typedef struct {
@@ -379,6 +380,10 @@ int containers_pickup(GameState *g) {
             return jail_recover_gear(g);
         }
         c->rewards &= pending(g, c->kind);
+        if (c->kind == TILE_DRAGON_RELIQUARY_FLOOR && c->rewards && !g->ridgeshire.legacy_dragon) {
+            ridgeshire_armor_offer(g);
+            return 1;
+        }
         for (int bit = 1; bit <= 2; bit <<= 1) {
             if (!(c->rewards & bit)) {
                 continue;

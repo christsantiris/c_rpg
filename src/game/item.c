@@ -634,7 +634,13 @@ void item_apply_legacy_metadata(Item *item) {
 
 void item_apply_legacy_armor_metadata(Item *item) {
     Item definition = {0};
-    if (strcmp(item->name, "Leather Armor") == 0) {
+    if (strcmp(item->name, "Dragonplate") == 0) {
+        definition = item_make_dragonforged_armor(0);
+    } else if (strcmp(item->name, "Dragonscale Leathers") == 0) {
+        definition = item_make_dragonforged_armor(1);
+    } else if (strcmp(item->name, "Emberweave Robes") == 0) {
+        definition = item_make_dragonforged_armor(2);
+    } else if (strcmp(item->name, "Leather Armor") == 0) {
         definition = item_make_leather_armor();
     } else if (strcmp(item->name, "Chain Mail") == 0) {
         definition = item_make_chain_mail();
@@ -1245,5 +1251,26 @@ Item item_make_scroll_resurrection(void) {
     item.value = 200;
     item.class_mask = ITEM_CLASS_MAGE;
     item.rarity = ITEM_RARITY_RARE;
+    return item;
+}
+
+Item item_make_royal_ward_ring(void) {
+    Item item = make_accessory("Royal Ward Ring", ACCESSORY_FAMILY_RING, 1500);
+    item.rarity = ITEM_RARITY_RARE;
+    item.defense_bonus = 2;
+    item.max_hp_bonus = 25;
+    item.max_mp_bonus = 25;
+    return item;
+}
+
+Item item_make_dragonforged_armor(int choice) {
+    Item item = choice == 0 ? item_make_magic_plate() : choice == 1 ? item_make_shadow_armor() : item_make_archmage_robes();
+    const char *names[] = {"Dragonplate", "Dragonscale Leathers", "Emberweave Robes"};
+    int index = choice >= 0 && choice < 3 ? choice : 2;
+    snprintf(item.name, sizeof(item.name), "%s", names[index]);
+    item.defense_bonus = index == 0 ? 12 : index == 1 ? 8 : 5;
+    item.max_hp_bonus = index == 0 ? 60 : index == 1 ? 25 : 0;
+    item.max_mp_bonus = index == 2 ? 70 : 0;
+    item.value = 1800;
     return item;
 }

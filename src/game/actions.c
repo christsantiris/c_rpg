@@ -1,3 +1,4 @@
+#include "ridgeshire.h"
 #include "act5_routes.h"
 #include "labyrinth_arc.h"
 #include "western_arc.h"
@@ -3053,6 +3054,8 @@ void action_resolve_player(GameState *g, Action a) {
     eastern_update(g);
     western_update(g);
     quarry_update(g);
+    ridgeshire_sync(g);
+    ridgeshire_prepare(g);
     act5_reveal_exits(g);
     if (location != g->location || level != g->level || route != g->approach_route || road_town != g->road_town) {
         // Travel handlers return before the ordinary movement-facing update.

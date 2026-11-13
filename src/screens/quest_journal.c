@@ -1,3 +1,4 @@
+#include "../game/ridgeshire.h"
 #include "../game/western_arc.h"
 #include "../game/quarry_quest.h"
 #include "quest_journal.h"
@@ -73,9 +74,9 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
     {
         "The Dragon's Hoard", "Ilya",
         "Recover the golden goblet from Dragonspine's fifth stage.",
-        "Return and speak to Ilya in Oakhaven's Inn.",
+        "Return to Ilya in Ridgeshire's Tavern.",
         {"Recover the golden goblet", "", ""},
-        "Dragonspine", {5, 0, 0}, 0, 600, "Potion of Strength"
+        "Dragonspine", {5, 0, 0}, 300, 0
     },
     {
         "The King's Tribute", "Zara",
@@ -172,7 +173,7 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Read stage 2's orders; ride to stage 4's supply platform.",
         "Sink the weapons; take the Mine Boss's seal to Veyra in Ridgeshire.",
         {"Recover shipment orders", "Dump the suspended weapons", "Recover the Mine Boss's command seal"},
-        "Ironfang Mines", {2, 4, 5, 0}, WAR_REWARD_GOLD, WAR_REWARD_SCORE
+        "Ironfang Mines", {2, 4, 5, 0}, WAR_REWARD_GOLD, WAR_REWARD_SCORE, "Royal Ward Ring"
     },
     {
         "Giant's Crown", "Historian Liora",
@@ -212,11 +213,20 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "The Last Jarl holds the road to Stillbury under a royal charter.",
         "Defeat him to open Giant's Bridge. Completion is immediate; no camp return is needed.",
         {"Defeat the Last Jarl"}, "Giant's Peaks", {5}, 0, 0
+    },
+    {
+        "The Dragon's Binding", "Runewright Edric",
+        "Defeat the Red Dragon and recover its binding shackle.",
+        "Return to Edric at Ridgeshire's Runewright's Lodge for 350 gold.",
+        {"Defeat the Red Dragon; recover shackle"}, "Dragonspine", {5}, 350, 0
     }
 
 };
 
 static int quest_state(const GameState *g, int quest) {
+    if (quest == 26) {
+        return g->ridgeshire.dragon_quest;
+    }
     if (quest == 25) {
         return g->jarl_quest_state;
     }
@@ -231,7 +241,7 @@ static int quest_state(const GameState *g, int quest) {
         return g->crown_quest_state;
     }
     if (quest == 19) {
-        return g->war_machine_quest_state;
+        return g->war_machine_quest_state == 3 && g->ridgeshire.ring_reward == 1 ? 2 : g->war_machine_quest_state;
     }
     if (quest == 18) {
         return g->stormbell_quest_state;
@@ -292,6 +302,9 @@ static int quest_state(const GameState *g, int quest) {
 }
 
 static int quest_progress(const GameState *g, int quest) {
+    if (quest == 26) {
+        return g->ridgeshire.dragon_quest >= 2;
+    }
     if (quest == 25) {
         return g->giants_crown_defeated;
     }
@@ -440,6 +453,9 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         if (quest == 0) {
             entry->summary_line_2 = state == ELOWEN_HOME ? "Elowen is home at Oakhaven's Inn. Bram's reward has been collected." :
                 state == ELOWEN_RESCUED ? definition->summary_line_2 : "Bram waits at Oakhaven's Inn. Rescue Elowen from the Lich King.";
+        }
+        if (quest == 19 && g->war_machine_quest_state == 3 && g->ridgeshire.ring_reward == 1) {
+            entry->summary_line_2 = "Gold and score paid. Make room, then collect your Royal Ward Ring from Veyra.";
         }
         if (state == 3 && (quest == 21 || quest == 22)) {
             entry->summary_line_1 = quest == 21 ? "The Necromancer's royal writ bears the King's seal, granting protection to his work." :

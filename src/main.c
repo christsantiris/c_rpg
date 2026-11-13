@@ -1,3 +1,4 @@
+#include "game/ridgeshire.h"
 #include "game/western_arc.h"
 #include <SDL2/SDL.h>
 #include <stdio.h>
@@ -812,6 +813,17 @@ int main(int argc, char **argv) {
                     if (screen == SCREEN_PLAYING && stormbell_handle_key(&game, sc, event.key.repeat)) {
                         break;
                     }
+                    if (screen == SCREEN_PLAYING && ridgeshire_dialogue(&game) && game.ridgeshire.prompt == RIDGE_EDRIC_MENU && sc == SDL_SCANCODE_2) {
+                        if (!event.key.repeat) {
+                            game.dialogue_active = 0;
+                            shop_init(&shop_screen, SHOP_TYPE_RUNEWRIGHT, game.defeated_bosses, game.player.player_class);
+                            screen = SCREEN_SHOP;
+                        }
+                        break;
+                    }
+                    if (screen == SCREEN_PLAYING && ridgeshire_handle_key(&game, sc, event.key.repeat)) {
+                        break;
+                    }
                     if (screen == SCREEN_PLAYING && quarry_handle_key(&game, sc, event.key.repeat)) {
                         break;
                     }
@@ -1130,6 +1142,9 @@ int main(int argc, char **argv) {
                                 screen = SCREEN_HELP;
                                 break;
                             case CONTROL_TALK: {
+                                if (ridgeshire_talk(&game)) {
+                                    break;
+                                }
                                 int facing_x = game.player.x + game.player.last_dx;
                                 int facing_y = game.player.y + game.player.last_dy;
                                 if (garran_talk(&game, facing_x, facing_y)) {
@@ -1395,7 +1410,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (western_convoy_prompt(&game) || game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || garran_dialogue(&game) || (quarry_dialogue(&game) && game.quarry_prompt) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (western_convoy_prompt(&game) || game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || ridgeshire_dialogue(&game) || garran_dialogue(&game) || (quarry_dialogue(&game) && game.quarry_prompt) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
                         break;
                     }
 
@@ -1656,7 +1671,7 @@ int main(int argc, char **argv) {
             entry_gate.active || enemy_shots.count > 0 || !(SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) ||
             game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) ||
             game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) ||
-            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || garran_dialogue(&game) || (quarry_dialogue(&game) && game.quarry_prompt) || restoration_prompt_active(&game) || resurrection_prompt_active(&game);
+            game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || ridgeshire_dialogue(&game) || garran_dialogue(&game) || (quarry_dialogue(&game) && game.quarry_prompt) || restoration_prompt_active(&game) || resurrection_prompt_active(&game);
         if (update_stormwatch_clock(&game, &wind_clock, SDL_GetTicks(), wind_paused)) {
             viewport_center_on(&viewport, game.player.x, game.player.y);
             needs_redraw = 1;
@@ -1703,7 +1718,7 @@ int main(int argc, char **argv) {
             game.location == LOCATION_GUILD ||
             game.location == LOCATION_SPICE_SHOP;
         int in_town4 = game.location == LOCATION_TOWN4 || game.location == LOCATION_WORKSHOP ||
-            game.location == LOCATION_TOWN_HALL || game.location == LOCATION_MONASTERY;
+            game.location == LOCATION_TOWN_HALL || game.location == LOCATION_MONASTERY || game.location == LOCATION_RIDGESHIRE_TAVERN;
         int in_dawnmere = game.location == LOCATION_DAWNMERE || game.location == LOCATION_DAWNMERE_MERCHANT || game.location == LOCATION_ALEHOUSE;
         music_update(screen, is_town, in_town2, in_town3, in_town4, traveling, in_dawnmere, game.location == LOCATION_CASTLE);
 

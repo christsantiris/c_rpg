@@ -95,9 +95,9 @@ optional track and rock obstruction without granting the boss victory.
 
 ## Break the War Machine
 
-Talk to Marshal Veyra in Ridgeshire's Town Hall and press **2** to select this
-quest, then Y to accept. **1** returns to her Watchfires conversation. Both
-quests can be active together and retain separate progress and rewards.
+Talk to Marshal Veyra in Ridgeshire's Town Hall, then Y to accept. This is
+her default quest. The old Watchfires conversation is available only for
+previously accepted contracts in existing saves.
 
 Read the shipment orders on the desk in stage 2's northwest side office. In
 stage 4, repair the eastern rail and set the junction east. Ride the minecart
@@ -110,8 +110,15 @@ while the player stands still.
 
 Defeat the Goblin Mine Boss on stage 5 and recover his command seal from the
 coffer in his gallery. An existing victory counts. Return to Veyra and select
-the Ironfang topic for **160 gold and 1,000 score**, once, separately from the
-boss reward. Discoveries need no pack slots and retain credit before acceptance.
+the Ironfang topic for **400 gold, 1,000 score and a Royal Ward Ring**, once,
+separately from the boss reward. The all-class ring gives +2 defense and +25
+maximum HP/MP. Veyra holds it if the bag is full and never repeats the payment.
+All three discoveries complete the quest before acceptance if necessary.
+
+Malakar's private requisitions reveal royal steel diverted to goblins and a
+binding apparatus concealed from the King's household. The evidence needs no
+bag slot or quest acceptance. Oswin compares it with the Red Dragon's shackle
+and the royal crown inventory; see [Ridgeshire](ridgeshire-arc.md).
 
 Save version **207** adds the quest without regenerating old mines or changing
 cart position, track repairs, lamps, switches, explored terrain, wounded actors,

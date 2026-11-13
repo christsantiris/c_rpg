@@ -241,6 +241,8 @@ Item item_make_necromancer_cloak(void);
 Item item_make_gravekeeper_mantle(void);
 Item item_make_briarweave_cloak(void);
 Item item_make_dragon_scale_mantle(void);
+Item item_make_dragonforged_armor(int choice);
+Item item_make_royal_ward_ring(void);
 Item item_make_tidecaller_robes(void);
 Item item_make_buckler(void);
 Item item_make_kite_shield(void);

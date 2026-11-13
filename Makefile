@@ -75,6 +75,7 @@ sprites:
 	python3 tools/sprites/workshop.py
 	python3 tools/sprites/town_hall.py
 	python3 tools/sprites/local_buildings.py
+	python3 tools/sprites/runewright.py
 	python3 tools/sprites/towns.py
 	python3 tools/sprites/town_gate.py
 	python3 tools/sprites/loot_chests.py

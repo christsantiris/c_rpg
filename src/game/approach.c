@@ -62,6 +62,8 @@ const TownApproach *approach_route(const GameState *g) {
 const char *approach_area_name(Location area) {
     switch (area) {
         case LOCATION_GIANTS_CROWN: return "GIANT'S PEAKS";
+        case LOCATION_MONASTERY: return "RUNEWRIGHT'S LODGE";
+        case LOCATION_RIDGESHIRE_TAVERN: return "RIDGESHIRE TAVERN";
         case LOCATION_IRONFANG: return "IRONFANG MINES";
         case LOCATION_STORMWATCH: return "STORMWATCH HEADLAND";
         case LOCATION_DUNGEON: return "DUNGEON";

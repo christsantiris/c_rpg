@@ -1,4 +1,10 @@
-# Watchfires of Ridgeshire
+# Watchfires of Ridgeshire — legacy contract
+
+This contract is retired for new characters. Previously accepted contracts
+retain their objectives, progress and one-time payout. Veyra now offers
+[Break the War Machine](ridgeshire-arc.md); her previous-contract topic remains
+available only when Watchfires progress already exists. Routes described below
+are historical; use the current world roads.
 
 **Marshal Veyra** waits beside the planning table in **Ridgeshire's Town Hall**.
 Approach her and press **T**, then **Y** to accept this one-time quest. The town's

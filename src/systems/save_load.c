@@ -1,3 +1,4 @@
+#include "../game/ridgeshire.h"
 #include "../game/act5_routes.h"
 #include "../game/labyrinth_arc.h"
 #include "../game/stillbury_routes.h"
@@ -2018,8 +2019,37 @@ static int load_garran(const cJSON *root, GameState *g, int version) {
     return garran_valid(g);
 }
 
+static cJSON *serialize_ridgeshire(const GameState *g) {
+    cJSON *object = cJSON_CreateObject();
+    const RidgeshireArc *arc = &g->ridgeshire;
+    const char *keys[] = {"dragon_quest", "ring_reward", "dragon_armor", "crown_record", "prompt", "legacy_dragon"};
+    const int values[] = {arc->dragon_quest, arc->ring_reward, arc->dragon_armor, arc->crown_record, arc->prompt, arc->legacy_dragon};
+    for (int i = 0; i < 6; i++) {
+        cJSON_AddNumberToObject(object, keys[i], values[i]);
+    }
+    return object;
+}
+
+static int load_ridgeshire(const cJSON *root, GameState *g, int version) {
+    g->ridgeshire = (RidgeshireArc){0};
+    if (version < 251) {
+        return 1;
+    }
+    const cJSON *object = cJSON_GetObjectItem(root, "ridgeshire");
+    RidgeshireArc *arc = &g->ridgeshire;
+    const char *keys[] = {"dragon_quest", "ring_reward", "dragon_armor", "crown_record", "prompt", "legacy_dragon"};
+    int *values[] = {&arc->dragon_quest, &arc->ring_reward, &arc->dragon_armor, &arc->crown_record, &arc->prompt, &arc->legacy_dragon};
+    const int limits[] = {3, 2, RIDGE_EMBERWEAVE, 1, RIDGE_ARMOR, 1};
+    for (int i = 0; i < 6; i++) {
+        if (!stormwatch_number(object, keys[i], values[i]) || *values[i] < 0 || *values[i] > limits[i]) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int save_game(const GameState *g, int slot) {
-    if (!garran_valid(g) || !quarry_valid(g)) {
+    if (!garran_valid(g) || !quarry_valid(g) || !ridgeshire_valid(g)) {
         return 0;
     }
     if (!western_valid(g) || !eastern_valid(g) || !containers_valid(g) || !crown_quest_valid(g) || !war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
@@ -2030,7 +2060,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 250);
+    cJSON_AddNumberToObject(root, "save_version", 251);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -2274,6 +2304,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(root, "aldric_recruited", g->aldric_recruited);
     cJSON_AddItemToObject(root, "storm_mage", serialize_storm_mage(g));
     cJSON_AddItemToObject(root, "garran", serialize_garran(g));
+    cJSON_AddItemToObject(root, "ridgeshire", serialize_ridgeshire(g));
     cJSON_AddNumberToObject(root, "resurrection_prompt", g->resurrection_prompt);
     cJSON_AddNumberToObject(root, "resurrection_target", g->resurrection_target);
     cJSON_AddNumberToObject(root, "dain_quest_state", g->dain_quest_state);
@@ -4381,7 +4412,7 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
-    if (!load_storm_mage(root, g, save_version) || !load_garran(root, g, save_version)) {
+    if (!load_storm_mage(root, g, save_version) || !load_garran(root, g, save_version) || !load_ridgeshire(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -4881,7 +4912,7 @@ int load_game(GameState *g, int slot) {
     g->defeated_bosses = defeated_bosses ? defeated_bosses->valueint : 0;
     const cJSON *evidence_seen = cJSON_GetObjectItem(root, "royal_evidence_seen");
     if (save_version >= 235 && (!cJSON_IsNumber(evidence_seen) || evidence_seen->valuedouble != evidence_seen->valueint ||
-        evidence_seen->valueint < 0 || evidence_seen->valueint > 63 || (evidence_seen->valueint & ~royal_evidence_found(g)))) {
+        evidence_seen->valueint < 0 || evidence_seen->valueint > 511 || (evidence_seen->valueint & ~royal_evidence_found(g)))) {
         cJSON_Delete(root);
         return 0;
     }
@@ -7321,6 +7352,11 @@ int load_game(GameState *g, int slot) {
     elderwood_quest_migrate(g);
     game_repair_outdoor_entries(g);
     act5_routes_migrate(g);
+    ridgeshire_migrate(g, save_version);
+    if (!ridgeshire_valid(g)) {
+        cJSON_Delete(root);
+        return 0;
+    }
     town_road_refresh_oakhaven(g);
     aldric_place(g);
     if (save_version < 234 && g->aldric_party_state == ALDRIC_DEAD && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0) {

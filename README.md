@@ -128,12 +128,18 @@ coastal trade, warming civilian reactions without clearing the Crown's record.
 See the [coastal quest and travel notes](docs/coastal-quest.md).
 
 The atlas no longer labels the river mouth as Estuary. Geography south of the
-river stays fixed. Further Malakar evidence and the new island amulet remain
-separate story steps. Rosemoor and Ridgeshire are reached from Castle Grounds through their respective
+river stays fixed. The new island amulet remains a separate story step. Rosemoor and Ridgeshire are reached from Castle Grounds through their respective
 Crown Roads: **west to Rosemoor**, **east to Ridgeshire**. Rosemoor provides access to Frostfell and Ashen Hollow; Ridgeshire
 provides access to Dragonspine and Ironfang Mines. Ashen Hollow no longer has an
 entrance from Castle Grounds. The prison escape tunnel leads one way back to
-Stillbury. Act 5 stories and the castle finale remain provisional for later design.
+Stillbury. Ridgeshire now has three local quests: Veyra’s **Break the War Machine**
+(400 gold and a Royal Ward Ring), Edric’s **The Dragon’s Binding** (350 gold),
+and Ilya’s **The Dragon’s Hoard** (300 gold). The Red Dragon separately offers
+one class-specific armor choice. Ironfang’s requisitions and the dragon’s
+shackle lead Archivist Oswin to evidence that Malakar controls the King.
+The Runewright’s Lodge sells spells and health/mana potions; the Tavern offers
+paid rest and local reward collection. See the [Ridgeshire arc](docs/ridgeshire-arc.md).
+Rosemoor’s story and the castle finale remain provisional for later design.
 See [Act 4 geography](docs/stillbury-act4-geography.md).
 
 ## Controls

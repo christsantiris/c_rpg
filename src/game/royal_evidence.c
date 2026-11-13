@@ -1,8 +1,17 @@
+#include "ridgeshire.h"
 #include "royal_evidence.h"
+#include "war_machine.h"
 #include <SDL2/SDL.h>
 #include <stdio.h>
 
 static const RoyalEvidence documents[] = {
+    {ROYAL_EVIDENCE_REQUISITIONS, "Malakar's Requisitions", "Recovered from Ironfang's side office",
+        "Divert royal steel to the goblin forces. Supply components for the royal binding apparatus. Send reports only to Malakar, Royal Arcanist; withhold copies from the King's household."},
+    {ROYAL_EVIDENCE_BINDING, "The Dragon's Runic Shackle", "Recovered after defeating the Red Dragon",
+        "The runes suppress another creature's will. Edric identifies the pattern described in Malakar's binding requisitions. The dragon's violence was directed by magic."},
+    {ROYAL_EVIDENCE_CROWN, "Royal Crown Inventory", "Examined by Archivist Oswin in Ridgeshire",
+        "Malakar commissioned runes for the King's ceremonial crown. Oswin recognizes a binding pattern. Compare the inventory with Ironfang's requisitions and the dragon's shackle to establish whether the crown suppresses the King's will."},
+
     {ROYAL_EVIDENCE_FUNDING, "Royal Payment Records", "Recovered from the Goblin King",
         "Royal Treasury: release gold and weapons to the Goblin King for raids on Oakhaven's caravans. Continue payment while his forces hold the western road closed. By order of the King."},
     {ROYAL_EVIDENCE_PROTECTION, "Royal Writ of Protection", "Recovered from the Necromancer",
@@ -20,7 +29,10 @@ static const RoyalEvidence documents[] = {
 };
 
 int royal_evidence_found(const GameState *g) {
-    return ((g->defeated_bosses & (1u << LOCATION_MOUNTAINS)) ? ROYAL_EVIDENCE_FUNDING : 0) |
+    return ((g->war_machine_progress & WAR_ORDERS) ? ROYAL_EVIDENCE_REQUISITIONS : 0) |
+        ((g->defeated_bosses & (1u << LOCATION_DRAGONSPINE)) ? ROYAL_EVIDENCE_BINDING : 0) |
+        (g->ridgeshire.crown_record ? ROYAL_EVIDENCE_CROWN : 0) |
+        ((g->defeated_bosses & (1u << LOCATION_MOUNTAINS)) ? ROYAL_EVIDENCE_FUNDING : 0) |
         ((g->defeated_bosses & (1u << LOCATION_FOREST)) ? ROYAL_EVIDENCE_PROTECTION : 0) |
         (g->dawnmere_liberated ? ROYAL_EVIDENCE_CONFISCATION : 0) |
         ((g->defeated_bosses & (1u << LOCATION_DESERT)) ? ROYAL_EVIDENCE_TRIBUTE : 0) |
@@ -30,8 +42,11 @@ int royal_evidence_found(const GameState *g) {
 
 int royal_evidence_count(const GameState *g) {
     int found = royal_evidence_found(g);
-    return !!(found & ROYAL_EVIDENCE_FUNDING) + !!(found & ROYAL_EVIDENCE_PROTECTION) + !!(found & ROYAL_EVIDENCE_CONFISCATION) +
-        !!(found & ROYAL_EVIDENCE_TRIBUTE) + !!(found & ROYAL_EVIDENCE_CHARTER) + !!(found & ROYAL_EVIDENCE_PRISONERS);
+    int count = 0;
+    for (int i = 0; i < (int)(sizeof(documents) / sizeof(documents[0])); i++) {
+        count += !!(found & documents[i].id);
+    }
+    return count;
 }
 
 const RoyalEvidence *royal_evidence_document(int id) {
@@ -54,6 +69,12 @@ const RoyalEvidence *royal_evidence_entry(const GameState *g, int index) {
 }
 
 const char *royal_evidence_conclusion(const GameState *g) {
+    if (g->ridgeshire.crown_record && (g->war_machine_progress & WAR_ORDERS) && (g->defeated_bosses & (1u << LOCATION_DRAGONSPINE))) {
+        return "Malakar's requisitions, the dragon's shackle and the crown inventory show that he controls the King through binding magic.";
+    }
+    if ((g->war_machine_progress & WAR_ORDERS) || (g->defeated_bosses & (1u << LOCATION_DRAGONSPINE))) {
+        return "Malakar's binding magic directs creatures and diverts royal supplies. Archivist Oswin in Ridgeshire can compare the evidence with the King's crown records.";
+    }
     if (royal_evidence_found(g) & ROYAL_EVIDENCE_PRISONERS) {
         return "Malakar's private office directed the disappearances under royal authority and kept the records from the royal court. What does the King know?";
     }

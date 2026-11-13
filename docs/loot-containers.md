@@ -19,3 +19,8 @@ Save version 209 stores chest states and released loot independently of the
 active floor's dropped-item buffer. Travel, portals, and save/load retain them.
 Older saves remain usable: previously searched supply chests start empty, and
 chests already removed by older versions stay collected.
+
+The Red Dragon's new reliquary follows the same open-then-pick-up controls.
+Picking up its released armor opens a three-class armor choice instead of
+automatically granting equipment. A full bag or Esc leaves the choice pending.
+Old saves retain their unclaimed Dragon Scale Mantle.

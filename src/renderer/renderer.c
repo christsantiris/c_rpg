@@ -98,7 +98,7 @@ void renderer_init(Renderer *r, SDL_Renderer *sdl, int screen_w, int screen_h) {
     const char *local_paths[LOCAL_BUILDING_TEXTURE_COUNT] = {
         "assets/images/bakery.bmp",
         "assets/images/butcher.bmp",
-        "assets/images/monastery.bmp",
+        "assets/images/runewright-lodge.bmp",
         "assets/images/spice-merchant.bmp",
         "assets/images/alehouse.bmp",
         "assets/images/goldsmith.bmp",

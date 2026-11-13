@@ -1,3 +1,4 @@
+#include "../game/ridgeshire.h"
 #include "../game/western_arc.h"
 #include "western_arc_renderer.h"
 #include "../game/coast_exits.h"
@@ -628,7 +629,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int quest_offer = game_quest_offer_active(g);
     int stormbell_prompt = stormbell_prompt_active(g);
     int shrine_prompt = resurrection_prompt_active(g);
-    int escort_dialogue = strcmp(g->dialogue_speaker, "Elowen") == 0 ||
+    int escort_dialogue = ridgeshire_dialogue(g) || strcmp(g->dialogue_speaker, "Elowen") == 0 ||
         garran_dialogue(g) || quarry_dialogue(g) ||
         strcmp(g->dialogue_speaker, STORM_MAGE_SPEAKER) == 0 ||
         (g->aldric_party_state == ALDRIC_FOLLOWING && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0);
@@ -682,14 +683,14 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     if (game_cain_dialogue_active(g)) {
         hint = "1: Tell me about Oakhaven\nEnter / Esc: Close";
     }
-    if (war_machine_dialogue(g)) {
+    if (war_machine_dialogue(g) && g->watchfire_quest_state) {
         hint = quest_offer ? "Y: Accept   N: Decline\n1: Watchfires   2: Break the War Machine" : "1: Watchfires   2: Break the War Machine";
     }
     char quest_limit_hint[160];
     if (game_quest_offer_at_limit(g)) {
         snprintf(quest_limit_hint, sizeof(quest_limit_hint), "Active quests: %d/%d. Finish quests to free a slot.\nN / Esc: Close%s",
             game_active_quest_count(g), MAX_ACTIVE_QUESTS,
-            war_machine_dialogue(g) ? "\n1: Watchfires   2: Break the War Machine" : "");
+            (war_machine_dialogue(g) && g->watchfire_quest_state) ? "\n1: Watchfires   2: Break the War Machine" : "");
         hint = quest_limit_hint;
     }
     if (western_convoy_prompt(g)) {
@@ -706,6 +707,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     }
     if (garran_dialogue(g) && (g->garran.prompt != GARRAN_QUEST || !quest_offer)) {
         hint = garran_hint(g);
+    }
+    if (ridgeshire_dialogue(g) && !quest_offer) {
+        hint = ridgeshire_hint(g);
     }
     if (quarry_dialogue(g) && g->quarry_prompt) {
         hint = "Number: Choose reward   Esc: Choose later";
@@ -3280,8 +3284,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     npc_draw(r, sx, sy, NPC_ART_MARA, 0);
                     break;
                 case TILE_NPC_STORM_GUIDE:
-                    draw_npc_ground(r, g, sx, sy, x, y, g->location == LOCATION_TOWN ? TILE_TOWN_PATH : TILE_TAVERN_FLOOR);
-                    npc_draw(r, sx, sy, g->location == LOCATION_TOWN ? NPC_ART_NERIS : NPC_ART_TOVAN, 0);
+                    draw_npc_ground(r, g, sx, sy, x, y, (g->location == LOCATION_TOWN || g->location == LOCATION_CASTLE) ? TILE_TOWN_PATH : TILE_TAVERN_FLOOR);
+                    npc_draw(r, sx, sy, (g->location == LOCATION_TOWN || g->location == LOCATION_CASTLE) ? NPC_ART_NERIS : NPC_ART_TOVAN, 0);
                     break;
                 case TILE_NPC_ROOK:
                     draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
@@ -4287,12 +4291,26 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         TTF_SizeText(r->font_tiny, "MARSHAL VEYRA", &veyra_width, NULL);
         renderer_draw_text(r, "MARSHAL VEYRA", viewport_to_screen_x(v, HALL_VEYRA_X) * TILE_SIZE + (TILE_SIZE - veyra_width) / 2,
             viewport_to_screen_y(v, HALL_VEYRA_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
-        renderer_draw_text(r, "STEWARD HADRIN", viewport_to_screen_x(v, HALL_STEWARD_X) * TILE_SIZE - 45,
-            viewport_to_screen_y(v, HALL_STEWARD_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+        if (g->map.tiles[HALL_STEWARD_Y][HALL_STEWARD_X] == TILE_NPC_STEWARD) {
+            renderer_draw_text(r, "STEWARD HADRIN", viewport_to_screen_x(v, HALL_STEWARD_X) * TILE_SIZE - 45,
+                viewport_to_screen_y(v, HALL_STEWARD_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+        }
         int width = 0;
-        TTF_SizeText(r->font_tiny, "BROTHER OSWIN", &width, NULL);
-        renderer_draw_text(r, "BROTHER OSWIN", viewport_to_screen_x(v, HALL_OSWIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+        TTF_SizeText(r->font_tiny, "ARCHIVIST OSWIN", &width, NULL);
+        renderer_draw_text(r, "ARCHIVIST OSWIN", viewport_to_screen_x(v, HALL_OSWIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, HALL_OSWIN_Y - 1) * TILE_SIZE, area_label_color(LOCATION_CATACOMBS), r->font_tiny);
+    }
+    if (g->location == LOCATION_RIDGESHIRE_TAVERN) {
+        int width = 0;
+        TTF_SizeText(r->font_tiny, "ILYA - DRAGON'S HOARD", &width, NULL);
+        renderer_draw_text(r, "ILYA - DRAGON'S HOARD", viewport_to_screen_x(v, RIDGE_ILYA_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, RIDGE_ILYA_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+    }
+    if (g->location == LOCATION_CASTLE && g->map.tiles[RENN_Y][RENN_X] == TILE_NPC_STORM_GUIDE) {
+        int width = 0;
+        TTF_SizeText(r->font_tiny, "COURIER RENN", &width, NULL);
+        renderer_draw_text(r, "COURIER RENN", viewport_to_screen_x(v, RENN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, RENN_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
     }
     if (g->watchfire_quest_state && (g->location == LOCATION_MOUNTAINS || g->location == LOCATION_ASHEN || g->location == LOCATION_DRAGONSPINE)) {
         for (int y = 0; y < MAP_H; y++) {

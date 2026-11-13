@@ -24,6 +24,7 @@ void test_labyrinth_arc(void);
 void test_stillbury_routes(void);
 void test_quarry_quest(void);
 void test_act5_routes(void);
+void test_ridgeshire(void);
 void test_coastal_quest(void);
 void test_storm_mage(void);
 void test_garran(void);
@@ -115,6 +116,7 @@ int main(void) {
     test_stillbury_routes();
     test_quarry_quest();
     test_act5_routes();
+    test_ridgeshire();
     test_coastal_quest();
     test_storm_mage();
     test_garran();

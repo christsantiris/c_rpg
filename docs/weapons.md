@@ -166,7 +166,14 @@ in melee.
 | Crown Chapel Vestments | +4 | Mage | Boss | 1,000 | +45 maximum MP, 15% cheaper spells; Royal Arcanist reward |
 | Necromancer's Cloak | +5 | Rogue | Boss | 450 | 8% evasion; Necromancer reward |
 | Tidecaller Robes | +3 | Mage | Boss | 500 | +30 maximum MP, 8% cheaper spells; Drowned Queen reward |
-| Dragon Scale Mantle | +4 | All | Boss | 1,400 | +20 maximum HP; Red Dragon reward |
+| Dragonplate | +12 | Warrior | Boss choice | 1,800 | +60 maximum HP |
+| Dragonscale Leathers | +8 | Rogue | Boss choice | 1,800 | +25 maximum HP, 15% evasion |
+| Emberweave Robes | +5 | Mage | Boss choice | 1,800 | +70 maximum MP, 20% cheaper spells |
+| Dragon Scale Mantle | +4 | All | Legacy | 1,400 | +20 maximum HP; retained for old Red Dragon victories |
+
+The Red Dragon offers one of the three dragonforged armors; it is not shop
+stock. Veyra's Royal Ward Ring is an all-class accessory granting **+2 defense,
++25 maximum HP and +25 maximum MP**. It follows the existing two-ring limit.
 
 Evasion is checked before damage is applied. Staff and robe casting discounts
 stack, up to a combined reduction of 50%.
