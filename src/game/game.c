@@ -1,3 +1,5 @@
+#include "ridgeshire.h"
+#include "act5_routes.h"
 #include "labyrinth_arc.h"
 #include "western_arc.h"
 #include "coast_exits.h"
@@ -1620,6 +1622,7 @@ void game_init(GameState *g) {
     g->aldric_recruited = 0;
     storm_mage_init(g);
     garran_init(g);
+    g->ridgeshire = (RidgeshireArc){0};
     g->resurrection_target = 0;
     g->resurrection_prompt = 0;
     g->dain_quest_state = 0;
@@ -2403,7 +2406,7 @@ static void spawn_mara_guardian(GameState *g) {
 
 static void place_dragon_treasure(GameState *g) {
     if (g->location != LOCATION_DRAGONSPINE ||
-        g->level != DRAGONSPINE_DEPTH || g->dragon_treasure_quest_state != 1) {
+        g->level != DRAGONSPINE_DEPTH || g->dragon_treasure_quest_state >= 2) {
         return;
     }
     Room *lair = &g->map.rooms[g->map.room_count - 1];
@@ -3090,6 +3093,9 @@ static void place_hunt_encounter(GameState *g) {
 }
 
 void game_refresh_quest_encounters(GameState *g) {
+    ridgeshire_sync(g);
+    ridgeshire_prepare(g);
+    act5_reveal_exits(g);
     western_prepare(g);
     elowen_prepare(g);
     if (g->location == LOCATION_DUNGEON) {
@@ -3132,6 +3138,9 @@ void game_refresh_quest_encounters(GameState *g) {
     }
     containers_restore(g);
     coast_exits_repair(g);
+    ridgeshire_sync(g);
+    ridgeshire_prepare(g);
+    act5_reveal_exits(g);
 }
 
 static void generate_active_level(GameState *g) {
@@ -3215,6 +3224,9 @@ static void generate_active_level(GameState *g) {
     }
     place_hunt_encounter(g);
     coast_exits_repair(g);
+    ridgeshire_sync(g);
+    ridgeshire_prepare(g);
+    act5_reveal_exits(g);
     game_update_level_progress(g);
 }
 
@@ -4210,9 +4222,11 @@ void game_enter_crownroad(GameState *g, Location road, int from_castle) {
     }
     g->floor_item_count = 0;
     g->dialogue_active = 0;
+    town_road_reveal_gates(g);
+    ridgeshire_prepare(g);
     push_message(g, road == LOCATION_CROWNROAD ?
-        "Crown Road East links Rosemoor to the Castle of No Return." :
-        "Crown Road West links Ridgeshire to the Castle of No Return.");
+        "Crown Road West links Rosemoor to the Castle of No Return." :
+        "Crown Road East links Ridgeshire to the Castle of No Return.");
 }
 
 static void save_crownroad_cache(GameState *g) {
@@ -4252,6 +4266,8 @@ void game_leave_crownroad(GameState *g, Location destination) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     g->player.poison_turns = 0;
+    town_road_reveal_gates(g);
+    ridgeshire_prepare(g);
     push_message(g, destination == LOCATION_CASTLE ?
         "You reach the grounds of the Castle of No Return." :
         (destination == LOCATION_TOWN4 ? "You return to Ridgeshire." : "You return to Rosemoor."));
@@ -4364,6 +4380,7 @@ void game_enter_town_hall(GameState *g) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
+    ridgeshire_prepare(g);
     push_message(g, "Ridgeshire Town Hall. Press T beside an NPC to talk.");
 }
 
@@ -5416,6 +5433,8 @@ static void return_to_town(GameState *g, Location destination) {
     }
     g->dialogue_active = 0;
     eastern_enter_town(g);
+    town_road_reveal_gates(g);
+    ridgeshire_prepare(g);
     game_recover_retired_items(g);
 }
 
@@ -6176,41 +6195,6 @@ void game_talk_to_rowan(GameState *g) {
     }
 }
 
-static void prepare_quest_expedition(GameState *g, Location location) {
-    LevelCache *cache;
-    int *max_level;
-    int depth = MAX_REGION_DEPTH;
-    if (location == LOCATION_DUNGEON) {
-        cache = g->level_cache;
-        max_level = &g->max_level_reached;
-    } else if (location == LOCATION_FOREST) {
-        cache = g->forest_cache;
-        max_level = &g->max_forest_level_reached;
-    } else if (location == LOCATION_MOUNTAINS) {
-        cache = g->mountain_cache;
-        max_level = &g->max_mountain_level_reached;
-    } else if (location == LOCATION_SWAMP) {
-        cache = g->swamp_cache;
-        max_level = &g->max_swamp_level_reached;
-        depth = SWAMP_DEPTH;
-    } else if (location == LOCATION_DRAGONSPINE) {
-        cache = g->dragonspine_cache;
-        max_level = &g->max_dragonspine_level_reached;
-        depth = DRAGONSPINE_DEPTH;
-    } else {
-        cache = g->coast_cache;
-        max_level = &g->max_coast_level_reached;
-    }
-    for (int i = 0; i < depth; i++) {
-        cache[i].valid = 0;
-        cache[i].level_cleared = 0;
-    }
-    *max_level = 1;
-    if (g->portal_active && g->portal_location == location) {
-        g->portal_active = 0;
-    }
-}
-
 static void update_oakhaven_boss_quests(GameState *g) {
     if (g->alder_quest_state >= REGIONAL_CHAIN_BOSS_OFFERED &&
         g->alder_quest_state < REGIONAL_CHAIN_COMPLETE && (g->defeated_bosses & (1 << LOCATION_FOREST))) {
@@ -6233,6 +6217,8 @@ typedef struct {
 } QuestOffer;
 
 static const QuestOffer quest_offers[] = {
+    {RIDGE_DRAGON_SPEAKER, LOCATION_MONASTERY, offsetof(GameState, ridgeshire.dragon_quest), 0, "Assigned: The Dragon's Binding. Defeat the Red Dragon and return to Edric in Ridgeshire."},
+    {RIDGE_HOARD_SPEAKER, LOCATION_RIDGESHIRE_TAVERN, offsetof(GameState, dragon_treasure_quest_state), 0, "Assigned: The Dragon's Hoard. Bring the goblet to Ilya in Ridgeshire's Tavern."},
     {"Historian Liora", LOCATION_APPROACH, offsetof(GameState, crown_quest_state), 0,
         "Assigned: Giant's Crown. Recover the crown from the Last Jarl and deliver it to Edda outside Stillbury's western checkpoint."},
     {"Caravan Scout Garran", LOCATION_APPROACH, offsetof(GameState, jarl_quest_state), 0,
@@ -6258,7 +6244,6 @@ static const QuestOffer quest_offers[] = {
     {"Alder", LOCATION_TAVERN, offsetof(GameState, alder_quest_state), REGIONAL_CHAIN_BOSS_OFFERED, "Assigned: Defeat the Necromancer."},
     {"Captain Rowan", LOCATION_RIVER_CROSSING, offsetof(GameState, mara_quest_state), 0, "Assigned: Relight the Drowned Beacons. Return to Rowan at Stillbury's docks for your reward."},
     {"Rook", LOCATION_INN, offsetof(GameState, rook_quest_state), 0, "Assigned: Slay the Minotaur."},
-    {"Ilya", LOCATION_TAVERN, offsetof(GameState, dragon_treasure_quest_state), 0, "Assigned: The Dragon's Hoard."},
     {"Nahla", LOCATION_ISLAND, offsetof(GameState, temple_treasure_state), 0, "Quest assigned: The Buried Sun."},
     {"Steward Hadrin", LOCATION_TOWN_HALL, offsetof(GameState, emberforge_quest_state), 0, "Assigned: Reclaim the Emberforge. See your quest journal."},
     {"Quartermaster Brenna", LOCATION_INN, offsetof(GameState, frostfell_quest_state), 0,
@@ -6370,8 +6355,6 @@ int game_handle_quest_offer_key(GameState *g, int key, int repeat) {
         g->alder_wardens_rescued = 0;
     } else if (state == &g->mara_quest_state && (g->mara_beacons_lit & 7) == 7) {
         g->mara_quest_state = 2;
-    } else if (state == &g->dragon_treasure_quest_state) {
-        prepare_quest_expedition(g, LOCATION_DRAGONSPINE);
     } else if (state == &g->catacombs_quest_state) {
         catacombs_accept_quest(g);
     } else if (state == &g->jail_quest_state) {
@@ -6395,7 +6378,7 @@ void game_talk_to_royal_guard(GameState *g, int x, int y) {
     if (g->location == LOCATION_TOWN4) {
         if (y < TOWN4_CROWN_GATE_Y) {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "Traveler, Crown Road West is dangerous. Bandits, archers and "
+                "Traveler, Crown Road East is dangerous. Bandits, archers and "
                 "horsemen roam the route. Stay alert, but we will not stop you.");
         } else {
             snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
@@ -6405,13 +6388,13 @@ void game_talk_to_royal_guard(GameState *g, int x, int y) {
         }
     } else if (y < TOWN3_CROWN_GATE_Y) {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Halt, traveler. Beyond this gate Crown Road East swarms with "
+            "Halt, traveler. Beyond this gate Crown Road West swarms with "
             "bandits, archers and horsemen. Few who walk it return.");
     } else {
         snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
             "We will not stop you, but grow stronger first. Brave Blackwater "
             "Swamp, the labyrinth and the lands near OakHaven before "
-            "Crown Road East.");
+            "Crown Road West.");
     }
     push_message(g, "The Royal Guards recommend exploring other areas first.");
 }
@@ -6421,50 +6404,20 @@ void game_talk_to_guild_seeker(GameState *g) {
 }
 
 void game_talk_to_dragon_seeker(GameState *g) {
-    if (g->location != LOCATION_TAVERN || abs(g->player.x - ILYA_TAVERN_X) > 1 || abs(g->player.y - ILYA_TAVERN_Y) > 1) {
-        return;
-    }
-    g->dialogue_active = 1;
-    snprintf(g->dialogue_speaker, MAX_SPEAKER_LEN, "Ilya");
-    g->dialogue_x = ILYA_TAVERN_X;
-    g->dialogue_y = ILYA_TAVERN_Y;
-    if (g->dragon_treasure_quest_state == 0) {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Travelers from Ridgeshire speak of treasure in Dragonspine, far to the north. "
-            "Bring its fifth-stage golden goblet back here to Oakhaven's Inn for a Potion of Strength.");
-    } else if (g->dragon_treasure_quest_state == 1) {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Find the golden goblet in the dragon's hoard on Dragonspine's "
-            "fifth stage. Stand on it and press A, then return to me in Oakhaven's Inn.");
-    } else if (g->dragon_treasure_quest_state == 2) {
-        if (g->inventory_count >= MAX_INVENTORY) {
-            snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-                "You found the goblet! Make room in your pack for the "
-                "Potion of Strength, then speak with me again.");
-            return;
-        }
-        g->inventory[g->inventory_count++] = item_make_strength_potion();
-        g->dragon_treasure_quest_state = 3;
-        g->score += 600;
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "The goblet is safe. This Potion of Strength permanently raises "
-            "your attack when you drink it. Thank you.");
-        push_message(g, "Completed: The Dragon's Hoard. Potion of Strength awarded.");
-    } else {
-        snprintf(g->dialogue_text, MAX_DIALOGUE_LEN,
-            "Dragonspine's treasure is safe. Thank you for returning to Oakhaven with the goblet.");
+    if (g->location == LOCATION_RIDGESHIRE_TAVERN) {
+        ridgeshire_talk(g);
     }
 }
 
 void game_collect_dragon_treasure(GameState *g) {
     if (g->location != LOCATION_DRAGONSPINE ||
-        g->level != DRAGONSPINE_DEPTH || g->dragon_treasure_quest_state != 1 ||
+        g->level != DRAGONSPINE_DEPTH || g->dragon_treasure_quest_state >= 2 ||
         g->map.tiles[g->player.y][g->player.x] != TILE_DRAGON_TREASURE) {
         return;
     }
     g->map.tiles[g->player.y][g->player.x] = TILE_DRAGON_HOARD;
     g->dragon_treasure_quest_state = 2;
-    push_message(g, "Golden goblet recovered. Return to Ilya in Oakhaven's Inn.");
+    push_message(g, "Golden goblet recovered. Return to Ilya in Ridgeshire's Tavern.");
 }
 
 void game_talk_to_dain(GameState *g) {
@@ -6720,6 +6673,7 @@ void game_migrate_boss_shortcuts(GameState *g) {
 }
 
 void game_update_level_progress(GameState *g) {
+    ridgeshire_sync(g);
     eastern_update(g);
     western_update(g);
     update_oakhaven_boss_quests(g);

@@ -75,7 +75,7 @@ int shop_accepts_item(ShopType type, const Item *item) {
     if (type == SHOP_TYPE_COBBLER) {
         return item->type == ITEM_ACCESSORY && item->accessory_family == ACCESSORY_FAMILY_BOOTS;
     }
-    if (type == SHOP_TYPE_ALCHEMIST) {
+    if (type == SHOP_TYPE_ALCHEMIST || type == SHOP_TYPE_RUNEWRIGHT) {
         return item->type == ITEM_POTION_HEALTH || item->type == ITEM_POTION_MANA ||
             item->type == ITEM_SCROLL || item->type == ITEM_SPELL_TOME;
     }
@@ -106,6 +106,12 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses, PlayerClass pl
 
     if (type == SHOP_TYPE_FLETCHER) {
         s->items[s->item_count++] = item_make_arrows();
+        s->items[s->item_count++] = item_make_shortbow();
+        s->items[s->item_count++] = item_make_bow();
+        s->items[s->item_count++] = item_make_crossbow();
+        if (defeated_boss_count(defeated_bosses) >= 3) {
+            s->items[s->item_count++] = item_make_longbow();
+        }
     } else if (type == SHOP_TYPE_APOTHECARY) {
         s->items[s->item_count++] = item_make_health_potion();
         s->items[s->item_count++] = item_make_mana_potion();
@@ -113,7 +119,7 @@ void shop_init(ShopScreen *s, ShopType type, int defeated_bosses, PlayerClass pl
         s->items[s->item_count++] = item_make_intelligence_potion();
     }
 
-    if (type == SHOP_TYPE_ALCHEMIST) {
+    if (type == SHOP_TYPE_ALCHEMIST || type == SHOP_TYPE_RUNEWRIGHT) {
         int boss_count = defeated_boss_count(defeated_bosses);
         s->stock_tier = boss_count + 1;
         s->items[s->item_count++] = item_make_health_potion();

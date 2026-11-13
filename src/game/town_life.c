@@ -1,3 +1,4 @@
+#include "ridgeshire.h"
 #include "town_life.h"
 #include "spice_skiff.h"
 #include "coastal_travel.h"
@@ -6,6 +7,9 @@
 #include <stdlib.h>
 
 static const TownBuilding buildings[] = {
+    {LOCATION_TOWN4, LOCATION_RIDGESHIRE_TAVERN, 26, 16, 7, 5, 4, 0,
+        "TAVERN & LODGINGS", "Ridgeshire Innkeeper",
+        "Welcome to Ridgeshire. Rest here and speak to Ilya about the dragon's hoard.", NULL},
     {LOCATION_TOWN, LOCATION_BAKERY, 7, 17, 5, 4, 0, 1 << LOCATION_DUNGEON,
         "BAKERY", "Baker Nessa",
         "Business has been slow since the evil Lich King took over Oakhaven's dungeon. Folk are too afraid to leave home, even for fresh bread.",
@@ -14,9 +18,9 @@ static const TownBuilding buildings[] = {
         "BUTCHER", "Butcher Holt",
         "There is evil lurking in the lands north of Stillbury. Hunters return from the swamp pale and shaken, if they return at all. Mind your step beyond the north gate.", NULL},
     {LOCATION_TOWN4, LOCATION_MONASTERY, 6, 16, 7, 5, 2, 1 << LOCATION_DRAGONSPINE,
-        "MONASTERY", "Abbot Edric",
-        "The dragons of Dragonspine, north of Ridgeshire, terrorize our town. We hear their cries across the peaks and pray for those caught outside the walls.",
-        "Since you defeated the dragon ruling Dragonspine, Ridgeshire is safer. Our bells ring in gratitude rather than alarm. May you find peace beneath this roof."},
+        "RUNEWRIGHT'S LODGE", "Runewright Edric",
+        "I study binding runes and sell spells and potions. Dragonspine lies north of Ridgeshire; speak to me about its unnatural attacks.",
+        "The dragon's shackle bears binding runes. Take the evidence to Oswin in the Town Hall and compare it with Ironfang's requisitions."},
     {LOCATION_TOWN3, LOCATION_SPICE_SHOP, 7, 17, 5, 4, 3, 0,
         "SPICE MERCHANT", "Spice Merchant Suri",
         "The Crown Road has become dangerous. Bandits prey on caravans, and every sack of spice that reaches Rosemoor has a tale of narrow escape. Traders travel in company now.", NULL},
@@ -133,6 +137,9 @@ void town_life_generate(Map *map, Location interior, int *sx, int *sy) {
         }
         map->tiles[STORM_GUIDE_DAWN_Y][STORM_GUIDE_DAWN_X] = TILE_NPC_STORM_GUIDE;
     }
+    if (interior == LOCATION_RIDGESHIRE_TAVERN) {
+        map->tiles[RIDGE_ILYA_Y][RIDGE_ILYA_X] = TILE_NPC_DRAGON_SEEKER;
+    }
     map->tiles[RESIDENT_Y][RESIDENT_X] = TILE_NPC_RESIDENT;
 }
 
@@ -146,6 +153,9 @@ int town_life_near_shopkeeper(const GameState *g) {
 }
 
 int town_life_talk(GameState *g, int greeting) {
+    if (!greeting && ridgeshire_talk(g)) {
+        return 1;
+    }
     if (g->location == LOCATION_ALEHOUSE && greeting) {
         return 0;
     }

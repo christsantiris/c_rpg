@@ -1,6 +1,6 @@
 # Dragonspine and High Pass
 
-Ridgeshire is reached from Castle Grounds by Crown Road West. Its former
+Ridgeshire is reached from Castle Grounds by Crown Road East. Its former
 southern mountain connection is closed; neither Dawnmere nor Stillbury's
 coastal adventures lead there.
 Ridgeshire's north gate leads along a safe approach through rock walls to
@@ -54,7 +54,8 @@ Drakes close for melee, Stone Giants endure heavy punishment, and Fire Elemental
 cast along clear rows or columns. As in other regions, stages 1–4 can be
 exited without defeating every enemy. The stage 5 summit departure also remains
 available while the Red Dragon lives; see [boss gates](boss-gates.md). Defeating
-the dragon awards gold and the all-class Dragon Scale Mantle.
+the dragon awards gold, a choice of dragonforged armor, and the binding
+evidence for Edric’s local investigation.
 
 ## Red Dragon encounter
 
@@ -103,35 +104,41 @@ preserving existing walking routes and the goblet's preferred location.
 Ordinary movement is sufficient for every class. An attack with no safe walking
 escape through current cover and fire is withheld instead of forcing damage.
 
-The original **Dragon Scale Mantle** still drops on victory: rare all-class
-light armor with **+4 defense, +20 maximum HP and value 1,400**. The existing
-gold reward is unchanged. A full loot floor reserves the mantle in a hoard
-reliquary without deleting ordinary drops; unclaimed equipment left behind
-also becomes recoverable on return. Press **A** beside the cache or **P** on it,
-including beneath loot. A full inventory cannot consume it. Claiming restores
-the cache's original snow, ash or hoard ground. Once claimed, selling or
-dropping a mantle cannot generate a replacement. The summit exit still opens
-on the dragon's defeat even if ordinary enemies survive.
+The Red Dragon's reliquary offers **one** armor reward. Open it with Interact
+and press Pick Up on its released loot to choose:
 
-## The Dragon's Hoard
+| Armor | Class | Bonuses |
+| --- | --- | --- |
+| Dragonplate | Warrior | +12 defense, +60 maximum HP |
+| Dragonscale Leathers | Rogue | +8 defense, +25 maximum HP, 15% evasion |
+| Emberweave Robes | Mage | +5 defense, +70 maximum MP, 20% cheaper spells |
 
-In V2, Ilya has left Oakhaven and no one offers this quest until a later act
-places her. Existing quest progress is kept.
+Esc postpones the choice. A full inventory preserves the unclaimed reward;
+claiming any one armor consumes the choice permanently. The boss's gold, XP,
+score and combat behavior are unchanged. Legacy saves with a previous victory
+or pending mantle retain the original all-class Dragon Scale Mantle instead.
 
-Ilya waits in **Oakhaven's Inn**, alongside Elowen and Mara. Press
-`T` beside her to hear the offer, then `Y` to accept **The Dragon's Hoard**. On
-Dragonspine stage 5, find the golden goblet in the dragon's lair, stand on it,
-and press `P` (Pick up). Return to Ilya in the Inn to trade the goblet for a one-time
-Potion of Strength and 600 score. Make space in your pack before turning in the
-quest. Drinking the potion permanently raises base attack by 1; it is not sold
-in shops. The quest can still be completed if the Red Dragon was defeated before
-speaking with Ilya.
+## The Dragon's Binding and The Dragon's Hoard
 
-Her directions lead north through the mountains to Ridgeshire, then north
-through its Dragonspine gate. Save version **102** moves Ilya from saved
-Ridgeshire maps into saved Inn interiors while preserving the goblet,
-quest completion, boss victories, equipment, and money. Overlapping players
-and dropped items move one tile south of her new Inn position.
+**Runewright Edric**, in Ridgeshire's Runewright's Lodge, offers **The Dragon's
+Binding**. Defeating the Red Dragon records its runic shackle in Evidence and
+moves the quest directly to Completed, even without acceptance or a free quest
+slot. Return to Edric, choose the investigation topic, and collect **350 gold
+once**. No inventory space is needed for the shackle.
+
+**Ilya** offers **The Dragon's Hoard** in **Ridgeshire's Tavern & lodgings**.
+Find the golden goblet in the stage-5 lair and press Pick Up on it. The goblet
+exists without accepting the quest, needs no bag slot, and marks the quest
+Completed on collection. Return to Ilya here for **300 gold once**. Oakhaven is
+no longer a turn-in location. The goblet, binding evidence and armor choice
+are independent rewards. All three rewards remain available after travel and
+save/load.
+
+Archivist Oswin in the Town Hall compares the shackle with Ironfang's
+requisitions and the royal crown inventory. Either area can be completed first;
+neither boss requires a quest. See [Ridgeshire's story](ridgeshire-arc.md).
+
+### Earlier save formats
 
 Save version **136** adds one initialized, serialized mantle-recovery state
 and two compact enemy bitfields for the exact warned cells. Existing enemy

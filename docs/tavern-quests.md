@@ -19,8 +19,8 @@ Tomas's escape and confiscated-equipment recovery do not use these slots.
 Other dialogue bubbles are dismissed by
 movement. Bram runs Oakhaven's Inn, offering the Lich King warning and supply
 advice and the Save Elowen quest at its counter. Elowen lives there only after
-her rescue and reunion. Mara introduces the coastal adventure there; Ilya's
-quest awaits later placement.
+her rescue and reunion. Mara introduces the coastal adventure there. Ilya offers the Dragon's Hoard
+in Ridgeshire's Tavern & lodgings.
 Rook now offers Slay the Minotaur in Stillbury's Tavern.
 After the Lich King's defeat, Alder and Dain arrive at Oakhaven's Inn with the
 eastward and westward adventure choices, and Aldric moves in from the square.
@@ -28,21 +28,19 @@ Brenna remains in Stillbury's Tavern. Zara starts in Oakhaven's Inn after the Go
 host and no longer offers Dain's quest.
 Stillbury's duplicate Bram and the Bring Mira Home swamp quest are retired.
 
-Ridgeshire's Town Hall uses the same entry, conversation, and exit controls.
-Steward Hadrin assigns **Reclaim the Emberforge**: recover its guarded mechanism
-in Ashen Hollow north of Castle Grounds on stage 2, then defeat the forge defenders and repair its furnace
-on stage 4. Press `A` on or beside each objective. Return to Hadrin for a
-one-time reward of 100 gold and 800 score. This quest adds encounters to
-previously explored stages without resetting the expedition. See
-[Ashen Hollow](ashen-hollow.md#reclaim-the-emberforge).
+Ridgeshire's Town Hall uses the same entry, conversation and exit controls.
+Marshal Veyra offers **Break the War Machine** for **400 gold, 1,000 score and
+a Royal Ward Ring**. Runewright Edric offers **The Dragon's Binding** at the
+Runewright's Lodge for **350 gold**; Ilya offers **The Dragon's Hoard** in the
+local Tavern for **300 gold**. All rewards are claimed in Ridgeshire, and the
+Red Dragon's separate armor choice is available without either quest.
+Archivist Oswin compares discoveries from Ironfang and Dragonspine with the
+King's crown inventory. See [the Ridgeshire arc](ridgeshire-arc.md).
 
-Brother Oswin also waits in the Town Hall and offers **Rest for the Forgotten**.
-Silence the three marked memorial braziers on Royal Catacombs floors 2, 3, and
-4, then defeat the Grave Marshal and recover the burial ledger on floor 5.
-Press `A` directly beside each objective. Memorials can be silenced before
-fighting their guards to prevent resurrection. Return to Oswin for 150 gold
-and 1,500 score once. Existing exploration, cold braziers, and boss victories
-are preserved. See [Royal Catacombs](catacombs.md#rest-for-the-forgotten).
+The former Watchfires, Emberforge and Catacombs offers are retired for new
+characters. Existing accepted contracts retain their objectives and local
+turn-ins; Hadrin appears only for an existing Emberforge contract, and Oswin
+has a previous-contract topic when applicable.
 
 ## Bram: Save Elowen
 

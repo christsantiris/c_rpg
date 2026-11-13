@@ -1,3 +1,4 @@
+#include "act5_routes.h"
 #include "wilds.h"
 #include <stdlib.h>
 #include <string.h>
@@ -310,6 +311,9 @@ void map_generate_dragonspine(Map *m, int level) {
     }
     edges(m, TILE_DRAGON_WALL, TILE_DRAGON_FLOOR, TILE_DRAGON_ENTRANCE, TILE_DRAGON_EXIT);
     place_boulders(m);
+    if (level == 1) {
+        act5_shape_entry(m, LOCATION_DRAGONSPINE);
+    }
 }
 
 static int find_boulder(const GameState *g, int *x, int *y) {

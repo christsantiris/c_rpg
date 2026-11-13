@@ -359,7 +359,7 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             line2 = "WATCH THE CROWN'S WARNED LANES";
         }
     } else if (g->location == LOCATION_CROWNROAD || g->location == LOCATION_CROWNROAD_WEST) {
-        title = g->location == LOCATION_CROWNROAD ? "CROWN ROAD EAST" : "CROWN ROAD WEST";
+        title = g->location == LOCATION_CROWNROAD ? "CROWN ROAD WEST" : "CROWN ROAD EAST";
         line1 = "BANDITS AND HORSEMEN PATROL AHEAD";
         line2 = "BREAK ARCHER SIGHTLINES WITH COVER";
     } else if (g->location == LOCATION_JAIL_ARMORY) {

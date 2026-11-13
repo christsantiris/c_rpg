@@ -62,6 +62,8 @@ const TownApproach *approach_route(const GameState *g) {
 const char *approach_area_name(Location area) {
     switch (area) {
         case LOCATION_GIANTS_CROWN: return "GIANT'S PEAKS";
+        case LOCATION_MONASTERY: return "RUNEWRIGHT'S LODGE";
+        case LOCATION_RIDGESHIRE_TAVERN: return "RIDGESHIRE TAVERN";
         case LOCATION_IRONFANG: return "IRONFANG MINES";
         case LOCATION_STORMWATCH: return "STORMWATCH HEADLAND";
         case LOCATION_DUNGEON: return "DUNGEON";
@@ -78,8 +80,9 @@ const char *approach_area_name(Location area) {
         case LOCATION_GLASSDEEP: return "STONEWAKE QUARRY";
         case LOCATION_CATACOMBS: return "ROYAL CATACOMBS";
         case LOCATION_ELDERWOOD: return "ELDERWOOD FOREST";
-        case LOCATION_CROWNROAD: return "CROWN ROAD EAST";
-        case LOCATION_CROWNROAD_WEST: return "CROWN ROAD WEST";
+        // Serialized Crown Road IDs retain their historical names and patrol caches.
+        case LOCATION_CROWNROAD: return "CROWN ROAD WEST";
+        case LOCATION_CROWNROAD_WEST: return "CROWN ROAD EAST";
         default: return "AREA";
     }
 }

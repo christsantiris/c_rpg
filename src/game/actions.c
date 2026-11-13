@@ -1,3 +1,5 @@
+#include "ridgeshire.h"
+#include "act5_routes.h"
 #include "labyrinth_arc.h"
 #include "western_arc.h"
 #include "coast_exits.h"
@@ -2553,7 +2555,7 @@ static void resolve_player_action(GameState *g, Action a) {
             } else if (tx == TOWN_W - 1) {
                 game_enter_crownroad(g, LOCATION_CROWNROAD, 0);
             } else if (tx == 0) {
-                giants_enter(g, 0);
+                game_enter_ashen(g);
             }
             return;
         }
@@ -3052,6 +3054,9 @@ void action_resolve_player(GameState *g, Action a) {
     eastern_update(g);
     western_update(g);
     quarry_update(g);
+    ridgeshire_sync(g);
+    ridgeshire_prepare(g);
+    act5_reveal_exits(g);
     if (location != g->location || level != g->level || route != g->approach_route || road_town != g->road_town) {
         // Travel handlers return before the ordinary movement-facing update.
         // A doorway or boundary crossing keeps the direction of that step.

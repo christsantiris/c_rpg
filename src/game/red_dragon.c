@@ -1,3 +1,4 @@
+#include "ridgeshire.h"
 #include "red_dragon.h"
 #include <stdlib.h>
 #include <string.h>
@@ -447,7 +448,7 @@ void red_dragon_restore_reward(GameState *g) {
     for (int y = r->y; y < r->y + r->h; y++) {
         for (int x = r->x; x < r->x + r->w; x++) {
             int d = abs(x - r->x - r->w / 2) + abs(y - r->y - r->h / 2);
-            if (plain(tile_at(g, x, y)) && !occupied(g->enemies, g->enemy_count, x, y) && d < best) {
+            if (g->map.tiles[y][x] != TILE_ITEM && plain(tile_at(g, x, y)) && !occupied(g->enemies, g->enemy_count, x, y) && d < best) {
                 bx = x;
                 by = y;
                 best = d;
@@ -458,7 +459,7 @@ void red_dragon_restore_reward(GameState *g) {
         TileType tile = tile_at(g, bx, by);
         set_tile(g, bx, by, tile == TILE_DRAGON_FLOOR ? TILE_DRAGON_RELIQUARY_FLOOR :
             tile == TILE_DRAGON_ASH ? TILE_DRAGON_RELIQUARY_ASH : TILE_DRAGON_RELIQUARY_HOARD);
-        push_message(g, "Unclaimed Dragon Scale Mantle waits in the hoard reliquary. Open with Interact, then Pick Up the released loot.");
+        push_message(g, g->ridgeshire.legacy_dragon ? "Unclaimed Dragon Scale Mantle waits in the hoard reliquary. Open with Interact." : "Choose dragonforged armor at the hoard reliquary. Its runic shackle is kept with your evidence.");
     }
 }
 
@@ -467,6 +468,12 @@ void red_dragon_award_reward(GameState *g, int x, int y) {
         return;
     }
     g->red_dragon_reward_state = 1;
+    if (!g->ridgeshire.legacy_dragon) {
+        g->ridgeshire.dragon_armor = RIDGE_ARMOR_PENDING;
+        ridgeshire_sync(g);
+        red_dragon_restore_reward(g);
+        return;
+    }
     if (g->floor_item_count < MAX_FLOOR_ITEMS) {
         TileType tile = tile_at(g, x, y);
         FloorItem *f = &g->floor_items[g->floor_item_count++];
@@ -497,6 +504,10 @@ int red_dragon_has_interaction(const GameState *g) {
 int red_dragon_interact(GameState *g, int pickup) {
     if (!nearby_cache(g, pickup)) {
         return 0;
+    }
+    if (!g->ridgeshire.legacy_dragon) {
+        ridgeshire_armor_offer(g);
+        return 1;
     }
     if (g->inventory_count >= MAX_INVENTORY) {
         push_message(g, "Inventory full. The Dragon Scale Mantle remains reserved in the hoard.");

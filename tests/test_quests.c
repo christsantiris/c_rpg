@@ -1,4 +1,5 @@
 #include "game/western_arc.h"
+#include "game/ridgeshire.h"
 #include "game/coastal_travel.h"
 #include "approach_checks.h"
 #include "test_utils.h"
@@ -354,7 +355,7 @@ static void test_quest_capacity(GameState *g, GameState *loaded) {
         {"Captain Rowan", LOCATION_RIVER_CROSSING, &g->mara_quest_state},
         {"Rook", LOCATION_INN, &g->rook_quest_state},
         {"Zara", LOCATION_TAVERN, &g->tribute_quest_state},
-        {"Ilya", LOCATION_TAVERN, &g->dragon_treasure_quest_state},
+        {RIDGE_HOARD_SPEAKER, LOCATION_RIDGESHIRE_TAVERN, &g->dragon_treasure_quest_state},
         {"Nahla", LOCATION_ISLAND, &g->temple_treasure_state},
         {"Steward Hadrin", LOCATION_TOWN_HALL, &g->emberforge_quest_state},
         {"Quartermaster Brenna", LOCATION_INN, &g->frostfell_quest_state},
@@ -474,7 +475,7 @@ void test_quest_offer_controls(void) {
         {game_talk_to_rowan, LOCATION_RIVER_CROSSING, STILLBURY_ROWAN_X, STILLBURY_ROWAN_Y, &g.mara_quest_state},
         {game_talk_to_rook, LOCATION_INN, ROOK_TAVERN_X, ROOK_TAVERN_Y, &g.rook_quest_state},
         {game_talk_to_guild_seeker, LOCATION_TAVERN, ZARA_OAKHAVEN_X, ZARA_OAKHAVEN_Y, &g.tribute_quest_state},
-        {game_talk_to_dragon_seeker, LOCATION_TAVERN, ILYA_TAVERN_X, ILYA_TAVERN_Y, &g.dragon_treasure_quest_state},
+        {game_talk_to_dragon_seeker, LOCATION_RIDGESHIRE_TAVERN, RIDGE_ILYA_X, RIDGE_ILYA_Y, &g.dragon_treasure_quest_state},
         {game_talk_to_nahla, LOCATION_ISLAND, ISLAND_NAHLA_X, ISLAND_NAHLA_Y, &g.temple_treasure_state},
         {game_talk_to_steward, LOCATION_TOWN_HALL, HALL_STEWARD_X, HALL_STEWARD_Y, &g.emberforge_quest_state},
         {game_talk_to_brenna, LOCATION_INN, BRENNA_INN_X, BRENNA_INN_Y, &g.frostfell_quest_state},

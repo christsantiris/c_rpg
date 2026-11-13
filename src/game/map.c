@@ -1,3 +1,4 @@
+#include "act5_routes.h"
 #include "coast_exits.h"
 #include <assert.h>
 #include "giants_crown.h"
@@ -1713,9 +1714,11 @@ void map_place_town4_square(Map *m) {
 
 void map_set_ridgeshire_mountain_road(Map *m, int unlocked) {
     (void)unlocked;
+    const TownBuilding *inn = town_life_building(LOCATION_RIDGESHIRE_TAVERN);
     m->tiles[TOWN_H - 1][RIDGESHIRE_MOUNTAIN_ROAD_X] = TILE_WALL;
     for (int y = 13; y < TOWN_H - 1; y++) {
-        if (m->tiles[y][RIDGESHIRE_MOUNTAIN_ROAD_X] == TILE_TOWN_PATH) {
+        int inn_path = y == inn->y + inn->h && RIDGESHIRE_MOUNTAIN_ROAD_X >= inn->x - 1 && RIDGESHIRE_MOUNTAIN_ROAD_X <= inn->x + inn->w / 2;
+        if (m->tiles[y][RIDGESHIRE_MOUNTAIN_ROAD_X] == TILE_TOWN_PATH && !inn_path) {
             m->tiles[y][RIDGESHIRE_MOUNTAIN_ROAD_X] = TILE_TOWN_FLOOR;
         }
     }
@@ -2320,6 +2323,9 @@ void map_generate_frostfell(Map *m, int level) {
     }
     place_thin_ice_shortcuts(m, level);
     place_slick_ice_patches(m, level);
+    if (level == 1) {
+        act5_shape_entry(m, LOCATION_FROSTFELL);
+    }
 }
 
 void map_generate_forest_road(Map *m) {

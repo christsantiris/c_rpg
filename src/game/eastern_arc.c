@@ -74,9 +74,10 @@ static void restore_town_tile(GameState *g, int x, int y, TileType tile) {
 
 void eastern_refresh(GameState *g) {
     if (g->location == LOCATION_TOWN3) {
-        // The Peaks moved south of the river; the swamp's new roads await Act 4.
+        // The west gate leads to Ashen Hollow; the retired southern swamp road stays closed.
         for (int y = 0; y < TOWN_H; y++) {
-            restore_town_tile(g, 0, y, TILE_WALL);
+            TileType tile = abs(y - ROSEMOOR_ASHEN_GATE_Y) <= 2 ? TILE_TOWN_EXIT : TILE_WALL;
+            restore_town_tile(g, 0, y, tile);
         }
         restore_town_tile(g, 20, TOWN_H - 1, TILE_WALL);
     }

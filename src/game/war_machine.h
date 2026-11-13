@@ -11,7 +11,7 @@
 #define WAR_CARGO_Y 23
 #define WAR_SEAL_X 53
 #define WAR_SEAL_Y 13
-#define WAR_REWARD_GOLD 160
+#define WAR_REWARD_GOLD 400
 #define WAR_REWARD_SCORE 1000
 #define WAR_SPEAKER "Marshal Veyra: Ironfang"
 

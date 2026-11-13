@@ -1,3 +1,4 @@
+#include "act5_routes.h"
 #include "boss_gates.h"
 #include "containers.h"
 #include "ironfang.h"
@@ -200,6 +201,8 @@ void ironfang_generate(Map *map, int level) {
     map->stairs_down_y = 0;
     map->tiles[IRON_H - 1][9] = TILE_IRON_ENTRANCE;
     map->tiles[0][54] = TILE_IRON_EXIT;
+    map_mark_explored(map, map->stairs_up_x, map->stairs_up_y);
+    map_mark_explored(map, map->stairs_down_x, map->stairs_down_y);
     map->room_count = 1;
     map->rooms[0] = (Room){2, 2, IRON_W - 4, IRON_H - 4};
 }
@@ -234,6 +237,8 @@ void ironfang_unpack(const IronfangStage *state, Map *map) {
     map->stairs_up_y = IRON_H - 1;
     map->stairs_down_x = 54;
     map->stairs_down_y = 0;
+    map_mark_explored(map, map->stairs_up_x, map->stairs_up_y);
+    map_mark_explored(map, map->stairs_down_x, map->stairs_down_y);
     map->room_count = 1;
     map->rooms[0] = (Room){2, 2, IRON_W - 4, IRON_H - 4};
 }

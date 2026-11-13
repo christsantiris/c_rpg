@@ -32,6 +32,7 @@ int town_road_enter(GameState *g, Location town, TownSide side, int departing);
 int town_road_depart(GameState *g, int x, int y);
 int town_road_travel(GameState *g, int x, int y);
 void town_road_migrate(GameState *g);
+void town_road_reveal_gates(GameState *g);
 void town_road_refresh_oakhaven(GameState *g);
 
 #endif

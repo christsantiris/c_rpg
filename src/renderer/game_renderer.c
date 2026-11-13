@@ -1,3 +1,4 @@
+#include "../game/ridgeshire.h"
 #include "../game/western_arc.h"
 #include "western_arc_renderer.h"
 #include "../game/coast_exits.h"
@@ -267,6 +268,46 @@ static void draw_town_gates(Renderer *r, const GameState *g, const Viewport *v) 
             continue;
         }
         draw_town_gate(r, viewport_to_screen_x(v, gate.gate_x), viewport_to_screen_y(v, gate.gate_y), g->location, dx[side], dy[side]);
+    }
+}
+
+static void draw_navigation_label(Renderer *r, const Viewport *v, int x, int y, const char *text, float sx, float sy) {
+    if (!viewport_is_visible(v, x, y)) {
+        return;
+    }
+    int width;
+    TTF_SizeText(r->font_tiny, text, &width, NULL);
+    int px = (int)((viewport_to_screen_x(v, x) * TILE_SIZE + TILE_SIZE / 2) * sx) - width / 2;
+    int py = (int)(viewport_to_screen_y(v, y) * TILE_SIZE * sy) - 18;
+    int right = r->screen_w - INFO_PANEL_W - width - 8;
+    int bottom = r->tiles_y * TILE_SIZE - TTF_FontHeight(r->font_tiny) - 8;
+    px = px < 8 ? 8 : px > right ? right : px;
+    py = py < 88 ? 88 : py > bottom ? bottom : py;
+    SDL_Rect backing = {px - 4, py - 4, width + 8, TTF_FontHeight(r->font_tiny) + 8};
+    SDL_SetRenderDrawColor(r->sdl, 12, 26, 20, 255);
+    SDL_RenderFillRect(r->sdl, &backing);
+    SDL_SetRenderDrawColor(r->sdl, 221, 195, 116, 255);
+    SDL_RenderDrawRect(r->sdl, &backing);
+    renderer_draw_text(r, text, px, py, (SDL_Color){241, 215, 147, 255}, r->font_tiny);
+}
+
+static void draw_act5_navigation(Renderer *r, const GameState *g, const Viewport *v, float sx, float sy) {
+    if (g->location == LOCATION_CASTLE) {
+        draw_navigation_label(r, v, 0, CASTLE_ROAD_Y, "W: CROWN ROAD WEST / ROSEMOOR", sx, sy);
+        draw_navigation_label(r, v, TOWN_W - 1, CASTLE_ROAD_Y, "E: CROWN ROAD EAST / RIDGESHIRE", sx, sy);
+    } else if (g->location == LOCATION_TOWN3 || g->location == LOCATION_TOWN4) {
+        for (int side = 0; side < 4; side++) {
+            TownApproach route;
+            if (town_road_connection(g->location, side, &route)) {
+                char text[64];
+                snprintf(text, sizeof(text), "%c: %s", "NESW"[side], approach_area_name(route.area));
+                draw_navigation_label(r, v, route.gate_x, route.gate_y, text, sx, sy);
+            }
+        }
+    } else if (game_is_crownroad(g)) {
+        int rosemoor = g->location == LOCATION_CROWNROAD;
+        draw_navigation_label(r, v, 0, CROWNROAD_Y, rosemoor ? "W: ROSEMOOR" : "W: CASTLE GROUNDS", sx, sy);
+        draw_navigation_label(r, v, CROWNROAD_W - 1, CROWNROAD_Y, rosemoor ? "E: CASTLE GROUNDS" : "E: RIDGESHIRE", sx, sy);
     }
 }
 
@@ -588,7 +629,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int quest_offer = game_quest_offer_active(g);
     int stormbell_prompt = stormbell_prompt_active(g);
     int shrine_prompt = resurrection_prompt_active(g);
-    int escort_dialogue = strcmp(g->dialogue_speaker, "Elowen") == 0 ||
+    int escort_dialogue = ridgeshire_dialogue(g) || strcmp(g->dialogue_speaker, "Elowen") == 0 ||
         garran_dialogue(g) || quarry_dialogue(g) ||
         strcmp(g->dialogue_speaker, STORM_MAGE_SPEAKER) == 0 ||
         (g->aldric_party_state == ALDRIC_FOLLOWING && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0);
@@ -642,14 +683,14 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     if (game_cain_dialogue_active(g)) {
         hint = "1: Tell me about Oakhaven\nEnter / Esc: Close";
     }
-    if (war_machine_dialogue(g)) {
+    if (war_machine_dialogue(g) && g->watchfire_quest_state) {
         hint = quest_offer ? "Y: Accept   N: Decline\n1: Watchfires   2: Break the War Machine" : "1: Watchfires   2: Break the War Machine";
     }
     char quest_limit_hint[160];
     if (game_quest_offer_at_limit(g)) {
         snprintf(quest_limit_hint, sizeof(quest_limit_hint), "Active quests: %d/%d. Finish quests to free a slot.\nN / Esc: Close%s",
             game_active_quest_count(g), MAX_ACTIVE_QUESTS,
-            war_machine_dialogue(g) ? "\n1: Watchfires   2: Break the War Machine" : "");
+            (war_machine_dialogue(g) && g->watchfire_quest_state) ? "\n1: Watchfires   2: Break the War Machine" : "");
         hint = quest_limit_hint;
     }
     if (western_convoy_prompt(g)) {
@@ -666,6 +707,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     }
     if (garran_dialogue(g) && (g->garran.prompt != GARRAN_QUEST || !quest_offer)) {
         hint = garran_hint(g);
+    }
+    if (ridgeshire_dialogue(g) && !quest_offer) {
+        hint = ridgeshire_hint(g);
     }
     if (quarry_dialogue(g) && g->quarry_prompt) {
         hint = "Number: Choose reward   Esc: Choose later";
@@ -2382,7 +2426,7 @@ static void draw_labyrinth_exits(Renderer *r, const GameState *g, const Viewport
 }
 
 static void draw_adventure_exits(Renderer *r, const GameState *g, const Viewport *v) {
-    if ((g->location != LOCATION_FOREST && g->location != LOCATION_MOUNTAINS && g->location != LOCATION_ELDERWOOD && g->location != LOCATION_SWAMP && g->location != LOCATION_ASHEN && g->location != LOCATION_ESCAPE_TUNNEL) || !r->font_tiny) {
+    if ((g->location != LOCATION_FOREST && g->location != LOCATION_MOUNTAINS && g->location != LOCATION_ELDERWOOD && g->location != LOCATION_SWAMP && g->location != LOCATION_ASHEN && g->location != LOCATION_FROSTFELL && g->location != LOCATION_DRAGONSPINE && g->location != LOCATION_IRONFANG && g->location != LOCATION_ESCAPE_TUNNEL) || !r->font_tiny) {
         return;
     }
     int forest = g->location == LOCATION_FOREST;
@@ -2390,13 +2434,16 @@ static void draw_adventure_exits(Renderer *r, const GameState *g, const Viewport
     int swamp = g->location == LOCATION_SWAMP;
     int tunnel = g->location == LOCATION_ESCAPE_TUNNEL;
     int ashen = g->location == LOCATION_ASHEN;
-    TileType entrance = tunnel ? TILE_JAIL_HATCH : ashen ? TILE_ASHEN_ENTRANCE : elder ? TILE_ELDERWOOD_ENTRANCE : swamp ? TILE_SWAMP_ENTRANCE : forest ? TILE_FOREST_ENTRANCE : TILE_MOUNTAIN_ENTRANCE;
-    TileType exit = tunnel ? TILE_TUNNEL_EXIT : ashen ? TILE_ASHEN_EXIT : elder ? TILE_ELDERWOOD_EXIT : swamp ? TILE_SWAMP_EXIT : forest ? TILE_FOREST_EXIT : TILE_MOUNTAIN_EXIT;
-    const char *name = ashen ? "ASHEN HOLLOW" : elder ? "ELDERWOOD" : swamp ? "BLACKWATER" : forest ? "HAUNTED FOREST" : "GOBLIN MOUNTAINS";
-    const char *road = ashen ? "ROSEMOOR" : elder ? "ELDERWOOD" : swamp ? "BLACKWATER" : forest ? "FOREST" : "MOUNTAIN";
+    int frost = g->location == LOCATION_FROSTFELL;
+    int dragon = g->location == LOCATION_DRAGONSPINE;
+    int iron = g->location == LOCATION_IRONFANG;
+    TileType entrance = tunnel ? TILE_JAIL_HATCH : iron ? TILE_IRON_ENTRANCE : frost ? TILE_FROST_ENTRANCE : dragon ? TILE_DRAGON_ENTRANCE : ashen ? TILE_ASHEN_ENTRANCE : elder ? TILE_ELDERWOOD_ENTRANCE : swamp ? TILE_SWAMP_ENTRANCE : forest ? TILE_FOREST_ENTRANCE : TILE_MOUNTAIN_ENTRANCE;
+    TileType exit = tunnel ? TILE_TUNNEL_EXIT : iron ? TILE_IRON_EXIT : frost ? TILE_FROST_EXIT : dragon ? TILE_DRAGON_EXIT : ashen ? TILE_ASHEN_EXIT : elder ? TILE_ELDERWOOD_EXIT : swamp ? TILE_SWAMP_EXIT : forest ? TILE_FOREST_EXIT : TILE_MOUNTAIN_EXIT;
+    const char *name = iron ? "IRONFANG" : frost ? "FROSTFELL" : dragon ? "DRAGONSPINE" : ashen ? "ASHEN HOLLOW" : elder ? "ELDERWOOD" : swamp ? "BLACKWATER" : forest ? "HAUNTED FOREST" : "GOBLIN MOUNTAINS";
+    const char *road = iron ? "RIDGESHIRE" : frost ? "ROSEMOOR" : dragon ? "RIDGESHIRE" : ashen ? "ROSEMOOR" : elder ? "ELDERWOOD" : swamp ? "BLACKWATER" : forest ? "FOREST" : "MOUNTAIN";
     const char *boss = elder ? "ELDERTHORN" : swamp ? "SWAMP DEMON" : forest ? "NECROMANCER" : "GOBLIN KING";
-    int depth = ashen ? ASHEN_DEPTH : elder ? ELDERWOOD_DEPTH : swamp ? SWAMP_DEPTH : forest ? FOREST_DEPTH : MOUNTAIN_DEPTH;
-    int edge_w = tunnel ? ESCAPE_TUNNEL_W : elder ? ELDERWOOD_W : ashen || swamp ? SWAMP_MAP_W : MAP_W;
+    int depth = iron ? IRON_DEPTH : frost ? FROSTFELL_DEPTH : dragon ? DRAGONSPINE_DEPTH : ashen ? ASHEN_DEPTH : elder ? ELDERWOOD_DEPTH : swamp ? SWAMP_DEPTH : forest ? FOREST_DEPTH : MOUNTAIN_DEPTH;
+    int edge_w = tunnel ? ESCAPE_TUNNEL_W : iron ? IRON_W : elder ? ELDERWOOD_W : ashen || swamp || frost || dragon ? SWAMP_MAP_W : MAP_W;
     float zoom = game_camera_zoom(g);
     for (int y = v->cam_y; y < v->cam_y + v->tiles_y && y < MAP_H; y++) {
         for (int x = v->cam_x; x < v->cam_x + v->tiles_x && x < MAP_W; x++) {
@@ -3237,8 +3284,8 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                     npc_draw(r, sx, sy, NPC_ART_MARA, 0);
                     break;
                 case TILE_NPC_STORM_GUIDE:
-                    draw_npc_ground(r, g, sx, sy, x, y, g->location == LOCATION_TOWN ? TILE_TOWN_PATH : TILE_TAVERN_FLOOR);
-                    npc_draw(r, sx, sy, g->location == LOCATION_TOWN ? NPC_ART_NERIS : NPC_ART_TOVAN, 0);
+                    draw_npc_ground(r, g, sx, sy, x, y, (g->location == LOCATION_TOWN || g->location == LOCATION_CASTLE) ? TILE_TOWN_PATH : TILE_TAVERN_FLOOR);
+                    npc_draw(r, sx, sy, (g->location == LOCATION_TOWN || g->location == LOCATION_CASTLE) ? NPC_ART_NERIS : NPC_ART_TOVAN, 0);
                     break;
                 case TILE_NPC_ROOK:
                     draw_npc_ground(r, g, sx, sy, x, y, TILE_TAVERN_FLOOR);
@@ -3990,13 +4037,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 (TOWN_GUILD_W * TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, TOWN_GUILD_Y - 1) * TILE_SIZE,
             label, r->font_tiny);
-        draw_town_road_sign(r, viewport_to_screen_x(v, 23), viewport_to_screen_y(v, 3), "FROSTFELL WASTES");
-        draw_town_road_sign(r, viewport_to_screen_x(v, 2), viewport_to_screen_y(v, ROSEMOOR_ASHEN_GATE_Y - 2), "ASHEN HOLLOW");
-        TTF_SizeText(r->font_tiny, "CROWN ROAD EAST", &width, NULL);
-        renderer_draw_text(r, "CROWN ROAD EAST",
-            viewport_to_screen_x(v, TOWN_W - 1) * TILE_SIZE - width - 8,
-            viewport_to_screen_y(v, TOWN3_CROWN_GATE_Y) * TILE_SIZE,
-            area_label_color(LOCATION_CROWNROAD), r->font_tiny);
         TTF_SizeText(r->font_tiny, "APOTHECARY", &width, NULL);
         renderer_draw_text(r, "APOTHECARY",
             viewport_to_screen_x(v, TOWN_APOTHECARY_X) * TILE_SIZE +
@@ -4005,10 +4045,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
             label, r->font_tiny);
     }
     if (g->location == LOCATION_TOWN4) {
-        renderer_draw_text(r, "CROWN ROAD WEST",
-            viewport_to_screen_x(v, 1) * TILE_SIZE + 8,
-            viewport_to_screen_y(v, 12) * TILE_SIZE,
-            area_label_color(LOCATION_CROWNROAD_WEST), r->font_tiny);
         int width = 0;
         TTF_SizeText(r->font_tiny, "WORKSHOP", &width, NULL);
         renderer_draw_text(r, "WORKSHOP",
@@ -4030,17 +4066,6 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, "CASTLE OF NO RETURN",
             viewport_to_screen_x(v, 20) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, 1) * TILE_SIZE, label, r->font_tiny);
-        draw_town_road_sign(r, viewport_to_screen_x(v, 1),
-            viewport_to_screen_y(v, CASTLE_ROAD_Y - 4), "ROSEMOOR");
-        draw_town_road_sign(r, viewport_to_screen_x(v, TOWN_W - 6),
-            viewport_to_screen_y(v, CASTLE_ROAD_Y - 4), "RIDGESHIRE");
-    }
-    if (game_is_crownroad(g)) {
-        int east = g->location == LOCATION_CROWNROAD;
-        draw_town_road_sign(r, viewport_to_screen_x(v, 1),
-            viewport_to_screen_y(v, CROWNROAD_Y - 3), east ? "ROSEMOOR" : "CASTLE");
-        draw_town_road_sign(r, viewport_to_screen_x(v, CROWNROAD_W - 6),
-            viewport_to_screen_y(v, CROWNROAD_Y - 3), east ? "CASTLE" : "RIDGESHIRE");
     }
     if (g->location == LOCATION_APPROACH && !northern_approach(g) && r->font_tiny) {
         const TownApproach *route = approach_route(g);
@@ -4266,12 +4291,26 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         TTF_SizeText(r->font_tiny, "MARSHAL VEYRA", &veyra_width, NULL);
         renderer_draw_text(r, "MARSHAL VEYRA", viewport_to_screen_x(v, HALL_VEYRA_X) * TILE_SIZE + (TILE_SIZE - veyra_width) / 2,
             viewport_to_screen_y(v, HALL_VEYRA_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
-        renderer_draw_text(r, "STEWARD HADRIN", viewport_to_screen_x(v, HALL_STEWARD_X) * TILE_SIZE - 45,
-            viewport_to_screen_y(v, HALL_STEWARD_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+        if (g->map.tiles[HALL_STEWARD_Y][HALL_STEWARD_X] == TILE_NPC_STEWARD) {
+            renderer_draw_text(r, "STEWARD HADRIN", viewport_to_screen_x(v, HALL_STEWARD_X) * TILE_SIZE - 45,
+                viewport_to_screen_y(v, HALL_STEWARD_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+        }
         int width = 0;
-        TTF_SizeText(r->font_tiny, "BROTHER OSWIN", &width, NULL);
-        renderer_draw_text(r, "BROTHER OSWIN", viewport_to_screen_x(v, HALL_OSWIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+        TTF_SizeText(r->font_tiny, "ARCHIVIST OSWIN", &width, NULL);
+        renderer_draw_text(r, "ARCHIVIST OSWIN", viewport_to_screen_x(v, HALL_OSWIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, HALL_OSWIN_Y - 1) * TILE_SIZE, area_label_color(LOCATION_CATACOMBS), r->font_tiny);
+    }
+    if (g->location == LOCATION_RIDGESHIRE_TAVERN) {
+        int width = 0;
+        TTF_SizeText(r->font_tiny, "ILYA - DRAGON'S HOARD", &width, NULL);
+        renderer_draw_text(r, "ILYA - DRAGON'S HOARD", viewport_to_screen_x(v, RIDGE_ILYA_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, RIDGE_ILYA_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
+    }
+    if (g->location == LOCATION_CASTLE && g->map.tiles[RENN_Y][RENN_X] == TILE_NPC_STORM_GUIDE) {
+        int width = 0;
+        TTF_SizeText(r->font_tiny, "COURIER RENN", &width, NULL);
+        renderer_draw_text(r, "COURIER RENN", viewport_to_screen_x(v, RENN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+            viewport_to_screen_y(v, RENN_Y - 1) * TILE_SIZE, (SDL_Color){233, 201, 133, 255}, r->font_tiny);
     }
     if (g->watchfire_quest_state && (g->location == LOCATION_MOUNTAINS || g->location == LOCATION_ASHEN || g->location == LOCATION_DRAGONSPINE)) {
         for (int y = 0; y < MAP_H; y++) {
@@ -4688,6 +4727,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
 
     draw_low_health_warning(r, g);
     draw_area_description(r, g, v);
+    draw_act5_navigation(r, g, v, world_sx, world_sy);
     mangrove_draw_hint(r, g);
     stormwatch_draw_hint(r, g);
     giants_draw_hint(r, g);

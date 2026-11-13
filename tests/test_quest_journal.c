@@ -67,11 +67,11 @@ void test_quest_journal(void) {
     g.elowen_quest_state = 0;
     g.dain_quest_state = 0;
     g.dragon_treasure_quest_state = 1;
-    ASSERT("Ilya's dragon treasure quest appears with the strength reward",
+    ASSERT("Ilya's dragon treasure quest pays gold locally in Ridgeshire",
         quest_journal_count(&g, QUEST_TAB_ACTIVE) == 1 &&
         quest_journal_get_entry(&g, QUEST_TAB_ACTIVE, 0, &entry) &&
         strcmp(entry.title, "The Dragon's Hoard") == 0 &&
-        strcmp(entry.reward_item, "Potion of Strength") == 0 && strstr(entry.summary_line_2, "Oakhaven's Inn"));
+        entry.reward_gold == 300 && strstr(entry.summary_line_2, "Ridgeshire"));
     g.dragon_treasure_quest_state = 2;
     ASSERT("recovered dragon treasure completes the quest with its reward pending",
         quest_journal_get_entry(&g, QUEST_TAB_COMPLETED, 2, &entry) &&

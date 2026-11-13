@@ -367,7 +367,7 @@ def build_oakhaven_goldsmith():
     return canvas
 
 
-def build_monastery():
+def build_monastery(runewright=False):
     size = (168, 120)
     canvas = Image.new("RGBA", size, (0, 0, 0, 0))
     slate = [(22, 26, 35), (33, 40, 52), (54, 65, 80), (75, 88, 103), (105, 119, 131), (143, 154, 159)]
@@ -375,6 +375,10 @@ def build_monastery():
     gold = [(81, 53, 22), (130, 86, 32), (189, 134, 49), (234, 190, 89), (255, 225, 152)]
     glass = [(39, 74, 97), (67, 130, 159), (128, 192, 202), (133, 53, 57), (203, 106, 86)]
     leaf = [(27, 52, 30), (45, 79, 39), (70, 110, 49), (108, 138, 66)]
+
+    if runewright:
+        slate = [(24, 23, 39), (38, 32, 61), (62, 50, 88), (88, 72, 117), (117, 99, 145), (157, 142, 176)]
+        glass = [(27, 69, 89), (49, 139, 160), (127, 224, 229), (75, 49, 113), (162, 113, 213)]
 
     def stained_window(layer, cx, top, bottom, half):
         stone_arch(layer, cx, top, bottom, half, pale, thick=2)
@@ -456,7 +460,7 @@ def build_monastery():
                 if distance < 6:
                     color = gold[3]
             gable.put(x, y, color)
-    stamp(gable, 87, 45, ["..G..", "GGGGG", "..G..", "..G.."], {"G": gold[3]})
+    stamp(gable, 87, 45, ["..G..", ".GGG.", "GGYGG", ".GGG.", "..G.."] if runewright else ["..G..", "GGGGG", "..G..", "..G.."], {"G": glass[2] if runewright else gold[3], "Y": gold[4]})
     composite(canvas, gable, OUT)
 
     # A tall bell tower sits beside the chapel rather than on its roof.
@@ -469,7 +473,10 @@ def build_monastery():
                slate, 129, tile_w=4, row_h=3, rounded=False)
     beam(tower, 12, 31, 55, 31, pale, width=3)
     beam(tower, 34, 2, 34, 12, IRON, width=1)
-    beam(tower, 31, 5, 37, 5, gold, width=1)
+    if runewright:
+        stamp(tower, 30, 2, ["....G....", "...GGG...", "..GGYGG..", "...GGG...", "....G...."], {"G": glass[2], "Y": gold[4]})
+    else:
+        beam(tower, 31, 5, 37, 5, gold, width=1)
     stone_arch(tower, 34, 40, 62, 7, pale, thick=2)
     for y in range(40, 63):
         for x in range(27, 42):
@@ -481,7 +488,7 @@ def build_monastery():
     for row in range(12):
         half = 2 + max(0, row - 3) // 3
         for x in range(34 - half, 35 + half):
-            color = gold[3] if x < 34 else gold[1]
+            color = (glass[2] if x < 34 else glass[1]) if runewright else (gold[3] if x < 34 else gold[1])
             if x == 34 - half:
                 color = gold[4]
             tower.put(x, 48 + row, color)
@@ -509,7 +516,7 @@ def build_monastery():
         beam(detail, x - 1, 87, x + 5, 87, IRON, width=1)
         rectangle(detail, x, 88, x + 4, 103, slate[1])
         rectangle(detail, x, 88, x, 102, gold[2])
-        stamp(detail, x + 1, 91, [".g.", "ggg", ".g.", ".g."], {"g": gold[3]})
+        stamp(detail, x + 1, 91, [".g.", "g.g", ".g.", "g.g"] if runewright else [".g.", "ggg", ".g.", ".g."], {"g": glass[2] if runewright else gold[3]})
         for col in range(5):
             detail.put(x + col, 104 + min(col, 4 - col), slate[1])
     stone_arch(detail, 84, 92, 110, 6, pale, thick=4)

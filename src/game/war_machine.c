@@ -1,3 +1,4 @@
+#include "ridgeshire.h"
 #include "war_machine.h"
 #include "combat_feedback.h"
 #include <SDL2/SDL.h>
@@ -14,7 +15,7 @@ static int near_veyra(const GameState *g) {
 }
 
 void war_machine_accept(GameState *g) {
-    if (g->war_machine_quest_state == 1 && g->war_machine_progress == 7) {
+    if (g->war_machine_quest_state < 2 && g->war_machine_progress == 7) {
         g->war_machine_quest_state = 2;
         push_message(g, "The weapons shipment is destroyed and the command seal is safe. Report to Veyra in Ridgeshire's Town Hall.");
     }
@@ -30,7 +31,7 @@ int war_machine_talk(GameState *g) {
     snprintf(g->dialogue_speaker, sizeof(g->dialogue_speaker), "%s", WAR_SPEAKER);
     if (!g->war_machine_quest_state) {
         snprintf(g->dialogue_text, sizeof(g->dialogue_text),
-            "Ironfang arms the goblins on Crown Road North. Read stage 2's office orders, dump stage 4's weapons by minecart, and take the stage 5 Mine Boss's command seal. Return for 160 gold.");
+            "I serve the King, but Malakar's private orders divert our steel to goblins. Read Ironfang 2's orders, sink the weapons on 4, and take the Mine Boss's seal on 5. Return for 400 gold and a Royal Ward Ring. I judge your work here, whatever the Crown reports about you.");
     } else if (g->war_machine_quest_state == 1) {
         if (!(g->war_machine_progress & WAR_ORDERS)) {
             snprintf(g->dialogue_text, sizeof(g->dialogue_text),
@@ -43,15 +44,20 @@ int war_machine_talk(GameState *g) {
                 "The weapons are lost. Defeat Ironfang 5's Goblin Mine Boss and take his command seal from the coffer in his gallery. A previous victory counts. Bring the seal and orders back here.");
         }
     } else if (g->war_machine_quest_state == 2) {
+        ridgeshire_sync(g);
         g->war_machine_quest_state = 3;
         g->gold += WAR_REWARD_GOLD;
         g->score += WAR_REWARD_SCORE;
         snprintf(g->dialogue_text, sizeof(g->dialogue_text),
-            "Their weapons lie at the bottom of the shaft, and this seal proves their commander is dead. You have broken Ironfang's next war shipment. Take 160 gold with Ridgeshire's thanks.");
-        push_message(g, "Completed: Break the War Machine. +160 gold, +1000 score.");
+            "Their weapons lie at the bottom of the shaft, and this seal proves their commander is dead. You have broken Ironfang's next war shipment. Take 400 gold and the Royal Ward Ring with Ridgeshire's thanks. Show Oswin the requisitions.");
+        push_message(g, "Completed: Break the War Machine. +400 gold, +1000 score.");
     } else {
         snprintf(g->dialogue_text, sizeof(g->dialogue_text),
             "Ironfang's shipment will never reach the goblin soldiers. Their patrols remain dangerous, but your sabotage denied them fresh weapons.");
+    }
+    ridgeshire_claim_ring(g);
+    if (g->ridgeshire.crown_record && (g->war_machine_progress & WAR_ORDERS) && (g->defeated_bosses & (1u << LOCATION_DRAGONSPINE))) {
+        snprintf(g->dialogue_text, sizeof(g->dialogue_text), "The requisitions, shackle and crown inventory agree: Malakar controls the King. We must confront the Arcanist. Ridgeshire supports you. Your earned ring remains reserved if you need room in your pack.");
     }
     return 1;
 }
@@ -72,7 +78,7 @@ int war_machine_handle_key(GameState *g, int key, int repeat) {
     }
     if (key == SDL_SCANCODE_2) {
         war_machine_talk(g);
-    } else {
+    } else if (g->watchfire_quest_state) {
         game_talk_to_veyra(g);
     }
     return 1;
@@ -100,7 +106,7 @@ int war_machine_interact(GameState *g) {
     }
     if (g->level == 2) {
         g->war_machine_progress |= WAR_ORDERS;
-        push_message(g, "Shipment orders: swords, spearheads and armor for Crown Road North. The stockpile hangs over Ironfang 4's flooded shaft.");
+        push_message(g, "Malakar's private requisitions divert royal steel to goblins and components for a royal binding apparatus. Reports are withheld from the King's household.");
         push_message(g, "Set the junction east, repair the eastern rail, then ride to the supply platform. Its loading winch can sink the weapons.");
     } else if (g->level == 4) {
         g->war_machine_progress |= WAR_SABOTAGE;

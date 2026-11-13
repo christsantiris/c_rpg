@@ -45,17 +45,18 @@ of which document is found first or whether the other boss has been defeated.
 Evidence and acknowledgment persist through save/load. Older boss victories
 gain their journal records without a new popup on loading.
 
-Mara, Ilya and Rook have left Oakhaven in V2; their journal entries keep any
-existing progress, but no one offers these quests until a later act.
+Mara introduces the coastal voyage in Oakhaven. Rowan assigns and rewards
+the beacon quest at Stillbury's docks. Rook offers Slay the Minotaur in
+Stillbury's Tavern.
 
-Mara assigns **Relight the Drowned Beacons** in **Oakhaven's Inn**.
-The beacons remain on Sunken Coast stages 2, 3, and 4. Return to her in the
-Inn for 80 gold and 600 score; her location change preserves existing
-quest progress.
-
-Ilya assigns **The Dragon's Hoard** in **Oakhaven's Inn**. Its objective
-remains the golden goblet on Dragonspine stage 5, beyond Ridgeshire's north
-gate. Return to Ilya in the Inn for one Potion of Strength and 600 score.
+Ridgeshire has three local quests. Veyra's **Break the War Machine** records
+Ironfang 2's requisitions, stage 4's sabotage and stage 5's command seal.
+Edric's **The Dragon's Binding** completes on defeating the Red Dragon;
+Ilya's **The Dragon's Hoard** completes on collecting its goblet. All three
+can reach Completed before acceptance, and rewards wait locally in Ridgeshire.
+The Evidence tab includes the requisitions, runic shackle and Oswin's crown
+inventory. Together they establish Malakar's control of the King. See
+[the Ridgeshire arc](ridgeshire-arc.md).
 
 Zara's **The King's Tribute** tracks Sunscar 2's confiscated cargo and the
 Pharaoh's agreement on stage 5. Both are required. The quest moves to Completed
@@ -63,16 +64,9 @@ before the camp reward is collected. Garran's Jarl quest completes on the boss's
 defeat; Liora's crown quest waits in Completed for delivery to Edda outside
 Stillbury. The lamp quest is retired. See [western quests](act3-western.md).
 
-Town Hall quest, **Reclaim the Emberforge**, tracks recovery of its mechanism
-on Ashen Hollow stage 2 and repair of its furnace on stage 4. Return to Steward
-Hadrin in Ridgeshire for 100 gold and 800 score; both objectives stay recorded
-after collecting the reward.
-
-Marshal Veyra's **Watchfires of Ridgeshire**, offered in **Ridgeshire's Town
-Hall**, spans three regions: **Goblin Mountains 5**, **Ashen Hollow 3**, and
-**Dragonspine 3**. Each objective displays its own region and stage. Restore
-the watchfires in any order and return for **180 gold and 1,400 score**.
-Completed objectives remain recorded after claiming the reward.
+Watchfires, Reclaim the Emberforge and Rest for the Forgotten remain in the
+journal only for previously accepted legacy contracts; new Ridgeshire games
+do not offer them.
 
 Brenna's **The Silent Expedition** appears after talking to her in Stillbury's
 Tavern. It tracks the expedition journal on Frostfell stage 2 and Surveyor Fen's

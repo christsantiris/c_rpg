@@ -315,9 +315,9 @@ void test_town_life(void) {
         action_resolve_player(&game, (Action){ACTION_MOVE, RESIDENT_X, RESIDENT_Y + 1});
         ASSERT("approaching a town resident does not initiate dialogue", !game.dialogue_active);
         ASSERT("talking explicitly opens resident dialogue without granting quests or items", town_life_talk(&game, 0) &&
-            game.dialogue_active && strcmp(game.dialogue_speaker, b->speaker) == 0 && strcmp(game.dialogue_text, b->before) == 0 &&
+            game.dialogue_active && strcmp(game.dialogue_speaker, b->speaker) == 0 && (b->interior == LOCATION_MONASTERY || b->interior == LOCATION_RIDGESHIRE_TAVERN || strcmp(game.dialogue_text, b->before) == 0) &&
             game.gold == 123 && game.score == 456 && game.inventory_count == inventory && game.elowen_quest_state == 1);
-        if (b->victory) {
+        if (b->victory && b->interior != LOCATION_MONASTERY) {
             game.defeated_bosses |= b->victory;
             ASSERT("baker and abbot react to their regional boss victories", town_life_talk(&game, 0) && strcmp(game.dialogue_text, b->after) == 0);
         }
