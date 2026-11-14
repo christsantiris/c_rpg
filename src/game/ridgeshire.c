@@ -141,6 +141,9 @@ int ridgeshire_dialogue(const GameState *g) {
 }
 
 const char *ridgeshire_hint(const GameState *g) {
+    if (!strcmp(g->dialogue_speaker, "Courier Renn")) {
+        return "2: News from Rosemoor\nEnter / Esc: Close";
+    }
     if (g->ridgeshire.prompt == RIDGE_EDRIC_MENU) {
         return "1: The Dragon's Binding\n2: Browse spells and potions\nEnter / Esc: Close";
     }
@@ -170,7 +173,9 @@ int ridgeshire_handle_key(GameState *g, int key, int repeat) {
     if (game_quest_offer_active(g)) {
         return game_handle_quest_offer_key(g, key, 0);
     }
-    if (g->ridgeshire.prompt == RIDGE_EDRIC_MENU && key == SDL_SCANCODE_1) {
+    if (!strcmp(g->dialogue_speaker, "Courier Renn") && key == SDL_SCANCODE_2) {
+        say(g, "Courier Renn", "Rosemoor's wardkeepers warned us before creatures overran the north. Malakar's office suppressed their reports. Follow Crown Road West. Mira at the Apothecary studies Frostfell; Selene and Hadrin at the Guild investigate the pack attacks and Ashen Hollow's commandeered forge.", RENN_X, RENN_Y, RIDGE_MENU);
+    } else if (g->ridgeshire.prompt == RIDGE_EDRIC_MENU && key == SDL_SCANCODE_1) {
         dragon_offer(g);
     } else if (g->ridgeshire.prompt == RIDGE_INN_MENU && key == SDL_SCANCODE_1) {
         say(g, "Ridgeshire Innkeeper", "Rest restores HP and MP for you and your living companions. Fallen companions remain dead. Pay 100 gold?", RESIDENT_X, RESIDENT_Y, RIDGE_REST);

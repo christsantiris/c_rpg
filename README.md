@@ -139,7 +139,12 @@ one class-specific armor choice. Ironfang’s requisitions and the dragon’s
 shackle lead Archivist Oswin to evidence that Malakar controls the King.
 The Runewright’s Lodge sells spells and health/mana potions; the Tavern offers
 paid rest and local reward collection. See the [Ridgeshire arc](docs/ridgeshire-arc.md).
-Rosemoor’s story and the castle finale remain provisional for later design.
+Rosemoor now offers **The Broken Ward** through Mira at its walk-in Apothecary,
+**The Arcanist’s Forge** through Hadrin at the Guild, and Selene’s local
+**Hunt Rimefang**. Rewards are collected in Rosemoor; the Kraken separately
+offers a class weapon choice. The wardkeepers’ orders, forge ledger and binding
+collar expose Malakar’s manufactured crisis. See the [Rosemoor arc](docs/rosemoor-arc.md).
+The castle finale remains provisional for later design.
 See [Act 4 geography](docs/stillbury-act4-geography.md).
 
 ## Controls

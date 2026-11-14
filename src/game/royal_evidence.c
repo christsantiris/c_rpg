@@ -5,6 +5,12 @@
 #include <stdio.h>
 
 static const RoyalEvidence documents[] = {
+    {ROYAL_EVIDENCE_WARD_ORDERS, "Orders to the Wardkeepers", "Recovered with the Frost Kraken's stolen wardstone",
+        "Remove the northern wardstones under royal authority. When the creatures emerge, do not restore the seals. Send warnings to my private office; the King's household must hear nothing. Signed: Malakar, Royal Arcanist."},
+    {ROYAL_EVIDENCE_FORGE_LEDGER, "Emberforge Production Ledger", "Recovered after defeating the Cinder Lord",
+        "Malakar's private commissions: binding devices for the creature allies, restraints for the dragon, and runes for the King's ceremonial crown. Admit no royal inspectors. Conceal deliveries among protected Crown shipments."},
+    {ROYAL_EVIDENCE_RIMEFANG, "Rimefang's Binding Collar", "Recovered after defeating Rimefang's entire pack",
+        "A command collar bears Malakar's private maker's mark. The pack's coordinated attacks targeted ordinary expedition routes while marked royal shipments passed unharmed."},
     {ROYAL_EVIDENCE_REQUISITIONS, "Malakar's Requisitions", "Recovered from Ironfang's side office",
         "Divert royal steel to the goblin forces. Supply components for the royal binding apparatus. Send reports only to Malakar, Royal Arcanist; withhold copies from the King's household."},
     {ROYAL_EVIDENCE_BINDING, "The Dragon's Runic Shackle", "Recovered after defeating the Red Dragon",
@@ -29,7 +35,10 @@ static const RoyalEvidence documents[] = {
 };
 
 int royal_evidence_found(const GameState *g) {
-    return ((g->war_machine_progress & WAR_ORDERS) ? ROYAL_EVIDENCE_REQUISITIONS : 0) |
+    return ((g->defeated_bosses & (1u << LOCATION_FROSTFELL)) ? ROYAL_EVIDENCE_WARD_ORDERS : 0) |
+        ((g->defeated_bosses & (1u << LOCATION_ASHEN)) ? ROYAL_EVIDENCE_FORGE_LEDGER : 0) |
+        ((g->hunt_quest_progress & 1) ? ROYAL_EVIDENCE_RIMEFANG : 0) |
+        ((g->war_machine_progress & WAR_ORDERS) ? ROYAL_EVIDENCE_REQUISITIONS : 0) |
         ((g->defeated_bosses & (1u << LOCATION_DRAGONSPINE)) ? ROYAL_EVIDENCE_BINDING : 0) |
         (g->ridgeshire.crown_record ? ROYAL_EVIDENCE_CROWN : 0) |
         ((g->defeated_bosses & (1u << LOCATION_MOUNTAINS)) ? ROYAL_EVIDENCE_FUNDING : 0) |
@@ -69,11 +78,23 @@ const RoyalEvidence *royal_evidence_entry(const GameState *g, int index) {
 }
 
 const char *royal_evidence_conclusion(const GameState *g) {
+    if ((g->defeated_bosses & (1u << LOCATION_FROSTFELL)) && (g->defeated_bosses & (1u << LOCATION_ASHEN))) {
+        return "Malakar dismantled the wards, armed his allies and commissioned the King's binding crown. He manufactured the crisis and concealed it behind royal authority.";
+    }
+    if (g->defeated_bosses & (1u << LOCATION_ASHEN)) {
+        return "The Emberforge ledger names Malakar as the supplier of creature bindings and the King's crown runes. Mira and the Ridgeshire investigators can compare the evidence.";
+    }
+    if (g->defeated_bosses & (1u << LOCATION_FROSTFELL)) {
+        return "Malakar deliberately opened the northern wards, released creatures and suppressed warnings. The influx of evil was planned.";
+    }
     if (g->ridgeshire.crown_record && (g->war_machine_progress & WAR_ORDERS) && (g->defeated_bosses & (1u << LOCATION_DRAGONSPINE))) {
         return "Malakar's requisitions, the dragon's shackle and the crown inventory show that he controls the King through binding magic.";
     }
     if ((g->war_machine_progress & WAR_ORDERS) || (g->defeated_bosses & (1u << LOCATION_DRAGONSPINE))) {
         return "Malakar's binding magic directs creatures and diverts royal supplies. Archivist Oswin in Ridgeshire can compare the evidence with the King's crown records.";
+    }
+    if (g->hunt_quest_progress & 1) {
+        return "Rimefang's command collar bears Malakar's private mark. Mira and Hadrin in Rosemoor can investigate his connection to the creature attacks.";
     }
     if (royal_evidence_found(g) & ROYAL_EVIDENCE_PRISONERS) {
         return "Malakar's private office directed the disappearances under royal authority and kept the records from the royal court. What does the King know?";

@@ -1,4 +1,12 @@
-# The Three Great Hunts
+# The Three Great Hunts — legacy contract
+
+This contract is retired for fresh games. Selene now offers the local
+[Hunt Rimefang](rosemoor-arc.md) in Rosemoor. Previously accepted contracts
+retain their progress and reward through her **3: Previous Great Hunts
+contract** topic, including while the new quest is unaccepted or the active
+limit is reached. The route table below describes the historical layout;
+use the current atlas for travel.
+
 
 **Huntmaster Selene** stands beside the contract table in **Rosemoor's
 Adventurer's Guild**. Approach her and press **T**, then **Y** to accept this

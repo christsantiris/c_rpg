@@ -1,3 +1,4 @@
+#include "../game/rosemoor.h"
 #include "../game/ridgeshire.h"
 #include "../game/western_arc.h"
 #include "../game/quarry_quest.h"
@@ -219,11 +220,39 @@ static const QuestDefinition quest_definitions[JOURNAL_QUEST_COUNT] = {
         "Defeat the Red Dragon and recover its binding shackle.",
         "Return to Edric at Ridgeshire's Runewright's Lodge for 350 gold.",
         {"Defeat the Red Dragon; recover shackle"}, "Dragonspine", {5}, 350, 0
+    },
+    {
+        "The Broken Ward", "Apothecary Mira",
+        "Defeat the Frost Kraken; recover its stolen wardstone and orders.",
+        "Speak to Mira in Rosemoor's Apothecary and choose the Frostfell topic.",
+        {"Defeat the Frost Kraken; recover wardstone"}, "Frostfell Wastes", {5}, 350, 0
+    },
+    {
+        "The Arcanist's Forge", "Forgekeeper Hadrin",
+        "Defeat the Cinder Lord; recover Malakar's production ledger.",
+        "Return to Hadrin in Rosemoor's Guild.",
+        {"Defeat the Cinder Lord; recover ledger"}, "Ashen Hollow", {5}, 400, 0, "Emberforge Bracers"
+    },
+    {
+        "Hunt Rimefang", "Huntmaster Selene",
+        "Defeat Rimefang and its entire pack. The Kraken is optional.",
+        "Return to Selene in Rosemoor's Guild for gold and one potion.",
+        {"Defeat Rimefang and its entire pack"}, "Frostfell Wastes", {3}, 200, 0, "Choose Strength or Intelligence potion"
     }
+
 
 };
 
 static int quest_state(const GameState *g, int quest) {
+    if (quest == 27) {
+        return g->rosemoor.frost_quest;
+    }
+    if (quest == 28) {
+        return g->rosemoor.forge_quest == 3 && g->rosemoor.bracers == 1 ? 2 : g->rosemoor.forge_quest;
+    }
+    if (quest == 29) {
+        return g->rosemoor.hunt_quest == 3 && g->rosemoor.potion == 1 ? 2 : g->rosemoor.hunt_quest;
+    }
     if (quest == 26) {
         return g->ridgeshire.dragon_quest;
     }
@@ -302,6 +331,9 @@ static int quest_state(const GameState *g, int quest) {
 }
 
 static int quest_progress(const GameState *g, int quest) {
+    if (quest == 27 || quest == 28 || quest == 29) {
+        return quest_state(g, quest) >= 2;
+    }
     if (quest == 26) {
         return g->ridgeshire.dragon_quest >= 2;
     }
@@ -450,6 +482,12 @@ int quest_journal_get_entry(const GameState *g, QuestJournalTab tab, int index, 
         entry->giver = definition->giver;
         entry->summary_line_1 = definition->summary_line_1;
         entry->summary_line_2 = definition->summary_line_2;
+        if (quest == 28 && g->rosemoor.forge_quest == 3 && g->rosemoor.bracers == 1) {
+            entry->summary_line_2 = "Gold paid. Make room, then collect Emberforge Bracers from Hadrin in Rosemoor.";
+        }
+        if (quest == 29 && g->rosemoor.hunt_quest == 3 && g->rosemoor.potion == 1) {
+            entry->summary_line_2 = "Gold paid. Choose one potion from Selene in Rosemoor's Guild.";
+        }
         if (quest == 0) {
             entry->summary_line_2 = state == ELOWEN_HOME ? "Elowen is home at Oakhaven's Inn. Bram's reward has been collected." :
                 state == ELOWEN_RESCUED ? definition->summary_line_2 : "Bram waits at Oakhaven's Inn. Rescue Elowen from the Lich King.";

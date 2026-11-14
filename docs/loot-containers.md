@@ -24,3 +24,8 @@ The Red Dragon's new reliquary follows the same open-then-pick-up controls.
 Picking up its released armor opens a three-class armor choice instead of
 automatically granting equipment. A full bag or Esc leaves the choice pending.
 Old saves retain their unclaimed Dragon Scale Mantle.
+
+The Frost Kraken's new reliquary uses the same open-then-pick-up interaction to
+offer one class weapon choice. The chest preserves its underlying snow or frozen
+lake. Esc or a full bag keeps the choice pending through travel and save/load.
+Old victories and pending rewards retain the original Krakenbone Bow.

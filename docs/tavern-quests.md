@@ -24,7 +24,7 @@ in Ridgeshire's Tavern & lodgings.
 Rook now offers Slay the Minotaur in Stillbury's Tavern.
 After the Lich King's defeat, Alder and Dain arrive at Oakhaven's Inn with the
 eastward and westward adventure choices, and Aldric moves in from the square.
-Brenna remains in Stillbury's Tavern. Zara starts in Oakhaven's Inn after the Goblin King falls, then moves to the Sunscar caravan camp. Dawnmere's Alehouse has a generic
+Brenna remains in Stillbury's Tavern only for an accepted legacy expedition quest. Zara starts in Oakhaven's Inn after the Goblin King falls, then moves to the Sunscar caravan camp. Dawnmere's Alehouse has a generic
 host and no longer offers Dain's quest.
 Stillbury's duplicate Bram and the Bring Mira Home swamp quest are retired.
 
@@ -150,7 +150,23 @@ The Queen is not a beacon objective. Her defeat opens the island voyage from
 Stillbury independently; the beacons and Queen together reopen coastal trade
 and improve civilian reception. No Oakhaven return is required.
 
-## Brenna: The Silent Expedition
+## Rosemoor: Mira, Hadrin and Selene
+
+Mira's Apothecary opens a conversation on Talk: **1: Buy / sell**, **2: Ask
+about Frostfell**. Choosing the quest topic offers **The Broken Ward** with Y/N.
+Defeat the Frost Kraken, then return to that topic for **350 gold**.
+Hadrin at Rosemoor's Guild offers **The Arcanist's Forge**: defeat the Cinder
+Lord, then return locally for **400 gold and Emberforge Bracers**. Selene offers
+**Hunt Rimefang** on Frostfell 3 for **200 gold and one potion choice**. Full bags
+preserve equipment and potion rewards. All three objectives can complete before
+acceptance, and completed objectives free active slots before NPC turn-in.
+See [Rosemoor's arc](rosemoor-arc.md).
+
+## Brenna: The Silent Expedition — legacy contract
+
+This rescue quest is retired for fresh games. Accepted contracts keep their
+objectives and Brenna remains available for their original turn-in.
+
 
 Quartermaster Brenna waits in Stillbury's Tavern. Press `T` beside her, then `Y`
 to accept. She explains the route across the swamp north of Stillbury to

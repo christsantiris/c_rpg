@@ -143,7 +143,21 @@ migration never grants repeat rewards. Return portals ward threatening landing
 signatures and clear lingering heat on the landing cell without advancing other
 arena clocks.
 
-## Reclaim the Emberforge
+## The Arcanist's Forge
+
+Forgekeeper Hadrin in Rosemoor's Guild asks the player to defeat the Cinder Lord
+on stage 5. His death stops binding production and automatically recovers
+Malakar's ledger, even without acceptance. The quest moves straight to Completed;
+return locally for **400 gold and Emberforge Bracers** (+2 defense, +30 maximum
+HP/MP, all classes). A full bag leaves the bracers reserved without repeating
+gold. This is independent of the existing boss equipment and potion.
+See [Rosemoor's story](rosemoor-arc.md).
+
+## Reclaim the Emberforge — legacy contract
+
+The repair contract below remains only for already accepted legacy quests.
+Fresh games use The Arcanist's Forge; no stage-2/4 repair mission is required.
+
 
 Steward Hadrin assigns this one-time quest inside Ridgeshire's Town Hall,
 northeast of the crossroads. Ashen Hollow is reached through Rosemoor's west gate. Approach him and press **T**. The town wants to

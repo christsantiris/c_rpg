@@ -68,6 +68,15 @@ Watchfires, Reclaim the Emberforge and Rest for the Forgotten remain in the
 journal only for previously accepted legacy contracts; new Ridgeshire games
 do not offer them.
 
+Rosemoor's **The Broken Ward**, **The Arcanist's Forge** and **Hunt Rimefang**
+use the same three active slots. Kraken victory, Cinder Lord victory and defeating
+the whole pack respectively move them to Completed, including before acceptance.
+Rewards wait locally with Mira, Hadrin and Selene. Reserved bracers and potion
+choices remain marked pending after their gold is paid. Their discoveries add
+three documents implicating Malakar to Evidence. See [Rosemoor](rosemoor-arc.md).
+
+The Silent Expedition and Three Great Hunts now remain only for legacy progress.
+
 Brenna's **The Silent Expedition** appears after talking to her in Stillbury's
 Tavern. It tracks the expedition journal on Frostfell stage 2 and Surveyor Fen's
 rescue on stage 4. Recover the journal with `A`, then defeat Fen's captors and

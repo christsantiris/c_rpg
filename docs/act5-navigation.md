@@ -14,11 +14,10 @@ or reputation requirement. Stillbury’s sole first approach to the castle remai
 Blackwater Swamp, Royal Catacombs and Crown Road North. The western quarry and
 eastern coast remain local adventures, separated from these hubs by cliffs.
 
-This establishes the routes for the final regional act. The next change sets
-will define each hub’s storyline, NPC interactions, quests and rewards, followed
-by the castle player experience and the final encounter with Malakar. Those
-story and finale decisions remain provisional; the atlas keeps its Act V
-provisional legend. This change stops for a manual commit before that work.
+The [Ridgeshire arc](ridgeshire-arc.md) and [Rosemoor arc](rosemoor-arc.md) now
+supply local quests, services, rewards and complementary evidence about Malakar.
+The castle player experience and final encounter remain a separate design step;
+the atlas retains its provisional Act V legend while that work is deferred.
 
 ## Implementation
 

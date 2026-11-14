@@ -26,6 +26,13 @@ static void floor_tile(Renderer *r, const GameState *g, int sx, int sy, int x, i
                 draw_coast_floor(r, sx, sy, x, y);
             }
             break;
+        case LOCATION_FROSTFELL:
+            if (ground == TILE_FROST_LAKE || ground == TILE_KRAKEN_LAKE_RELIQUARY) {
+                draw_frostfell_lake(r, sx, sy, x, y);
+            } else {
+                draw_frostfell_floor(r, sx, sy, x, y);
+            }
+            break;
         case LOCATION_SWAMP: draw_swamp_floor(r, sx, sy, x, y); break;
         case LOCATION_DRAGONSPINE:
             draw_dragonspine_floor(r, sx, sy, x, y,
