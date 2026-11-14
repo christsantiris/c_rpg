@@ -1,3 +1,4 @@
+#include "rosemoor.h"
 #include "ridgeshire.h"
 #include "act5_routes.h"
 #include "labyrinth_arc.h"
@@ -408,7 +409,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         }
 
         if (type == ENEMY_CINDER_LORD) {
-            push_message(g, "The Cinder Lord falls. The path to Rosemoor opens!");
+            push_message(g, "The Cinder Lord falls. Malakar's binding forge stops; return to Hadrin in Rosemoor.");
         }
         if (type == ENEMY_GRAVE_MARSHAL) {
             push_message(g, "The Grave Marshal falls. The passage to the castle opens!");
@@ -532,6 +533,16 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
     // Each boss leaves a fixed regional reward instead of rolling ordinary
     // equipment, so capstone weapons remain Blacksmith progression.
     if (is_boss) {
+        if (type == ENEMY_FROST_KRAKEN && !g->rosemoor.legacy_kraken) {
+            if (g->floor_item_count < MAX_FLOOR_ITEMS) {
+                place_gold_drop(g, x, y, gold);
+            } else {
+                award_gold(g, gold);
+            }
+            rosemoor_kraken_reward(g);
+            game_update_level_progress(g);
+            return;
+        }
         if (type == ENEMY_RED_DRAGON) {
             if (g->floor_item_count < MAX_FLOOR_ITEMS) {
                 place_gold_drop(g, x, y, gold);
@@ -3055,7 +3066,9 @@ void action_resolve_player(GameState *g, Action a) {
     western_update(g);
     quarry_update(g);
     ridgeshire_sync(g);
+    rosemoor_sync(g);
     ridgeshire_prepare(g);
+    rosemoor_prepare(g);
     act5_reveal_exits(g);
     if (location != g->location || level != g->level || route != g->approach_route || road_town != g->road_town) {
         // Travel handlers return before the ordinary movement-facing update.

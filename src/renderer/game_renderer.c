@@ -1,3 +1,4 @@
+#include "../game/rosemoor.h"
 #include "../game/ridgeshire.h"
 #include "../game/western_arc.h"
 #include "western_arc_renderer.h"
@@ -629,7 +630,7 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     int quest_offer = game_quest_offer_active(g);
     int stormbell_prompt = stormbell_prompt_active(g);
     int shrine_prompt = resurrection_prompt_active(g);
-    int escort_dialogue = ridgeshire_dialogue(g) || strcmp(g->dialogue_speaker, "Elowen") == 0 ||
+    int escort_dialogue = rosemoor_dialogue(g) || ridgeshire_dialogue(g) || strcmp(g->dialogue_speaker, "Elowen") == 0 ||
         garran_dialogue(g) || quarry_dialogue(g) ||
         strcmp(g->dialogue_speaker, STORM_MAGE_SPEAKER) == 0 ||
         (g->aldric_party_state == ALDRIC_FOLLOWING && strcmp(g->dialogue_speaker, ALDRIC_SPEAKER) == 0);
@@ -707,6 +708,9 @@ static void draw_dialogue_bubble(Renderer *r, const GameState *g, const Viewport
     }
     if (garran_dialogue(g) && (g->garran.prompt != GARRAN_QUEST || !quest_offer)) {
         hint = garran_hint(g);
+    }
+    if (rosemoor_dialogue(g) && (!quest_offer || (!strcmp(g->dialogue_speaker, ROSE_HUNT_SPEAKER) && g->hunt_quest_state))) {
+        hint = rosemoor_hint(g);
     }
     if (ridgeshire_dialogue(g) && !quest_offer) {
         hint = ridgeshire_hint(g);
@@ -1808,7 +1812,7 @@ static void draw_coast_trap_underlay(Renderer *r, const GameState *g, int map_x,
 }
 
 static int frostfell_surface_family(TileType tile) {
-    if (tile == TILE_FROST_LAKE || tile == TILE_FROST_LAKE_HOLE || tile == TILE_FROST_BROKEN_ICE) {
+    if (tile == TILE_FROST_LAKE || tile == TILE_FROST_LAKE_HOLE || tile == TILE_FROST_BROKEN_ICE || tile == TILE_KRAKEN_LAKE_RELIQUARY) {
         return 1;
     }
     return tile == TILE_FROST_ICE ? 2 : 0;
@@ -1977,7 +1981,7 @@ static void draw_floor_item_with_underlay(Renderer *r, const GameState *g, int m
         draw_glassdeep_edge(r, screen_x, screen_y, map_x, map_y);
     } else if (underlay == TILE_RETIRED_DESERT_LAMP) {
         draw_desert_floor(r, screen_x, screen_y, map_x, map_y);
-    } else if (underlay == TILE_FROST_LAKE) {
+    } else if (underlay == TILE_FROST_LAKE || underlay == TILE_KRAKEN_LAKE_RELIQUARY) {
         draw_frostfell_lake(r, screen_x, screen_y, map_x, map_y);
         draw_frostfell_shore(r, g, screen_x, screen_y, map_x, map_y, underlay);
     } else if (underlay == TILE_FROST_ICE) {
@@ -2995,6 +2999,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
                 case TILE_FROST_EXIT:
                     draw_frostfell_edge(r, sx, sy, x, y); break;
                 case TILE_FROST_LAKE:
+                case TILE_KRAKEN_LAKE_RELIQUARY:
                     draw_frostfell_lake(r, sx, sy, x, y);
                     draw_frostfell_shore(r, g, sx, sy, x, y, TILE_FROST_LAKE);
                     break;
@@ -4247,7 +4252,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         renderer_draw_text(r, label, viewport_to_screen_x(v, RESTORATION_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, RESTORATION_Y - 1) * TILE_SIZE, (SDL_Color){182, 224, 196, 255}, r->font_tiny);
     }
-    if (g->location == LOCATION_INN) {
+    if (g->location == LOCATION_INN && g->map.tiles[BRENNA_INN_Y][BRENNA_INN_X] == TILE_NPC_BRENNA) {
         int width = 0;
         TTF_SizeText(r->font_tiny, "BRENNA", &width, NULL);
         renderer_draw_text(r, "BRENNA", viewport_to_screen_x(v, BRENNA_INN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
@@ -4364,6 +4369,11 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
     if (g->location == LOCATION_GUILD) {
         int width = 0;
+        if (g->map.tiles[ROSE_HADRIN_Y][ROSE_HADRIN_X] == TILE_NPC_STEWARD) {
+            TTF_SizeText(r->font_tiny, "FORGEKEEPER HADRIN", &width, NULL);
+            renderer_draw_text(r, "FORGEKEEPER HADRIN", viewport_to_screen_x(v, ROSE_HADRIN_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
+                viewport_to_screen_y(v, ROSE_HADRIN_Y - 1) * TILE_SIZE, (SDL_Color){237, 186, 82, 255}, r->font_tiny);
+        }
         TTF_SizeText(r->font_tiny, "HUNTMASTER SELENE", &width, NULL);
         renderer_draw_text(r, "HUNTMASTER SELENE", viewport_to_screen_x(v, GUILD_SELENE_X) * TILE_SIZE + (TILE_SIZE - width) / 2,
             viewport_to_screen_y(v, GUILD_SELENE_Y - 1) * TILE_SIZE, (SDL_Color){237, 186, 82, 255}, r->font_tiny);

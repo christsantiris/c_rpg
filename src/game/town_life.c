@@ -1,3 +1,4 @@
+#include "rosemoor.h"
 #include "ridgeshire.h"
 #include "town_life.h"
 #include "spice_skiff.h"
@@ -7,6 +8,7 @@
 #include <stdlib.h>
 
 static const TownBuilding buildings[] = {
+
     {LOCATION_TOWN4, LOCATION_RIDGESHIRE_TAVERN, 26, 16, 7, 5, 4, 0,
         "TAVERN & LODGINGS", "Ridgeshire Innkeeper",
         "Welcome to Ridgeshire. Rest here and speak to Ilya about the dragon's hoard.", NULL},
@@ -23,7 +25,7 @@ static const TownBuilding buildings[] = {
         "The dragon's shackle bears binding runes. Take the evidence to Oswin in the Town Hall and compare it with Ironfang's requisitions."},
     {LOCATION_TOWN3, LOCATION_SPICE_SHOP, 7, 17, 5, 4, 3, 0,
         "SPICE MERCHANT", "Spice Merchant Suri",
-        "The Crown Road has become dangerous. Bandits prey on caravans, and every sack of spice that reaches Rosemoor has a tale of narrow escape. Traders travel in company now.", NULL},
+        "Our caravans were attacked while Malakar's marked shipments passed untouched. They called the shortages inevitable. Mira studies Frostfell's broken wards; Hadrin and Selene at the Guild can guide you to Ashen Hollow and a local hunt.", NULL},
     {LOCATION_DAWNMERE, LOCATION_DAWNMERE_MERCHANT, 7, 7, 5, 4, 0, 0,
         "SPICE MERCHANT", "Spice Merchant Corvin",
         spice_skiff_offer, NULL},
@@ -44,7 +46,10 @@ static const TownBuilding buildings[] = {
         "Welcome to the forge! I buy and sell weapons and armor. Approach my counter and Talk to browse my stock.", NULL, 1},
     {LOCATION_TOWN, LOCATION_ALCHEMIST, TOWN_ALCHEMIST_X, TOWN_ALCHEMIST_Y, 5, 4, 9, 0,
         "ALCHEMIST", "Alchemist Wren",
-        "Welcome! I sell potions and scrolls for the road. Approach my counter and Talk to browse my shelves.", NULL, 1}
+        "Welcome! I sell potions and scrolls for the road. Approach my counter and Talk to browse my shelves.", NULL, 1},
+    {LOCATION_TOWN3, LOCATION_ROSEMOOR_APOTHECARY, TOWN_APOTHECARY_X, TOWN_APOTHECARY_Y, TOWN_APOTHECARY_W, TOWN_APOTHECARY_H, 9, 0,
+        "APOTHECARY", "Apothecary Mira",
+        "Welcome to Rosemoor. Approach Mira and Talk to trade or discuss Frostfell's broken wards.", NULL, 1}
 };
 
 const TownBuilding *town_life_building(Location location) {
@@ -153,7 +158,7 @@ int town_life_near_shopkeeper(const GameState *g) {
 }
 
 int town_life_talk(GameState *g, int greeting) {
-    if (!greeting && ridgeshire_talk(g)) {
+    if (!greeting && (rosemoor_talk(g) || ridgeshire_talk(g))) {
         return 1;
     }
     if (g->location == LOCATION_ALEHOUSE && greeting) {

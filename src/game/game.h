@@ -157,6 +157,17 @@ typedef struct {
 } RidgeshireArc;
 
 typedef struct {
+    int frost_quest;
+    int forge_quest;
+    int hunt_quest;
+    int bracers;
+    int potion;
+    int weapon;
+    int prompt;
+    int legacy_kraken;
+} RosemoorArc;
+
+typedef struct {
     Map   map;
     Enemy enemies[LEVEL_CACHE_ENEMY_CAPACITY];
     int   enemy_count;
@@ -241,7 +252,8 @@ typedef enum {
     LOCATION_BLACKSMITH,
     LOCATION_ALCHEMIST,
     LOCATION_RIVER_CROSSING,
-    LOCATION_RIDGESHIRE_TAVERN
+    LOCATION_RIDGESHIRE_TAVERN,
+    LOCATION_ROSEMOOR_APOTHECARY
 } Location;
 
 // Elderwood uses only its own bounds; compact caches avoid allocating the
@@ -521,6 +533,7 @@ typedef struct {
     StormMage storm_mage;
     CaravanRogue garran;
     RidgeshireArc ridgeshire;
+    RosemoorArc rosemoor;
     int resurrection_prompt;
     int resurrection_target;
     int dain_quest_state; // 0 offer, 1 halves, 2 turn-in, 3 boss offer, 4 boss active, 5 complete.

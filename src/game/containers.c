@@ -15,6 +15,7 @@
 #include "prism_sovereign.h"
 #include "sun_guardian.h"
 #include "red_dragon.h"
+#include "rosemoor.h"
 #include "ridgeshire.h"
 #include <stdlib.h>
 
@@ -29,6 +30,7 @@ typedef struct {
 } ContainerDefinition;
 
 static const ContainerDefinition definitions[] = {
+    {TILE_KRAKEN_RELIQUARY, -1, LOCATION_FROSTFELL, 0, 0, 0, 0},
     {TILE_CRYPT_CACHE, -1, LOCATION_DUNGEON, 10, 2, 1, 0},
     {TILE_MOUNTAIN_CACHE, -1, LOCATION_MOUNTAINS, 15, 4, 1, 0},
     {TILE_COAST_CACHE, -1, LOCATION_COAST, 20, 4, 1, 0},
@@ -140,6 +142,8 @@ int containers_at(const GameState *g, int x, int y, int *kind, int *opened) {
         tile = TILE_PRISM_RELIQUARY;
     } else if (tile == TILE_DRAGON_RELIQUARY_ASH || tile == TILE_DRAGON_RELIQUARY_HOARD) {
         tile = TILE_DRAGON_RELIQUARY_FLOOR;
+    } else if (tile == TILE_KRAKEN_LAKE_RELIQUARY) {
+        tile = TILE_KRAKEN_RELIQUARY;
     }
     for (unsigned int i = 0; i < sizeof(definitions) / sizeof(definitions[0]); i++) {
         const ContainerDefinition *d = &definitions[i];
@@ -215,6 +219,7 @@ const char *containers_hint(const GameState *g) {
 
 static int pending(const GameState *g, int kind) {
     switch (kind) {
+        case TILE_KRAKEN_RELIQUARY: return g->rosemoor.weapon == ROSE_WEAPON_PENDING;
         case TILE_LICH_RELIQUARY: return g->lich_reward_state == 1;
         case TILE_NECRO_RELIQUARY: return g->necromancer_reward_state == 1;
         case TILE_GOBLIN_KING_RELIQUARY: return g->goblin_king_reward_state == 1;
@@ -235,6 +240,7 @@ static int pending(const GameState *g, int kind) {
 
 Item containers_reward(const LootContainer *c, int bit) {
     switch (c->kind) {
+        case TILE_KRAKEN_RELIQUARY: return item_make_kraken_weapon(1);
         case TILE_LICH_RELIQUARY: return item_make_crypt_ring();
         case TILE_NECRO_RELIQUARY: return item_make_necromancer_cloak();
         case TILE_GOBLIN_KING_RELIQUARY: return item_make_goblin_king_shield();
@@ -380,6 +386,10 @@ int containers_pickup(GameState *g) {
             return jail_recover_gear(g);
         }
         c->rewards &= pending(g, c->kind);
+        if (c->kind == TILE_KRAKEN_RELIQUARY && c->rewards) {
+            rosemoor_weapon_offer(g);
+            return 1;
+        }
         if (c->kind == TILE_DRAGON_RELIQUARY_FLOOR && c->rewards && !g->ridgeshire.legacy_dragon) {
             ridgeshire_armor_offer(g);
             return 1;

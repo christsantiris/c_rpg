@@ -1,3 +1,4 @@
+#include "rosemoor.h"
 #include "ridgeshire.h"
 #include "act5_routes.h"
 #include "labyrinth_arc.h"
@@ -1623,6 +1624,7 @@ void game_init(GameState *g) {
     storm_mage_init(g);
     garran_init(g);
     g->ridgeshire = (RidgeshireArc){0};
+    g->rosemoor = (RosemoorArc){0};
     g->resurrection_target = 0;
     g->resurrection_prompt = 0;
     g->dain_quest_state = 0;
@@ -2452,7 +2454,7 @@ static void place_dragon_treasure(GameState *g) {
 // Keep the unique reward available even when a fresh visit regenerates the map.
 static void restore_frostfell_reward(GameState *g) {
     if (g->location != LOCATION_FROSTFELL || g->level != FROSTFELL_DEPTH ||
-        !g->kraken_bow_unclaimed || g->map.room_count == 0) {
+        !g->kraken_bow_unclaimed || !g->rosemoor.legacy_kraken || g->map.room_count == 0) {
         return;
     }
     for (int i = 0; i < g->floor_item_count; i++) {
@@ -3016,7 +3018,7 @@ static int hunt_encounter_mask(int index) {
 
 static void refresh_hunt_progress(GameState *g) {
     int index = hunt_stage_index(g);
-    if (index < 0 || g->hunt_quest_state != 1 || (g->hunt_quest_progress & (1 << index)) ||
+    if (index < 0 || (g->hunt_quest_state != 1 && !(index == 0 && g->rosemoor.hunt_quest < 2)) || (g->hunt_quest_progress & (1 << index)) ||
         (g->hunt_quest_encounters & hunt_encounter_mask(index)) != hunt_encounter_mask(index)) {
         return;
     }
@@ -3026,6 +3028,7 @@ static void refresh_hunt_progress(GameState *g) {
         }
     }
     g->hunt_quest_progress |= 1 << index;
+    rosemoor_sync(g);
     char message[MAX_MESSAGE_LEN];
     snprintf(message, sizeof(message), "Hunt complete: %s and its entire group are defeated.", guild_hunts[index].leader);
     push_message(g, message);
@@ -3037,7 +3040,7 @@ static void refresh_hunt_progress(GameState *g) {
 
 static void place_hunt_encounter(GameState *g) {
     int index = hunt_stage_index(g);
-    if (index < 0 || g->hunt_quest_state != 1 || (g->hunt_quest_progress & (1 << index)) || !g->map.room_count) {
+    if (index < 0 || (g->hunt_quest_state != 1 && !(index == 0 && g->rosemoor.hunt_quest < 2)) || (g->hunt_quest_progress & (1 << index)) || !g->map.room_count) {
         return;
     }
     const GuildHunt *hunt = &guild_hunts[index];
@@ -3094,7 +3097,9 @@ static void place_hunt_encounter(GameState *g) {
 
 void game_refresh_quest_encounters(GameState *g) {
     ridgeshire_sync(g);
+    rosemoor_sync(g);
     ridgeshire_prepare(g);
+    rosemoor_prepare(g);
     act5_reveal_exits(g);
     western_prepare(g);
     elowen_prepare(g);
@@ -3139,7 +3144,9 @@ void game_refresh_quest_encounters(GameState *g) {
     containers_restore(g);
     coast_exits_repair(g);
     ridgeshire_sync(g);
+    rosemoor_sync(g);
     ridgeshire_prepare(g);
+    rosemoor_prepare(g);
     act5_reveal_exits(g);
 }
 
@@ -3225,7 +3232,9 @@ static void generate_active_level(GameState *g) {
     place_hunt_encounter(g);
     coast_exits_repair(g);
     ridgeshire_sync(g);
+    rosemoor_sync(g);
     ridgeshire_prepare(g);
+    rosemoor_prepare(g);
     act5_reveal_exits(g);
     game_update_level_progress(g);
 }
@@ -4224,6 +4233,7 @@ void game_enter_crownroad(GameState *g, Location road, int from_castle) {
     g->dialogue_active = 0;
     town_road_reveal_gates(g);
     ridgeshire_prepare(g);
+    rosemoor_prepare(g);
     push_message(g, road == LOCATION_CROWNROAD ?
         "Crown Road West links Rosemoor to the Castle of No Return." :
         "Crown Road East links Ridgeshire to the Castle of No Return.");
@@ -4268,6 +4278,7 @@ void game_leave_crownroad(GameState *g, Location destination) {
     g->player.poison_turns = 0;
     town_road_reveal_gates(g);
     ridgeshire_prepare(g);
+    rosemoor_prepare(g);
     push_message(g, destination == LOCATION_CASTLE ?
         "You reach the grounds of the Castle of No Return." :
         (destination == LOCATION_TOWN4 ? "You return to Ridgeshire." : "You return to Rosemoor."));
@@ -4300,6 +4311,7 @@ void game_enter_guild(GameState *g) {
     g->enemy_count = 0;
     g->floor_item_count = 0;
     g->dialogue_active = 0;
+    rosemoor_prepare(g);
     push_message(g, "You enter the Adventurer's Guild.");
 }
 
@@ -4381,6 +4393,7 @@ void game_enter_town_hall(GameState *g) {
     g->floor_item_count = 0;
     g->dialogue_active = 0;
     ridgeshire_prepare(g);
+    rosemoor_prepare(g);
     push_message(g, "Ridgeshire Town Hall. Press T beside an NPC to talk.");
 }
 
@@ -5435,6 +5448,7 @@ static void return_to_town(GameState *g, Location destination) {
     eastern_enter_town(g);
     town_road_reveal_gates(g);
     ridgeshire_prepare(g);
+    rosemoor_prepare(g);
     game_recover_retired_items(g);
 }
 
@@ -6217,6 +6231,9 @@ typedef struct {
 } QuestOffer;
 
 static const QuestOffer quest_offers[] = {
+    {ROSE_FROST_SPEAKER, LOCATION_ROSEMOOR_APOTHECARY, offsetof(GameState, rosemoor.frost_quest), 0, "Assigned: The Broken Ward. Defeat the Frost Kraken and return to Mira in Rosemoor."},
+    {ROSE_FORGE_SPEAKER, LOCATION_GUILD, offsetof(GameState, rosemoor.forge_quest), 0, "Assigned: The Arcanist's Forge. Defeat the Cinder Lord and return to Hadrin in Rosemoor's Guild."},
+    {ROSE_HUNT_SPEAKER, LOCATION_GUILD, offsetof(GameState, rosemoor.hunt_quest), 0, "Assigned: Hunt Rimefang. Defeat the entire pack on Frostfell 3; return to Selene in Rosemoor."},
     {RIDGE_DRAGON_SPEAKER, LOCATION_MONASTERY, offsetof(GameState, ridgeshire.dragon_quest), 0, "Assigned: The Dragon's Binding. Defeat the Red Dragon and return to Edric in Ridgeshire."},
     {RIDGE_HOARD_SPEAKER, LOCATION_RIDGESHIRE_TAVERN, offsetof(GameState, dragon_treasure_quest_state), 0, "Assigned: The Dragon's Hoard. Bring the goblet to Ilya in Ridgeshire's Tavern."},
     {"Historian Liora", LOCATION_APPROACH, offsetof(GameState, crown_quest_state), 0,
@@ -6674,6 +6691,7 @@ void game_migrate_boss_shortcuts(GameState *g) {
 
 void game_update_level_progress(GameState *g) {
     ridgeshire_sync(g);
+    rosemoor_sync(g);
     eastern_update(g);
     western_update(g);
     update_oakhaven_boss_quests(g);

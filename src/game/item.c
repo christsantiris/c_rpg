@@ -555,7 +555,9 @@ void item_apply_legacy_metadata(Item *item) {
     item->pierces_targets = 0;
     item->spell_power_bonus = 0;
     item->armor_penetration_percent = 0;
-    if (strcmp(item->name, "Rusty Sword") == 0) {
+    if (!strcmp(item->name, "Krakenbone Blade") || !strcmp(item->name, "Krakenbone Warbow") || !strcmp(item->name, "Rimestaff")) {
+        definition = item_make_kraken_weapon(!strcmp(item->name, "Krakenbone Blade") ? 0 : !strcmp(item->name, "Krakenbone Warbow") ? 1 : 2);
+    } else if (strcmp(item->name, "Rusty Sword") == 0) {
         definition = item_make_rusty_sword();
     } else if (strcmp(item->name, "Short Sword") == 0) {
         definition = item_make_short_sword();
@@ -1272,5 +1274,31 @@ Item item_make_dragonforged_armor(int choice) {
     item.max_hp_bonus = index == 0 ? 60 : index == 1 ? 25 : 0;
     item.max_mp_bonus = index == 2 ? 70 : 0;
     item.value = 1800;
+    return item;
+}
+
+Item item_make_emberforge_bracers(void) {
+    Item item = make_accessory("Emberforge Bracers", ACCESSORY_FAMILY_BRACERS, 1500);
+    item.rarity = ITEM_RARITY_RARE;
+    item.defense_bonus = 2;
+    item.max_hp_bonus = 30;
+    item.max_mp_bonus = 30;
+    return item;
+}
+
+Item item_make_kraken_weapon(int choice) {
+    Item item = choice == 0 ? item_make_magic_long_sword() : choice == 1 ? item_make_magic_longbow() : item_make_magic_staff();
+    const char *names[] = {"Krakenbone Blade", "Krakenbone Warbow", "Rimestaff"};
+    int index = choice >= 0 && choice < 3 ? choice : 2;
+    snprintf(item.name, sizeof(item.name), "%s", names[index]);
+    item.attack_bonus += 1;
+    item.value = 1800;
+    if (index == 0) {
+        item.class_mask = ITEM_CLASS_WARRIOR;
+        item.max_hp_bonus = 25;
+    } else if (index == 2) {
+        item.spell_power_bonus = 10;
+        item.max_mp_bonus = 45;
+    }
     return item;
 }

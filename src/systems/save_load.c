@@ -1,3 +1,4 @@
+#include "../game/rosemoor.h"
 #include "../game/ridgeshire.h"
 #include "../game/act5_routes.h"
 #include "../game/labyrinth_arc.h"
@@ -2048,8 +2049,37 @@ static int load_ridgeshire(const cJSON *root, GameState *g, int version) {
     return 1;
 }
 
+static cJSON *serialize_rosemoor(const GameState *g) {
+    cJSON *object = cJSON_CreateObject();
+    const RosemoorArc *arc = &g->rosemoor;
+    const char *keys[] = {"frost_quest", "forge_quest", "hunt_quest", "bracers", "potion", "weapon", "prompt", "legacy_kraken"};
+    const int values[] = {arc->frost_quest, arc->forge_quest, arc->hunt_quest, arc->bracers, arc->potion, arc->weapon, arc->prompt, arc->legacy_kraken};
+    for (int i = 0; i < 8; i++) {
+        cJSON_AddNumberToObject(object, keys[i], values[i]);
+    }
+    return object;
+}
+
+static int load_rosemoor(const cJSON *root, GameState *g, int version) {
+    g->rosemoor = (RosemoorArc){0};
+    if (version < 252) {
+        return 1;
+    }
+    const cJSON *object = cJSON_GetObjectItem(root, "rosemoor");
+    RosemoorArc *arc = &g->rosemoor;
+    const char *keys[] = {"frost_quest", "forge_quest", "hunt_quest", "bracers", "potion", "weapon", "prompt", "legacy_kraken"};
+    int *values[] = {&arc->frost_quest, &arc->forge_quest, &arc->hunt_quest, &arc->bracers, &arc->potion, &arc->weapon, &arc->prompt, &arc->legacy_kraken};
+    const int limits[] = {3, 3, 3, 2, 2, ROSE_STAFF, ROSE_WEAPON, 1};
+    for (int i = 0; i < 8; i++) {
+        if (!stormwatch_number(object, keys[i], values[i]) || *values[i] < 0 || *values[i] > limits[i]) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int save_game(const GameState *g, int slot) {
-    if (!garran_valid(g) || !quarry_valid(g) || !ridgeshire_valid(g)) {
+    if (!garran_valid(g) || !quarry_valid(g) || !ridgeshire_valid(g) || !rosemoor_valid(g)) {
         return 0;
     }
     if (!western_valid(g) || !eastern_valid(g) || !containers_valid(g) || !crown_quest_valid(g) || !war_machine_valid(g) || !stormbell_valid(g) || !giants_valid(g) || !northroad_valid(g) || !mangrove_state_valid(g) || !stormwatch_valid(g) || !ironfang_valid(g)) {
@@ -2060,7 +2090,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 251);
+    cJSON_AddNumberToObject(root, "save_version", 252);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -2305,6 +2335,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddItemToObject(root, "storm_mage", serialize_storm_mage(g));
     cJSON_AddItemToObject(root, "garran", serialize_garran(g));
     cJSON_AddItemToObject(root, "ridgeshire", serialize_ridgeshire(g));
+    cJSON_AddItemToObject(root, "rosemoor", serialize_rosemoor(g));
     cJSON_AddNumberToObject(root, "resurrection_prompt", g->resurrection_prompt);
     cJSON_AddNumberToObject(root, "resurrection_target", g->resurrection_target);
     cJSON_AddNumberToObject(root, "dain_quest_state", g->dain_quest_state);
@@ -4412,7 +4443,7 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
-    if (!load_storm_mage(root, g, save_version) || !load_garran(root, g, save_version) || !load_ridgeshire(root, g, save_version)) {
+    if (!load_storm_mage(root, g, save_version) || !load_garran(root, g, save_version) || !load_ridgeshire(root, g, save_version) || !load_rosemoor(root, g, save_version)) {
         cJSON_Delete(root);
         return 0;
     }
@@ -4576,7 +4607,7 @@ int load_game(GameState *g, int slot) {
         hunt_state->valuedouble != hunt_state->valueint || hunt_state->valueint < 0 || hunt_state->valueint > 3 ||
         hunt_progress->valuedouble != hunt_progress->valueint || hunt_progress->valueint < 0 || hunt_progress->valueint > 7 ||
         hunt_encounters->valuedouble != hunt_encounters->valueint || hunt_encounters->valueint < 0 || hunt_encounters->valueint > 1023 ||
-        (hunt_state->valueint == 0 && (hunt_progress->valueint || hunt_encounters->valueint)) ||
+        (hunt_state->valueint == 0 && ((hunt_progress->valueint & ~1) || (hunt_encounters->valueint & ~15) || (save_version < 252 && (hunt_progress->valueint || hunt_encounters->valueint)))) ||
         (hunt_state->valueint == 1 && hunt_progress->valueint == 7) ||
         (hunt_state->valueint >= 2 && hunt_progress->valueint != 7) ||
         ((hunt_progress->valueint & 1) && (hunt_encounters->valueint & 15) != 15) ||
@@ -4912,7 +4943,7 @@ int load_game(GameState *g, int slot) {
     g->defeated_bosses = defeated_bosses ? defeated_bosses->valueint : 0;
     const cJSON *evidence_seen = cJSON_GetObjectItem(root, "royal_evidence_seen");
     if (save_version >= 235 && (!cJSON_IsNumber(evidence_seen) || evidence_seen->valuedouble != evidence_seen->valueint ||
-        evidence_seen->valueint < 0 || evidence_seen->valueint > 511 || (evidence_seen->valueint & ~royal_evidence_found(g)))) {
+        evidence_seen->valueint < 0 || evidence_seen->valueint > 4095 || (evidence_seen->valueint & ~royal_evidence_found(g)))) {
         cJSON_Delete(root);
         return 0;
     }
@@ -7353,7 +7384,8 @@ int load_game(GameState *g, int slot) {
     game_repair_outdoor_entries(g);
     act5_routes_migrate(g);
     ridgeshire_migrate(g, save_version);
-    if (!ridgeshire_valid(g)) {
+    rosemoor_migrate(g, save_version);
+    if (!ridgeshire_valid(g) || !rosemoor_valid(g)) {
         cJSON_Delete(root);
         return 0;
     }

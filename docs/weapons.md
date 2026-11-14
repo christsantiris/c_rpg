@@ -115,7 +115,10 @@ striking adjacent enemies in melee.
 | Shortbow | +5 | Two | Rogue | 1 | 140 | Range 5 |
 | Longbow | +7 | Two | Rogue | 2 | 250 | Range 7 |
 | Crossbow | +9 | Two | Rogue | 2 | 450 | Range 5; more damage than Longbow |
-| Krakenbone Bow | +10 | Two | Rogue | Boss | 700 | Range 7; Frost Kraken reward |
+| Krakenbone Blade | +11 | One | Warrior | Boss choice | 1,800 | +25 maximum HP; 20% critical chance |
+| Krakenbone Warbow | +14 | Two | Rogue | Boss choice | 1,800 | Range 7; piercing |
+| Rimestaff | +10 | Two | Mage | Boss choice | 1,800 | +10 spell power, +45 maximum MP, 10% cheaper spells |
+| Krakenbone Bow | +10 | Two | Rogue | Legacy | 700 | Range 7; retained for old Kraken victories |
 | Magic Longbow | +13 | Two | Rogue | 3 | 1,200 | Range 7 and pierces every target in its path |
 
 Bows fire with `F` in the last movement direction. A target directly adjacent
@@ -227,3 +230,10 @@ The Grave Marshal in the Royal Catacombs drops this rare armor for every class.
 It grants +6 defense and +20 maximum health. Extinguish the boss chamber's two
 braziers to remove its damage protection. An unclaimed mantle remains
 recoverable on returning to the final catacomb floor.
+
+## Emberforge Bracers
+
+Hadrin rewards The Arcanist's Forge in Rosemoor with these rare all-class
+bracers: **+2 defense, +30 maximum HP and +30 maximum MP**, value 1,500.
+They follow the existing one-equipped-bracers limit. A full pack leaves them
+reserved with Hadrin after the 400-gold payment.

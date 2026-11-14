@@ -1495,7 +1495,7 @@ void map_place_town_apothecary(Map *m) {
             m->tiles[y][x] = TILE_SHOP_ALCHEMIST;
         }
     }
-    m->tiles[TOWN_APOTHECARY_DOOR_Y][TOWN_APOTHECARY_DOOR_X] = TILE_ALCHEMIST_DOOR;
+    m->tiles[TOWN_APOTHECARY_DOOR_Y][TOWN_APOTHECARY_DOOR_X] = TILE_LOCAL_DOOR;
     if (m->tiles[TOWN_APOTHECARY_DOOR_Y + 1][TOWN_APOTHECARY_DOOR_X] != TILE_ITEM) {
         m->tiles[TOWN_APOTHECARY_DOOR_Y + 1][TOWN_APOTHECARY_DOOR_X] = TILE_TOWN_PATH;
     }
