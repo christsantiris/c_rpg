@@ -12,6 +12,7 @@ void castle_draw_gatehouse(Renderer *r, const GameState *g, const Viewport *v);
 void castle_draw_alchemy(Renderer *r, const GameState *g, const Viewport *v);
 void castle_draw_court(Renderer *r, const GameState *g, const Viewport *v);
 void castle_draw_chapel(Renderer *r, const GameState *g, const Viewport *v);
+void castle_draw_apartments(Renderer *r, const GameState *g, const Viewport *v);
 void castle_draw_malakar_status(Renderer *r, const GameState *g, const Viewport *v);
 void castle_draw_arcanist_status(Renderer *r, const GameState *g, const Viewport *v);
 void castle_draw_veyr_status(Renderer *r, const GameState *g, const Viewport *v);

@@ -2,6 +2,7 @@
 #include "castle_gatehouse.h"
 #include "castle_court.h"
 #include "castle_chapel.h"
+#include "castle_apartments.h"
 #include "malakar.h"
 #include "combat_feedback.h"
 #include "royal_arcanist.h"
@@ -50,7 +51,7 @@ static void set_tile(GameState *g, int x, int y, TileType tile) {
 }
 
 const char *castle_floor_name(int level) {
-    static const char *names[CASTLE_DEPTH] = {"Gatehouse", "Royal alchemy Wing", "Court and Household", "Crown Chapel", "Royal Archives", "Throne of No Return"};
+    static const char *names[CASTLE_DEPTH] = {"Gatehouse", "Royal alchemy Wing", "Court and Household", "Crown Chapel", "Royal Apartments", "Throne of No Return"};
     return level >= 1 && level <= CASTLE_DEPTH ? names[level - 1] : "Castle";
 }
 
@@ -132,6 +133,10 @@ void castle_generate(Map *m, int level) {
     }
     if (level == 4) {
         chapel_generate(m);
+        return;
+    }
+    if (level == 5) {
+        apartments_generate(m);
         return;
     }
     memset(m, 0, sizeof(*m));
@@ -297,6 +302,30 @@ int castle_remodel(Map *m, Enemy *enemies, int count, FloorItem *loot, int items
         return 0;
     }
     castle_generate(layout, level);
+    if (level == 5) {
+        // A resumed warning keeps its original footprint, including covered runes.
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (layout->tiles[y][x] == TILE_CASTLE_FIRE_RUNE) {
+                    layout->tiles[y][x] = TILE_CASTLE_FLOOR;
+                }
+            }
+        }
+        for (int y = 0; y < MAP_H; y++) {
+            for (int x = 0; x < MAP_W; x++) {
+                if (m->tiles[y][x] == TILE_CASTLE_FIRE_RUNE) {
+                    preserve_position(layout, x, y);
+                    layout->tiles[y][x] = TILE_CASTLE_FIRE_RUNE;
+                }
+            }
+        }
+        for (int i = 0; i < items; i++) {
+            if (loot[i].active && loot[i].underlying_tile == TILE_CASTLE_FIRE_RUNE) {
+                preserve_position(layout, loot[i].x, loot[i].y);
+                layout->tiles[loot[i].y][loot[i].x] = TILE_CASTLE_FIRE_RUNE;
+            }
+        }
+    }
     // Preserve portcullis choices, including an already opened V2 shortcut.
     for (int y = 0; y < CASTLE_H; y++) {
         for (int x = 0; x < CASTLE_W; x++) {
@@ -619,6 +648,8 @@ void castle_enter(GameState *g, int level) {
         castle_spawn(g);
         if (level == 1) {
             gatehouse_supply(g);
+        } else if (level == 5) {
+            apartments_supply(g);
         }
     }
     memcpy(g->floor_items, g->castle_loot[level - 1], sizeof(g->floor_items));
@@ -633,13 +664,14 @@ void castle_enter(GameState *g, int level) {
         "Malakar works in the laboratory ahead. Break his preparations and force him to retreat.",
         "Household passages flank the Great Hall. Seek the chamberlain and council records.",
         "Explore the nave, cloister and reliquary. The sacristy opens a royal service shortcut; break the Arcanist's wards.",
-        "Patrols circle the shelves. Fire runes flash twice before burning.",
+        "Explore the suites, treasury and recovery ledger. Fire runes warn twice before burning.",
         "Break the wards, defeat the Royal Guards, and watch the throne's fire lane."
     };
     const char *hint = level == 2 && (g->castle_minibosses & 1) ? "Malakar has fled. Explore the wing; the upper stair leads to the Court and Household." : hints[level - 1];
     snprintf(message, sizeof(message), "%s: %s", castle_floor_name(level), hint);
     push_message(g, message);
     push_message(g, level == 2 ? "Use Interact (A by default) beside condensers, the private ledger and the sealed royal passage." :
+        level == 5 ? "Use Interact beside labeled orders and ledgers. Pick Up collects loose supplies." :
         "Press the interact key (A by default) beside levers and ward pedestals to activate them.");
 }
 
@@ -777,6 +809,9 @@ static int interaction_at(const GameState *g, int *x, int *y) {
         *x = g->player.x + (i < 0 ? 0 : dxs[i]);
         *y = g->player.y + (i < 0 ? 0 : dys[i]);
         TileType tile = tile_at(g, *x, *y);
+        if (g->level == 5 && tile == TILE_CASTLE_BOOKCASE && ((*x == 12 && *y == 27) || (*x == 40 && *y == 26) || (*x == 31 && *y == 44))) {
+            return 1;
+        }
         if (g->level == 4 && tile == TILE_CASTLE_BOOKCASE && *x == 12 && *y == 26) {
             return 1;
         }
@@ -815,6 +850,9 @@ int castle_interact(GameState *g) {
         return 1;
     }
     if (chapel_interact(g, x, y)) {
+        return 1;
+    }
+    if (apartments_interact(g, x, y)) {
         return 1;
     }
     if (g->level == 2 && x == 53 && y == 55) {

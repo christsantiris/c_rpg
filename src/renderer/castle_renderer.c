@@ -10,6 +10,7 @@
 #include "../game/malakar.h"
 #include "../game/castle_court.h"
 #include "../game/castle_chapel.h"
+#include "../game/castle_apartments.h"
 
 static void rect(Renderer *r, int x, int y, int w, int h, SDL_Color c) {
     SDL_SetRenderDrawColor(r->sdl, c.r, c.g, c.b, c.a);
@@ -108,6 +109,8 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
             art = PROP_STRAW;
         } else if (g->level == 4 && y < 40) {
             art = PROP_TABLE;
+        } else if (g->level == 5) {
+            art = PROP_STRAW;
         }
         draw_world_prop(r, sx, sy, art, (SDL_Color){179, 150, 105, 255});
         if (g->level == 4 && y < 40 && (x == 29 || x == 45)) {
@@ -120,7 +123,13 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
             draw_world_prop(r, sx, sy, x % 2 ? PROP_BREAD : PROP_MEAT, (SDL_Color){213, 170, 99, 255});
         }
     } else if (tile == TILE_CASTLE_BOOKCASE) {
-        if (g->level == 3 && y == 46) {
+        if (g->level == 5 && y == 6) {
+            draw_world_prop(r, sx, sy, PROP_BOOKCASE, (SDL_Color){220, 189, 113, 255});
+            draw_world_prop(r, sx, sy, x % 2 ? PROP_RELIC : PROP_GOBLET, (SDL_Color){220, 189, 113, 255});
+        } else if (g->level == 5 && y == 44) {
+            draw_world_prop(r, sx, sy, PROP_TABLE, (SDL_Color){170, 116, 58, 255});
+            draw_world_prop(r, sx, sy, PROP_GOBLET, (SDL_Color){140, 193, 155, 255});
+        } else if (g->level == 3 && y == 46) {
             draw_world_prop(r, sx, sy, PROP_BAG, (SDL_Color){192, 177, 143, 255});
         } else if (g->level == 2 && x == 54 && y == 8 && (g->castle_minibosses & 1)) {
             draw_world_prop(r, sx, sy, PROP_VAULT_DOOR, (SDL_Color){155, 167, 101, 255});
@@ -278,10 +287,31 @@ void castle_draw_chapel(Renderer *r, const GameState *g, const Viewport *v) {
         gatehouse_label(r, g, v, names[i], room->x + room->w / 2, room->y + 1);
     }
     gatehouse_label(r, g, v, "DOWN: COURT AND HOUSEHOLD", 15, 11);
-    gatehouse_label(r, g, v, "UP: ROYAL ARCHIVES", 45, 55);
+    gatehouse_label(r, g, v, "UP: ROYAL APARTMENTS", 45, 55);
     gatehouse_label(r, g, v, "CHAPEL REGISTER: A", 12, 26);
     gatehouse_label(r, g, v, "ROYAL LEVER: A", CHAPEL_LEVER_X, CHAPEL_LEVER_Y);
     gatehouse_label(r, g, v, g->map.tiles[CHAPEL_GATE_Y][CHAPEL_GATE_X] == TILE_CASTLE_GATE ? "ROYAL PASSAGE: SEALED" : "ROYAL PASSAGE: OPEN", CHAPEL_GATE_X, CHAPEL_GATE_Y);
+}
+
+void castle_draw_apartments(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_CASTLE_INTERIOR || g->level != 5) {
+        return;
+    }
+    static const char *names[MAX_ROOMS] = {"RECEIVING HALL", "ROYAL BEDROOM", "ROYAL ARCHIVES", "TREASURY", "GUEST SUITE", "THRONE ANTECHAMBER", "RECOVERY ROOM", "DRESSING ROOM", "EAST GALLERY", "PRIVATE STUDY"};
+    for (int i = 0; i < g->map.room_count; i++) {
+        if (i == 1 || i == 2 || i == 6) {
+            continue;
+        }
+        const Room *room = &g->map.rooms[i];
+        gatehouse_label(r, g, v, names[i], room->x + room->w / 2, room->y + 1);
+    }
+    gatehouse_label(r, g, v, "DOWN: CROWN CHAPEL", 15, 11);
+    gatehouse_label(r, g, v, "UP: THRONE", 45, 55);
+    gatehouse_label(r, g, v, "BEDSIDE ORDERS: A", 12, 27);
+    gatehouse_label(r, g, v, "CROWN DIAGRAMS: A", 40, 26);
+    gatehouse_label(r, g, v, "RECOVERY LEDGER: A", 31, 44);
+    gatehouse_label(r, g, v, "HOUSE LEVER: A", APARTMENTS_LEVER_X, APARTMENTS_LEVER_Y);
+    gatehouse_label(r, g, v, g->map.tiles[APARTMENTS_GATE_Y][26] == TILE_CASTLE_GATE ? "HOUSE PASSAGE: SEALED" : "HOUSE PASSAGE: OPEN", 26, APARTMENTS_GATE_Y);
 }
 
 void castle_draw_malakar_status(Renderer *r, const GameState *g, const Viewport *v) {
