@@ -20,19 +20,20 @@ so they stay on screen; a wounded Royal Arcanist or Lord Veyr retaliates from up
 The player climbs from the gatehouse on floor 1 to the throne on floor 6.
 Charcoal masonry, gold trim, crimson carpets and banners, stained glass,
 torches, pillars, court tables, archives, and a royal throne establish the
-fortress theme. The approved roster includes shared Royal Guards and a Vampire
-armory miniboss, alongside dedicated royal defenders and the final boss.
+fortress theme. The approved roster includes shared Royal Guards and Royal
+Alchemist Malakar in an early laboratory encounter, alongside dedicated royal
+defenders and the current final boss.
 
 | Floor | Setting | Encounter and progress |
 |---|---|---|
 | 1 | Gatehouse and Lower Keep | Ten connected rooms, two guarded approaches, an eastern gallery and a permanent service shortcut |
-| 2 | Iron Keep | Vampire miniboss, guard detail and side portcullis controls |
+| 2 | Royal alchemy Wing | Early Malakar encounter, interrupted preparations, escape at 40% health, and ten explorable rooms |
 | 3 | Forsaken Court | Royal Guards defend the court alongside marksmen and hexers |
 | 4 | Crown Chapel | Royal Arcanist's two phases, sequential ward lanes and pedestal counters |
 | 5 | Royal Archives | Shelves narrow sightlines; roaming soldiers and warned fire lanes threaten the approaches |
 | 6 | Throne of No Return | Veyr combines guarded approaches, ward pedestals, Royal Guards, fire lanes, and mixed escorts |
 
-Floors 2–6 retain six rooms linked by loops. Closed portcullises and magical
+Floors 3–6 retain six rooms linked by loops. Closed portcullises and magical
 barriers retain alternate routes. Tables stay outside the carpeted corridors,
 so every room is accessible without moving furniture. The entry room and stairs are free of traps;
 bosses remain inside their arenas. Use the configured **Ascend stairs** command
@@ -60,7 +61,7 @@ defenders regroup. The ten defenders occupy the rooms and gallery rather than
 repeating a pair at every room center. There is no required boss on this floor.
 
 The entry stair remains at **(15,11)** and is labeled **DOWN: CASTLE GROUNDS**.
-The onward stair remains at **(45,55)** and is labeled **UP: IRON KEEP**. Both
+The onward stair remains at **(45,55)** and is labeled **UP: alchemy WING**. Both
 use the established castle stair commands, and discovered stairs retain their
 minimap markers. The upper-floor trapdoor landing at **(8,15)** stays usable.
 
@@ -68,7 +69,7 @@ Save version **253** converts active and cached gatehouses in place. Exploration
 actor positions, wounds and deaths, dropped items, equipment, quests, boss
 victories and operated entrance gates remain intact. If new masonry overlaps
 an old occupant or item, a short connected alcove preserves its position. Old
-gatehouses receive no replacement supply drops. Floors 2–6 keep their current
+gatehouses receive no replacement supply drops. Floors 3–6 keep their current
 layouts and encounters for subsequent V2 changes.
 
 ## Enemies and combat
@@ -80,33 +81,66 @@ layouts and encounters for subsequent V2 changes.
 | Royal Marksman | Shoots through clear lanes; closing a portcullis provides cover |
 | Court Hexer | Ranged magic and an attack bonus for nearby allies |
 | Royal Guard | Shared armored melee defender from the Royal Dungeon and Crown Roads |
-| Vampire | Existing melee enemy; the armory miniboss retains floor-3 progression and its unique reward |
+| Malakar, Royal Alchemist | Warned concoctions, interruptible restorative, and a permanent escape at 40% health |
 
 Gold markers show shield facing; they dim during recovery. Flanking and
 recovery attacks bypass shields. Frontal hits always deal at least one damage.
 All three classes can fight the guards and operate levers. Press **Interact**
 (default `A`) on or beside a lever to change its portcullis.
 
-The armory Vampire uses ordinary castle melee warnings and recovery. It has no
-charge, shield phase or reinforcement call. Its Warden and Marksman detail
-remains, and its defeat retains the first castle miniboss completion flag.
+## V2 Royal alchemy Wing
 
-Two side levers at **(37,51)** and **(53,51)** control their own three-stone
-portcullises at **x=40** and **x=50**, **y=47..49**. Both begin open. Actor- or
-loot-occupied cells remain open; paths around each gate preserve access to the
-stairs and both levers.
+Malakar works in the laboratory immediately east of level 2's receiving hall.
+The entry stair remains at **(15,11)**, with an uninterrupted retreat to the
+gatehouse. A visible laboratory seal identifies the route into the lower wing;
+it opens when Malakar flees. The onward stair at **(45,55)** leads to the
+Forsaken Court and uses the existing encounter checkpoint.
 
-Victory preserves the **100 gold** and floor-3 unlock and reserves **Castellan's
-Bulwark** in the southeast armory chest at **(53,55)**. Interact on or beside it
-to claim the rare Warrior shield: **+8 defense, 30% block**, with the usual 50%
-block damage reduction. It requires a one-handed main weapon. A full inventory
-leaves it reserved; maximum floor loot cannot prevent the award. The reservation
-survives retreat, floor travel and save/load. Claiming, dropping or selling the
-shield cannot award another copy.
+Malakar introduces himself when engaged. His **Bursting Vial** marks a small
+five-stone diamond for **two player actions**. **Volatile Overpressure**, powered
+by a glowing condenser, marks a larger radius-two diamond for **three actions**.
+Footprints lock at declaration, respect masonry and furnishings, and resolve
+once before a full recovery action. Freezing pauses the countdown. If walls
+and actors leave no walking escape within the warning time, the mixture vents
+harmlessly. Breaking line of sight cancels a pending preparation.
 
-Save version **222** migrates the replaced castle actors in active and cached
-floors. Existing wounds, deaths, victories, armory reservations and claimed
-items remain intact; retired attack and summon warnings are cleared.
+At or below 70% health, Malakar can prepare **one restorative per attempt**.
+The HUD and an R-marked source announce its two-action preparation. Damage him,
+or use **Interact** beside its linked condenser at **(38,16)** or **(51,16)**,
+to interrupt it and create two counterattack opportunities. An uninterrupted
+restorative heals 25% of maximum health, capped at full health. Interacting with
+the source of a warned overpressure also cancels that mixture. All classes can
+operate the apparatus. Drained condensers remain spent through floor revisits,
+retreat and save/load.
+
+Any damage that would reduce Malakar to **40% health or lower** instead stops
+at that threshold and makes him flee immediately, including an oversized melee,
+arrow, spell or companion hit. He remains alive, disappears from the room, and
+cannot be fought here again. The escape clears his warnings, breaks the lab seal,
+awards **100 gold and 300 XP**, and reserves **Castellan's Bulwark** in the chest
+at **(53,55)**. Existing chest and inventory-capacity rules still apply. It is
+not campaign victory. A surviving Malakar regroups when the player leaves the
+castle, following the existing castle retreat rule.
+
+The opened wing contains a specimen room, infirmary, reagent vault, distillery,
+experiment room and private study, connected by offset doors and looping routes.
+Malakar's ledger in the study explains that the crown's binding can restore him
+in the King's chamber. The royal passage behind his laboratory shelves is sealed
+from within; the player continues through the upper castle. Both discoveries
+use **Interact** beside their labeled shelves. Room and transition labels remain
+readable in small windows, and discovered stairs retain minimap markers.
+
+Save version **254** migrates active and cached Iron Keeps. The old boss becomes
+Malakar while retaining its position, health, wounds or death; incompatible old
+attack warnings are cleared. Existing completed encounters and claimed or reserved
+equipment remain completed without another payout. Exploration, other defenders,
+loot, player position, equipment, quests and other castle victories are retained.
+A migrated wing keeps the laboratory seal open so actors already south of it
+remain reachable; the onward stair still requires the encounter checkpoint.
+Old positions covered by new masonry receive connected alcoves. Encounter warning
+masks, countdowns, restorative allowance and escape progress use the existing saved
+actor and castle records. The later castle stages and final Malakar confrontation
+remain subsequent V2 changes.
 
 The Royal Arcanist's **Warded Scholar** phase retains a two-action, five-stone
 diamond blast. At or below half health, **Shattered Liturgy** alternates a
@@ -253,7 +287,7 @@ their names/scores and receive no invented victory status.
 
 ## Progression
 
-Defeating the armory Vampire and Royal Arcanist opens the route to the throne.
+Forcing Malakar to flee and defeating the Royal Arcanist opens the route to the throne.
 No regional collectibles are required; visiting other areas is optional.
 
 ## Trapdoors
@@ -310,9 +344,9 @@ Suggested play test:
 1. Enter through both Crown Road approaches and cancel/confirm the entry warning.
 2. Fight the mixed guards; flank Wardens and use levers for ranged cover.
    Try both Gatehouse approaches and their independent levers.
-3. Defeat the Vampire on floor 2 and the Arcanist on floor 4; climb onward and
-   confirm the miniboss stays defeated after retreat, with no shortcut portals.
-   Bait a charge into a guard, and disable both chapel pedestals.
+3. Force Malakar to flee on floor 2 and defeat the Arcanist on floor 4; climb
+   onward and confirm both encounters stay completed after retreat, with no
+   shortcut portals. Interrupt Malakar's restorative and disable the chapel pedestals.
 4. Trigger a trapdoor, revisit its open hole, and save/load with loot over it.
 5. Reach floor 6 without collecting objects from other regions.
 6. Cancel and accept Return to Town; verify surviving defenders reset and
@@ -328,7 +362,8 @@ retired portal removal, all three classes' victory paths, save round-trips, and 
 An SDL software-rendering check verifies sprite loading and attack overlays.
 Enemy statistics and encounter pacing still need hands-on balance feedback.
 
-## Review artwork
-The interior review board predates the reordered floors: its Iron Keep and
-Crown Chapel panels correspond to floors 2 and 4; Forsaken Court and Archives
-correspond to floors 3 and 5. Gameplay uses native tile rendering with these themes.
+## Visual validation
+
+Gameplay uses native tile rendering. The V2 gatehouse and alchemy wing are
+checked in the game renderer at 1280×720 and 640×480, including room labels,
+stairs, Malakar's preparations and escape, and migrated legacy maps.

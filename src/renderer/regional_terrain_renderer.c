@@ -349,8 +349,8 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         line1 = "LEAVE WARNED FIRE AND ATTACK LANES";
         line2 = "USE LEVERS TO OPEN PORTCULLISES";
         if (g->level == 2) {
-            line1 = "SIDE LEVERS SPLIT THE DEFENDERS";
-            line2 = "DEFEAT THE VAMPIRE TO CLIMB";
+            line1 = (g->castle_minibosses & 1) ? "MALAKAR HAS FLED TO THE KING" : "INTERRUPT HIS PREPARATIONS";
+            line2 = (g->castle_minibosses & 1) ? "EXPLORE THE WING; UPPER STAIR OPEN" : "FORCE MALAKAR TO FLEE";
         } else if (g->level == 4) {
             line1 = "DISABLE THE LINKED WARD PEDESTAL";
             line2 = "DEFEAT THE ARCANIST TO CLIMB";

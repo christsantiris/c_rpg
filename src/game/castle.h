@@ -24,7 +24,8 @@ int castle_tick(GameState *g);
 int castle_attack_marks(const Map *m, const Enemy *e, int x, int y);
 int castle_barrier_warning(const GameState *g, int x, int y);
 int castle_fire_warning(const GameState *g, int x, int y);
-int castle_enemy_damage(const GameState *g, const Enemy *e, int damage);
+int castle_enemy_damage(GameState *g, Enemy *e, int damage);
+int castle_remodel(Map *m, Enemy *enemies, int count, FloorItem *loot, int items, int px, int py, int level);
 void castle_record_death(GameState *g, Enemy *e);
 
 #endif

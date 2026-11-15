@@ -4655,6 +4655,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     }
     draw_catacombs_warnings(r, g, v);
     castle_draw_gatehouse(r, g, v);
+    castle_draw_alchemy(r, g, v);
     castle_draw_warnings(r, g, v);
 
     if (g->location == LOCATION_SWAMP && r->font_tiny) {
@@ -4759,6 +4760,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_sun_guardian_status(r, g, v);
     draw_red_dragon_status(r, g, v);
     castle_draw_arcanist_status(r, g, v);
+    castle_draw_malakar_status(r, g, v);
     castle_draw_veyr_status(r, g, v);
 
     // Draw info panel

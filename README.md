@@ -188,9 +188,11 @@ inventory actions.
 
 ## Game Documentation
 
-The castle's first V2 stage is the **Gatehouse and Lower Keep**: ten connected
-rooms, an eastern guard gallery, and a service shortcut opened from within.
-See the [castle guide](docs/castle-design.md) for its routes and supplies.
+The castle's first two V2 stages are the **Gatehouse and Lower Keep** and the
+**Royal alchemy Wing**. Explore connected rooms and alternate approaches,
+then confront Royal Alchemist Malakar early on level 2. At 40% health he flees,
+opening the rest of the wing and its upper stair. See the
+[castle guide](docs/castle-design.md) for routes and encounter details.
 
 - [Regional difficulty and progression](docs/difficulty-scaling.md)
 - [Weapons, armor, and shields](docs/weapons.md)

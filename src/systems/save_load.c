@@ -1,5 +1,6 @@
 #include "../game/rosemoor.h"
 #include "../game/castle_gatehouse.h"
+#include "../game/malakar.h"
 #include "../game/ridgeshire.h"
 #include "../game/act5_routes.h"
 #include "../game/labyrinth_arc.h"
@@ -2094,7 +2095,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 253);
+    cJSON_AddNumberToObject(root, "save_version", 254);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -7408,6 +7409,10 @@ int load_game(GameState *g, int slot) {
         g->royal_evidence_seen = royal_evidence_found(g);
     }
     if (save_version < 253 && !gatehouse_migrate(g)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    if (save_version < 254 && !malakar_migrate(g)) {
         cJSON_Delete(root);
         return 0;
     }

@@ -160,6 +160,7 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
         case ENEMY_ROYAL_MARKSMAN:
         case ENEMY_COURT_HEXER:
         case ENEMY_ROYAL_ARCANIST:
+        case ENEMY_MALAKAR:
         case ENEMY_LORD_VEYR:
             break;
         case ENEMY_ANCIENT_SKELETON:
