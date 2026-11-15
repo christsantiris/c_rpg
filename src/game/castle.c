@@ -1,5 +1,6 @@
 #include "castle.h"
 #include "castle_gatehouse.h"
+#include "castle_court.h"
 #include "malakar.h"
 #include "combat_feedback.h"
 #include "royal_arcanist.h"
@@ -48,7 +49,7 @@ static void set_tile(GameState *g, int x, int y, TileType tile) {
 }
 
 const char *castle_floor_name(int level) {
-    static const char *names[CASTLE_DEPTH] = {"Gatehouse", "Royal alchemy Wing", "Forsaken Court", "Crown Chapel", "Royal Archives", "Throne of No Return"};
+    static const char *names[CASTLE_DEPTH] = {"Gatehouse", "Royal alchemy Wing", "Court and Household", "Crown Chapel", "Royal Archives", "Throne of No Return"};
     return level >= 1 && level <= CASTLE_DEPTH ? names[level - 1] : "Castle";
 }
 
@@ -122,6 +123,10 @@ void castle_generate(Map *m, int level) {
     }
     if (level == 2) {
         malakar_generate(m);
+        return;
+    }
+    if (level == 3) {
+        court_generate(m);
         return;
     }
     memset(m, 0, sizeof(*m));
@@ -383,10 +388,6 @@ static void spawn_detail(GameState *g) {
         add_enemy(g, ENEMY_OATHBOUND_SOLDIER, 14, 25);
         add_enemy(g, ENEMY_ROYAL_MARKSMAN, 17, 25);
     }
-    if (g->level == 3) {
-        add_enemy(g, ENEMY_IRON_WARDEN, 48, 34);
-        add_enemy(g, ENEMY_ROYAL_MARKSMAN, 52, 28);
-    }
     if ((g->level == 4 && !(g->castle_minibosses & 2)) || g->level == 6) {
         add_enemy(g, ENEMY_IRON_WARDEN, 39, 54);
         add_enemy(g, ENEMY_ROYAL_MARKSMAN, 51, 54);
@@ -415,6 +416,16 @@ void castle_summon_guard(GameState *g, EnemyType type, int x, int y) {
 
 void castle_spawn(GameState *g) {
     g->enemy_count = 0;
+    if (g->level == 3) {
+        static const int positions[10][2] = {{32, 27}, {40, 29}, {34, 36}, {25, 34}, {11, 28}, {35, 13}, {54, 14}, {53, 43}, {31, 51}, {40, 38}};
+        static const EnemyType types[10] = {ENEMY_ROYAL_GUARD, ENEMY_ROYAL_MARKSMAN, ENEMY_COURT_HEXER, ENEMY_IRON_WARDEN,
+            ENEMY_ROYAL_MARKSMAN, ENEMY_OATHBOUND_SOLDIER, ENEMY_OATHBOUND_SOLDIER, ENEMY_ROYAL_MARKSMAN, ENEMY_OATHBOUND_SOLDIER, ENEMY_ROYAL_GUARD};
+        for (int i = 0; i < 10; i++) {
+            add_enemy(g, types[i], positions[i][0], positions[i][1]);
+        }
+        g->level_cleared = 0;
+        return;
+    }
     if (g->level == 2) {
         if (!(g->castle_minibosses & 1)) {
             add_enemy(g, ENEMY_MALAKAR, 45, 14);
@@ -615,12 +626,12 @@ void castle_enter(GameState *g, int level) {
     static const char *hints[CASTLE_DEPTH] = {
         "Explore the lower keep. A service lever opens a shortcut back to the entrance hall.",
         "Malakar works in the laboratory ahead. Break his preparations and force him to retreat.",
-        "Royal Guards defend the court. Use cover to approach the marksmen.",
+        "Household passages flank the Great Hall. Seek the chamberlain and council records.",
         "Interact beside the two glowing pedestals to weaken the Arcanist.",
         "Patrols circle the shelves. Fire runes flash twice before burning.",
         "Break the wards, defeat the Royal Guards, and watch the throne's fire lane."
     };
-    const char *hint = level == 2 && (g->castle_minibosses & 1) ? "Malakar has fled. Explore the wing; the upper stair leads to the Forsaken Court." : hints[level - 1];
+    const char *hint = level == 2 && (g->castle_minibosses & 1) ? "Malakar has fled. Explore the wing; the upper stair leads to the Court and Household." : hints[level - 1];
     snprintf(message, sizeof(message), "%s: %s", castle_floor_name(level), hint);
     push_message(g, message);
     push_message(g, level == 2 ? "Use Interact (A by default) beside condensers, the private ledger and the sealed royal passage." :
@@ -648,8 +659,10 @@ void castle_leave(GameState *g, int escape) {
         c->level_cleared = 0;
         memcpy(g->floor_items, g->castle_loot[i], sizeof(g->floor_items));
         g->floor_item_count = g->castle_loot_count[i];
-        for (int y = 10; y <= 12; y++) {
-            set_tile(g, 29, y, TILE_CASTLE_GATE);
+        if (i != 2) {
+            for (int y = 10; y <= 12; y++) {
+                set_tile(g, 29, y, TILE_CASTLE_GATE);
+            }
         }
         if (i == 0 || i == 5) {
             for (int x = 14; x <= 16; x++) {
@@ -759,6 +772,9 @@ static int interaction_at(const GameState *g, int *x, int *y) {
         *x = g->player.x + (i < 0 ? 0 : dxs[i]);
         *y = g->player.y + (i < 0 ? 0 : dys[i]);
         TileType tile = tile_at(g, *x, *y);
+        if (g->level == 3 && tile == TILE_CASTLE_BOOKCASE && *x == 29 && *y == 6) {
+            return 1;
+        }
         if (g->level == 2 && tile == TILE_CASTLE_BOOKCASE && ((*x == 14 && *y == 46) || (*x == 54 && *y == 8))) {
             return 1;
         }
@@ -785,6 +801,9 @@ int castle_interact(GameState *g) {
         return 1;
     }
     if (malakar_interact(g, x, y)) {
+        return 1;
+    }
+    if (court_interact(g, x, y)) {
         return 1;
     }
     if (g->level == 2 && x == 53 && y == 55) {

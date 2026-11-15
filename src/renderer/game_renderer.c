@@ -4656,6 +4656,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_catacombs_warnings(r, g, v);
     castle_draw_gatehouse(r, g, v);
     castle_draw_alchemy(r, g, v);
+    castle_draw_court(r, g, v);
     castle_draw_warnings(r, g, v);
 
     if (g->location == LOCATION_SWAMP && r->font_tiny) {

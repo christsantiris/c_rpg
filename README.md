@@ -188,10 +188,12 @@ inventory actions.
 
 ## Game Documentation
 
-The castle's first two V2 stages are the **Gatehouse and Lower Keep** and the
-**Royal alchemy Wing**. Explore connected rooms and alternate approaches,
+The castle's first three V2 stages are the **Gatehouse and Lower Keep**, the
+**Royal alchemy Wing**, and the **Court and Household**. Explore connected rooms
+and alternate approaches,
 then confront Royal Alchemist Malakar early on level 2. At 40% health he flees,
-opening the rest of the wing and its upper stair. See the
+opening the rest of the wing and its upper stair. The court's household routes
+flank the Great Hall; Chamberlain Edras explains the King's isolation. See the
 [castle guide](docs/castle-design.md) for routes and encounter details.
 
 - [Regional difficulty and progression](docs/difficulty-scaling.md)

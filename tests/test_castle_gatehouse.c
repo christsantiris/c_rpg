@@ -55,7 +55,7 @@ static int set_legacy_version(void) {
 
 static void legacy_layout(Map *m) {
     // The pre-V2 gatehouse used six 22-by-14 chambers on a regular grid.
-    castle_generate(m, 3);
+    castle_legacy_layout(m, 1);
     m->burial_trap_count = 0;
     m->tiles[32][17] = TILE_CASTLE_FLOOR;
     m->tiles[21][15] = TILE_CASTLE_GATE_OPEN;
