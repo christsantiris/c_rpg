@@ -1,4 +1,5 @@
 #include "../game/rosemoor.h"
+#include "../game/castle_gatehouse.h"
 #include "../game/ridgeshire.h"
 #include "../game/act5_routes.h"
 #include "../game/labyrinth_arc.h"
@@ -842,14 +843,17 @@ static void deserialize_enemies(const cJSON *arr, Enemy *enemies, int *count, in
              e->type == ENEMY_DROWNED_QUEEN);
         cJSON *dain_fragment = cJSON_GetObjectItem(obj, "dain_fragment");
         e->dain_fragment = dain_fragment ? dain_fragment->valueint : 0;
-        e->frozen_turns = cJSON_GetObjectItem(obj, "frozen_turns")->valueint;
+        cJSON *frozen = cJSON_GetObjectItem(obj, "frozen_turns");
+        e->frozen_turns = frozen ? frozen->valueint : 0;
         const cJSON *poison = cJSON_GetObjectItem(obj, "poison_turns");
         e->poison_turns = poison && cJSON_IsNumber(poison) && poison->valuedouble == poison->valueint &&
             poison->valueint >= 0 && poison->valueint <= POISON_SWORD_TURNS ? poison->valueint : 0;
         const cJSON *dormant = cJSON_GetObjectItem(obj, "alignment_dormant");
         e->alignment_dormant = cJSON_IsNumber(dormant) && dormant->valueint == 1 && e->hp > 0 && !e->active;
-        e->attack_target_x = cJSON_GetObjectItem(obj, "attack_target_x")->valueint;
-        e->attack_target_y = cJSON_GetObjectItem(obj, "attack_target_y")->valueint;
+        cJSON *target_x = cJSON_GetObjectItem(obj, "attack_target_x");
+        cJSON *target_y = cJSON_GetObjectItem(obj, "attack_target_y");
+        e->attack_target_x = target_x ? target_x->valueint : -1;
+        e->attack_target_y = target_y ? target_y->valueint : -1;
         cJSON *revived = cJSON_GetObjectItem(obj, "revived");
         cJSON *revive_timer = cJSON_GetObjectItem(obj, "revive_timer");
         e->revived = revived ? revived->valueint : 0;
@@ -2090,7 +2094,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 252);
+    cJSON_AddNumberToObject(root, "save_version", 253);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -4701,7 +4705,9 @@ int load_game(GameState *g, int slot) {
         sp->damage  = cJSON_GetObjectItem(s, "damage")->valueint;
         sp->range   = cJSON_GetObjectItem(s, "range")->valueint;
         sp->radius  = cJSON_GetObjectItem(s, "radius")->valueint;
-        sp->rank    = cJSON_GetObjectItem(s, "rank")->valueint;
+        // Saves written before spell upgrades have no rank field.
+        cJSON *rank = cJSON_GetObjectItem(s, "rank");
+        sp->rank = rank ? rank->valueint : 1;
         if (sp->id == SPELL_HEAL) {
             sp->mp_cost = HEAL_BASE_MP_COST - 2 * (sp->rank - 1);
         }
@@ -4743,14 +4749,14 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
-    g->rook_quest_state = cJSON_GetObjectItem(root,
-        "rook_quest_state")->valueint;
+    cJSON *rook_quest = cJSON_GetObjectItem(root, "rook_quest_state");
+    g->rook_quest_state = rook_quest ? rook_quest->valueint : 0;
     cJSON *innkeeper_quest = cJSON_GetObjectItem(root, "innkeeper_quest_state");
     g->innkeeper_quest_state = innkeeper_quest ? innkeeper_quest->valueint : 0;
-    g->rook_labyrinth_switches = cJSON_GetObjectItem(root,
-        "rook_labyrinth_switches")->valueint;
-    g->rook_quest_completions = cJSON_GetObjectItem(root,
-        "rook_quest_completions")->valueint;
+    cJSON *rook_switches = cJSON_GetObjectItem(root, "rook_labyrinth_switches");
+    g->rook_labyrinth_switches = rook_switches ? rook_switches->valueint : 0;
+    cJSON *rook_completions = cJSON_GetObjectItem(root, "rook_quest_completions");
+    g->rook_quest_completions = rook_completions ? rook_completions->valueint : 0;
     g->score             = cJSON_GetObjectItem(root, "score")->valueint;
     cJSON *main_hand = cJSON_GetObjectItem(root, "equipped_main_hand");
     cJSON *off_hand = cJSON_GetObjectItem(root, "equipped_off_hand");
@@ -7400,6 +7406,10 @@ int load_game(GameState *g, int slot) {
     if (save_version < 240) {
         // Earlier victories gain journal evidence without interrupting a resumed adventure.
         g->royal_evidence_seen = royal_evidence_found(g);
+    }
+    if (save_version < 253 && !gatehouse_migrate(g)) {
+        cJSON_Delete(root);
+        return 0;
     }
     game_recover_retired_items(g);
     cJSON_Delete(root);

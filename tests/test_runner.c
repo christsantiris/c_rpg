@@ -94,6 +94,7 @@ void test_combat_feedback(void);
 void test_controls(void);
 void test_quick_potion(void);
 void test_expeditions(void);
+void test_castle_gatehouse(void);
 
 int main(void) {
 #if defined(__unix__) || defined(__APPLE__)
@@ -109,6 +110,7 @@ int main(void) {
     // ASSERT("sanity check false", 1 == 0);
     printf("=== CONR Test Suite ===\n\n");
     test_movement();
+    test_castle_gatehouse();
     test_travel_direction();
     test_town_roads();
     test_western_geography();

@@ -1584,7 +1584,99 @@ static void test_retired_enemy_migration(void) {
     free(loaded);
 }
 
+static void test_missing_legacy_fields(void) {
+    static GameState original;
+    static GameState loaded;
+    game_init(&original);
+    original.player.known_spell_count = 2;
+    original.player.known_spells[0] = spell_make_magic_arrow();
+    original.player.known_spells[1] = spell_make_heal();
+    original.enemy_count = 1;
+    original.enemies[0] = (Enemy){0};
+    original.enemies[0].type = ENEMY_ZOMBIE;
+    original.enemies[0].hp = 7;
+    original.enemies[0].max_hp = 22;
+    original.enemies[0].active = 1;
+    snprintf(original.enemies[0].name, sizeof(original.enemies[0].name), "Zombie");
+    original.level_cache[0].valid = 1;
+    original.level_cache[0].map = original.map;
+    original.level_cache[0].enemy_count = 1;
+    original.level_cache[0].enemies[0] = original.enemies[0];
+    int ok = save_game(&original, ROUND_TRIP_SLOT);
+    ASSERT("spell rank fixture saves", ok);
+    if (!ok) {
+        return;
+    }
+    char path[64];
+    format_save_path(ROUND_TRIP_SLOT, path, sizeof(path));
+    FILE *file = fopen(path, "r");
+    if (!file) {
+        ASSERT("spell rank fixture opens", 0);
+        remove_test_save(ROUND_TRIP_SLOT);
+        return;
+    }
+    fseek(file, 0, SEEK_END);
+    long length = ftell(file);
+    rewind(file);
+    char *text = malloc(length + 1);
+    if (!text) {
+        fclose(file);
+        ASSERT("spell rank fixture allocates", 0);
+        remove_test_save(ROUND_TRIP_SLOT);
+        return;
+    }
+    size_t count = fread(text, 1, length, file);
+    text[count] = '\0';
+    fclose(file);
+    cJSON *root = cJSON_Parse(text);
+    free(text);
+    cJSON *spells = cJSON_GetObjectItem(cJSON_GetObjectItem(root, "player"), "spells");
+    for (int i = 0; i < 2; i++) {
+        cJSON_DeleteItemFromObject(cJSON_GetArrayItem(spells, i), "rank");
+    }
+    cJSON_DeleteItemFromObject(root, "rook_quest_state");
+    cJSON_DeleteItemFromObject(root, "rook_labyrinth_switches");
+    cJSON_DeleteItemFromObject(root, "rook_quest_completions");
+    cJSON *active = cJSON_GetArrayItem(cJSON_GetObjectItem(root, "enemies"), 0);
+    cJSON *cache = cJSON_GetArrayItem(cJSON_GetObjectItem(root, "level_cache"), 0);
+    cJSON *cached = cJSON_GetArrayItem(cJSON_GetObjectItem(cache, "enemies"), 0);
+    cJSON *enemies[2] = {active, cached};
+    for (int i = 0; i < 2; i++) {
+        cJSON_DeleteItemFromObject(enemies[i], "frozen_turns");
+        cJSON_DeleteItemFromObject(enemies[i], "attack_target_x");
+        cJSON_DeleteItemFromObject(enemies[i], "attack_target_y");
+    }
+    char *updated = cJSON_Print(root);
+    cJSON_Delete(root);
+    file = updated ? fopen(path, "w") : NULL;
+    ok = file != NULL;
+    if (file) {
+        fputs(updated, file);
+        fclose(file);
+    }
+    free(updated);
+    ok = ok && load_game(&loaded, ROUND_TRIP_SLOT);
+    ASSERT("spells without saved ranks load at rank one", ok &&
+        loaded.player.known_spell_count == 2 &&
+        loaded.player.known_spells[0].rank == 1 && loaded.player.known_spells[1].rank == 1);
+    ASSERT("legacy Heal retains its base mana cost", ok &&
+        loaded.player.known_spells[1].mp_cost == HEAL_BASE_MP_COST);
+    ASSERT("missing Rook progress defaults to an unstarted quest", ok &&
+        !loaded.rook_quest_state && !loaded.rook_labyrinth_switches && !loaded.rook_quest_completions);
+    Enemy *restored[2] = {&loaded.enemies[0], &loaded.level_cache[0].enemies[0]};
+    for (int i = 0; i < 2; i++) {
+        ASSERT("legacy active and cached enemies preserve wounds and load without freeze or attack targets", ok &&
+            restored[i]->hp == 7 && restored[i]->max_hp == 22 && restored[i]->active &&
+            !restored[i]->frozen_turns && restored[i]->attack_target_x == -1 && restored[i]->attack_target_y == -1);
+    }
+    ASSERT("migrated spell ranks survive saving again", ok &&
+        save_game(&loaded, ROUND_TRIP_SLOT) && load_game(&original, ROUND_TRIP_SLOT) &&
+        original.player.known_spells[0].rank == 1 && original.player.known_spells[1].rank == 1);
+    remove_test_save(ROUND_TRIP_SLOT);
+}
+
 void test_save_load(void) {
+    test_missing_legacy_fields();
     test_retired_enemy_migration();
     test_aldric_town_migration();
     test_aldric_inn_migration();

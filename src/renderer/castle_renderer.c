@@ -2,8 +2,10 @@
 #include "sprites.h"
 #include "world_props.h"
 #include "info_panel.h"
+#include "item_icons.h"
 #include "../game/royal_arcanist.h"
 #include "../game/lord_veyr.h"
+#include "../game/castle_gatehouse.h"
 
 static void rect(Renderer *r, int x, int y, int w, int h, SDL_Color c) {
     SDL_SetRenderDrawColor(r->sdl, c.r, c.g, c.b, c.a);
@@ -90,9 +92,22 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
     } else if (tile == TILE_CASTLE_MUSTER) {
         draw_world_prop(r, sx, sy, PROP_MUSTER, (SDL_Color){222, 183, 104, 255});
     } else if (tile == TILE_CASTLE_TABLE) {
-        draw_world_prop(r, sx, sy, PROP_BANQUET_TABLE, (SDL_Color){179, 150, 105, 255});
+        draw_world_prop(r, sx, sy, g->level == 1 && x < 23 && y >= 25 && y < 38 ? PROP_STRAW : PROP_BANQUET_TABLE, (SDL_Color){179, 150, 105, 255});
+        if (g->level == 1 && y == 40) {
+            draw_world_prop(r, sx, sy, x % 2 ? PROP_BREAD : PROP_MEAT, (SDL_Color){213, 170, 99, 255});
+        }
     } else if (tile == TILE_CASTLE_BOOKCASE) {
-        draw_world_prop(r, sx, sy, PROP_BOOKCASE, (SDL_Color){170, 116, 58, 255});
+        if (g->level == 1 && y == 45) {
+            if (x < 19) {
+                draw_world_prop(r, sx, sy, PROP_BAG, (SDL_Color){170, 116, 58, 255});
+            } else {
+                draw_world_prop(r, sx, sy, PROP_TABLE, (SDL_Color){170, 116, 58, 255});
+                Item item = x % 2 ? item_make_kite_shield() : item_make_long_sword();
+                draw_icon_item(r, px, py, &item);
+            }
+        } else {
+            draw_world_prop(r, sx, sy, PROP_BOOKCASE, (SDL_Color){170, 116, 58, 255});
+        }
     } else if (tile == TILE_CASTLE_THRONE) {
         draw_world_prop(r, sx, sy, PROP_THRONE, (SDL_Color){224, 177, 82, 255});
     } else if (tile == TILE_CASTLE_PILLAR) {
@@ -128,6 +143,41 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
         draw_world_prop(r, sx, sy, PROP_CHEST, (SDL_Color){163, 140, 214, 255});
         renderer_draw_text(r, "VESTMENTS: A", px - 28, py - 12, (SDL_Color){234, 218, 255, 255}, r->font_tiny);
     }
+}
+
+static void gatehouse_label(Renderer *r, const GameState *g, const Viewport *v, const char *text, int x, int y) {
+    if (!r->font_tiny || !map_is_explored(&g->map, x, y) || !viewport_is_visible(v, x, y)) {
+        return;
+    }
+    int width = 0;
+    int height = 0;
+    TTF_SizeText(r->font_tiny, text, &width, &height);
+    int px = viewport_to_screen_x(v, x) * TILE_SIZE + (TILE_SIZE - width) / 2;
+    int py = viewport_to_screen_y(v, y) * TILE_SIZE - height - 2;
+    int right = v->tiles_x * TILE_SIZE - width - 3;
+    int bottom = v->tiles_y * TILE_SIZE - height - 3;
+    px = px < 3 ? 3 : px > right ? right : px;
+    py = py < 88 ? 88 : py > bottom ? bottom : py;
+    rect(r, px - 2, py - 1, width + 4, height + 2, (SDL_Color){24, 23, 32, 255});
+    renderer_draw_text(r, text, px, py, (SDL_Color){241, 216, 145, 255}, r->font_tiny);
+}
+
+void castle_draw_gatehouse(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_CASTLE_INTERIOR || g->level != 1) {
+        return;
+    }
+    static const char *names[MAX_ROOMS] = {"ENTRANCE HALL", "EAST WATCH", "BARRACKS", "MESS HALL", "KITCHEN", "UPPER STAIR", "STORES", "ARMORY", "SERVICE CONTROL", "GUARD GALLERY"};
+    for (int i = 0; i < g->map.room_count; i++) {
+        if (i == 8) {
+            continue;
+        }
+        const Room *room = &g->map.rooms[i];
+        gatehouse_label(r, g, v, names[i], room->x + room->w / 2, room->y + 1);
+    }
+    gatehouse_label(r, g, v, "DOWN: CASTLE GROUNDS", g->map.stairs_up_x, g->map.stairs_up_y);
+    gatehouse_label(r, g, v, "UP: IRON KEEP", g->map.stairs_down_x, g->map.stairs_down_y);
+    gatehouse_label(r, g, v, "SERVICE LEVER: A", GATEHOUSE_LEVER_X, GATEHOUSE_LEVER_Y);
+    gatehouse_label(r, g, v, g->map.tiles[GATEHOUSE_SHORTCUT_Y][GATEHOUSE_SHORTCUT_X] == TILE_CASTLE_GATE ? "SERVICE GATE: SEALED" : "SERVICE GATE: OPEN", GATEHOUSE_SHORTCUT_X, GATEHOUSE_SHORTCUT_Y);
 }
 
 void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {

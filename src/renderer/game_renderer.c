@@ -4654,6 +4654,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
         draw_region_weather(r, v, 1);
     }
     draw_catacombs_warnings(r, g, v);
+    castle_draw_gatehouse(r, g, v);
     castle_draw_warnings(r, g, v);
 
     if (g->location == LOCATION_SWAMP && r->font_tiny) {
