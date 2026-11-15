@@ -182,7 +182,7 @@ static void test_preparations(void) {
 static void test_migration(void) {
     for (int completed = 0; completed < 2; completed++) {
         Enemy *e = setup();
-        castle_generate(&game.map, 3);
+        castle_legacy_layout(&game.map, 2);
         game.player.x = 25;
         game.player.y = 17;
         game.player.hp = 41;
@@ -250,7 +250,7 @@ void test_malakar(void) {
         ASSERT("all ten rooms remain explorable after the escape and encounter placement", connected);
         ASSERT("the wing's real onward stair remains reachable", castle_walk_to(&game, 45, 55));
         action_resolve_player(&game, (Action){ACTION_ASCEND, 0, 0});
-        ASSERT("forcing Malakar to flee unlocks actual travel to the Forsaken Court", game.level == 3);
+        ASSERT("forcing Malakar to flee unlocks actual travel to the Court and Household", game.level == 3);
         action_resolve_player(&game, (Action){ACTION_DESCEND, 0, 0});
         ASSERT("cached revisits preserve Malakar's escape and the opened seal", game.level == 2 && !game.enemies[0].active && game.map.tiles[22][35] == TILE_CASTLE_GATE_OPEN);
         ASSERT("the wing retains a continuous route to the gatehouse stair", castle_walk_to(&game, 15, 11));

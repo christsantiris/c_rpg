@@ -144,7 +144,7 @@ void minimap_draw(Renderer *r, const GameState *g) {
                         tile == TILE_ROAD_GATE_OPEN || tile == TILE_ROAD_GATE_CLOSED || tile == TILE_LABYRINTH_ENTRANCE ||
                         tile == TILE_CROWN_EXIT || tile == TILE_CROWN_SUPPLIES || tile == TILE_IRON_ENTRANCE || tile == TILE_IRON_EXIT || tile == TILE_IRON_LAMP_LIT || tile == TILE_IRON_SWITCH || tile == TILE_IRON_CACHE || tile == TILE_STORM_EXIT || tile == TILE_STORM_ENTRANCE || tile == TILE_STORM_SUPPLIES || tile == TILE_STORM_CRANK ||
                         tile == TILE_TOWN_EXIT || tile == TILE_MANGROVE_EXIT || tile == TILE_MANGROVE_LANDING || tile == TILE_MANGROVE_RETURN || tile == TILE_MANGROVE_CACHE ||
-                        tile == TILE_CASTLE_TRAP_OPEN || tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT || tile == TILE_CASTLE_MUSTER ||
+                        tile == TILE_CASTLE_TRAP_OPEN || tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT || tile == TILE_CASTLE_MUSTER || tile == TILE_CASTLE_CHAMBERLAIN ||
                         tile == TILE_STAIRS_UP || tile == TILE_STAIRS_DOWN ||
                         tile == TILE_ELDERWOOD_ENTRANCE || tile == TILE_ELDERWOOD_EXIT ||
                         tile == TILE_NORTH_SWAMP || tile == TILE_NORTH_CATACOMBS || tile == TILE_NORTH_STILLBURY || tile == TILE_NORTH_CASTLE ||

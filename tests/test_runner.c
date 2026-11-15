@@ -95,6 +95,7 @@ void test_controls(void);
 void test_quick_potion(void);
 void test_expeditions(void);
 void test_castle_gatehouse(void);
+void test_castle_court(void);
 void test_malakar(void);
 
 int main(void) {
@@ -112,6 +113,7 @@ int main(void) {
     printf("=== CONR Test Suite ===\n\n");
     test_movement();
     test_castle_gatehouse();
+    test_castle_court();
     test_malakar();
     test_travel_direction();
     test_town_roads();

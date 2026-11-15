@@ -3,10 +3,12 @@
 #include "world_props.h"
 #include "info_panel.h"
 #include "item_icons.h"
+#include "npc_renderer.h"
 #include "../game/royal_arcanist.h"
 #include "../game/lord_veyr.h"
 #include "../game/castle_gatehouse.h"
 #include "../game/malakar.h"
+#include "../game/castle_court.h"
 
 static void rect(Renderer *r, int x, int y, int w, int h, SDL_Color c) {
     SDL_SetRenderDrawColor(r->sdl, c.r, c.g, c.b, c.a);
@@ -37,7 +39,7 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
     rect(r, px, py, 24, 24, (SDL_Color){24, 23, 32, 255});
     rect(r, px + 1, py + 1, 22, 22, stone);
     rect(r, px + 2, py + 2, 20, 1, tile == TILE_CASTLE_WALL ? (SDL_Color){47, 42, 56, 255} : (SDL_Color){79, 72, 86, 255});
-    if (tile == TILE_CASTLE_FLOOR || tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT || tile == TILE_CASTLE_MUSTER) {
+    if (tile == TILE_CASTLE_FLOOR || tile == TILE_CASTLE_WARD || tile == TILE_CASTLE_WARD_SPENT || tile == TILE_CASTLE_MUSTER || tile == TILE_CASTLE_CHAMBERLAIN) {
         rect(r, px + 2, py + 11, 20, 1, (SDL_Color){37, 34, 45, 255});
         rect(r, px + 7 + (x % 2) * 5, py + 2, 1, 9, (SDL_Color){37, 34, 45, 255});
         rect(r, px + 12 - (x % 2) * 5, py + 12, 1, 10, (SDL_Color){37, 34, 45, 255});
@@ -101,6 +103,8 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
             art = PROP_STRAW;
         } else if (g->level == 2) {
             art = y < 20 ? PROP_TABLE : y < 38 ? PROP_STRAW : PROP_FURNACE;
+        } else if (g->level == 3 && (x >= 48 || y >= 47)) {
+            art = PROP_STRAW;
         }
         draw_world_prop(r, sx, sy, art, (SDL_Color){179, 150, 105, 255});
         if (g->level == 2 && y < 20) {
@@ -110,7 +114,9 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
             draw_world_prop(r, sx, sy, x % 2 ? PROP_BREAD : PROP_MEAT, (SDL_Color){213, 170, 99, 255});
         }
     } else if (tile == TILE_CASTLE_BOOKCASE) {
-        if (g->level == 2 && x == 54 && y == 8 && (g->castle_minibosses & 1)) {
+        if (g->level == 3 && y == 46) {
+            draw_world_prop(r, sx, sy, PROP_BAG, (SDL_Color){192, 177, 143, 255});
+        } else if (g->level == 2 && x == 54 && y == 8 && (g->castle_minibosses & 1)) {
             draw_world_prop(r, sx, sy, PROP_VAULT_DOOR, (SDL_Color){155, 167, 101, 255});
         } else if (g->level == 2 && y == 29) {
             draw_world_prop(r, sx, sy, PROP_BOOKCASE, (SDL_Color){142, 176, 121, 255});
@@ -132,6 +138,8 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
         draw_world_prop(r, sx, sy, g->level == 2 ? PROP_CRYSTAL : PROP_PILLAR, g->level == 2 ? (SDL_Color){94, 196, 159, 255} : (SDL_Color){136, 111, 63, 255});
     } else if (tile == TILE_CASTLE_BANNER) {
         draw_world_prop(r, sx, sy, PROP_BANNER, (SDL_Color){198, 159, 75, 255});
+    } else if (tile == TILE_CASTLE_CHAMBERLAIN) {
+        npc_draw(r, sx, sy, NPC_ART_HADRIN, 0);
     } else if (tile == TILE_CASTLE_GATE || tile == TILE_CASTLE_GATE_OPEN) {
         draw_world_prop(r, sx, sy, tile == TILE_CASTLE_GATE ? PROP_GATE : PROP_GATE_OPEN, (SDL_Color){156, 119, 65, 255});
     } else if (tile == TILE_CASTLE_LEVER) {
@@ -211,12 +219,40 @@ void castle_draw_alchemy(Renderer *r, const GameState *g, const Viewport *v) {
         gatehouse_label(r, g, v, names[i], room->x + room->w / 2, room->y + 1);
     }
     gatehouse_label(r, g, v, "DOWN: GATEHOUSE", 15, 11);
-    gatehouse_label(r, g, v, "UP: FORSAKEN COURT", 45, 55);
+    gatehouse_label(r, g, v, "UP: COURT AND HOUSEHOLD", 45, 55);
     gatehouse_label(r, g, v, "LAB SEAL", 35, 22);
     gatehouse_label(r, g, v, "CONDENSER: A", 38, 16);
     gatehouse_label(r, g, v, "CONDENSER: A", 51, 16);
     gatehouse_label(r, g, v, "PRIVATE LEDGER: A", 14, 46);
     gatehouse_label(r, g, v, "SEALED ROYAL PASSAGE: A", 54, 8);
+}
+
+void castle_draw_court(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_CASTLE_INTERIOR || g->level != 3) {
+        return;
+    }
+    static const char *names[MAX_ROOMS] = {"RECEIVING HALL", "GREAT HALL", "WEST GALLERY", "COUNCIL CHAMBER", "GUEST CHAMBERS", "UPPER STAIR", "SERVANTS' QUARTERS", "LINEN STORE", "HOUSEHOLD OFFICE", "EAST GALLERY"};
+    for (int i = 0; i < g->map.room_count; i++) {
+        if (i == 3 || i == 8) {
+            continue;
+        }
+        const Room *room = &g->map.rooms[i];
+        gatehouse_label(r, g, v, names[i], room->x + room->w / 2, room->y + 1);
+    }
+    gatehouse_label(r, g, v, "DOWN: ALCHEMY WING", 15, 11);
+    gatehouse_label(r, g, v, "UP: CROWN CHAPEL", 45, 55);
+    gatehouse_label(r, g, v, "COUNCIL ORDERS: A", 29, 6);
+    gatehouse_label(r, g, v, "HOUSE LEVER: A", COURT_LEVER_X, COURT_LEVER_Y);
+    gatehouse_label(r, g, v, g->map.tiles[COURT_GATE_Y][COURT_GATE_X] == TILE_CASTLE_GATE ? "HOUSE GATE: SEALED" : "HOUSE GATE: OPEN", COURT_GATE_X, COURT_GATE_Y);
+    for (int y = v->cam_y; y < v->cam_y + v->tiles_y && y < CASTLE_H; y++) {
+        for (int x = v->cam_x; x < v->cam_x + v->tiles_x && x < CASTLE_W; x++) {
+            if (g->map.tiles[y][x] == TILE_CASTLE_CHAMBERLAIN) {
+                char text[48];
+                snprintf(text, sizeof(text), "EDRAS: %s", SDL_GetScancodeName((SDL_Scancode)g->key_bindings[CONTROL_TALK]));
+                gatehouse_label(r, g, v, text, x, y);
+            }
+        }
+    }
 }
 
 void castle_draw_malakar_status(Renderer *r, const GameState *g, const Viewport *v) {

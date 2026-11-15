@@ -351,6 +351,9 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
         if (g->level == 2) {
             line1 = (g->castle_minibosses & 1) ? "MALAKAR HAS FLED TO THE KING" : "INTERRUPT HIS PREPARATIONS";
             line2 = (g->castle_minibosses & 1) ? "EXPLORE THE WING; UPPER STAIR OPEN" : "FORCE MALAKAR TO FLEE";
+        } else if (g->level == 3) {
+            line1 = "HOUSEHOLD ROUTES FLANK THE HALL";
+            line2 = "SEEK THE CHAMBERLAIN AND ORDERS";
         } else if (g->level == 4) {
             line1 = "DISABLE THE LINKED WARD PEDESTAL";
             line2 = "DEFEAT THE ARCANIST TO CLIMB";

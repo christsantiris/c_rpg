@@ -483,7 +483,8 @@ int map_is_walkable(const Map *m, int x, int y) {
     if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) {
         return 0;
     }
-    return m->tiles[y][x] != TILE_SOULSTONE_SHRINE && m->tiles[y][x] != TILE_NPC_WARLOCK &&
+    return m->tiles[y][x] != TILE_CASTLE_CHAMBERLAIN &&
+        m->tiles[y][x] != TILE_SOULSTONE_SHRINE && m->tiles[y][x] != TILE_NPC_WARLOCK &&
         m->tiles[y][x] != TILE_GOBLIN_ROAD_GUARD && m->tiles[y][x] != TILE_DARK_ELF_ROAD_GUARD &&
         m->tiles[y][x] != TILE_ROAD_GATE_CLOSED && m->tiles[y][x] != TILE_ROAD_BANK &&
         m->tiles[y][x] != TILE_CARAVAN_CAMP &&

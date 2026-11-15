@@ -28,12 +28,12 @@ defenders and the current final boss.
 |---|---|---|
 | 1 | Gatehouse and Lower Keep | Ten connected rooms, two guarded approaches, an eastern gallery and a permanent service shortcut |
 | 2 | Royal alchemy Wing | Early Malakar encounter, interrupted preparations, escape at 40% health, and ten explorable rooms |
-| 3 | Forsaken Court | Royal Guards defend the court alongside marksmen and hexers |
+| 3 | Court and Household | Great Hall, western and eastern flanking routes, a permanent service shortcut, and Chamberlain Edras |
 | 4 | Crown Chapel | Royal Arcanist's two phases, sequential ward lanes and pedestal counters |
 | 5 | Royal Archives | Shelves narrow sightlines; roaming soldiers and warned fire lanes threaten the approaches |
 | 6 | Throne of No Return | Veyr combines guarded approaches, ward pedestals, Royal Guards, fire lanes, and mixed escorts |
 
-Floors 3–6 retain six rooms linked by loops. Closed portcullises and magical
+Floors 4–6 retain six rooms linked by loops. Closed portcullises and magical
 barriers retain alternate routes. Tables stay outside the carpeted corridors,
 so every room is accessible without moving furniture. The entry room and stairs are free of traps;
 bosses remain inside their arenas. Use the configured **Ascend stairs** command
@@ -69,7 +69,7 @@ Save version **253** converts active and cached gatehouses in place. Exploration
 actor positions, wounds and deaths, dropped items, equipment, quests, boss
 victories and operated entrance gates remain intact. If new masonry overlaps
 an old occupant or item, a short connected alcove preserves its position. Old
-gatehouses receive no replacement supply drops. Floors 3–6 keep their current
+gatehouses receive no replacement supply drops. Floors 4–6 keep their current
 layouts and encounters for subsequent V2 changes.
 
 ## Enemies and combat
@@ -94,7 +94,7 @@ Malakar works in the laboratory immediately east of level 2's receiving hall.
 The entry stair remains at **(15,11)**, with an uninterrupted retreat to the
 gatehouse. A visible laboratory seal identifies the route into the lower wing;
 it opens when Malakar flees. The onward stair at **(45,55)** leads to the
-Forsaken Court and uses the existing encounter checkpoint.
+Court and Household and uses the existing encounter checkpoint.
 
 Malakar introduces himself when engaged. His **Bursting Vial** marks a small
 five-stone diamond for **two player actions**. **Volatile Overpressure**, powered
@@ -284,6 +284,47 @@ Hall of Fame records now store the trophy per ranked run and retain a permanent
 earned flag even if a victory does not reach the top ten. The application records
 that history on victory before leaving the ending. Legacy score rows preserve
 their names/scores and receive no invented victory status.
+
+## V2 Court and Household
+
+Floor 3 surrounds a larger **Great Hall** with a receiving hall, council chamber,
+guest chambers, west and east galleries, servants' quarters, linen store,
+household office and upper stair hall. Long banquet tables and pillars divide
+the Great Hall into fighting lanes. Royal Guards and a Court Hexer hold the
+hall while marksmen cover the galleries; guest pallets, service bedding and
+linen stores give the surrounding rooms distinct uses.
+
+The **western route** runs through the west gallery and servants' quarters to
+the linen store and upper stair. The **eastern route** crosses the council and
+guest chambers, household office and east gallery. Either route can reach the
+chapel stair without crossing the Great Hall or defeating every defender.
+The household lever at **(19,49)** permanently opens the service gate at
+**(19..20,43)**, shortening retreat to the receiving hall. Its state survives
+floor travel, castle regrouping and save/load; dropped loot cannot be erased
+by operating it. There is no new boss or collection requirement on this floor.
+
+**Chamberlain Edras**, a noncombat resident in the household office, explains
+Malakar's dismissal of the royal attendants and points toward the Crown Chapel.
+Stand beside him and use **Talk**; **Enter / Esc** closes the conversation.
+Other keys are consumed while it is open. Existing Rosemoor or Ridgeshire
+evidence adds context, but the conversation assigns no quest, consumes no
+evidence and gives no repeatable reward. Council orders at **(29,6)** can be
+read with **Interact** for another account of the royal household's isolation.
+
+The return stair remains at **(15,11)**, labeled **DOWN: ALCHEMY WING**. The
+onward stair remains at **(45,55)**, labeled **UP: CROWN CHAPEL**. Both use the
+existing castle stair commands and discovered minimap markers. The optional
+trapdoor at **(17,32)** retains a path around it and its existing fall rules.
+
+Save version **255** converts active and cached Forsaken Courts in place,
+preserving player and enemy positions, wounds, deaths, exploration, loot,
+equipment, quests, castle victories and spent trapdoors. New masonry around
+an old position receives a connected alcove. If an existing occupant or loose
+item overlaps Edras's initial position, he moves to a nearby free office tile.
+His location uses the existing serialized map; the service gate uses its saved
+tiles, and conversation state uses the existing dialogue records. No new
+Player or GameState fields are introduced. The Crown Chapel and later stages
+remain subsequent V2 changes.
 
 ## Progression
 
