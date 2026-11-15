@@ -30,10 +30,10 @@ defenders and the current final boss.
 | 2 | Royal alchemy Wing | Early Malakar encounter, interrupted preparations, escape at 40% health, and ten explorable rooms |
 | 3 | Court and Household | Great Hall, western and eastern flanking routes, a permanent service shortcut, and Chamberlain Edras |
 | 4 | Crown Chapel | Nave, reliquary, cloister and choir approaches, royal service shortcut, and the Arcanist sanctuary |
-| 5 | Royal Archives | Shelves narrow sightlines; roaming soldiers and warned fire lanes threaten the approaches |
+| 5 | Royal Apartments | Connected suites, archives, treasury, recovery ledger, optional supplies and a household shortcut |
 | 6 | Throne of No Return | Veyr combines guarded approaches, ward pedestals, Royal Guards, fire lanes, and mixed escorts |
 
-Floors 5–6 retain six rooms linked by loops. Closed portcullises and magical
+Floor 6 retains six rooms linked by loops. Closed portcullises and magical
 barriers retain alternate routes. Tables stay outside the carpeted corridors,
 so every room is accessible without moving furniture. The entry room and stairs are free of traps;
 bosses remain inside their arenas. Use the configured **Ascend stairs** command
@@ -69,8 +69,8 @@ Save version **253** converts active and cached gatehouses in place. Exploration
 actor positions, wounds and deaths, dropped items, equipment, quests, boss
 victories and operated entrance gates remain intact. If new masonry overlaps
 an old occupant or item, a short connected alcove preserves its position. Old
-gatehouses receive no replacement supply drops. Floors 5–6 keep their current
-layouts and encounters for subsequent V2 changes.
+gatehouses receive no replacement supply drops. Floor 6 keeps its current
+layout and encounter for a subsequent V2 change.
 
 ## Enemies and combat
 
@@ -340,7 +340,7 @@ The sacristy lever at **(27,44)** permanently opens the royal service gate at
 **(26..27,39)**, creating a direct retreat to the entrance hall. It remains open
 through floor travel, save/load and castle regrouping, including beneath loose
 loot. The entrance stair stays at **(15,11)** and is labeled **DOWN: COURT AND
-HOUSEHOLD**; the onward stair stays at **(45,55)**, labeled **UP: ROYAL ARCHIVES**.
+HOUSEHOLD**; the onward stair stays at **(45,55)**, labeled **UP: ROYAL APARTMENTS**.
 Discovered stairs retain their minimap markers. The optional reliquary trapdoor
 at **(17,32)** keeps its existing fall and persistence rules.
 
@@ -359,6 +359,49 @@ Exploration, loot, player progress, spent trapdoors, victories and reward claims
 remain intact. No new persistent fields are needed: shortcut progress is stored
 in the existing map records. The upper apartments and finale remain subsequent
 V2 changes.
+
+## V2 Royal Apartments
+
+Level 5 contains a receiving hall, royal bedroom, dressing room, guest suite,
+royal archives, treasury, recovery room, private study, east gallery and throne
+antechamber. The western route links the bedroom and guest suite to the recovery
+room and upper stair. The eastern route passes the treasury and archives to the
+long gallery. Shelves provide cover and alternate approaches to the patrols.
+No new boss, key, collectible or regional quest is required to continue.
+
+Three labeled records can be read with **Interact**: bedside orders at **(12,27)**
+explain the King's isolation; crown diagrams at **(40,26)** identify the conduits
+in the throne chamber; the recovery ledger at **(31,44)** establishes that Malakar
+will regain full strength there. His empty restorative vessels are a discovery,
+not an opportunity to weaken the final encounter.
+
+The bedroom contains one Health Potion at **(15,36)**, the treasury one Strength
+Potion at **(48,13)**, and the recovery room one Mana Potion at **(31,52)**. These
+are loose items collected with **Pick Up**. They are placed only when a new floor
+is generated, persist when uncollected, and never replenish on castle regrouping.
+The household lever at **(27,46)** permanently opens the gate at **(26..27,39)**,
+providing a shorter retreat. Existing floor-loot records and map tiles store all
+supply and shortcut progress; no new persistent player fields are introduced.
+
+The entry at **(15,11)** is labeled **DOWN: CROWN CHAPEL**, and the onward stair
+at **(45,55)** is labeled **UP: THRONE**. The stair commands and discovered minimap
+markers remain unchanged. The final floor retains its current encounter until
+the finale rewrite. Both routes and the household shortcut preserve retreat.
+The optional trapdoor at **(17,32)** retains its existing fall and saved state.
+
+New floors have a warned fire lane across the archives at **(38..48,34)** and a
+short crossing at **(44..46,42)**. Fire retains two warning actions, one eruption
+and one quiet action. A perpendicular step avoids a crossing; stairs and supplies
+stand outside the runes. Loot over a rune preserves its warning and damage.
+
+Save version **257** migrates active and cached Archives into the apartments,
+preserving exploration, player and enemy positions, wounds, deaths, loot,
+equipment, quests, victories, claimed rewards and spent trapdoors. Older floors
+keep their exact existing fire-rune footprint, including loot-covered runes,
+and retain the saved fire clock. Connected alcoves preserve old occupied and
+hazard positions where new masonry would overlap them. No new rune lanes or
+replacement supply drops are added to an existing floor. Subsequent saves retain
+that repaired layout and hazard state.
 
 ## Progression
 

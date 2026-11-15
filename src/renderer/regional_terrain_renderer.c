@@ -356,7 +356,10 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             line2 = "SEEK THE CHAMBERLAIN AND ORDERS";
         } else if (g->level == 4) {
             line1 = (g->castle_minibosses & 2) ? "THE CHAPEL WARDS HAVE FALLEN" : "DISABLE THE LINKED WARD PEDESTAL";
-            line2 = (g->castle_minibosses & 2) ? "UPPER STAIR: ROYAL ARCHIVES" : "DEFEAT THE ARCANIST TO CLIMB";
+            line2 = (g->castle_minibosses & 2) ? "UPPER STAIR: ROYAL APARTMENTS" : "DEFEAT THE ARCANIST TO CLIMB";
+        } else if (g->level == 5) {
+            line1 = "EXPLORE THE SUITES AND RECOVERY ROOM";
+            line2 = "FIRE RUNES WARN TWICE BEFORE BURNING";
         } else if (g->level == CASTLE_DEPTH) {
             line1 = "DISABLE BOTH WARDS TO WEAKEN VEYR";
             line2 = "WATCH THE CROWN'S WARNED LANES";
