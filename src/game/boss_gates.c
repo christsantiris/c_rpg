@@ -16,7 +16,7 @@ static const BossGateRule rules[] = {
     {LOCATION_ELDERWOOD, BOSS_GATE_ROAD, "Elderthorn"},
     {LOCATION_CATACOMBS, BOSS_GATE_ROAD, "Grave Marshal"},
     {LOCATION_COAST, BOSS_GATE_DESTINATION, "Drowned Queen"},
-    {LOCATION_CASTLE_INTERIOR, BOSS_GATE_INTERNAL, "Castellan / Royal Arcanist / Lord Veyr"},
+    {LOCATION_CASTLE_INTERIOR, BOSS_GATE_INTERNAL, "Malakar (Laboratory) / Royal Arcanist / Malakar"},
     {LOCATION_LABYRINTH, BOSS_GATE_NONE, "Minotaur"},
     {LOCATION_GLASSDEEP, BOSS_GATE_NONE, "Quarry Colossus"},
     {LOCATION_MANGROVES, BOSS_GATE_DESTINATION, "Sszareth"},

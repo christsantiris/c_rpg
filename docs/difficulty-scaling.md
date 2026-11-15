@@ -222,15 +222,16 @@ stats, the resurrection cap, and the Grave Marshal's brazier protection.
 
 The six-floor castle uses fixed endgame statistics rather than the regional-order
 multiplier. Regular guards start at 65–150 HP, 18–28 attack plus half the floor
-number (rounded down), and 4–11 defense. The Castellan has 420 HP, the Royal
-Arcanist 470 HP, and Lord Veyr 950 HP. Shields, guard formations, Hexer support,
+number (rounded down), and 4–11 defense. Laboratory Malakar has 420 HP and flees
+at 40% health; the Royal Arcanist has 470 HP, and final Malakar returns at a full
+950 HP. Shields, guard formations, Hexer support,
 telegraphed attacks, wards, and trapdoor patrols supply the tactical difficulty.
 Castle enemies award fixed gold: 5 per regular enemy and 100 per miniboss.
 The six floors add distinct guard details, independent firing-lane gates,
-limited Herald patrols, ward pedestals, and archive fire lanes. Each active
+finite escort calls, ward pedestals, and archive fire lanes. Each active
 pedestal reduces boss damage taken by 20 percentage points and adds 4 outgoing
 damage. Fire lanes warn for two turns, then deal 24 minus half player defense
-(minimum 6). Disable pedestals with Interact; interrupt Heralds before their calls.
-Veyr awards 10,000 score and campaign victory. Bring supplies before entry;
+(minimum 6). Disable pedestals with Interact; final escorts are announced before arrival.
+Final Malakar awards 10,000 score and campaign victory. Bring supplies before entry;
 retreat resets surviving defenders while preserving permanent progress.
 See [Castle interior](castle-design.md) for mechanics and play-test expectations.

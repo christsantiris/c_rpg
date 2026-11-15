@@ -361,8 +361,8 @@ void draw_area_description(Renderer *r, const GameState *g, const Viewport *v) {
             line1 = "EXPLORE THE SUITES AND RECOVERY ROOM";
             line2 = "FIRE RUNES WARN TWICE BEFORE BURNING";
         } else if (g->level == CASTLE_DEPTH) {
-            line1 = "DISABLE BOTH WARDS TO WEAKEN VEYR";
-            line2 = "WATCH THE CROWN'S WARNED LANES";
+            line1 = g->game_won ? "THE KING IS FREE; MALAKAR HAS FALLEN" : "BREAK CONDUITS TO WEAKEN MALAKAR";
+            line2 = g->game_won ? "ENTER / ESC: CONTINUE THE ENDING" : "FREE THE KING; WATCH WARNED MIXTURES";
         }
     } else if (g->location == LOCATION_CROWNROAD || g->location == LOCATION_CROWNROAD_WEST) {
         title = g->location == LOCATION_CROWNROAD ? "CROWN ROAD WEST" : "CROWN ROAD EAST";

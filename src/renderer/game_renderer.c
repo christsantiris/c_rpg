@@ -4659,6 +4659,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     castle_draw_court(r, g, v);
     castle_draw_chapel(r, g, v);
     castle_draw_apartments(r, g, v);
+    castle_draw_finale(r, g, v);
     castle_draw_warnings(r, g, v);
 
     if (g->location == LOCATION_SWAMP && r->font_tiny) {
@@ -4764,7 +4765,7 @@ void game_draw(Renderer *r, GameState *g, Viewport *v) {
     draw_red_dragon_status(r, g, v);
     castle_draw_arcanist_status(r, g, v);
     castle_draw_malakar_status(r, g, v);
-    castle_draw_veyr_status(r, g, v);
+    castle_draw_final_status(r, g, v);
 
     // Draw info panel
     info_panel_draw(r, g, v);

@@ -442,7 +442,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_COURT_HEXER:
         case ENEMY_ROYAL_ARCANIST:
         case ENEMY_MALAKAR:
-        case ENEMY_LORD_VEYR:
+        case ENEMY_MALAKAR_FINAL:
             break;
         case ENEMY_ANCIENT_SKELETON: gold = 8 + rand() % 8; break;
         case ENEMY_BONE_SENTINEL: gold = 12 + rand() % 10; break;

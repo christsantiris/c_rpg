@@ -424,6 +424,7 @@ typedef struct {
     int castle_prompt;
     int game_won;
     int crown_of_unbound; // Permanent victory trophy; no inventory slot required.
+    int castle_ending; // 0: unfinished, 1: King, 2: aftermath, 3: victory screen.
     int jail_quest_state; // 0: not arrested, 1: jailed, 2: escorting, 3: rewarded.
     int prisoner_x;
     int prisoner_y;

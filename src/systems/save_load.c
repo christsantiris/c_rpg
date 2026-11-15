@@ -3,6 +3,7 @@
 #include "../game/castle_court.h"
 #include "../game/castle_chapel.h"
 #include "../game/castle_apartments.h"
+#include "../game/castle_finale.h"
 #include "../game/malakar.h"
 #include "../game/ridgeshire.h"
 #include "../game/act5_routes.h"
@@ -25,7 +26,7 @@
 #include "../game/town_road.h"
 #include "../game/castle.h"
 #include "../game/royal_arcanist.h"
-#include "../game/lord_veyr.h"
+#include "../game/malakar_final.h"
 #include "../game/lich.h"
 #include "../game/necromancer.h"
 #include "../game/goblin_king.h"
@@ -2098,7 +2099,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 257);
+    cJSON_AddNumberToObject(root, "save_version", 258);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -2719,6 +2720,7 @@ int save_game(const GameState *g, int slot) {
     cJSON_AddNumberToObject(castle, "arcanist_reward", g->arcanist_reward_state);
     cJSON_AddNumberToObject(castle, "prompt", g->castle_prompt);
     cJSON_AddNumberToObject(castle, "won", g->game_won);
+    cJSON_AddNumberToObject(castle, "ending", g->game_won && !g->castle_ending ? 3 : g->castle_ending);
     cJSON_AddNumberToObject(castle, "crown_of_unbound", g->crown_of_unbound);
     cJSON *floors = cJSON_CreateArray();
     for (int i = 0; i < CASTLE_DEPTH; i++) {
@@ -5377,6 +5379,7 @@ int load_game(GameState *g, int slot) {
     memset(g->castle_loot_count, 0, sizeof(g->castle_loot_count));
     memset(g->castle_fire_phase, 0, sizeof(g->castle_fire_phase));
     g->castle_minibosses = 0;
+    g->castle_ending = 0;
     g->castellan_reward_state = 0;
     g->arcanist_reward_state = 0;
     g->castle_prompt = 0;
@@ -5415,6 +5418,12 @@ int load_game(GameState *g, int slot) {
         g->castle_minibosses = minis->valueint;
         g->castle_prompt = prompt->valueint;
         g->game_won = won->valueint;
+        cJSON *ending = cJSON_GetObjectItem(castle, "ending");
+        if (save_version >= 258 && (!cJSON_IsNumber(ending) || ending->valuedouble != ending->valueint || ending->valueint < 0 || ending->valueint > 3 || (!g->game_won && ending->valueint))) {
+            cJSON_Delete(root);
+            return 0;
+        }
+        g->castle_ending = save_version >= 258 ? ending->valueint : g->game_won ? 3 : 0;
         for (int i = 0; i < CASTLE_DEPTH; i++) {
             LevelCache *cache = &g->castle_cache[i];
             cJSON *entry = cJSON_GetArrayItem(floors, i);
@@ -6889,7 +6898,7 @@ int load_game(GameState *g, int slot) {
         royal_arcanist_migrate(g);
     }
     if (save_version < 139) {
-        lord_veyr_migrate(g);
+        malakar_final_migrate(g);
     }
     if (save_version < 141) {
         drowned_queen_remove_islands(g);
@@ -7431,6 +7440,11 @@ int load_game(GameState *g, int slot) {
         cJSON_Delete(root);
         return 0;
     }
+    if (save_version < 258 && !finale_migrate(g)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    finale_sync(g);
     game_recover_retired_items(g);
     cJSON_Delete(root);
     return 1;

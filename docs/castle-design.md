@@ -13,7 +13,7 @@ castle victories or equipment. See [Royal Dungeon](royal-dungeon.md).
 
 The interior is drawn at the Crown Roads' 1.5× zoom: the camera shows about
 30 × 18 tiles around the player. Ranged defenders fire from at most eight tiles,
-so they stay on screen; a wounded Royal Arcanist or Lord Veyr retaliates from up to twelve, and the camera leans toward them to keep them on screen across their 22 × 14 arenas.
+so they stay on screen; a wounded Royal Arcanist or final Malakar retaliates from up to twelve, and the camera leans toward them to keep them on screen across their 22 × 14 arenas.
 
 ## Floors and appearance
 
@@ -22,7 +22,7 @@ Charcoal masonry, gold trim, crimson carpets and banners, stained glass,
 torches, pillars, court tables, archives, and a royal throne establish the
 fortress theme. The approved roster includes shared Royal Guards and Royal
 Alchemist Malakar in an early laboratory encounter, alongside dedicated royal
-defenders and the current final boss.
+defenders and his fully restored final encounter.
 
 | Floor | Setting | Encounter and progress |
 |---|---|---|
@@ -31,10 +31,11 @@ defenders and the current final boss.
 | 3 | Court and Household | Great Hall, western and eastern flanking routes, a permanent service shortcut, and Chamberlain Edras |
 | 4 | Crown Chapel | Nave, reliquary, cloister and choir approaches, royal service shortcut, and the Arcanist sanctuary |
 | 5 | Royal Apartments | Connected suites, archives, treasury, recovery ledger, optional supplies and a household shortcut |
-| 6 | Throne of No Return | Veyr combines guarded approaches, ward pedestals, Royal Guards, fire lanes, and mixed escorts |
+| 6 | King's Chamber | Eight connected royal spaces, alternate approaches, retreat shortcut, restored Malakar and the captive King |
 
-Floor 6 retains six rooms linked by loops. Closed portcullises and magical
-barriers retain alternate routes. Tables stay outside the carpeted corridors,
+The final floor connects a vestibule, council antechamber, guard galleries,
+audience hall, privy gallery, royal passage and the King’s chamber. Closed
+portcullises and magical barriers retain alternate routes. Tables stay outside the carpeted corridors,
 so every room is accessible without moving furniture. The entry room and stairs are free of traps;
 bosses remain inside their arenas. Use the configured **Ascend stairs** command
 (default `,`) to climb and **Descend stairs / exit** (default `.`) to descend.
@@ -69,8 +70,8 @@ Save version **253** converts active and cached gatehouses in place. Exploration
 actor positions, wounds and deaths, dropped items, equipment, quests, boss
 victories and operated entrance gates remain intact. If new masonry overlaps
 an old occupant or item, a short connected alcove preserves its position. Old
-gatehouses receive no replacement supply drops. Floor 6 keeps its current
-layout and encounter for a subsequent V2 change.
+gatehouses receive no replacement supply drops. The final floor has its own
+version 258 migration described below.
 
 ## Enemies and combat
 
@@ -216,32 +217,27 @@ Violet outlines mark attacks' fixed destinations before damage is applied.
 Normal attacks allow one movement turn; Arcanist attacks allow two. Freezing an enemy pauses its pending attack and its ward change.
 Cover blocks ranged attacks even if the barrier closes after the warning starts.
 
-Lord Veyr has one continuous health bar and three phases: Armored Ruler above
-two-thirds health, Broken Throne down to one-third, and Unbound Crown below it.
-Health, base attack, defense, XP and the 10,000-point victory bonus remain.
-Phases latch forward and wait for queued attacks and recovery to finish.
+Final Malakar returns at **950/950 HP**, regardless of his laboratory wounds.
+His final encounter is a separate saved actor; he cannot flee a second time.
+One continuous health bar has three phases: **Royal Alchemist** above two-thirds
+health, **Crown Binding** down to one-third, and **Desperate Alchemist** below it.
+Phases latch forward after queued attacks and recovery finish.
 
-- **Armored Ruler:** frontal armor halves incoming damage before ward protection.
-  A fixed close Oathblade Swing alternates with a **Throne Advance**, moving up
-  to three marked cardinal stones. These give one action of warning; the first
-  attack is extended to at least two when announcing escorts. Sidestep the
-  advance and flank during recovery. Veyr never moves onto actors or outside
-  the arena. Corridor fire can provoke a two-action Royal Edict rather than
-  allowing ranged attacks against an inert boss; ordinary cover still blocks
-  incoming shots and engagement.
-- **Broken Throne:** armor gives way to a two-action five-stone Royal Edict,
-  then separately prepared west/east ward lanes. West marks a fixed row across
-  x=34..55; east marks a fixed column across y=44..57. Spent sources are skipped.
-  Disabling a prepared lane's pedestal cancels its damage and gate changes;
-  its announced countdown still finishes, preserving any queued escort arrival.
-  With both wards spent, the boss continues using Royal Edicts.
-- **Unbound Crown:** a fixed, radius-two diamond gives three ordinary actions
-  of warning. After its recovery, the existing nine-stone throne rune lane
-  at y=51, x=41..49 receives its own two-action fire warning. The crown and fire
-  never damage simultaneously. Fire retains 24 minus half defense damage,
-  minimum 6, with one eruption and no repeated floor damage. The old independent
-  throne-fire clock is suspended while Veyr lives; earlier phases leave the runes
-  dormant. Archive fire remains unchanged.
+- **Royal Alchemist:** a fixed five-stone **Bursting Vial** gives two ordinary
+  actions of warning, alternating with a **Volatile Surge** along three marked
+  cardinal stones. The surge gives one action of warning. Sidestep its line;
+  Malakar stops before occupied stones and never surges onto the captive King.
+  Corridor attacks provoke warned vials rather than allowing an inert target.
+- **Crown Binding:** vials alternate with separately prepared west/east conduit
+  lanes. West marks a fixed row across x=34..55; east marks a fixed column across
+  y=44..57. Breaking a lane’s source with Interact cancels its damage and gate
+  changes while its announced countdown and queued escort arrival finish.
+  Spent sources are skipped; both spent means continued vials.
+- **Desperate Alchemist:** **Crown Rupture** marks a fixed radius-two diamond
+  with three ordinary actions of warning. After recovery, the nine-stone throne
+  rune lane at y=51, x=41..49 receives its own two-action fire warning. The crown
+  and fire never damage simultaneously. Fire deals 24 minus half defense,
+  minimum 6, once per eruption. Earlier phases leave throne runes dormant.
 
 Every signature or fire eruption leaves one full recovery action. Completing
 a crown with **both pedestals spent** instead leaves **two** full counterattack
@@ -249,7 +245,7 @@ actions. Pedestals retain their existing damage/protection effects and are
 available to every class. They stay spent for the attempt and reset around a
 surviving boss only when the castle regroups on retreat. Freeze pauses a queued
 attack, escort preparation, fire warning and gate plan together. A resolved fire
-impact clears visually on the following action, including while Veyr is frozen.
+impact clears visually on the following action, including while Malakar is frozen.
 
 Footprints and barrier plans lock at declaration. C/O previews distinguish gate
 closures/openings; W/E identify ward lanes; F identifies throne fire; X identifies
@@ -257,20 +253,36 @@ a damaging cell with a gate change. Numbers count remaining player actions.
 Occupied and loot-covered gate cells stay open. Walking escape checks include
 planned closures; an inescapable preparation misses and only opens gates.
 
-Veyr announces at most two escorts per attempt, a Warden and a Marksman, at
+Malakar announces at most two escorts per attempt, a Warden and a Marksman, at
 G-marked stones (42,46) and (48,46). They arrive on empty stones when the warning
 resolves and act from the following turn. Occupied arrivals or a full roster
 consume the call without retrying. New escorts grant no gold, items, XP or score.
-Royal Guards replace the former reinforcement callers. Returning between
-castle floors preserves the attempt; retreat resets a living Veyr and his escort
+Finale guards use Wardens, Marksmen and Hexers; Royal Guards elsewhere cannot summon patrols. Returning between
+castle floors preserves the attempt; retreat resets a living Malakar and his escort
 allowance according to existing castle rules.
 
-Defeating Veyr awards **Crown of the Unbound** before setting campaign victory,
-stops combat/fire immediately and grants the existing 10,000 score once. The crown
+Defeating final Malakar awards **Crown of the Unbound** before setting campaign victory,
+stops combat/fire immediately and grants 10,000 score once. The crown
 is a permanent trophy, requiring no inventory slot, loot space or post-combat
-pickup. The boss journal records it; the ending displays it and allows the bound
-journal key (default Q) to inspect the completed boss record. Closing that journal
-returns to the ending. Enter retains the original Hall of Fame flow.
+pickup. The boss journal records it. Two closing pages first free the King and then
+acknowledge the companions who survived or fell. Enter or Esc advances one page;
+held keys cannot skip them. The existing victory screen then displays the crown,
+allows the bound journal key (default Q) to inspect the completed boss record,
+and retains the Hall of Fame flow.
+
+Save version **258** adds this ending progress and remodels active and cached
+final floors into eight connected spaces. It preserves the entire saved combat
+arena, actor wounds/deaths, attack masks and clocks, freeze, loot underlays,
+exploration, equipment and rewards. Serialized boss type 94 becomes final
+Malakar without healing or restarting an existing fight. Historical victories
+remain completed without replaying the ending or paying again. The earlier
+Royal Apartments and all other castle migrations still run for older saves.
+
+The King is a protected throne occupant, not a combat target. His binding breaks
+on victory. Western and eastern approaches remain available during the fight;
+the lever in the royal passage permanently opens the central retreat shortcut.
+The labeled stair returns to Royal Apartments. There is no onward staircase:
+defeating Malakar and freeing the King is the final objective.
 
 Save version **139** preserves the trophy, active/cached signature masks, phases,
 gate plans, escort flags, sequence state, warning clocks and long recovery. Older
@@ -469,8 +481,8 @@ Suggested play test:
 5. Reach floor 6 without collecting objects from other regions.
 6. Cancel and accept Return to Town; verify surviving defenders reset and
    permanent progress and dropped items survive.
-7. Fight all three Veyr phases, dodge marked areas, and confirm the victory ending.
-8. Fight Royal Guards in the court and throne room; verify they cannot summon patrols.
+7. Fight all three final Malakar phases, dodge marked areas, and confirm the victory ending.
+8. Fight Royal Guards in the court and the finite final escorts; verify they cannot summon patrols.
 9. Walk the Archives' fire lanes during both countdown turns; dodge one eruption
    and deliberately take another. Save during a warning and confirm it resumes.
 

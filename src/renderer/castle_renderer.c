@@ -5,7 +5,7 @@
 #include "item_icons.h"
 #include "npc_renderer.h"
 #include "../game/royal_arcanist.h"
-#include "../game/lord_veyr.h"
+#include "../game/malakar_final.h"
 #include "../game/castle_gatehouse.h"
 #include "../game/malakar.h"
 #include "../game/castle_court.h"
@@ -149,6 +149,16 @@ void castle_draw_tile(Renderer *r, const GameState *g, int sx, int sy, int x, in
         }
     } else if (tile == TILE_CASTLE_THRONE) {
         draw_world_prop(r, sx, sy, PROP_THRONE, (SDL_Color){224, 177, 82, 255});
+        if (g->level == 6) {
+            npc_draw(r, sx, sy, NPC_ART_OSWIN, 0);
+            rect(r, px + 7, py + 2, 10, 3, (SDL_Color){230, 188, 77, 255});
+            for (int n = 0; n < 3; n++) {
+                rect(r, px + 7 + n * 4, py, 2, 3, (SDL_Color){250, 219, 116, 255});
+            }
+            if (!g->game_won) {
+                rect(r, px + 4, py + 11, 16, 2, (SDL_Color){143, 88, 222, 255});
+            }
+        }
     } else if (tile == TILE_CASTLE_PILLAR) {
         WorldPropArt art = g->level == 2 ? PROP_CRYSTAL : g->level == 4 && x < 20 && y < 40 ? PROP_RELIC : PROP_PILLAR;
         draw_world_prop(r, sx, sy, art, g->level == 2 ? (SDL_Color){94, 196, 159, 255} : (SDL_Color){136, 111, 63, 255});
@@ -306,12 +316,31 @@ void castle_draw_apartments(Renderer *r, const GameState *g, const Viewport *v) 
         gatehouse_label(r, g, v, names[i], room->x + room->w / 2, room->y + 1);
     }
     gatehouse_label(r, g, v, "DOWN: CROWN CHAPEL", 15, 11);
-    gatehouse_label(r, g, v, "UP: THRONE", 45, 55);
+    gatehouse_label(r, g, v, "UP: KING'S CHAMBER", 45, 55);
     gatehouse_label(r, g, v, "BEDSIDE ORDERS: A", 12, 27);
     gatehouse_label(r, g, v, "CROWN DIAGRAMS: A", 40, 26);
     gatehouse_label(r, g, v, "RECOVERY LEDGER: A", 31, 44);
     gatehouse_label(r, g, v, "HOUSE LEVER: A", APARTMENTS_LEVER_X, APARTMENTS_LEVER_Y);
     gatehouse_label(r, g, v, g->map.tiles[APARTMENTS_GATE_Y][26] == TILE_CASTLE_GATE ? "HOUSE PASSAGE: SEALED" : "HOUSE PASSAGE: OPEN", 26, APARTMENTS_GATE_Y);
+}
+
+void castle_draw_finale(Renderer *r, const GameState *g, const Viewport *v) {
+    if (g->location != LOCATION_CASTLE_INTERIOR || g->level != 6) {
+        return;
+    }
+    static const char *names[8] = {"ROYAL VESTIBULE", "COUNCIL ANTECHAMBER", "WEST GUARD GALLERY", "AUDIENCE HALL", "ROYAL PASSAGE", "KING'S CHAMBER", "EAST GUARD GALLERY", "PRIVY GALLERY"};
+    for (int i = 0; i < g->map.room_count && i < 8; i++) {
+        if (i == 5) {
+            continue;
+        }
+        const Room *room = &g->map.rooms[i];
+        gatehouse_label(r, g, v, names[i], room->x + room->w / 2, room->y + 1);
+    }
+    gatehouse_label(r, g, v, "DOWN: ROYAL APARTMENTS", 15, 11);
+    gatehouse_label(r, g, v, "COUNCIL LEVER: A", 24, 13);
+    gatehouse_label(r, g, v, g->game_won ? "THE KING: FREED" : "THE KING: BOUND", 45, 45);
+    gatehouse_label(r, g, v, "RETREAT LEVER: A", 27, 48);
+    gatehouse_label(r, g, v, g->map.tiles[40][26] == TILE_CASTLE_GATE ? "ROYAL GATE: SEALED" : "ROYAL GATE: OPEN", 26, 40);
 }
 
 void castle_draw_malakar_status(Renderer *r, const GameState *g, const Viewport *v) {
@@ -353,7 +382,7 @@ void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {
     // Native frames are bottom-centered in 32-pixel regular / 40-pixel boss cells.
     static const SDL_Rect regular[5] = {{4, 6, 24, 26}, {36, 6, 24, 26}, {68, 6, 24, 26}, {4, 38, 24, 26}, {36, 38, 24, 26}};
     static const SDL_Rect bosses[5] = {{2, 4, 36, 36}, {42, 4, 36, 36}, {82, 4, 36, 36}, {2, 44, 36, 36}, {42, 44, 36, 36}};
-    int index = e->type == ENEMY_MALAKAR ? 6 : e->type - ENEMY_OATHBOUND_SOLDIER;
+    int index = (e->type == ENEMY_MALAKAR || e->type == ENEMY_MALAKAR_FINAL) ? 6 : e->type - ENEMY_OATHBOUND_SOLDIER;
     SDL_Texture *texture = index < 5 ? r->castle_enemy_texture : r->castle_boss_texture;
     SDL_Rect source;
     if (index < 5) {
@@ -364,7 +393,7 @@ void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {
     }
     SDL_Rect destination = {sx * 24 - (e->is_boss ? 6 : 0), sy * 24 - (e->is_boss ? 12 : 2), e->is_boss ? 36 : 24, e->is_boss ? 36 : 26};
     if (texture) {
-        if (e->type == ENEMY_MALAKAR) {
+        if (e->type == ENEMY_MALAKAR || e->type == ENEMY_MALAKAR_FINAL) {
             SDL_SetTextureColorMod(texture, 178, 255, 192);
         }
         if (e->type == ENEMY_ROYAL_ARCANIST && e->attack_phase == 2) {
@@ -375,11 +404,10 @@ void castle_draw_enemy(Renderer *r, int sx, int sy, const Enemy *e) {
     } else {
         draw_armored_guard(r, sx, sy);
     }
-    if (e->type == ENEMY_MALAKAR) {
+    if (e->type == ENEMY_MALAKAR || e->type == ENEMY_MALAKAR_FINAL) {
         draw_world_prop(r, sx, sy, PROP_GOBLET, (SDL_Color){110, 238, 165, 255});
     }
-    if (e->type == ENEMY_IRON_WARDEN ||
-        (e->type == ENEMY_LORD_VEYR && e->attack_phase <= 1)) {
+    if (e->type == ENEMY_IRON_WARDEN) {
         int cx = sx * 24 + 12 + e->facing_dx * 10;
         int cy = sy * 24 + 12 + e->facing_dy * 10;
         rect(r, cx - 2, cy - 2, 4, 4, e->move_timer == 2 ? (SDL_Color){94, 88, 107, 255} : (SDL_Color){242, 195, 84, 255});
@@ -403,8 +431,8 @@ void castle_draw_warnings(Renderer *r, const GameState *g, const Viewport *v) {
             }
             for (int i = 0; i < g->enemy_count; i++) {
                 const Enemy *e = &g->enemies[i];
-                int rally = lord_veyr_escort_marks(e, x, y);
-                int barrier = royal_arcanist_barrier_change(e, x, y) + lord_veyr_barrier_change(e, x, y);
+                int rally = malakar_final_escort_marks(e, x, y);
+                int barrier = royal_arcanist_barrier_change(e, x, y) + malakar_final_barrier_change(e, x, y);
                 int attack_marks = castle_attack_marks(&g->map, e, x, y);
                 int reagent = e->active && e->type == ENEMY_MALAKAR && e->attack_target_x >= 0 && y == 16 &&
                     ((e->boss_attack == MALAKAR_RESTORE && e->attack_target_x == x) || (e->boss_attack == MALAKAR_PRESSURE && e->boss_aux_y == x));
@@ -417,13 +445,13 @@ void castle_draw_warnings(Renderer *r, const GameState *g, const Viewport *v) {
                     SDL_RenderFillRect(r->sdl, &tile);
                     SDL_SetRenderDrawColor(r->sdl, 236, 159, 252, 255);
                     SDL_RenderDrawRect(r->sdl, &tile);
-                    if (e->type == ENEMY_ROYAL_ARCANIST || e->type == ENEMY_LORD_VEYR || e->type == ENEMY_MALAKAR) {
+                    if (e->type == ENEMY_ROYAL_ARCANIST || e->type == ENEMY_MALAKAR_FINAL || e->type == ENEMY_MALAKAR) {
                         char text[8];
                         int turns = e->type == ENEMY_MALAKAR ? e->move_timer : e->move_timer >= 3 ? e->move_timer - 1 : 1;
-                        int west = e->type == ENEMY_LORD_VEYR ? e->boss_attack == VEYR_WEST_LANE : e->boss_attack == ARCANIST_WEST_LANE;
-                        int east = e->type == ENEMY_LORD_VEYR ? e->boss_attack == VEYR_EAST_LANE : e->boss_attack == ARCANIST_EAST_LANE;
+                        int west = e->type == ENEMY_MALAKAR_FINAL ? e->boss_attack == FINAL_WEST_LANE : e->boss_attack == ARCANIST_WEST_LANE;
+                        int east = e->type == ENEMY_MALAKAR_FINAL ? e->boss_attack == FINAL_EAST_LANE : e->boss_attack == ARCANIST_EAST_LANE;
                         const char *label = reagent ? "R" : rally ? "G" : barrier && attack_marks ? "X" : barrier ? (barrier < 0 ? "C" : "O") :
-                            west ? "W" : east ? "E" : e->type == ENEMY_LORD_VEYR && e->boss_attack == VEYR_FIRE ? "F" : "";
+                            west ? "W" : east ? "E" : e->type == ENEMY_MALAKAR_FINAL && e->boss_attack == FINAL_FIRE ? "F" : "";
                         snprintf(text, sizeof(text), "%s%d", label, turns);
                         SDL_SetRenderDrawColor(r->sdl, barrier ? 248 : 134, barrier ? 199 : 226, barrier ? 104 : 247, 255);
                         SDL_RenderDrawRect(r->sdl, &tile);
@@ -481,13 +509,13 @@ void castle_draw_arcanist_status(Renderer *r, const GameState *g, const Viewport
     }
 }
 
-void castle_draw_veyr_status(Renderer *r, const GameState *g, const Viewport *v) {
+void castle_draw_final_status(Renderer *r, const GameState *g, const Viewport *v) {
     if (g->location != LOCATION_CASTLE_INTERIOR || g->level != 6) {
         return;
     }
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *e = &g->enemies[i];
-        if (!e->active || e->type != ENEMY_LORD_VEYR || e->max_hp <= 0 || !viewport_is_visible(v, e->x, e->y) || !map_is_explored(&g->map, e->x, e->y)) {
+        if (!e->active || e->type != ENEMY_MALAKAR_FINAL || e->max_hp <= 0 || !viewport_is_visible(v, e->x, e->y) || !map_is_explored(&g->map, e->x, e->y)) {
             continue;
         }
         int width = r->screen_w - INFO_PANEL_W - 16;
@@ -500,20 +528,20 @@ void castle_draw_veyr_status(Renderer *r, const GameState *g, const Viewport *v)
         int x = (r->screen_w - INFO_PANEL_W - width) / 2;
         int top = x < SWAMP_MAP_W / 2 + 12 ? SWAMP_MAP_H / 2 + 16 : 8;
         rect(r, x, top, width, 78, (SDL_Color){39, 25, 42, 255});
-        static const char *phases[] = {"ARMORED RULER", "BROKEN THRONE", "UNBOUND CROWN"};
+        static const char *phases[] = {"ROYAL ALCHEMIST", "CROWN BINDING", "DESPERATE ALCHEMIST"};
         int phase = e->attack_phase >= 3 ? 2 : e->attack_phase == 2 ? 1 : 0;
         char text[80];
         if (width < 300) {
-            snprintf(text, sizeof(text), "VEYR: PHASE %d", phase + 1);
+            snprintf(text, sizeof(text), "MALAKAR: PHASE %d", phase + 1);
         } else {
-            snprintf(text, sizeof(text), "LORD VEYR: %s", phases[phase]);
+            snprintf(text, sizeof(text), "MALAKAR: %s", phases[phase]);
         }
         renderer_draw_text(r, text, x + 10, top + 8, (SDL_Color){251, 220, 156, 255}, r->font_tiny);
         rect(r, x + 10, top + 23, width - 20, 8, (SDL_Color){76, 41, 66, 255});
         rect(r, x + 10, top + 23, (width - 20) * e->hp / e->max_hp, 8, (SDL_Color){217, 153, 82, 255});
         if (e->attack_target_x >= 0) {
-            static const char *attacks[] = {"PREPARING", "OATHBLADE", "THRONE ADVANCE", "ROYAL EDICT", "WEST WARD LANE", "EAST WARD LANE", "UNBOUND CROWN", "THRONE FIRE"};
-            int attack = e->boss_attack >= VEYR_SWING && e->boss_attack <= VEYR_FIRE ? e->boss_attack : 0;
+            static const char *attacks[] = {"PREPARING", "CAUSTIC SPLASH", "VOLATILE SURGE", "BURSTING VIAL", "WEST WARD LANE", "EAST WARD LANE", "CROWN RUPTURE", "THRONE FIRE"};
+            int attack = e->boss_attack >= FINAL_SWING && e->boss_attack <= FINAL_FIRE ? e->boss_attack : 0;
             snprintf(text, sizeof(text), "%s: %d%s", !e->boss_aux_x ? "BLOCKED ATTACK" : attacks[attack], e->move_timer >= 3 ? e->move_timer - 1 : 1, e->frozen_turns > 0 ? " FROZEN" : "");
         } else if (e->move_timer == 2) {
             snprintf(text, sizeof(text), "RECOVERY: %d%s", 1 + e->revive_timer, e->frozen_turns > 0 ? " FROZEN" : "");

@@ -188,17 +188,19 @@ inventory actions.
 
 ## Game Documentation
 
-The castle's first five V2 stages are the **Gatehouse and Lower Keep**, the
+The castle's six V2 stages are the **Gatehouse and Lower Keep**, the
 **Royal alchemy Wing**, the **Court and Household**, the **Crown Chapel**,
-and the **Royal Apartments**. Explore connected rooms
+the **Royal Apartments**, and the **King's Chamber**. Explore connected rooms
 and alternate approaches,
 then confront Royal Alchemist Malakar early on level 2. At 40% health he flees,
 opening the rest of the wing and its upper stair. The court's household routes
 flank the Great Hall; Chamberlain Edras explains the King's isolation. The chapel
 adds a nave, reliquary, cloister and choir approaches, with a royal service shortcut.
 The apartments connect royal suites, archives, treasury and Malakar's recovery
-room on the way to the finale. See the
-[castle guide](docs/castle-design.md) for routes and encounter details.
+room on the way to a fully recovered Malakar. Defeat him in the King's chamber
+to break the crown binding, free the King, and complete the game. See the
+[castle guide](docs/castle-design.md) for routes and encounter details, and the
+[full-game playtest checklist](docs/playtesting.md) for a start-to-finish run.
 
 - [Regional difficulty and progression](docs/difficulty-scaling.md)
 - [Weapons, armor, and shields](docs/weapons.md)

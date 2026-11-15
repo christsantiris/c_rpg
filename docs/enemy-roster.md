@@ -11,7 +11,9 @@ with the same base power as Hobgoblin Guards: 36 HP, 11 attack, 7 defense and
 44 experience. Goblin Warchiefs are armored melee attackers.
 Royal Alchemist Malakar replaces the castle's armory Vampire. His early
 laboratory encounter ends in escape at 40% health, retaining the floor unlock
-and reserved equipment reward. Vampires remain in their other areas.
+and reserved equipment reward. Final Malakar replaces the retired ruler at
+serialized ID 94 and returns at full health in a fresh final encounter. Existing
+final fights retain their wounds and warnings. Vampires remain in their other areas.
 
 Sun Priests appear only during Sun alignment; Lunar Effigies appear only during
 Moon alignment. Living actors hidden by alignment retain their health and status,
@@ -24,7 +26,7 @@ are active during either alignment.
 | --- | --- | --- |
 | ✅ | Ashen Hollow | Cinder Imp; Ash Hound; Obsidian Guardian; Fire Elemental; Cinder Lord |
 | ✅ | Blackwater Swamp | Giant Rat; Zombie; Bandit; Wraith; Vampire; Swamp Demon |
-| ✅ | Castle of No Return — interior | Oathbound Soldier; Iron Warden; Royal Marksman; Court Hexer; Royal Guard; Malakar; Royal Arcanist; Lord Veyr |
+| ✅ | Castle of No Return — interior | Oathbound Soldier; Iron Warden; Royal Marksman; Court Hexer; Royal Guard; Malakar; Royal Arcanist; Malakar (final encounter) |
 | ✅ | Crown Road East | Bandit; Blighted Wolf |
 | ✅ | Crown Road North | Goblin Scout; Goblin Archer; Goblin Warchief; Goblin Shaman; Hobgoblin Guard; Blighted Wolf |
 | ✅ | Crown Road West | Bandit; Blighted Wolf |
