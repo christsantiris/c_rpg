@@ -15,7 +15,7 @@ directions; ordinary enemy respawns never close it again.
 | Elderwood Forest | Boss-gated road | Elderthorn; Stillbury ↔ Sunken Coast |
 | Royal Catacombs | Boss-gated road | Grave Marshal; Catacombs section of the northern castle connection |
 | Sunken Coast | Boss-gated destination | Drowned Queen unlocks the docks; existing chart and sailing rules remain |
-| Castle interior | Internal progression | Existing Castellan, Royal Arcanist and Lord Veyr encounter rules |
+| Castle interior | Internal progression | Malakar’s laboratory escape, Royal Arcanist victory, then final Malakar |
 | Rook's Labyrinth | Optional adventure | Beside the western quarry road; Minotaur never blocks quarry travel |
 | Stonewake Quarry | Free travel | Quarry Colossus and quarry quest remain optional |
 | Saltwind Marsh | Boss-gated destination | Sszareth unlocks the final river launch; retreat and ordinary stage travel remain open |

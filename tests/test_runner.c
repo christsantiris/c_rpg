@@ -98,6 +98,7 @@ void test_castle_gatehouse(void);
 void test_castle_court(void);
 void test_castle_chapel(void);
 void test_castle_apartments(void);
+void test_castle_finale(void);
 void test_malakar(void);
 
 int main(void) {
@@ -118,6 +119,7 @@ int main(void) {
     test_castle_court();
     test_castle_chapel();
     test_castle_apartments();
+    test_castle_finale();
     test_malakar();
     test_travel_direction();
     test_town_roads();

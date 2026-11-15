@@ -3,10 +3,11 @@
 #include "castle_court.h"
 #include "castle_chapel.h"
 #include "castle_apartments.h"
+#include "castle_finale.h"
 #include "malakar.h"
 #include "combat_feedback.h"
 #include "royal_arcanist.h"
-#include "lord_veyr.h"
+#include "malakar_final.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -51,7 +52,7 @@ static void set_tile(GameState *g, int x, int y, TileType tile) {
 }
 
 const char *castle_floor_name(int level) {
-    static const char *names[CASTLE_DEPTH] = {"Gatehouse", "Royal alchemy Wing", "Court and Household", "Crown Chapel", "Royal Apartments", "Throne of No Return"};
+    static const char *names[CASTLE_DEPTH] = {"Gatehouse", "Royal alchemy Wing", "Court and Household", "Crown Chapel", "Royal Apartments", "King's Chamber"};
     return level >= 1 && level <= CASTLE_DEPTH ? names[level - 1] : "Castle";
 }
 
@@ -137,6 +138,10 @@ void castle_generate(Map *m, int level) {
     }
     if (level == 5) {
         apartments_generate(m);
+        return;
+    }
+    if (level == 6) {
+        finale_generate(m);
         return;
     }
     memset(m, 0, sizeof(*m));
@@ -370,6 +375,9 @@ int castle_remodel(Map *m, Enemy *enemies, int count, FloorItem *loot, int items
 }
 
 static int occupied(const GameState *g, int x, int y) {
+    if (g->level == 6 && x == 45 && y == 45) {
+        return 1;
+    }
     if (!map_is_walkable(&g->map, x, y) || (g->player.x == x && g->player.y == y)) {
         return 1;
     }
@@ -402,7 +410,7 @@ static Enemy *add_enemy(GameState *g, EnemyType type, int x, int y) {
     if (type >= ENEMY_ROYAL_ARCANIST) {
         n -= 2;
     }
-    static const char *names[6] = {"Oathbound Soldier", "Iron Warden", "Royal Marksman", "Court Hexer", "Royal Arcanist", "Lord Veyr"};
+    static const char *names[6] = {"Oathbound Soldier", "Iron Warden", "Royal Marksman", "Court Hexer", "Royal Arcanist", "Malakar, Crown Alchemist"};
     static const int hp[6] = {95, 150, 75, 90, 470, 950};
     static const int attack[6] = {24, 28, 26, 27, 36, 42};
     static const int defense[6] = {7, 11, 5, 6, 9, 14};
@@ -450,6 +458,17 @@ void castle_summon_guard(GameState *g, EnemyType type, int x, int y) {
 
 void castle_spawn(GameState *g) {
     g->enemy_count = 0;
+    if (g->level == 6) {
+        static const int positions[7][2] = {{36, 11}, {45, 14}, {13, 31}, {42, 31}, {17, 52}, {39, 54}, {51, 54}};
+        for (int i = 0; i < 7; i++) {
+            add_enemy(g, i % 3 == 0 ? ENEMY_IRON_WARDEN : i % 3 == 1 ? ENEMY_ROYAL_MARKSMAN : ENEMY_COURT_HEXER, positions[i][0], positions[i][1]);
+        }
+        if (!g->game_won) {
+            add_enemy(g, ENEMY_MALAKAR_FINAL, 45, 49);
+        }
+        g->level_cleared = 0;
+        return;
+    }
     if (g->level == 3) {
         static const int positions[10][2] = {{32, 27}, {40, 29}, {34, 36}, {25, 34}, {11, 28}, {35, 13}, {54, 14}, {53, 43}, {31, 51}, {40, 38}};
         static const EnemyType types[10] = {ENEMY_ROYAL_GUARD, ENEMY_ROYAL_MARKSMAN, ENEMY_COURT_HEXER, ENEMY_IRON_WARDEN,
@@ -494,7 +513,7 @@ void castle_spawn(GameState *g) {
     if (g->level == 4 && !(g->castle_minibosses & 2)) {
         add_enemy(g, ENEMY_ROYAL_ARCANIST, 45, 49);
     } else if (g->level == 6 && !g->game_won) {
-        add_enemy(g, ENEMY_LORD_VEYR, 45, 49);
+        add_enemy(g, ENEMY_MALAKAR_FINAL, 45, 49);
     }
     g->level_cleared = 0;
 }
@@ -618,8 +637,8 @@ static void arrive(GameState *g, int x, int y) {
             if (e->type == ENEMY_ROYAL_ARCANIST) {
                 royal_arcanist_cancel(e);
             }
-            if (e->type == ENEMY_LORD_VEYR) {
-                lord_veyr_cancel(g, e);
+            if (e->type == ENEMY_MALAKAR_FINAL) {
+                malakar_final_cancel(g, e);
             }
             e->attack_target_x = -1;
             e->attack_target_y = -1;
@@ -665,7 +684,7 @@ void castle_enter(GameState *g, int level) {
         "Household passages flank the Great Hall. Seek the chamberlain and council records.",
         "Explore the nave, cloister and reliquary. The sacristy opens a royal service shortcut; break the Arcanist's wards.",
         "Explore the suites, treasury and recovery ledger. Fire runes warn twice before burning.",
-        "Break the wards, defeat the Royal Guards, and watch the throne's fire lane."
+        "Malakar is restored. Break the crown conduits, dodge his mixtures, and free the King. Retreat remains open."
     };
     const char *hint = level == 2 && (g->castle_minibosses & 1) ? "Malakar has fled. Explore the wing; the upper stair leads to the Court and Household." : hints[level - 1];
     snprintf(message, sizeof(message), "%s: %s", castle_floor_name(level), hint);
@@ -701,7 +720,7 @@ void castle_leave(GameState *g, int escape) {
                 set_tile(g, 29, y, TILE_CASTLE_GATE);
             }
         }
-        if (i == 0 || i == 5) {
+        if (i == 0) {
             for (int x = 14; x <= 16; x++) {
                 set_tile(g, x, 21, TILE_CASTLE_GATE_OPEN);
             }
@@ -852,6 +871,9 @@ int castle_interact(GameState *g) {
     if (chapel_interact(g, x, y)) {
         return 1;
     }
+    if (finale_interact(g, x, y)) {
+        return 1;
+    }
     if (apartments_interact(g, x, y)) {
         return 1;
     }
@@ -869,7 +891,7 @@ int castle_interact(GameState *g) {
         set_tile(g, x, y, TILE_CASTLE_WARD_SPENT);
         push_message(g, "The pedestal goes dark. Royal ward protection weakens!");
         royal_arcanist_disable_ward(g, x, y);
-        lord_veyr_disable_ward(g, x, y);
+        malakar_final_disable_ward(g, x, y);
         return 1;
     }
     if (g->level == 4 && x == 53 && y == 56) {
@@ -947,8 +969,8 @@ int castle_attack_marks(const Map *m, const Enemy *e, int x, int y) {
     if (e->type == ENEMY_MALAKAR) {
         return malakar_marks(e, x, y);
     }
-    if (e->type == ENEMY_LORD_VEYR) {
-        return lord_veyr_marks(e, x, y);
+    if (e->type == ENEMY_MALAKAR_FINAL) {
+        return malakar_final_marks(e, x, y);
     }
     if (e->type == ENEMY_ROYAL_ARCANIST) {
         return royal_arcanist_marks(e, x, y);
@@ -992,7 +1014,7 @@ static void advance(GameState *g, Enemy *e) {
     for (int d = 0; d < 4; d++) {
         int x = e->x + dxs[d];
         int y = e->y + dys[d];
-        if ((e->type == ENEMY_ROYAL_ARCANIST || e->type == ENEMY_LORD_VEYR) && !boss_arena(x, y)) {
+        if ((e->type == ENEMY_ROYAL_ARCANIST || e->type == ENEMY_MALAKAR_FINAL) && !boss_arena(x, y)) {
             continue;
         }
         if (x < 0 || y < 0 || x >= CASTLE_W || y >= CASTLE_H || distances[y][x] < 0 ||
@@ -1067,8 +1089,8 @@ int castle_fire_warning(const GameState *g, int x, int y) {
     if (g->level == 6) {
         for (int i = 0; i < g->enemy_count; i++) {
             const Enemy *e = &g->enemies[i];
-            if (e->active && e->type == ENEMY_LORD_VEYR) {
-                return (phase == 1 || phase == 2) && e->boss_attack == VEYR_FIRE && lord_veyr_marks(e, x, y);
+            if (e->active && e->type == ENEMY_MALAKAR_FINAL) {
+                return (phase == 1 || phase == 2) && e->boss_attack == FINAL_FIRE && malakar_final_marks(e, x, y);
             }
         }
     }
@@ -1081,7 +1103,7 @@ static int tick_fire(GameState *g) {
     }
     if (g->level == 6) {
         for (int i = 0; i < g->enemy_count; i++) {
-            if (g->enemies[i].active && g->enemies[i].type == ENEMY_LORD_VEYR) {
+            if (g->enemies[i].active && g->enemies[i].type == ENEMY_MALAKAR_FINAL) {
                 return 0;
             }
         }
@@ -1105,7 +1127,7 @@ int castle_barrier_warning(const GameState *g, int x, int y) {
     }
     for (int i = 0; i < g->enemy_count; i++) {
         const Enemy *e = &g->enemies[i];
-        if (royal_arcanist_barrier_change(e, x, y) || lord_veyr_barrier_change(e, x, y)) {
+        if (royal_arcanist_barrier_change(e, x, y) || malakar_final_barrier_change(e, x, y)) {
             return 1;
         }
     }
@@ -1142,18 +1164,18 @@ int castle_tick(GameState *g) {
         int arcanist_range = e->type == ENEMY_ROYAL_ARCANIST && abs(g->player.x - e->x) <= 12 && abs(g->player.y - e->y) <= 12 &&
             line_clear(&g->map, e->x, e->y, g->player.x, g->player.y);
         int arcanist_retaliates = arcanist_range && (e->hp < e->max_hp || e->attack_phase > 0);
-        int veyr_range = e->type == ENEMY_LORD_VEYR && abs(g->player.x - e->x) <= 12 && abs(g->player.y - e->y) <= 12 &&
+        int final_range = e->type == ENEMY_MALAKAR_FINAL && abs(g->player.x - e->x) <= 12 && abs(g->player.y - e->y) <= 12 &&
             line_clear(&g->map, e->x, e->y, g->player.x, g->player.y);
-        int veyr_retaliates = veyr_range && (e->hp < e->max_hp || e->attack_phase > 0);
+        int final_retaliates = final_range && (e->hp < e->max_hp || e->attack_phase > 0);
         // Room-by-room encounters; bosses never pursue outside their arena.
-        if ((e->is_boss && !boss_arena(g->player.x, g->player.y) && !arcanist_retaliates && !veyr_retaliates) || (!e->is_boss && distances[e->y][e->x] > 12)) {
+        if ((e->is_boss && !boss_arena(g->player.x, g->player.y) && !arcanist_retaliates && !final_retaliates) || (!e->is_boss && distances[e->y][e->x] > 12)) {
             e->attack_target_x = -1;
             e->move_timer = 0;
             if (e->type == ENEMY_ROYAL_ARCANIST) {
                 royal_arcanist_cancel(e);
             }
-            if (e->type == ENEMY_LORD_VEYR) {
-                lord_veyr_cancel(g, e);
+            if (e->type == ENEMY_MALAKAR_FINAL) {
+                malakar_final_cancel(g, e);
             }
             patrol(g, e);
             continue;
@@ -1166,9 +1188,9 @@ int castle_tick(GameState *g) {
             }
             continue;
         }
-        if (e->type == ENEMY_LORD_VEYR) {
-            if (e->move_timer || veyr_range) {
-                damage += lord_veyr_tick(g, e);
+        if (e->type == ENEMY_MALAKAR_FINAL) {
+            if (e->move_timer || final_range) {
+                damage += malakar_final_tick(g, e);
             } else if (distances[e->y][e->x] >= 0) {
                 advance(g, e);
             }
@@ -1227,7 +1249,7 @@ int castle_enemy_damage(GameState *g, Enemy *e, int damage) {
     if (e->type == ENEMY_MALAKAR) {
         return malakar_damage(g, e, damage);
     }
-    if ((e->type == ENEMY_IRON_WARDEN || (e->type == ENEMY_LORD_VEYR && e->attack_phase <= 1)) && e->move_timer != 2 && !e->frozen_turns) {
+    if (e->type == ENEMY_IRON_WARDEN && e->move_timer != 2 && !e->frozen_turns) {
         int front = (g->player.x - e->x) * e->facing_dx + (g->player.y - e->y) * e->facing_dy > 0;
         if (front) {
             damage /= 2;
@@ -1247,7 +1269,7 @@ int castle_enemy_damage(GameState *g, Enemy *e, int damage) {
             }
         }
     }
-    if (e->type == ENEMY_ROYAL_ARCANIST || e->type == ENEMY_LORD_VEYR) {
+    if (e->type == ENEMY_ROYAL_ARCANIST || e->type == ENEMY_MALAKAR_FINAL) {
         damage = damage * (100 - active_wards(g) * 20) / 100;
     }
     return damage > 0 ? damage : 1;
@@ -1269,17 +1291,19 @@ void castle_record_death(GameState *g, Enemy *e) {
         g->castle_minibosses |= e->type == ENEMY_VAMPIRE ? 1 : 2;
         g->gold += 100;
         push_message(g, "Miniboss defeated! The way to the next castle floor is open.");
-    } else if (e->type == ENEMY_LORD_VEYR) {
+    } else if (e->type == ENEMY_MALAKAR_FINAL) {
         if (g->game_won) {
             return;
         }
         g->crown_of_unbound = 1;
-        lord_veyr_cancel(g, e);
+        malakar_final_cancel(g, e);
         g->game_won = 1;
+        g->castle_ending = 1;
         g->defeated_bosses |= 1 << LOCATION_CASTLE_INTERIOR;
         g->score += 10000;
         g->portal_active = 0;
-        push_message(g, "Veyr falls! Crown of the Unbound earned. The broken oath is undone. You have won!");
+        push_message(g, "Malakar falls! The crown binding breaks. The King is free. Crown of the Unbound earned!");
+        finale_sync(g);
     } else if (e->experience > 0) {
         g->gold += 5;
     }

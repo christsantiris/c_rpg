@@ -1,4 +1,4 @@
-#include "lord_veyr.h"
+#include "malakar_final.h"
 #include "castle.h"
 #include <stdlib.h>
 
@@ -27,6 +27,9 @@ static int wards(const GameState *g) {
 }
 
 static int actor_at(const GameState *g, int x, int y) {
+    if (x == 45 && y == 45) {
+        return 1;
+    }
     if (g->player.x == x && g->player.y == y) {
         return 1;
     }
@@ -38,17 +41,17 @@ static int actor_at(const GameState *g, int x, int y) {
     return 0;
 }
 
-int lord_veyr_escort_marks(const Enemy *e, int x, int y) {
-    return e->active && e->type == ENEMY_LORD_VEYR && e->attack_target_x >= 0 &&
-        (e->boss_wave_used & VEYR_ESCORT_PENDING) && y == 46 && (x == 42 || x == 48);
+int malakar_final_escort_marks(const Enemy *e, int x, int y) {
+    return e->active && e->type == ENEMY_MALAKAR_FINAL && e->attack_target_x >= 0 &&
+        (e->boss_wave_used & FINAL_ESCORT_PENDING) && y == 46 && (x == 42 || x == 48);
 }
 
-int lord_veyr_marks(const Enemy *e, int x, int y) {
-    if (!e->active || e->type != ENEMY_LORD_VEYR || e->attack_target_x < 0 || e->attack_target_y < 0) {
+int malakar_final_marks(const Enemy *e, int x, int y) {
+    if (!e->active || e->type != ENEMY_MALAKAR_FINAL || e->attack_target_x < 0 || e->attack_target_y < 0) {
         return 0;
     }
     int bit;
-    if (e->boss_attack == VEYR_ADVANCE) {
+    if (e->boss_attack == FINAL_ADVANCE) {
         int dx = x - e->x;
         int dy = y - e->y;
         int step = dx * e->facing_dx + dy * e->facing_dy;
@@ -56,17 +59,17 @@ int lord_veyr_marks(const Enemy *e, int x, int y) {
             return 0;
         }
         bit = step - 1;
-    } else if (e->boss_attack == VEYR_FIRE) {
+    } else if (e->boss_attack == FINAL_FIRE) {
         if (y != 51 || x < 41 || x > 49) {
             return 0;
         }
         bit = x - 41;
-    } else if (e->boss_attack == VEYR_WEST_LANE) {
+    } else if (e->boss_attack == FINAL_WEST_LANE) {
         if (y != e->attack_target_y || x < 34 || x >= 56) {
             return 0;
         }
         bit = x - 34;
-    } else if (e->boss_attack == VEYR_EAST_LANE) {
+    } else if (e->boss_attack == FINAL_EAST_LANE) {
         if (x != e->attack_target_x || y < 44 || y >= 58) {
             return 0;
         }
@@ -82,8 +85,8 @@ int lord_veyr_marks(const Enemy *e, int x, int y) {
     return (e->boss_aux_x & (1 << bit)) != 0;
 }
 
-int lord_veyr_barrier_change(const Enemy *e, int x, int y) {
-    if (!e->active || e->type != ENEMY_LORD_VEYR || e->attack_target_x < 0 || (x != 40 && x != 50) || y < 47 || y > 49) {
+int malakar_final_barrier_change(const Enemy *e, int x, int y) {
+    if (!e->active || e->type != ENEMY_MALAKAR_FINAL || e->attack_target_x < 0 || (x != 40 && x != 50) || y < 47 || y > 49) {
         return 0;
     }
     int bit = (x == 50 ? 3 : 0) + y - 47;
@@ -93,29 +96,29 @@ int lord_veyr_barrier_change(const Enemy *e, int x, int y) {
 static void lock_footprint(const Map *m, Enemy *e) {
     e->boss_aux_x = 0;
     e->boss_aux_y = 0;
-    int radius = e->boss_attack == VEYR_CROWN ? 2 : e->boss_attack == VEYR_BLAST ? 1 : 0;
+    int radius = e->boss_attack == FINAL_CROWN ? 2 : e->boss_attack == FINAL_BLAST ? 1 : 0;
     for (int bit = 0; bit < 25; bit++) {
         int dx = bit % 5 - 2;
         int dy = bit / 5 - 2;
         int x = e->attack_target_x + dx;
         int y = e->attack_target_y + dy;
         int mark = abs(dx) + abs(dy) <= radius;
-        if (e->boss_attack == VEYR_ADVANCE) {
+        if (e->boss_attack == FINAL_ADVANCE) {
             x = e->x + e->facing_dx * (bit + 1);
             y = e->y + e->facing_dy * (bit + 1);
             if (bit >= 3 || !inside(x, y) || !map_is_walkable(m, x, y)) {
                 break;
             }
             mark = 1;
-        } else if (e->boss_attack == VEYR_FIRE) {
+        } else if (e->boss_attack == FINAL_FIRE) {
             x = 41 + bit;
             y = 51;
             mark = bit < 9;
-        } else if (e->boss_attack == VEYR_WEST_LANE) {
+        } else if (e->boss_attack == FINAL_WEST_LANE) {
             x = 34 + bit;
             y = e->attack_target_y;
             mark = bit < 22;
-        } else if (e->boss_attack == VEYR_EAST_LANE) {
+        } else if (e->boss_attack == FINAL_EAST_LANE) {
             x = e->attack_target_x;
             y = 44 + bit;
             mark = bit < 14;
@@ -128,7 +131,7 @@ static void lock_footprint(const Map *m, Enemy *e) {
 
 static void plan_barriers(const Map *m, Enemy *e) {
     e->boss_aux_y = 0;
-    if (e->boss_attack < VEYR_BLAST || e->boss_attack == VEYR_FIRE) {
+    if (e->boss_attack < FINAL_BLAST || e->boss_attack == FINAL_FIRE) {
         return;
     }
     for (int bit = 0; bit < 6; bit++) {
@@ -142,7 +145,7 @@ static void plan_barriers(const Map *m, Enemy *e) {
 }
 
 static int can_escape(const GameState *g, const Enemy *e, int x, int y, int turns) {
-    if (!lord_veyr_marks(e, x, y)) {
+    if (!malakar_final_marks(e, x, y)) {
         return 1;
     }
     if (!turns) {
@@ -153,21 +156,21 @@ static int can_escape(const GameState *g, const Enemy *e, int x, int y, int turn
     for (int d = 0; d < 4; d++) {
         int nx = x + dx[d];
         int ny = y + dy[d];
-        if (map_is_walkable(&g->map, nx, ny) && !actor_at(g, nx, ny) && lord_veyr_barrier_change(e, nx, ny) >= 0 && can_escape(g, e, nx, ny, turns - 1)) {
+        if (map_is_walkable(&g->map, nx, ny) && !actor_at(g, nx, ny) && malakar_final_barrier_change(e, nx, ny) >= 0 && can_escape(g, e, nx, ny, turns - 1)) {
             return 1;
         }
     }
     return 0;
 }
 
-void lord_veyr_cancel(GameState *g, Enemy *e) {
+void malakar_final_cancel(GameState *g, Enemy *e) {
     e->attack_target_x = -1;
     e->attack_target_y = -1;
     e->boss_aux_x = 0;
     e->boss_aux_y = 0;
     e->revive_timer = 0;
     e->move_timer = 0;
-    e->boss_wave_used &= ~VEYR_ESCORT_PENDING;
+    e->boss_wave_used &= ~FINAL_ESCORT_PENDING;
     g->castle_fire_phase[5] = 0;
 }
 
@@ -175,22 +178,22 @@ static void declare(GameState *g, Enemy *e, int attack) {
     e->boss_attack = attack;
     e->attack_target_x = g->player.x;
     e->attack_target_y = g->player.y;
-    e->move_timer = attack == VEYR_CROWN ? 4 : attack == VEYR_SWING || attack == VEYR_ADVANCE ? 1 : 3;
+    e->move_timer = attack == FINAL_CROWN ? 4 : attack == FINAL_SWING || attack == FINAL_ADVANCE ? 1 : 3;
     int dx = g->player.x - e->x;
     int dy = g->player.y - e->y;
     e->facing_dx = abs(dx) >= abs(dy) ? (dx > 0 ? 1 : -1) : 0;
     e->facing_dy = e->facing_dx ? 0 : (dy > 0 ? 1 : -1);
-    if (attack == VEYR_ADVANCE) {
+    if (attack == FINAL_ADVANCE) {
         e->attack_target_x = e->x + e->facing_dx * 3;
         e->attack_target_y = e->y + e->facing_dy * 3;
     }
     if (!e->revived) {
         e->revived = 1;
-        e->boss_wave_used |= VEYR_ESCORT_PENDING;
+        e->boss_wave_used |= FINAL_ESCORT_PENDING;
         if (e->move_timer == 1) {
             e->move_timer = 3;
         }
-        push_message(g, "Veyr calls his last two escorts! Marked G stones; arrivals wait until this attack resolves, then act next turn.");
+        push_message(g, "Malakar calls his last two escorts! Marked G stones; arrivals wait until this attack resolves, then act next turn.");
     }
     lock_footprint(&g->map, e);
     plan_barriers(&g->map, e);
@@ -203,33 +206,33 @@ static void declare(GameState *g, Enemy *e, int attack) {
     if (!can_escape(g, e, g->player.x, g->player.y, turns)) {
         e->boss_aux_x = 0;
         e->boss_aux_y &= 63 << 6;
-        push_message(g, "Veyr's blocked preparation leaves no walking escape, so its strike will miss.");
+        push_message(g, "Malakar's blocked preparation leaves no walking escape, so its strike will miss.");
     }
-    g->castle_fire_phase[5] = attack == VEYR_FIRE ? 1 : 0;
-    static const char *names[] = {"", "Oathblade Swing", "Throne Advance", "Royal Edict", "West Ward Lane", "East Ward Lane", "Unbound Crown", "Throne Fire"};
+    g->castle_fire_phase[5] = attack == FINAL_FIRE ? 1 : 0;
+    static const char *names[] = {"", "Caustic Splash", "Volatile Surge", "Bursting Vial", "West Ward Lane", "East Ward Lane", "Crown Rupture", "Throne Fire"};
     char message[MAX_MESSAGE_LEN];
     snprintf(message, sizeof(message), "%s: %d action%s! Fixed stones and gate changes are marked.", names[attack], turns, turns == 1 ? "" : "s");
     push_message(g, message);
 }
 
-void lord_veyr_disable_ward(GameState *g, int x, int y) {
+void malakar_final_disable_ward(GameState *g, int x, int y) {
     if (g->location != LOCATION_CASTLE_INTERIOR || g->level != 6 || y != 54 || (x != 37 && x != 53)) {
         return;
     }
     for (int i = 0; i < g->enemy_count; i++) {
         Enemy *e = &g->enemies[i];
-        if (e->active && e->type == ENEMY_LORD_VEYR && e->attack_target_x >= 0 && e->boss_attack == (x == 37 ? VEYR_WEST_LANE : VEYR_EAST_LANE)) {
+        if (e->active && e->type == ENEMY_MALAKAR_FINAL && e->attack_target_x >= 0 && e->boss_attack == (x == 37 ? FINAL_WEST_LANE : FINAL_EAST_LANE)) {
             // Preserve a separately announced escort arrival until the canceled lane resolves.
             e->boss_aux_x = 0;
             e->boss_aux_y = 0;
-            push_message(g, "Veyr's linked ward lane goes dark. Its strike and barrier change are canceled.");
+            push_message(g, "Malakar's linked ward lane goes dark. Its strike and barrier change are canceled.");
         }
     }
 }
 
 static int resolve(GameState *g, Enemy *e) {
-    int hit = lord_veyr_marks(e, g->player.x, g->player.y);
-    if (e->boss_attack == VEYR_ADVANCE) {
+    int hit = malakar_final_marks(e, g->player.x, g->player.y);
+    if (e->boss_attack == FINAL_ADVANCE) {
         hit = 0;
         for (int step = 0; step < 3 && (e->boss_aux_x & (1 << step)); step++) {
             int x = e->x + e->facing_dx;
@@ -245,8 +248,8 @@ static int resolve(GameState *g, Enemy *e) {
             e->y = y;
         }
     }
-    int damage = e->boss_attack == VEYR_FIRE ? 24 - g->player.defense / 2 : e->attack - g->player.defense + wards(g) * 4;
-    if (e->boss_attack != VEYR_FIRE) {
+    int damage = e->boss_attack == FINAL_FIRE ? 24 - g->player.defense / 2 : e->attack - g->player.defense + wards(g) * 4;
+    if (e->boss_attack != FINAL_FIRE) {
         for (int i = 0; i < g->enemy_count; i++) {
             const Enemy *hexer = &g->enemies[i];
             if (hexer->active && hexer->type == ENEMY_COURT_HEXER && abs(hexer->x - e->x) + abs(hexer->y - e->y) <= 4) {
@@ -257,7 +260,7 @@ static int resolve(GameState *g, Enemy *e) {
     }
     for (int y = 47; y <= 49; y++) {
         for (int x = 40; x <= 50; x += 10) {
-            int change = lord_veyr_barrier_change(e, x, y);
+            int change = malakar_final_barrier_change(e, x, y);
             if (change > 0 && g->map.tiles[y][x] == TILE_CASTLE_GATE) {
                 g->map.tiles[y][x] = TILE_CASTLE_GATE_OPEN;
             } else if (change < 0 && g->map.tiles[y][x] == TILE_CASTLE_GATE_OPEN && !actor_at(g, x, y)) {
@@ -265,29 +268,29 @@ static int resolve(GameState *g, Enemy *e) {
             }
         }
     }
-    if (e->boss_wave_used & VEYR_ESCORT_PENDING) {
+    if (e->boss_wave_used & FINAL_ESCORT_PENDING) {
         castle_summon_guard(g, ENEMY_IRON_WARDEN, 42, 46);
         castle_summon_guard(g, ENEMY_ROYAL_MARKSMAN, 48, 46);
-        push_message(g, "Veyr's finite escorts arrive on empty marked stones. They yield no gold, items or XP.");
+        push_message(g, "Malakar's finite escorts arrive on empty marked stones. They yield no gold, items or XP.");
     }
-    int extra = e->boss_attack == VEYR_CROWN && wards(g) == 0;
-    int fire = e->boss_attack == VEYR_FIRE;
-    int cycle = e->boss_attack == VEYR_CROWN || e->boss_attack == VEYR_SWING ? 1 :
-        e->boss_attack == VEYR_BLAST && e->attack_phase == 2 ? 1 : e->boss_attack == VEYR_WEST_LANE ? 2 : 0;
-    lord_veyr_cancel(g, e);
+    int extra = e->boss_attack == FINAL_CROWN && wards(g) == 0;
+    int fire = e->boss_attack == FINAL_FIRE;
+    int cycle = e->boss_attack == FINAL_CROWN || e->boss_attack == FINAL_SWING ? 1 :
+        e->boss_attack == FINAL_BLAST ? 1 : e->boss_attack == FINAL_WEST_LANE ? 2 : 0;
+    malakar_final_cancel(g, e);
     e->boss_wave_used = (e->boss_wave_used & ~3) | cycle;
     e->move_timer = 2;
     e->revive_timer = extra;
     g->castle_fire_phase[5] = fire ? 3 : 0;
-    push_message(g, extra ? "The crown shatters against the broken wards! Two full recovery actions." : "Veyr's declared strike ends. One full recovery action.");
+    push_message(g, extra ? "The crown shatters against the broken wards! Two full recovery actions." : "Malakar's declared strike ends. One full recovery action.");
     int minimum = fire ? 6 : 3;
     return hit ? (damage > minimum ? damage : minimum) : 0;
 }
 
-int lord_veyr_tick(GameState *g, Enemy *e) {
+int malakar_final_tick(GameState *g, Enemy *e) {
     if (e->move_timer >= 3) {
         e->move_timer = e->move_timer == 3 ? 1 : e->move_timer - 1;
-        if (e->boss_attack == VEYR_FIRE) {
+        if (e->boss_attack == FINAL_FIRE) {
             g->castle_fire_phase[5] = 2;
         }
         return 0;
@@ -307,25 +310,27 @@ int lord_veyr_tick(GameState *g, Enemy *e) {
     if (phase > e->attack_phase) {
         e->attack_phase = phase;
         e->boss_wave_used &= ~3;
-        static const char *names[] = {"", "Armored Ruler! Flank his shield and warned throne advance.", "Broken Throne! Royal Edicts and ward-linked lanes reshape the arena.", "Unbound Crown! Three-action crowns alternate with separately warned throne fire."};
+        static const char *names[] = {"", "Royal Alchemist! Dodge bursting vials and his volatile surge.", "Crown Binding! Break the linked conduits to interrupt his prepared lanes.", "Desperate Alchemist! Three-action crown bursts alternate with warned throne fire."};
+        if (phase == 1) {
+            push_message(g, "Malakar: The crown has restored me. Your pursuit ends here; the King remains mine!");
+        }
         push_message(g, names[phase]);
     }
     int cycle = e->boss_wave_used & 3;
-    int attack = VEYR_BLAST;
-    int distance = abs(g->player.x - e->x) + abs(g->player.y - e->y);
-    if (e->boss_wave_used & VEYR_DEFERRED_FIRE) {
-        e->boss_wave_used &= ~VEYR_DEFERRED_FIRE;
-        attack = VEYR_FIRE;
+    int attack = FINAL_BLAST;
+    if (e->boss_wave_used & FINAL_DEFERRED_FIRE) {
+        e->boss_wave_used &= ~FINAL_DEFERRED_FIRE;
+        attack = FINAL_FIRE;
     } else if (e->attack_phase == 1) {
-        attack = !inside(g->player.x, g->player.y) ? VEYR_BLAST : cycle || distance > 2 ? VEYR_ADVANCE : VEYR_SWING;
+        attack = !inside(g->player.x, g->player.y) ? FINAL_BLAST : cycle ? FINAL_ADVANCE : FINAL_BLAST;
     } else if (e->attack_phase == 2 && inside(g->player.x, g->player.y)) {
         if (cycle == 1 && tile_at(g, 37, 54) == TILE_CASTLE_WARD) {
-            attack = VEYR_WEST_LANE;
+            attack = FINAL_WEST_LANE;
         } else if (cycle && tile_at(g, 53, 54) == TILE_CASTLE_WARD) {
-            attack = VEYR_EAST_LANE;
+            attack = FINAL_EAST_LANE;
         }
     } else if (e->attack_phase == 3) {
-        attack = cycle && inside(g->player.x, g->player.y) ? VEYR_FIRE : VEYR_CROWN;
+        attack = cycle && inside(g->player.x, g->player.y) ? FINAL_FIRE : FINAL_CROWN;
     }
     declare(g, e, attack);
     return 0;
@@ -334,22 +339,22 @@ int lord_veyr_tick(GameState *g, Enemy *e) {
 static void migrate_floor(const Map *m, Enemy *enemies, int count, int fire) {
     for (int i = 0; i < count; i++) {
         Enemy *e = &enemies[i];
-        if (e->type != ENEMY_LORD_VEYR) {
+        if (e->type != ENEMY_MALAKAR_FINAL) {
             continue;
         }
-        e->boss_wave_used = fire == 1 || fire == 2 ? VEYR_DEFERRED_FIRE : 0;
+        e->boss_wave_used = fire == 1 || fire == 2 ? FINAL_DEFERRED_FIRE : 0;
         e->boss_aux_x = 0;
         e->boss_aux_y = 0;
         e->revive_timer = 0;
         if (e->attack_target_x >= 0 && e->attack_target_y >= 0) {
-            e->boss_attack = e->attack_phase == 3 ? VEYR_CROWN : e->attack_phase == 2 ? VEYR_BLAST : VEYR_SWING;
+            e->boss_attack = e->attack_phase == 3 ? FINAL_CROWN : e->attack_phase == 2 ? FINAL_BLAST : FINAL_SWING;
             lock_footprint(m, e);
             plan_barriers(m, e);
         }
     }
 }
 
-void lord_veyr_migrate(GameState *g) {
+void malakar_final_migrate(GameState *g) {
     g->crown_of_unbound = g->game_won != 0;
     int fire = g->castle_fire_phase[5];
     if (g->location == LOCATION_CASTLE_INTERIOR && g->level == 6) {

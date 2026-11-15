@@ -94,8 +94,8 @@ void game_over_draw(Renderer *r, const GameState *g) {
     }
     draw_centered(r, level_str, cy - 35, white, r->font_small);
 
-    draw_centered(r, g->game_won ? "LORD VEYR IS DEFEATED" : "CAUSE OF DEATH", cy + 10, g->game_won ? gold : red, r->font_small);
-    const char *cause = g->game_won ? "THE BROKEN OATH IS UNDONE. THE KINGDOM IS FREE." :
+    draw_centered(r, g->game_won ? "MALAKAR IS DEFEATED" : "CAUSE OF DEATH", cy + 10, g->game_won ? gold : red, r->font_small);
+    const char *cause = g->game_won ? "THE KING IS FREED. THE KINGDOM CAN REBUILD." :
         g->message_count > 0 ? g->messages[g->message_count - 1] : "Your injuries proved fatal.";
     draw_centered(r, cause, cy + 38, white, r->font_small);
     if (g->crown_of_unbound) {

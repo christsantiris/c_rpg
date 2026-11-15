@@ -2761,7 +2761,7 @@ void draw_enemy(Renderer *r, int tile_x, int tile_y, EnemyType type) {
         case ENEMY_COURT_HEXER:
         case ENEMY_ROYAL_ARCANIST:
         case ENEMY_MALAKAR:
-        case ENEMY_LORD_VEYR:
+        case ENEMY_MALAKAR_FINAL:
             draw_armored_guard(r, tile_x, tile_y);
             break;
         case ENEMY_ANCIENT_SKELETON:

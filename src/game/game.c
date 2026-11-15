@@ -161,7 +161,7 @@ static void spawn_enemy(GameState *g, Enemy *e, EnemyType type, int x, int y) {
         case ENEMY_COURT_HEXER:
         case ENEMY_ROYAL_ARCANIST:
         case ENEMY_MALAKAR:
-        case ENEMY_LORD_VEYR:
+        case ENEMY_MALAKAR_FINAL:
             break;
         case ENEMY_ANCIENT_SKELETON:
             snprintf(e->name, sizeof(e->name), "Ancient Skeleton");
@@ -1512,6 +1512,7 @@ void game_init(GameState *g) {
     g->castle_prompt = 0;
     g->game_won = 0;
     g->crown_of_unbound = 0;
+    g->castle_ending = 0;
     srand((unsigned)time(NULL));
     g->level = 1;
     g->crownroad_cache.valid = 0;

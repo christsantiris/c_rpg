@@ -86,7 +86,7 @@ typedef enum {
     ENEMY_ROYAL_MARKSMAN = 89,
     ENEMY_COURT_HEXER = 90,
     ENEMY_ROYAL_ARCANIST = 93,
-    ENEMY_LORD_VEYR = 94,
+    ENEMY_MALAKAR_FINAL = 94, // Retains the retired final boss's serialized ID.
     ENEMY_THORN_DRYAD = 97,
     ENEMY_TREEFOLK = 98,
     ENEMY_ELDERTHORN = 99,

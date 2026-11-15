@@ -23,6 +23,7 @@ EM_ASYNC_JS(void, browser_next_frame, (void), {
 #include "game/party.h"
 #include "game/royal_evidence.h"
 #include "game/castle_court.h"
+#include "game/castle_finale.h"
 #include "game/eastern_arc.h"
 #include "renderer/royal_evidence_renderer.h"
 #include "renderer/viewport.h"
@@ -779,7 +780,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     int sc = event.key.keysym.scancode;
-                    if (screen == SCREEN_PLAYING && (western_handle_key(&game, sc, event.key.repeat) || eastern_handle_key(&game, sc, event.key.repeat) || royal_evidence_handle_key(&game, sc, event.key.repeat) || court_handle_key(&game, sc, event.key.repeat))) {
+                    if (screen == SCREEN_PLAYING && (finale_handle_key(&game, sc, event.key.repeat) || western_handle_key(&game, sc, event.key.repeat) || eastern_handle_key(&game, sc, event.key.repeat) || royal_evidence_handle_key(&game, sc, event.key.repeat) || court_handle_key(&game, sc, event.key.repeat))) {
                         break;
                     }
                     if (screen == SCREEN_PLAYING && game_handle_cain_dialogue_key(&game, sc, event.key.repeat)) {
@@ -1425,7 +1426,7 @@ int main(int argc, char **argv) {
                         break;
                     }
                     if (event.button.button != SDL_BUTTON_LEFT) break;
-                    if (screen == SCREEN_PLAYING && (court_dialogue(&game) || western_convoy_prompt(&game) || game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || rosemoor_dialogue(&game) || ridgeshire_dialogue(&game) || garran_dialogue(&game) || (quarry_dialogue(&game) && game.quarry_prompt) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
+                    if (screen == SCREEN_PLAYING && (finale_pending(&game) || court_dialogue(&game) || western_convoy_prompt(&game) || game.stillbury_prompt || eastern_challenge_active(&game) || royal_evidence_pending(&game) || game_cain_dialogue_active(&game) || game_quest_offer_active(&game) || game_shortcut_prompt_active(&game) || game_glassdeep_prompt_active(&game) || stormbell_prompt_active(&game) || aldric_prompt_active(&game) || storm_mage_prompt_active(&game) || rosemoor_dialogue(&game) || ridgeshire_dialogue(&game) || garran_dialogue(&game) || (quarry_dialogue(&game) && game.quarry_prompt) || restoration_prompt_active(&game) || resurrection_prompt_active(&game))) {
                         break;
                     }
 
@@ -1699,7 +1700,10 @@ int main(int argc, char **argv) {
             }
         }
 
-        if (screen == SCREEN_PLAYING && game.game_won) {
+        if (screen == SCREEN_PLAYING && finale_pending(&game)) {
+            finale_sync(&game);
+        }
+        if (screen == SCREEN_PLAYING && game.game_won && !finale_pending(&game)) {
             screen = SCREEN_GAME_OVER;
             needs_redraw = 1;
         }

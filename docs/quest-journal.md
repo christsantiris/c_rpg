@@ -136,9 +136,9 @@ loading preserves progress without introducing a new saved counter.
 Each entry shows its quest giver, description, target area and stages, objective progress,
 status, gold reward, and score reward. The Bosses tab always lists every
 regional boss, including Stonewake Quarry's Quarry Colossus, with their
-defeated or undefeated status. It also tracks the castle's armory Vampire, Royal
-Arcanist, and Lord Veyr. Miniboss victories remain recorded after retreat;
-Veyr's defeat ends the campaign with victory.
+defeated or undefeated status. It also tracks Malakar's laboratory escape, the
+Royal Arcanist, and Malakar's final encounter. Miniboss victories remain recorded
+after retreat; Malakar's final defeat ends the campaign with victory.
 
 The Labyrinth entry tracks the Minotaur guarding Rook's ivory rook. Previous
 Maze Warden victories count as completed Minotaur encounters.
