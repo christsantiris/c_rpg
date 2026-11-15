@@ -25,19 +25,51 @@ armory miniboss, alongside dedicated royal defenders and the final boss.
 
 | Floor | Setting | Encounter and progress |
 |---|---|---|
-| 1 | Gatehouse | Two guarded approaches with independent portcullis levers and firing lanes |
+| 1 | Gatehouse and Lower Keep | Ten connected rooms, two guarded approaches, an eastern gallery and a permanent service shortcut |
 | 2 | Iron Keep | Vampire miniboss, guard detail and side portcullis controls |
 | 3 | Forsaken Court | Royal Guards defend the court alongside marksmen and hexers |
 | 4 | Crown Chapel | Royal Arcanist's two phases, sequential ward lanes and pedestal counters |
 | 5 | Royal Archives | Shelves narrow sightlines; roaming soldiers and warned fire lanes threaten the approaches |
 | 6 | Throne of No Return | Veyr combines guarded approaches, ward pedestals, Royal Guards, fire lanes, and mixed escorts |
 
-Each floor has six rooms linked by loops. Closed portcullises and magical
+Floors 2–6 retain six rooms linked by loops. Closed portcullises and magical
 barriers retain alternate routes. Tables stay outside the carpeted corridors,
 so every room is accessible without moving furniture. The entry room and stairs are free of traps;
 bosses remain inside their arenas. Use the configured **Ascend stairs** command
 (default `,`) to climb and **Descend stairs / exit** (default `.`) to descend.
 Descending from floor 1 returns you to the castle grounds.
+
+## V2 gatehouse and lower keep
+
+Floor 1 now has a fixed architectural layout rather than six matching halls.
+The entrance hall connects to the east watch through a guarded portcullis, or
+south into the barracks through a separately controlled portcullis. Narrow,
+offset doorways lead through the mess hall, kitchen, stores and armory. An
+eastern guard gallery connects the watch to the upper stair hall, providing
+another approach around the mess hall. Room names appear in the game renderer.
+
+The existing entrance levers still operate their own portcullises. A third
+lever in **Service Control**, reached from the lower keep, permanently opens
+the central service passage to the entrance hall. It cannot be reached through
+the sealed shortcut from the entrance side. Its three gate stones stay open
+through floor travel, castle retreat, defender regrouping and save/load.
+
+The stores contain one Health Potion; the kitchen contains one Mana Potion.
+These supplies are placed only on first generation and do not replenish when
+defenders regroup. The ten defenders occupy the rooms and gallery rather than
+repeating a pair at every room center. There is no required boss on this floor.
+
+The entry stair remains at **(15,11)** and is labeled **DOWN: CASTLE GROUNDS**.
+The onward stair remains at **(45,55)** and is labeled **UP: IRON KEEP**. Both
+use the established castle stair commands, and discovered stairs retain their
+minimap markers. The upper-floor trapdoor landing at **(8,15)** stays usable.
+
+Save version **253** converts active and cached gatehouses in place. Exploration,
+actor positions, wounds and deaths, dropped items, equipment, quests, boss
+victories and operated entrance gates remain intact. If new masonry overlaps
+an old occupant or item, a short connected alcove preserves its position. Old
+gatehouses receive no replacement supply drops. Floors 2–6 keep their current
+layouts and encounters for subsequent V2 changes.
 
 ## Enemies and combat
 

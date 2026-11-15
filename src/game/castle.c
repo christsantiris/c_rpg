@@ -1,4 +1,5 @@
 #include "castle.h"
+#include "castle_gatehouse.h"
 #include "combat_feedback.h"
 #include "royal_arcanist.h"
 #include "lord_veyr.h"
@@ -114,6 +115,10 @@ static TileType encounter_tile(int level, int x, int y, TileType tile) {
 }
 
 void castle_generate(Map *m, int level) {
+    if (level == 1) {
+        gatehouse_generate(m);
+        return;
+    }
     memset(m, 0, sizeof(*m));
     for (int y = 0; y < MAP_H; y++) {
         for (int x = 0; x < MAP_W; x++) {
@@ -326,6 +331,15 @@ void castle_summon_guard(GameState *g, EnemyType type, int x, int y) {
 
 void castle_spawn(GameState *g) {
     g->enemy_count = 0;
+    if (g->level == 1) {
+        static const int positions[10][2] = {{36, 11}, {47, 14}, {15, 29}, {20, 36}, {40, 27}, {50, 33}, {36, 44}, {57, 36}, {58, 48}, {28, 52}};
+        for (int i = 0; i < 10; i++) {
+            EnemyType type = i % 3 == 0 ? ENEMY_IRON_WARDEN : i % 3 == 1 ? ENEMY_ROYAL_MARKSMAN : ENEMY_OATHBOUND_SOLDIER;
+            add_enemy(g, type, positions[i][0], positions[i][1]);
+        }
+        g->level_cleared = 0;
+        return;
+    }
     for (int i = 1; i < 5; i++) {
         int x;
         int y;
@@ -494,6 +508,9 @@ void castle_enter(GameState *g, int level) {
     } else {
         castle_generate(&g->map, level);
         castle_spawn(g);
+        if (level == 1) {
+            gatehouse_supply(g);
+        }
     }
     memcpy(g->floor_items, g->castle_loot[level - 1], sizeof(g->floor_items));
     g->floor_item_count = g->castle_loot_count[level - 1];
@@ -502,7 +519,7 @@ void castle_enter(GameState *g, int level) {
     g->castle_prompt = 0;
     char message[MAX_MESSAGE_LEN];
     static const char *hints[CASTLE_DEPTH] = {
-        "Two approaches: use their levers to control shooting lanes.",
+        "Explore the lower keep. A service lever opens a shortcut back to the entrance hall.",
         "Defeat the Vampire in the armory; use side levers to split the defenders.",
         "Royal Guards defend the court. Use cover to approach the marksmen.",
         "Interact beside the two glowing pedestals to weaken the Arcanist.",
@@ -667,6 +684,9 @@ int castle_interact(GameState *g) {
     int y;
     if (!interaction_at(g, &x, &y)) {
         return 0;
+    }
+    if (gatehouse_open_shortcut(g, x, y)) {
+        return 1;
     }
     if (g->level == 2 && x == 53 && y == 55) {
         if (g->inventory_count >= MAX_INVENTORY) {
