@@ -29,11 +29,11 @@ defenders and the current final boss.
 | 1 | Gatehouse and Lower Keep | Ten connected rooms, two guarded approaches, an eastern gallery and a permanent service shortcut |
 | 2 | Royal alchemy Wing | Early Malakar encounter, interrupted preparations, escape at 40% health, and ten explorable rooms |
 | 3 | Court and Household | Great Hall, western and eastern flanking routes, a permanent service shortcut, and Chamberlain Edras |
-| 4 | Crown Chapel | Royal Arcanist's two phases, sequential ward lanes and pedestal counters |
+| 4 | Crown Chapel | Nave, reliquary, cloister and choir approaches, royal service shortcut, and the Arcanist sanctuary |
 | 5 | Royal Archives | Shelves narrow sightlines; roaming soldiers and warned fire lanes threaten the approaches |
 | 6 | Throne of No Return | Veyr combines guarded approaches, ward pedestals, Royal Guards, fire lanes, and mixed escorts |
 
-Floors 4–6 retain six rooms linked by loops. Closed portcullises and magical
+Floors 5–6 retain six rooms linked by loops. Closed portcullises and magical
 barriers retain alternate routes. Tables stay outside the carpeted corridors,
 so every room is accessible without moving furniture. The entry room and stairs are free of traps;
 bosses remain inside their arenas. Use the configured **Ascend stairs** command
@@ -69,7 +69,7 @@ Save version **253** converts active and cached gatehouses in place. Exploration
 actor positions, wounds and deaths, dropped items, equipment, quests, boss
 victories and operated entrance gates remain intact. If new masonry overlaps
 an old occupant or item, a short connected alcove preserves its position. Old
-gatehouses receive no replacement supply drops. Floors 4–6 keep their current
+gatehouses receive no replacement supply drops. Floors 5–6 keep their current
 layouts and encounters for subsequent V2 changes.
 
 ## Enemies and combat
@@ -325,6 +325,40 @@ His location uses the existing serialized map; the service gate uses its saved
 tiles, and conversation state uses the existing dialogue records. No new
 Player or GameState fields are introduced. The Crown Chapel and later stages
 remain subsequent V2 changes.
+
+## V2 Crown Chapel
+
+Floor 4 has ten distinct spaces: entrance hall, crown nave, reliquary, vestry,
+ruined cloister, ward sanctuary, sacristy, prayer cell, choir gallery and royal
+gallery. Candlelit pews divide the nave into aisles and provide ranged cover.
+The western reliquary/cloister route and eastern vestry/choir route both reach
+the sanctuary without crossing the nave. Neither requires a collectible or
+regional quest. The register at **(12,26)** explains Malakar's crown orders.
+Use **Interact** beside its labeled shelf to read it.
+
+The sacristy lever at **(27,44)** permanently opens the royal service gate at
+**(26..27,39)**, creating a direct retreat to the entrance hall. It remains open
+through floor travel, save/load and castle regrouping, including beneath loose
+loot. The entrance stair stays at **(15,11)** and is labeled **DOWN: COURT AND
+HOUSEHOLD**; the onward stair stays at **(45,55)**, labeled **UP: ROYAL ARCHIVES**.
+Discovered stairs retain their minimap markers. The optional reliquary trapdoor
+at **(17,32)** keeps its existing fall and persistence rules.
+
+The Royal Arcanist retains the established two-phase fight, warning timing,
+ward sources, arena geometry and counterplay described above. All arena gate
+states retain retreat and stair access. Defeating him remains necessary for
+onward travel and retains the gold and reserved Crown Chapel Vestments. The
+reward chest at **(53,56)** remains usable. Ordinary retreat still regroups a
+living boss and restores his wards; the royal service shortcut stays open.
+
+Save version **256** remodels active and cached chapels while preserving the
+entire saved **(34..55,44..57)** arena tile for tile. Spent wards, operated gates,
+cover and dropped-item underlays remain exact. Enemy positions, wounds, deaths,
+phases, queued warning masks, freeze and timers retain their saved values.
+Exploration, loot, player progress, spent trapdoors, victories and reward claims
+remain intact. No new persistent fields are needed: shortcut progress is stored
+in the existing map records. The upper apartments and finale remain subsequent
+V2 changes.
 
 ## Progression
 

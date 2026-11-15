@@ -1,6 +1,7 @@
 #include "castle.h"
 #include "castle_gatehouse.h"
 #include "castle_court.h"
+#include "castle_chapel.h"
 #include "malakar.h"
 #include "combat_feedback.h"
 #include "royal_arcanist.h"
@@ -127,6 +128,10 @@ void castle_generate(Map *m, int level) {
     }
     if (level == 3) {
         court_generate(m);
+        return;
+    }
+    if (level == 4) {
+        chapel_generate(m);
         return;
     }
     memset(m, 0, sizeof(*m));
@@ -627,7 +632,7 @@ void castle_enter(GameState *g, int level) {
         "Explore the lower keep. A service lever opens a shortcut back to the entrance hall.",
         "Malakar works in the laboratory ahead. Break his preparations and force him to retreat.",
         "Household passages flank the Great Hall. Seek the chamberlain and council records.",
-        "Interact beside the two glowing pedestals to weaken the Arcanist.",
+        "Explore the nave, cloister and reliquary. The sacristy opens a royal service shortcut; break the Arcanist's wards.",
         "Patrols circle the shelves. Fire runes flash twice before burning.",
         "Break the wards, defeat the Royal Guards, and watch the throne's fire lane."
     };
@@ -772,6 +777,9 @@ static int interaction_at(const GameState *g, int *x, int *y) {
         *x = g->player.x + (i < 0 ? 0 : dxs[i]);
         *y = g->player.y + (i < 0 ? 0 : dys[i]);
         TileType tile = tile_at(g, *x, *y);
+        if (g->level == 4 && tile == TILE_CASTLE_BOOKCASE && *x == 12 && *y == 26) {
+            return 1;
+        }
         if (g->level == 3 && tile == TILE_CASTLE_BOOKCASE && *x == 29 && *y == 6) {
             return 1;
         }
@@ -804,6 +812,9 @@ int castle_interact(GameState *g) {
         return 1;
     }
     if (court_interact(g, x, y)) {
+        return 1;
+    }
+    if (chapel_interact(g, x, y)) {
         return 1;
     }
     if (g->level == 2 && x == 53 && y == 55) {

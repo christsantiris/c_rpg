@@ -1,6 +1,7 @@
 #include "../game/rosemoor.h"
 #include "../game/castle_gatehouse.h"
 #include "../game/castle_court.h"
+#include "../game/castle_chapel.h"
 #include "../game/malakar.h"
 #include "../game/ridgeshire.h"
 #include "../game/act5_routes.h"
@@ -2096,7 +2097,7 @@ int save_game(const GameState *g, int slot) {
     }
     mkdir("saves", 0755);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "save_version", 255);
+    cJSON_AddNumberToObject(root, "save_version", 256);
     cJSON_AddNumberToObject(root, "tribute_quest_state", g->tribute_quest_state);
     cJSON_AddNumberToObject(root, "tribute_progress", g->tribute_progress);
     cJSON_AddNumberToObject(root, "jarl_quest_state", g->jarl_quest_state);
@@ -7418,6 +7419,10 @@ int load_game(GameState *g, int slot) {
         return 0;
     }
     if (save_version < 255 && !court_migrate(g)) {
+        cJSON_Delete(root);
+        return 0;
+    }
+    if (save_version < 256 && !chapel_migrate(g)) {
         cJSON_Delete(root);
         return 0;
     }
