@@ -107,87 +107,15 @@ int gatehouse_open_shortcut(GameState *g, int x, int y) {
     return 1;
 }
 
-static void preserve_position(Map *m, int x, int y) {
-    if (x < 1 || y < 1 || x >= MAP_W - 1 || y >= MAP_H - 1 || map_is_walkable(m, x, y)) {
-        return;
-    }
-    int tx = m->stairs_up_x;
-    int ty = m->stairs_up_y;
-    int distance = MAP_W + MAP_H;
-    // Connect an old occupant's alcove to the nearest new room without moving it.
-    for (int sy = 1; sy < CASTLE_H - 1; sy++) {
-        for (int sx = 1; sx < CASTLE_W - 1; sx++) {
-            int d = abs(sx - x) + abs(sy - y);
-            if (d < distance && map_is_walkable(m, sx, sy)) {
-                distance = d;
-                tx = sx;
-                ty = sy;
-            }
-        }
-    }
-    while (x != tx || y != ty) {
-        m->tiles[y][x] = TILE_CASTLE_FLOOR;
-        if (x != tx) {
-            x += tx > x ? 1 : -1;
-        } else {
-            y += ty > y ? 1 : -1;
-        }
-    }
-}
-
-static int migrate_floor(Map *m, Enemy *enemies, int count, FloorItem *loot, int items, int px, int py) {
-    Map *layout = malloc(sizeof(*layout));
-    if (!layout) {
-        return 0;
-    }
-    gatehouse_generate(layout);
-    // Preserve portcullis choices, including an already opened V2 shortcut.
-    for (int y = 0; y < CASTLE_H; y++) {
-        for (int x = 0; x < CASTLE_W; x++) {
-            TileType old = m->tiles[y][x];
-            if ((layout->tiles[y][x] == TILE_CASTLE_GATE || layout->tiles[y][x] == TILE_CASTLE_GATE_OPEN) &&
-                (old == TILE_CASTLE_GATE || old == TILE_CASTLE_GATE_OPEN)) {
-                layout->tiles[y][x] = old;
-            }
-        }
-    }
-    preserve_position(layout, px, py);
-    for (int i = 0; i < count; i++) {
-        preserve_position(layout, enemies[i].x, enemies[i].y);
-    }
-    for (int i = 0; i < items; i++) {
-        FloorItem *item = &loot[i];
-        if (item->active) {
-            preserve_position(layout, item->x, item->y);
-            item->underlying_tile = layout->tiles[item->y][item->x];
-        }
-    }
-    // Exploration and all actor/quest/reward data remain in their original records.
-    memcpy(m->tiles, layout->tiles, sizeof(m->tiles));
-    memcpy(m->rooms, layout->rooms, sizeof(m->rooms));
-    m->room_count = layout->room_count;
-    m->stairs_up_x = layout->stairs_up_x;
-    m->stairs_up_y = layout->stairs_up_y;
-    m->stairs_down_x = layout->stairs_down_x;
-    m->stairs_down_y = layout->stairs_down_y;
-    for (int i = 0; i < items; i++) {
-        if (loot[i].active) {
-            m->tiles[loot[i].y][loot[i].x] = TILE_ITEM;
-        }
-    }
-    free(layout);
-    return 1;
-}
-
 int gatehouse_migrate(GameState *g) {
     if (g->castle_cache[0].valid) {
         LevelCache *cache = &g->castle_cache[0];
-        if (!migrate_floor(&cache->map, cache->enemies, cache->enemy_count, g->castle_loot[0], g->castle_loot_count[0], -1, -1)) {
+        if (!castle_remodel(&cache->map, cache->enemies, cache->enemy_count, g->castle_loot[0], g->castle_loot_count[0], -1, -1, 1)) {
             return 0;
         }
     }
     if (g->location == LOCATION_CASTLE_INTERIOR && g->level == 1) {
-        if (!migrate_floor(&g->map, g->enemies, g->enemy_count, g->floor_items, g->floor_item_count, g->player.x, g->player.y)) {
+        if (!castle_remodel(&g->map, g->enemies, g->enemy_count, g->floor_items, g->floor_item_count, g->player.x, g->player.y, 1)) {
             return 0;
         }
     }

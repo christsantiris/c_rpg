@@ -104,7 +104,7 @@ void test_quest_journal(void) {
     };
     const char *names[JOURNAL_BOSS_COUNT] = {
         "Lich King", "Necromancer", "Goblin King", "Drowned Queen",
-        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Frost Kraken", "Desert Pharaoh", "Cinder Lord", "Quarry Colossus", "Minotaur", "Grave Marshal", "Castellan", "Royal Arcanist", "Lord Veyr", "Elderthorn", "Sszareth, Keeper of the Roots", "Tempest Matriarch", "Goblin Mine Boss", "The Last Jarl"
+        "Fallen Sun Guardian", "Swamp Demon", "Red Dragon", "Frost Kraken", "Desert Pharaoh", "Cinder Lord", "Quarry Colossus", "Minotaur", "Grave Marshal", "Malakar (Laboratory)", "Royal Arcanist", "Lord Veyr", "Elderthorn", "Sszareth, Keeper of the Roots", "Tempest Matriarch", "Goblin Mine Boss", "The Last Jarl"
     };
     for (int defeated = 0; defeated < JOURNAL_BOSS_COUNT; defeated++) {
         g.defeated_bosses = defeated < 13 || defeated == 15 ? 1 << regions[defeated] : 0;

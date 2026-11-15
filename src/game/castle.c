@@ -1,5 +1,6 @@
 #include "castle.h"
 #include "castle_gatehouse.h"
+#include "malakar.h"
 #include "combat_feedback.h"
 #include "royal_arcanist.h"
 #include "lord_veyr.h"
@@ -47,7 +48,7 @@ static void set_tile(GameState *g, int x, int y, TileType tile) {
 }
 
 const char *castle_floor_name(int level) {
-    static const char *names[CASTLE_DEPTH] = {"Gatehouse", "Iron Keep", "Forsaken Court", "Crown Chapel", "Royal Archives", "Throne of No Return"};
+    static const char *names[CASTLE_DEPTH] = {"Gatehouse", "Royal alchemy Wing", "Forsaken Court", "Crown Chapel", "Royal Archives", "Throne of No Return"};
     return level >= 1 && level <= CASTLE_DEPTH ? names[level - 1] : "Castle";
 }
 
@@ -117,6 +118,10 @@ static TileType encounter_tile(int level, int x, int y, TileType tile) {
 void castle_generate(Map *m, int level) {
     if (level == 1) {
         gatehouse_generate(m);
+        return;
+    }
+    if (level == 2) {
+        malakar_generate(m);
         return;
     }
     memset(m, 0, sizeof(*m));
@@ -248,6 +253,83 @@ void castle_migrate_layout(GameState *g) {
     }
 }
 
+static void preserve_position(Map *m, int x, int y) {
+    if (x < 1 || y < 1 || x >= MAP_W - 1 || y >= MAP_H - 1 || map_is_walkable(m, x, y)) {
+        return;
+    }
+    int tx = m->stairs_up_x;
+    int ty = m->stairs_up_y;
+    int distance = MAP_W + MAP_H;
+    // Connect an old occupant's alcove to the nearest new room without moving it.
+    for (int sy = 1; sy < CASTLE_H - 1; sy++) {
+        for (int sx = 1; sx < CASTLE_W - 1; sx++) {
+            int d = abs(sx - x) + abs(sy - y);
+            if (d < distance && map_is_walkable(m, sx, sy)) {
+                distance = d;
+                tx = sx;
+                ty = sy;
+            }
+        }
+    }
+    while (x != tx || y != ty) {
+        m->tiles[y][x] = TILE_CASTLE_FLOOR;
+        if (x != tx) {
+            x += tx > x ? 1 : -1;
+        } else {
+            y += ty > y ? 1 : -1;
+        }
+    }
+}
+
+int castle_remodel(Map *m, Enemy *enemies, int count, FloorItem *loot, int items, int px, int py, int level) {
+    Map *layout = malloc(sizeof(*layout));
+    if (!layout) {
+        return 0;
+    }
+    castle_generate(layout, level);
+    // Preserve portcullis choices, including an already opened V2 shortcut.
+    for (int y = 0; y < CASTLE_H; y++) {
+        for (int x = 0; x < CASTLE_W; x++) {
+            TileType old = m->tiles[y][x];
+            if ((layout->tiles[y][x] == TILE_CASTLE_GATE || layout->tiles[y][x] == TILE_CASTLE_GATE_OPEN) &&
+                (old == TILE_CASTLE_GATE || old == TILE_CASTLE_GATE_OPEN)) {
+                layout->tiles[y][x] = old;
+            }
+        }
+    }
+    preserve_position(layout, px, py);
+    for (int i = 0; i < count; i++) {
+        preserve_position(layout, enemies[i].x, enemies[i].y);
+    }
+    for (int i = 0; i < items; i++) {
+        FloorItem *item = &loot[i];
+        if (item->active) {
+            preserve_position(layout, item->x, item->y);
+            item->underlying_tile = layout->tiles[item->y][item->x];
+        }
+    }
+    // Exploration and all actor/quest/reward data remain in their original records.
+    memcpy(m->tiles, layout->tiles, sizeof(m->tiles));
+    for (int i = 0; i < m->burial_trap_count; i++) {
+        BurialTrap *trap = &m->burial_traps[i];
+        m->tiles[trap->y][trap->x] = trap->spent ? TILE_CASTLE_TRAP_OPEN : TILE_CASTLE_TRAP_HIDDEN;
+    }
+    memcpy(m->rooms, layout->rooms, sizeof(m->rooms));
+    m->room_count = layout->room_count;
+    m->stairs_up_x = layout->stairs_up_x;
+    m->stairs_up_y = layout->stairs_up_y;
+    m->stairs_down_x = layout->stairs_down_x;
+    m->stairs_down_y = layout->stairs_down_y;
+    for (int i = 0; i < items; i++) {
+        if (loot[i].active) {
+            loot[i].underlying_tile = m->tiles[loot[i].y][loot[i].x];
+            m->tiles[loot[i].y][loot[i].x] = TILE_ITEM;
+        }
+    }
+    free(layout);
+    return 1;
+}
+
 static int occupied(const GameState *g, int x, int y) {
     if (!map_is_walkable(&g->map, x, y) || (g->player.x == x && g->player.y == y)) {
         return 1;
@@ -263,6 +345,12 @@ static int occupied(const GameState *g, int x, int y) {
 static Enemy *add_enemy(GameState *g, EnemyType type, int x, int y) {
     if (g->enemy_count >= NON_ROAD_ENEMY_LIMIT || occupied(g, x, y)) {
         return NULL;
+    }
+    if (type == ENEMY_MALAKAR) {
+        Enemy *e = &g->enemies[g->enemy_count++];
+        malakar_init(e, x, y);
+        g->level_cleared = 0;
+        return e;
     }
     if (type == ENEMY_ROYAL_GUARD || type == ENEMY_VAMPIRE) {
         Enemy *e = &g->enemies[g->enemy_count++];
@@ -294,10 +382,6 @@ static void spawn_detail(GameState *g) {
         add_enemy(g, ENEMY_ROYAL_MARKSMAN, 33, 11);
         add_enemy(g, ENEMY_OATHBOUND_SOLDIER, 14, 25);
         add_enemy(g, ENEMY_ROYAL_MARKSMAN, 17, 25);
-    }
-    if (g->level == 2 && !(g->castle_minibosses & 1)) {
-        add_enemy(g, ENEMY_IRON_WARDEN, 42, 48);
-        add_enemy(g, ENEMY_ROYAL_MARKSMAN, 48, 50);
     }
     if (g->level == 3) {
         add_enemy(g, ENEMY_IRON_WARDEN, 48, 34);
@@ -331,6 +415,17 @@ void castle_summon_guard(GameState *g, EnemyType type, int x, int y) {
 
 void castle_spawn(GameState *g) {
     g->enemy_count = 0;
+    if (g->level == 2) {
+        if (!(g->castle_minibosses & 1)) {
+            add_enemy(g, ENEMY_MALAKAR, 45, 14);
+        }
+        static const int positions[8][2] = {{27, 15}, {52, 14}, {14, 30}, {36, 32}, {54, 34}, {17, 51}, {33, 46}, {52, 45}};
+        for (int i = 0; i < 8; i++) {
+            add_enemy(g, i % 3 == 0 ? ENEMY_IRON_WARDEN : i % 3 == 1 ? ENEMY_ROYAL_MARKSMAN : ENEMY_OATHBOUND_SOLDIER, positions[i][0], positions[i][1]);
+        }
+        g->level_cleared = 0;
+        return;
+    }
     if (g->level == 1) {
         static const int positions[10][2] = {{36, 11}, {47, 14}, {15, 29}, {20, 36}, {40, 27}, {50, 33}, {36, 44}, {57, 36}, {58, 48}, {28, 52}};
         for (int i = 0; i < 10; i++) {
@@ -351,9 +446,7 @@ void castle_spawn(GameState *g) {
         add_enemy(g, ENEMY_ROYAL_GUARD, 49, 32);
     }
     spawn_detail(g);
-    if (g->level == 2 && !(g->castle_minibosses & 1)) {
-        add_enemy(g, ENEMY_VAMPIRE, 45, 49);
-    } else if (g->level == 4 && !(g->castle_minibosses & 2)) {
+    if (g->level == 4 && !(g->castle_minibosses & 2)) {
         add_enemy(g, ENEMY_ROYAL_ARCANIST, 45, 49);
     } else if (g->level == 6 && !g->game_won) {
         add_enemy(g, ENEMY_LORD_VEYR, 45, 49);
@@ -514,21 +607,24 @@ void castle_enter(GameState *g, int level) {
     }
     memcpy(g->floor_items, g->castle_loot[level - 1], sizeof(g->floor_items));
     g->floor_item_count = g->castle_loot_count[level - 1];
+    malakar_prepare(g);
     arrive(g, 15, 11);
     g->dialogue_active = 0;
     g->castle_prompt = 0;
     char message[MAX_MESSAGE_LEN];
     static const char *hints[CASTLE_DEPTH] = {
         "Explore the lower keep. A service lever opens a shortcut back to the entrance hall.",
-        "Defeat the Vampire in the armory; use side levers to split the defenders.",
+        "Malakar works in the laboratory ahead. Break his preparations and force him to retreat.",
         "Royal Guards defend the court. Use cover to approach the marksmen.",
         "Interact beside the two glowing pedestals to weaken the Arcanist.",
         "Patrols circle the shelves. Fire runes flash twice before burning.",
         "Break the wards, defeat the Royal Guards, and watch the throne's fire lane."
     };
-    snprintf(message, sizeof(message), "%s: %s", castle_floor_name(level), hints[level - 1]);
+    const char *hint = level == 2 && (g->castle_minibosses & 1) ? "Malakar has fled. Explore the wing; the upper stair leads to the Forsaken Court." : hints[level - 1];
+    snprintf(message, sizeof(message), "%s: %s", castle_floor_name(level), hint);
     push_message(g, message);
-    push_message(g, "Press the interact key (A by default) beside levers and ward pedestals to activate them.");
+    push_message(g, level == 2 ? "Use Interact (A by default) beside condensers, the private ledger and the sealed royal passage." :
+        "Press the interact key (A by default) beside levers and ward pedestals to activate them.");
 }
 
 void castle_leave(GameState *g, int escape) {
@@ -571,10 +667,7 @@ void castle_leave(GameState *g, int escape) {
             }
         }
         if (i == 1) {
-            for (int y = 47; y <= 49; y++) {
-                set_tile(g, 40, y, TILE_CASTLE_GATE_OPEN);
-                set_tile(g, 50, y, TILE_CASTLE_GATE_OPEN);
-            }
+            malakar_prepare(g);
         }
         c->map = g->map;
         memcpy(g->castle_loot[i], g->floor_items, sizeof(g->floor_items));
@@ -604,7 +697,7 @@ int castle_travel(GameState *g, int forward) {
     }
     if (forward) {
         if (!g->debug_passages_unlocked && g->level == 2 && !(g->castle_minibosses & 1)) {
-            push_message(g, "The Castellan guards the next floor.");
+            push_message(g, "Malakar's laboratory seal blocks the upper stair. Force him to retreat.");
         } else if (!g->debug_passages_unlocked && g->level == 4 && !(g->castle_minibosses & 2)) {
             push_message(g, "The Royal Arcanist guards the next floor.");
         } else if (g->level < CASTLE_DEPTH) {
@@ -666,6 +759,9 @@ static int interaction_at(const GameState *g, int *x, int *y) {
         *x = g->player.x + (i < 0 ? 0 : dxs[i]);
         *y = g->player.y + (i < 0 ? 0 : dys[i]);
         TileType tile = tile_at(g, *x, *y);
+        if (g->level == 2 && tile == TILE_CASTLE_BOOKCASE && ((*x == 14 && *y == 46) || (*x == 54 && *y == 8))) {
+            return 1;
+        }
         if (tile == TILE_CASTLE_LEVER || tile == TILE_CASTLE_WARD) {
             return 1;
         }
@@ -688,9 +784,12 @@ int castle_interact(GameState *g) {
     if (gatehouse_open_shortcut(g, x, y)) {
         return 1;
     }
+    if (malakar_interact(g, x, y)) {
+        return 1;
+    }
     if (g->level == 2 && x == 53 && y == 55) {
         if (g->inventory_count >= MAX_INVENTORY) {
-            push_message(g, "Inventory full. Castellan's Bulwark stays reserved in the Iron Keep armory.");
+            push_message(g, "Inventory full. Castellan's Bulwark stays reserved beside the alchemy wing's upper stair.");
         } else {
             g->inventory[g->inventory_count++] = item_make_castellan_bulwark();
             g->castellan_reward_state = 2;
@@ -777,6 +876,9 @@ int castle_step(GameState *g) {
 }
 
 int castle_attack_marks(const Map *m, const Enemy *e, int x, int y) {
+    if (e->type == ENEMY_MALAKAR) {
+        return malakar_marks(e, x, y);
+    }
     if (e->type == ENEMY_LORD_VEYR) {
         return lord_veyr_marks(e, x, y);
     }
@@ -964,6 +1066,10 @@ int castle_tick(GameState *g) {
             e->frozen_turns--;
             continue;
         }
+        if (e->type == ENEMY_MALAKAR) {
+            damage += malakar_tick(g, e);
+            continue;
+        }
         int distance = abs(g->player.x - e->x) + abs(g->player.y - e->y);
         int arcanist_range = e->type == ENEMY_ROYAL_ARCANIST && abs(g->player.x - e->x) <= 12 && abs(g->player.y - e->y) <= 12 &&
             line_clear(&g->map, e->x, e->y, g->player.x, g->player.y);
@@ -1046,9 +1152,12 @@ int castle_tick(GameState *g) {
     return damage + tick_fire(g);
 }
 
-int castle_enemy_damage(const GameState *g, const Enemy *e, int damage) {
+int castle_enemy_damage(GameState *g, Enemy *e, int damage) {
     if (g->location != LOCATION_CASTLE_INTERIOR) {
         return damage;
+    }
+    if (e->type == ENEMY_MALAKAR) {
+        return malakar_damage(g, e, damage);
     }
     if ((e->type == ENEMY_IRON_WARDEN || (e->type == ENEMY_LORD_VEYR && e->attack_phase <= 1)) && e->move_timer != 2 && !e->frozen_turns) {
         int front = (g->player.x - e->x) * e->facing_dx + (g->player.y - e->y) * e->facing_dy > 0;

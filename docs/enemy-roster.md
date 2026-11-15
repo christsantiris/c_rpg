@@ -1,6 +1,6 @@
 # Approved enemy rosters by area
 
-All 24 area rosters are approved. The game defines **95 active enemy types**.
+All 24 area rosters are approved. The game defines **96 active enemy types**.
 Named quest, hunt and summoned enemies reuse these types rather than adding
 separate definitions. Retired numeric IDs are reserved and migrated in save/load;
 existing actors retain their wounds, deaths, quest identities and progress.
@@ -9,8 +9,9 @@ Dark Elf Archers hold firing lanes. Dark Elf Rangers use a slower bow cadence
 and reposition after shooting. Dark Elf Guards are armored melee protectors
 with the same base power as Hobgoblin Guards: 36 HP, 11 attack, 7 defense and
 44 experience. Goblin Warchiefs are armored melee attackers.
-The castle Vampire replaces the former armory miniboss while retaining its
-stair unlock and reserved equipment reward.
+Royal Alchemist Malakar replaces the castle's armory Vampire. His early
+laboratory encounter ends in escape at 40% health, retaining the floor unlock
+and reserved equipment reward. Vampires remain in their other areas.
 
 Sun Priests appear only during Sun alignment; Lunar Effigies appear only during
 Moon alignment. Living actors hidden by alignment retain their health and status,
@@ -23,7 +24,7 @@ are active during either alignment.
 | --- | --- | --- |
 | ✅ | Ashen Hollow | Cinder Imp; Ash Hound; Obsidian Guardian; Fire Elemental; Cinder Lord |
 | ✅ | Blackwater Swamp | Giant Rat; Zombie; Bandit; Wraith; Vampire; Swamp Demon |
-| ✅ | Castle of No Return — interior | Oathbound Soldier; Iron Warden; Royal Marksman; Court Hexer; Royal Guard; Vampire; Royal Arcanist; Lord Veyr |
+| ✅ | Castle of No Return — interior | Oathbound Soldier; Iron Warden; Royal Marksman; Court Hexer; Royal Guard; Malakar; Royal Arcanist; Lord Veyr |
 | ✅ | Crown Road East | Bandit; Blighted Wolf |
 | ✅ | Crown Road North | Goblin Scout; Goblin Archer; Goblin Warchief; Goblin Shaman; Hobgoblin Guard; Blighted Wolf |
 | ✅ | Crown Road West | Bandit; Blighted Wolf |

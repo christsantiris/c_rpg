@@ -441,6 +441,7 @@ static void drop_loot(GameState *g, Enemy *enemy, int gold_bonus) {
         case ENEMY_ROYAL_MARKSMAN:
         case ENEMY_COURT_HEXER:
         case ENEMY_ROYAL_ARCANIST:
+        case ENEMY_MALAKAR:
         case ENEMY_LORD_VEYR:
             break;
         case ENEMY_ANCIENT_SKELETON: gold = 8 + rand() % 8; break;
@@ -2073,6 +2074,8 @@ static void resolve_player_action(GameState *g, Action a) {
                             g->score += e->revived ? 0 : enemy_score(e->type);
                             snprintf(msg, sizeof(msg), "%s killed %s!",
                                 sp->name, e->name);
+                        } else if (!e->active && e->type == ENEMY_MALAKAR) {
+                            snprintf(msg, sizeof(msg), "Malakar escapes the laboratory alive.");
                         } else if (sp->id == SPELL_FROST_BOLT &&
                             (e->type == ENEMY_ICE_GOLEM ||
                             e->type == ENEMY_FALLEN_SUN_GUARDIAN ||
@@ -2382,7 +2385,7 @@ static void resolve_player_action(GameState *g, Action a) {
                 dmg = sun_guardian_enemy_damage(g, e, dmg);
                 e->hp -= dmg;
                 combat_feedback_add(g, critical ? FEEDBACK_ENEMY_CRITICAL : FEEDBACK_ENEMY_DAMAGE, FEEDBACK_NOW, e->x, e->y, dmg);
-                if (dmg > 0 && e->hp > 0 && melee_weapon && melee_weapon->visual_id == ITEM_VISUAL_POISON_SWORD) {
+                if (dmg > 0 && e->active && e->hp > 0 && melee_weapon && melee_weapon->visual_id == ITEM_VISUAL_POISON_SWORD) {
                     e->poison_turns = POISON_SWORD_TURNS;
                 }
                 int cleave_hits = melee_weapon

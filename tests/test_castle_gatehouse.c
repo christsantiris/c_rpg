@@ -1,4 +1,5 @@
 #include "test_utils.h"
+#include "castle_route_checks.h"
 #include "game/castle.h"
 #include "game/castle_gatehouse.h"
 #include "systems/save_load.h"
@@ -11,52 +12,6 @@
 
 static GameState game;
 static GameState loaded;
-
-static int walk_to(GameState *g, int tx, int ty) {
-    int previous[CASTLE_W * CASTLE_H];
-    int queue[CASTLE_W * CASTLE_H];
-    for (int i = 0; i < CASTLE_W * CASTLE_H; i++) {
-        previous[i] = -1;
-    }
-    int start = g->player.y * CASTLE_W + g->player.x;
-    int target = ty * CASTLE_W + tx;
-    int head = 0;
-    int tail = 1;
-    queue[0] = start;
-    previous[start] = start;
-    const int steps[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
-    while (head < tail && previous[target] < 0) {
-        int cell = queue[head++];
-        for (int side = 0; side < 4; side++) {
-            int x = cell % CASTLE_W + steps[side][0];
-            int y = cell / CASTLE_W + steps[side][1];
-            if (x < 0 || y < 0 || x >= CASTLE_W || y >= CASTLE_H || !map_is_walkable(&g->map, x, y)) {
-                continue;
-            }
-            int next = y * CASTLE_W + x;
-            if (previous[next] < 0) {
-                previous[next] = cell;
-                queue[tail++] = next;
-            }
-        }
-    }
-    if (previous[target] < 0) {
-        return 0;
-    }
-    int count = 0;
-    for (int cell = target; cell != start; cell = previous[cell]) {
-        queue[count++] = cell;
-    }
-    for (int i = count - 1; i >= 0; i--) {
-        int x = queue[i] % CASTLE_W;
-        int y = queue[i] / CASTLE_W;
-        action_resolve_player(g, (Action){ACTION_MOVE, x, y});
-        if (g->player.x != x || g->player.y != y) {
-            return 0;
-        }
-    }
-    return 1;
-}
 
 static void clear_enemies(GameState *g) {
     for (int i = 0; i < g->enemy_count; i++) {
@@ -100,7 +55,7 @@ static int set_legacy_version(void) {
 
 static void legacy_layout(Map *m) {
     // The pre-V2 gatehouse used six 22-by-14 chambers on a regular grid.
-    castle_generate(m, 2);
+    castle_generate(m, 3);
     m->burial_trap_count = 0;
     m->tiles[32][17] = TILE_CASTLE_FLOOR;
     m->tiles[21][15] = TILE_CASTLE_GATE_OPEN;
@@ -155,7 +110,7 @@ static void test_gatehouse_migration(void) {
         loaded.floor_items[0].x == 28 && loaded.floor_items[0].y == 36);
     if (ok) {
         clear_enemies(&loaded);
-        ASSERT("an old player position connects to both actual stairs after migration", walk_to(&loaded, 15, 11) && walk_to(&loaded, 45, 55));
+        ASSERT("an old player position connects to both actual stairs after migration", castle_walk_to(&loaded, 15, 11) && castle_walk_to(&loaded, 45, 55));
         action_resolve_player(&loaded, (Action){ACTION_ASCEND, 0, 0});
         ASSERT("the migrated onward stair enters floor two", loaded.location == LOCATION_CASTLE_INTERIOR && loaded.level == 2);
         clear_enemies(&loaded);
@@ -174,13 +129,13 @@ static void test_castle_stair_routes(void) {
         castle_enter(&game, 1);
         for (int level = 1; level < CASTLE_DEPTH; level++) {
             clear_enemies(&game);
-            int ok = walk_to(&game, game.map.stairs_down_x, game.map.stairs_down_y);
+            int ok = castle_walk_to(&game, game.map.stairs_down_x, game.map.stairs_down_y);
             action_resolve_player(&game, (Action){ACTION_ASCEND, 0, 0});
             ASSERT("each castle stage retains its actual onward stair after encounter placement", ok && game.level == level + 1);
         }
         for (int level = CASTLE_DEPTH; level >= 1; level--) {
             clear_enemies(&game);
-            int ok = walk_to(&game, game.map.stairs_up_x, game.map.stairs_up_y);
+            int ok = castle_walk_to(&game, game.map.stairs_up_x, game.map.stairs_up_y);
             action_resolve_player(&game, (Action){ACTION_DESCEND, 0, 0});
             ASSERT("every stage retains actual retreat through cached floors to Castle Grounds", ok &&
                 (level == 1 ? game.location == LOCATION_CASTLE : game.location == LOCATION_CASTLE_INTERIOR && game.level == level - 1));
@@ -193,7 +148,7 @@ static void test_castle_stair_routes(void) {
         .item = item_make_health_potion()};
     game.floor_item_count = 3;
     game.map.tiles[55][45] = TILE_ITEM;
-    ASSERT("dropped loot does not obstruct the continuous route onto the onward stair", walk_to(&game, 45, 55));
+    ASSERT("dropped loot does not obstruct the continuous route onto the onward stair", castle_walk_to(&game, 45, 55));
     action_resolve_player(&game, (Action){ACTION_ASCEND, 0, 0});
     ASSERT("an item-covered staircase still performs the actual onward transition", game.level == 2);
     clear_enemies(&game);
@@ -217,42 +172,42 @@ void test_castle_gatehouse(void) {
         ASSERT("all defenders stand on usable tiles after encounter placement", valid);
         clear_enemies(&game);
         ASSERT("the entrance side of the service shortcut starts sealed", game.map.tiles[21][26] == TILE_CASTLE_GATE);
-        int east_ok = walk_to(&game, 24, 13);
+        int east_ok = castle_walk_to(&game, 24, 13);
         action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
-        east_ok &= walk_to(&game, 10, 15);
+        east_ok &= castle_walk_to(&game, 10, 15);
         action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
-        ASSERT("the east watch and gallery reach the upper stair while south and service gates are closed", east_ok && walk_to(&game, 45, 55));
-        ASSERT("the eastern approach retains access to the entrance levers", walk_to(&game, 10, 15));
+        ASSERT("the east watch and gallery reach the upper stair while south and service gates are closed", east_ok && castle_walk_to(&game, 45, 55));
+        ASSERT("the eastern approach retains access to the entrance levers", castle_walk_to(&game, 10, 15));
         action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
-        ASSERT("the entrance still reaches its east gate lever", walk_to(&game, 24, 13));
+        ASSERT("the entrance still reaches its east gate lever", castle_walk_to(&game, 24, 13));
         action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
         int rooms_ok = 1;
         for (int i = 0; i < game.map.room_count; i++) {
             int x;
             int y;
             map_room_center(&game.map.rooms[i], &x, &y);
-            rooms_ok &= walk_to(&game, x, y);
+            rooms_ok &= castle_walk_to(&game, x, y);
         }
         ASSERT("real movement reaches every room with the east and service gates closed", rooms_ok);
-        ASSERT("the lower keep reaches its service lever", walk_to(&game, GATEHOUSE_LEVER_X, GATEHOUSE_LEVER_Y));
+        ASSERT("the lower keep reaches its service lever", castle_walk_to(&game, GATEHOUSE_LEVER_X, GATEHOUSE_LEVER_Y));
         action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
         ASSERT("the service lever permanently opens all three shortcut stones", game.map.tiles[21][25] == TILE_CASTLE_GATE_OPEN && game.map.tiles[21][26] == TILE_CASTLE_GATE_OPEN && game.map.tiles[21][27] == TILE_CASTLE_GATE_OPEN);
         ASSERT("the open shortcut survives a current-format save and load", save_game(&game, GATEHOUSE_SLOT) && load_game(&loaded, GATEHOUSE_SLOT) && loaded.map.tiles[21][26] == TILE_CASTLE_GATE_OPEN);
-        ASSERT("the stores' optional supply can be reached", walk_to(&game, 15, 52));
+        ASSERT("the stores' optional supply can be reached", castle_walk_to(&game, 15, 52));
         int inventory = game.inventory_count;
         action_resolve_player(&game, (Action){ACTION_PICK_UP, 0, 0});
         ASSERT("the stores supply is collected once", game.inventory_count == inventory + 1 && !game.floor_items[0].active);
-        ASSERT("the shortcut leads continuously back to the entrance stair", walk_to(&game, 15, 11));
-        ASSERT("both guarded approaches can close without trapping the player away from their levers", walk_to(&game, 10, 15));
+        ASSERT("the shortcut leads continuously back to the entrance stair", castle_walk_to(&game, 15, 11));
+        ASSERT("both guarded approaches can close without trapping the player away from their levers", castle_walk_to(&game, 10, 15));
         action_resolve_player(&game, (Action){ACTION_INTERACT, 0, 0});
-        ASSERT("the opened shortcut remains usable while both guarded gates are closed", walk_to(&game, 45, 55));
+        ASSERT("the opened shortcut remains usable while both guarded gates are closed", castle_walk_to(&game, 45, 55));
         action_resolve_player(&game, (Action){ACTION_ASCEND, 0, 0});
-        ASSERT("actual onward travel enters the Iron Keep", game.location == LOCATION_CASTLE_INTERIOR && game.level == 2);
+        ASSERT("actual onward travel enters the alchemy Wing", game.location == LOCATION_CASTLE_INTERIOR && game.level == 2);
         clear_enemies(&game);
         action_resolve_player(&game, (Action){ACTION_DESCEND, 0, 0});
         ASSERT("cached-floor retreat arrives on the correct gatehouse staircase", game.level == 1 && game.player.x == 45 && game.player.y == 55 && game.map.tiles[21][26] == TILE_CASTLE_GATE_OPEN);
         clear_enemies(&game);
-        ASSERT("retreat remains a continuous route to Castle Grounds", walk_to(&game, 15, 11));
+        ASSERT("retreat remains a continuous route to Castle Grounds", castle_walk_to(&game, 15, 11));
         action_resolve_player(&game, (Action){ACTION_DESCEND, 0, 0});
         ASSERT("the actual return stair exits to Castle Grounds", game.location == LOCATION_CASTLE);
         castle_enter(&game, 1);
